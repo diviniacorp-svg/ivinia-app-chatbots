@@ -7,6 +7,7 @@ const RUBRO_EMOJIS: Record<string, string> = {
   gimnasio: '💪', contabilidad: '📊', farmacia: '💊',
   peluqueria: '✂️', taller: '🔧', hotel: '🏨',
   veterinaria: '🐾', ecommerce: '🛍️', odontologia: '🦷', legal: '⚖️',
+  agencia: '🚀', turismo: '✈️', consultora: '💼',
 }
 
 export default function TemplatesPage() {
@@ -74,10 +75,14 @@ export default function TemplatesPage() {
                   <span className="text-xs text-indigo-600 font-medium">{t.trial_days || 14} días trial</span>
                 </div>
               </div>
-              <div className="border-t border-gray-50 px-5 py-3">
+              <div className="border-t border-gray-50 px-5 py-3 flex gap-2">
+                <Link href={`/templates/${t.id}`}
+                  className="flex-1 block text-center text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg transition-colors">
+                  Ver flujo
+                </Link>
                 <Link href={`/clientes?template=${t.id}`}
-                  className="block text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                  Usar template
+                  className="flex-1 block text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
+                  Usar
                 </Link>
               </div>
             </div>
