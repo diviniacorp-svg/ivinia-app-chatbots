@@ -14,6 +14,14 @@ export const CHATBOT_MODEL = 'liquid/lfm-2.5-1.2b-instruct:free'
 // Modelo para outreach (también gratuito)
 export const OUTREACH_MODEL = 'liquid/lfm-2.5-1.2b-instruct:free'
 
+const GROUNDING_INSTRUCTION = `
+
+REGLA CRÍTICA: Solo respondé con información que esté explícitamente en este prompt.
+- Si no tenés el dato (precio, disponibilidad, horario, producto, etc.), decí "No tengo esa información, te recomiendo contactarnos directamente" y dá el teléfono o WhatsApp del negocio.
+- NUNCA inventes precios, fechas, disponibilidad, nombres de productos ni ningún dato.
+- NUNCA uses información de internet ni de tu entrenamiento sobre el negocio.
+- Si la pregunta está fuera del rubro del negocio, redirigí amablemente al tema principal.`
+
 export async function generateChatbotResponse(
   systemPrompt: string,
   conversationHistory: { role: 'user' | 'assistant'; content: string }[],
@@ -23,7 +31,7 @@ export async function generateChatbotResponse(
     model: CHATBOT_MODEL,
     max_tokens: 500,
     messages: [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: systemPrompt + GROUNDING_INSTRUCTION },
       ...conversationHistory,
       { role: 'user', content: userMessage },
     ],
