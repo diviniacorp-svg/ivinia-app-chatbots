@@ -10,9 +10,9 @@ const openrouter = new OpenAI({
 })
 
 // Modelo gratuito para chatbots
-export const CHATBOT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free'
+export const CHATBOT_MODEL = 'liquid/lfm-2.5-1.2b-instruct:free'
 // Modelo para outreach (también gratuito)
-export const OUTREACH_MODEL = 'meta-llama/llama-3.1-8b-instruct:free'
+export const OUTREACH_MODEL = 'liquid/lfm-2.5-1.2b-instruct:free'
 
 export async function generateChatbotResponse(
   systemPrompt: string,
