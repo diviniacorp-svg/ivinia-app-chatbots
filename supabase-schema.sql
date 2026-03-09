@@ -56,8 +56,20 @@ CREATE TABLE IF NOT EXISTS clients (
   trial_start timestamptz DEFAULT now(),
   trial_end timestamptz DEFAULT (now() + interval '14 days'),
   mp_subscription_id text DEFAULT '',
+  whatsapp_number text DEFAULT '',
   created_at timestamptz DEFAULT now()
 );
+
+-- Historial de conversaciones WhatsApp
+CREATE TABLE IF NOT EXISTS whatsapp_conversations (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone text NOT NULL,
+  wa_number text NOT NULL,
+  role text NOT NULL CHECK (role IN ('user', 'assistant')),
+  content text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_wa_conv_phone ON whatsapp_conversations(phone, wa_number);
 
 -- Pagos
 CREATE TABLE IF NOT EXISTS payments (
