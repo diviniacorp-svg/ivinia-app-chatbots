@@ -143,6 +143,29 @@ export async function POST(request: NextRequest) {
       { phone: senderNumber, wa_number: waNumber, role: 'assistant', content: response },
     ])
 
+    // Registrar/actualizar lead en CRM (upsert por phone + wa_number)
+    const totalMessages = conversationHistory.length + 1
+    if (totalMessages === 1) {
+      // Primera vez que escribe — crear lead
+      await db.from('whatsapp_leads').insert({
+        phone: senderNumber,
+        wa_number: waNumber,
+        company_name: companyName,
+        summary: `Primer mensaje: "${message}"`,
+        interested_in: '',
+        status: 'nuevo'
+      })
+    } else if (totalMessages % 4 === 0) {
+      // Cada 4 mensajes — actualizar resumen
+      const recentMessages = [...conversationHistory.slice(-4), { role: 'user', content: message }]
+        .map(m => `${m.role === 'user' ? 'Cliente' : 'Bot'}: ${m.content}`)
+        .join('\n')
+      await db.from('whatsapp_leads')
+        .update({ summary: recentMessages, status: 'en_conversacion' })
+        .eq('phone', senderNumber)
+        .eq('wa_number', waNumber)
+    }
+
     return new NextResponse(twimlResponse(response), {
       headers: { 'Content-Type': 'text/xml' }
     })
