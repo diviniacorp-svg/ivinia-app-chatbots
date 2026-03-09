@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       .from('clients')
       .select('chatbot_id, company_name, custom_config, status, trial_end')
       .eq('whatsapp_number', waNumber)
-      .eq('status', 'active')
+      .in('status', ['active', 'trial'])
       .maybeSingle()
 
     // Si no hay cliente por número, usar el chatbot de sandbox para testing
