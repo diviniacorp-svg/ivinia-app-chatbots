@@ -5,6 +5,8 @@ const ADMIN_ROUTES = [
   '/leads',
   '/crm',
   '/clientes',
+  '/chatbots',
+  '/turnos',
   '/pagos',
   '/templates',
   '/outreach',
@@ -19,12 +21,13 @@ const PROTECTED_API_ROUTES = [
   '/api/mercadopago/create-preference',
   '/api/templates',
   '/api/bookings/appointments',
+  '/api/bookings/configs',
 ]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Proteger rutas del dashboard
+  // Proteger rutas del dashboard (la página pública de reservas está en /reservas/[id], no en /turnos/)
   const isAdminRoute = ADMIN_ROUTES.some(r => pathname.startsWith(r))
   if (isAdminRoute) {
     const session = request.cookies.get('divinia_session')?.value
@@ -58,6 +61,9 @@ export const config = {
     '/leads/:path*',
     '/crm/:path*',
     '/clientes/:path*',
+    '/chatbots/:path*',
+    '/turnos',
+    '/turnos/config/:path*',
     '/pagos/:path*',
     '/templates/:path*',
     '/outreach/:path*',
@@ -68,6 +74,8 @@ export const config = {
     '/api/outreach/:path*',
     '/api/mercadopago/create-preference/:path*',
     '/api/templates/:path*',
+    '/api/bookings/appointments/:path*',
+    '/api/bookings/configs/:path*',
     // rutas exactas sin slash final
     '/api/seed',
     '/api/clients',
@@ -77,5 +85,6 @@ export const config = {
     '/api/mercadopago/create-preference',
     '/api/templates',
     '/api/bookings/appointments',
+    '/api/bookings/configs',
   ],
 }

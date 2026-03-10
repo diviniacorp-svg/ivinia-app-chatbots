@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
-  CreditCard, Send, UserCheck, ExternalLink, Bot, CalendarCheck
+  CreditCard, Send, ExternalLink, Bot, CalendarCheck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -13,9 +13,12 @@ const navItems = [
   { href: '/leads', label: 'Leads', icon: Users },
   { href: '/crm', label: 'CRM', icon: Kanban },
   { href: '/outreach', label: 'Outreach', icon: Send },
-  { href: '/clientes', label: 'Clientes', icon: UserCheck },
   { href: '/pagos', label: 'Pagos', icon: CreditCard },
-  { href: '/dashboard/turnos', label: 'Turnos', icon: CalendarCheck },
+]
+
+const productItems = [
+  { href: '/chatbots', label: 'Chatbots', icon: Bot, color: 'bg-indigo-600' },
+  { href: '/turnos', label: 'Sistema de Turnos', icon: CalendarCheck, color: 'bg-purple-600' },
 ]
 
 export default function Sidebar() {
@@ -37,7 +40,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
           return (
@@ -48,6 +51,29 @@ export default function Sidebar() {
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                 active
                   ? 'bg-indigo-600 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              )}
+            >
+              <item.icon size={17} />
+              {item.label}
+            </Link>
+          )
+        })}
+
+        {/* Productos */}
+        <div className="pt-3 pb-1">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3">Productos</p>
+        </div>
+        {productItems.map((item) => {
+          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                active
+                  ? `${item.color} text-white`
                   : 'text-gray-400 hover:text-white hover:bg-gray-800'
               )}
             >
