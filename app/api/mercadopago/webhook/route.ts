@@ -1,10 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPaymentById } from '@/lib/mercadopago'
 import { supabaseAdmin } from '@/lib/supabase'
+import { createHmac } from 'crypto'
+
+function verifyMPSignature(request: NextRequest, rawBody: string): boolean {
+  const secret = process.env.MP_WEBHOOK_SECRET
+  if (!secret) return true // sin secret configurado → dev mode
+
+  const signatureHeader = request.headers.get('x-signature')
+  const requestId = request.headers.get('x-request-id')
+  if (!signatureHeader) return false
+
+  const parts = Object.fromEntries(signatureHeader.split(',').map(p => p.split('=')))
+  const ts = parts['ts']
+  const receivedHash = parts['v1']
+  if (!ts || !receivedHash) return false
+
+  const manifest = `id=${requestId};request-id=${requestId};ts=${ts};`
+  const expectedHash = createHmac('sha256', secret).update(manifest).digest('hex')
+  return expectedHash === receivedHash
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+
+    if (!verifyMPSignature(request, rawBody)) {
+      console.warn('MP Webhook: firma inválida rechazada')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = JSON.parse(rawBody)
 
     // MercadoPago envía notificaciones de tipo payment
     if (body.type === 'payment' && body.data?.id) {

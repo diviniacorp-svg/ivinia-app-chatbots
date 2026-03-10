@@ -6,12 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateChatbotId(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return result
+  // crypto.randomUUID es criptográficamente seguro (Node 14.17+ / browsers modernos)
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 16)
 }
 
 export function generateEmbedCode(chatbotId: string, appUrl: string): string {

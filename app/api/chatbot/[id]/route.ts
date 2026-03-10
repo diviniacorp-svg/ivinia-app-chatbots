@@ -7,15 +7,35 @@ interface Message {
   content: string
 }
 
+// Rate limiter simple en memoria: max 20 mensajes por IP por minuto
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 })
+    return true
+  }
+  if (entry.count >= 20) return false
+  entry.count++
+  return true
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: 'Demasiadas solicitudes. Esperá un momento.' }, { status: 429 })
+    }
+
     const { message, history = [] } = await request.json()
 
-    if (!message) {
-      return NextResponse.json({ error: 'message es requerido' }, { status: 400 })
+    if (!message || typeof message !== 'string' || message.length > 2000) {
+      return NextResponse.json({ error: 'message inválido' }, { status: 400 })
     }
 
     const chatbotId = params.id

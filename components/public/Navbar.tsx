@@ -1,20 +1,37 @@
 'use client'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const [secretClicks, setSecretClicks] = useState(0)
+  const router = useRouter()
+
+  const handleLogoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const next = secretClicks + 1
+    if (next >= 5) {
+      setSecretClicks(0)
+      router.push('/login')
+    } else {
+      setSecretClicks(next)
+      // Reset si no completa en 3 segundos
+      setTimeout(() => setSecretClicks(0), 3000)
+    }
+  }, [secretClicks, router])
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
+          <button onClick={handleLogoClick} className="flex items-center gap-2 select-none">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">D</span>
             </div>
             <span className="font-bold text-lg text-gray-900">DIVINIA</span>
-          </Link>
+          </button>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
             <a href="#rubros" className="hover:text-indigo-600 transition-colors">Rubros</a>
             <a href="#como-funciona" className="hover:text-indigo-600 transition-colors">Cómo funciona</a>

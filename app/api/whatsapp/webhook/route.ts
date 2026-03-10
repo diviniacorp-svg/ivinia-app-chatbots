@@ -1,15 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 import { generateChatbotResponse } from '@/lib/claude'
+import { createHmac } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-// Verificación de firma Twilio (seguridad)
+// Verificación de firma Twilio real
 function validateTwilioSignature(request: NextRequest, body: string): boolean {
-  // En dev o si no hay auth token configurado, permitir todo
-  if (!process.env.TWILIO_AUTH_TOKEN) return true
-  // TODO: implementar validación de firma X-Twilio-Signature
-  return true
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+  if (!authToken) return true // sin token → dev mode
+
+  const twilioSignature = request.headers.get('x-twilio-signature')
+  if (!twilioSignature) return false
+
+  const url = process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/api/whatsapp/webhook`
+    : request.url
+
+  // Parsear y ordenar params alfabéticamente (spec de Twilio)
+  const params = Object.fromEntries(
+    body.split('&').filter(Boolean).map(pair => {
+      const eqIdx = pair.indexOf('=')
+      const k = decodeURIComponent(pair.slice(0, eqIdx))
+      const v = decodeURIComponent(pair.slice(eqIdx + 1).replace(/\+/g, ' '))
+      return [k, v]
+    })
+  )
+  const sortedKeys = Object.keys(params).sort()
+  const dataToSign = url + sortedKeys.map(k => k + params[k]).join('')
+  const expectedSig = createHmac('sha1', authToken).update(dataToSign, 'utf8').digest('base64')
+  return expectedSig === twilioSignature
 }
 
 // Parsear form-urlencoded de Twilio

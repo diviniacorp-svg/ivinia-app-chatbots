@@ -7,9 +7,17 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json()
+
+    // Whitelist: solo campos permitidos para actualizar
+    const allowed = ['status', 'notes', 'score', 'contact_name', 'email', 'phone', 'outreach_sent']
+    const safeUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    for (const key of allowed) {
+      if (key in body) safeUpdate[key] = body[key]
+    }
+
     const { data, error } = await supabaseAdmin
       .from('leads')
-      .update({ ...body, updated_at: new Date().toISOString() })
+      .update(safeUpdate)
       .eq('id', params.id)
       .select()
       .single()

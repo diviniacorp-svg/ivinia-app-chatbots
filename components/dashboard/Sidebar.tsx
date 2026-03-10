@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
-  CreditCard, Send, UserCheck, ExternalLink, Bot
+  CreditCard, Send, UserCheck, ExternalLink, Bot, CalendarCheck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/outreach', label: 'Outreach', icon: Send },
   { href: '/clientes', label: 'Clientes', icon: UserCheck },
   { href: '/pagos', label: 'Pagos', icon: CreditCard },
+  { href: '/dashboard/turnos', label: 'Turnos', icon: CalendarCheck },
 ]
 
 export default function Sidebar() {

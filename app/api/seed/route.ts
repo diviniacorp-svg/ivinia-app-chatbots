@@ -1,8 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { TEMPLATES_DATA } from '@/lib/templates-data'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Doble check: middleware + header secreto
+  const secret = process.env.ADMIN_SECRET || 'divinia2024'
+  const apiKey = request.headers.get('x-api-key')
+  const cookie = request.cookies.get('divinia_session')?.value
+  if (apiKey !== secret && cookie !== secret) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
+
   try {
     // Insertar templates (upsert por name)
     // Borrar templates existentes y reinsertar
@@ -35,9 +43,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error('SEED ERROR:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error), details: JSON.stringify(error) },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error al cargar templates' }, { status: 500 })
   }
 }
