@@ -57,7 +57,7 @@ function parseSections(systemPrompt: string): { title: string; items: string[] }
 
 function extractVariables(text: string): string[] {
   const matches = text.match(/\{[A-Z_]+\}/g) || []
-  return [...new Set(matches)].map(v => v.replace(/[{}]/g, ''))
+  return Array.from(new Set(matches)).map(v => v.replace(/[{}]/g, ''))
 }
 
 const STEP_ICONS: Record<number, string> = {
