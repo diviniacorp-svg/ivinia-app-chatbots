@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
-  CreditCard, Send, ExternalLink, Bot, CalendarCheck
+  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -82,6 +82,20 @@ export default function Sidebar() {
             </Link>
           )
         })}
+
+        {/* Sub-item: Configurador de Turnos */}
+        <Link
+          href="/turnos/configurador"
+          className={cn(
+            'flex items-center gap-3 pl-8 pr-3 py-2 rounded-lg text-xs font-medium transition-all',
+            pathname === '/turnos/configurador'
+              ? 'bg-purple-700 text-white'
+              : 'text-gray-500 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Settings2 size={14} />
+          Configurador
+        </Link>
       </nav>
 
       {/* Footer */}
