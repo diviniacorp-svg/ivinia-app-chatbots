@@ -22,32 +22,39 @@ const PROTECTED_API_ROUTES = [
   '/api/templates',
   '/api/bookings/appointments',
   '/api/bookings/configs',
+  '/api/turnos/generar-landing',
 ]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Proteger rutas del dashboard (la página pública de reservas está en /reservas/[id], no en /turnos/)
-  const isAdminRoute = ADMIN_ROUTES.some(r => pathname.startsWith(r))
+  const validSecret = process.env.ADMIN_SECRET
+  if (!validSecret) {
+    // En producción, si no hay ADMIN_SECRET configurado, bloqueamos todo acceso admin
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Servidor mal configurado' }, { status: 503 })
+    }
+  }
+  const secret = validSecret || 'divinia2024'
+
+  // Proteger rutas del dashboard
+  const isAdminRoute = ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
   if (isAdminRoute) {
     const session = request.cookies.get('divinia_session')?.value
-    const validSecret = process.env.ADMIN_SECRET || 'divinia2024'
-    if (session !== validSecret) {
+    if (session !== secret) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('from', pathname)
       return NextResponse.redirect(loginUrl)
     }
   }
 
-  // Proteger rutas API internas (excepto webhooks públicos)
-  const isProtectedApi = PROTECTED_API_ROUTES.some(r => pathname.startsWith(r))
+  // Proteger rutas API internas
+  const isProtectedApi = PROTECTED_API_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
   if (isProtectedApi) {
-    // Aceptar cookie de sesión (requests desde el dashboard) o header API key
     const session = request.cookies.get('divinia_session')?.value
     const apiKey = request.headers.get('x-api-key')
-    const validSecret = process.env.ADMIN_SECRET || 'divinia2024'
 
-    if (session !== validSecret && apiKey !== validSecret) {
+    if (session !== secret && apiKey !== secret) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
   }
@@ -63,28 +70,28 @@ export const config = {
     '/clientes/:path*',
     '/chatbots/:path*',
     '/turnos',
-    '/turnos/config/:path*',
+    '/turnos/:path*',
     '/pagos/:path*',
     '/templates/:path*',
     '/outreach/:path*',
-    '/api/seed/:path*',
-    '/api/clients/:path*',
-    '/api/leads/:path*',
-    '/api/apify/:path*',
-    '/api/outreach/:path*',
-    '/api/mercadopago/create-preference/:path*',
-    '/api/templates/:path*',
-    '/api/bookings/appointments/:path*',
-    '/api/bookings/configs/:path*',
-    // rutas exactas sin slash final
     '/api/seed',
+    '/api/seed/:path*',
     '/api/clients',
+    '/api/clients/:path*',
     '/api/leads',
+    '/api/leads/:path*',
     '/api/apify',
+    '/api/apify/:path*',
     '/api/outreach',
+    '/api/outreach/:path*',
     '/api/mercadopago/create-preference',
+    '/api/mercadopago/create-preference/:path*',
     '/api/templates',
+    '/api/templates/:path*',
     '/api/bookings/appointments',
+    '/api/bookings/appointments/:path*',
     '/api/bookings/configs',
+    '/api/bookings/configs/:path*',
+    '/api/turnos/generar-landing',
   ],
 }

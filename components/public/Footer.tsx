@@ -13,7 +13,7 @@ export default function Footer() {
               <span className="font-bold text-xl">DIVINIA</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-xs">
-              Chatbots con IA para PYMEs argentinas. Hecho en San Luis, Argentina.
+              IA y automatización para PYMEs argentinas. Chatbots, turnos online y más. Hecho en San Luis.
             </p>
             <div className="flex gap-4">
               <a href="https://wa.me/5492665286110" target="_blank" rel="noopener noreferrer"
