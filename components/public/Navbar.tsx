@@ -33,6 +33,7 @@ export default function Navbar() {
             <span className="font-bold text-lg text-gray-900">DIVINIA</span>
           </button>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+            <a href="#productos" className="hover:text-indigo-600 transition-colors">Servicios</a>
             <a href="#rubros" className="hover:text-indigo-600 transition-colors">Rubros</a>
             <a href="#como-funciona" className="hover:text-indigo-600 transition-colors">Cómo funciona</a>
             <a href="#precios" className="hover:text-indigo-600 transition-colors">Precios</a>
@@ -54,6 +55,7 @@ export default function Navbar() {
         </div>
         {open && (
           <div className="md:hidden py-4 border-t border-gray-100 flex flex-col gap-4 text-sm">
+            <a href="#productos" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Servicios</a>
             <a href="#rubros" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Rubros</a>
             <a href="#como-funciona" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Cómo funciona</a>
             <a href="#precios" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Precios</a>

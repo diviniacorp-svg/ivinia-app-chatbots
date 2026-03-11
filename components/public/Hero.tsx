@@ -1,5 +1,12 @@
 import Link from 'next/link'
-import { ArrowRight, Star, MessageCircle } from 'lucide-react'
+import { ArrowRight, MessageCircle } from 'lucide-react'
+
+const STATS = [
+  { value: '24/7', label: 'Atención sin descanso' },
+  { value: '48hs', label: 'Implementación express' },
+  { value: '70%', label: 'Ahorro en costos operativos' },
+  { value: '∞', label: 'Escalabilidad sin contratar' },
+]
 
 export default function Hero() {
   return (
@@ -9,97 +16,67 @@ export default function Hero() {
         {/* Badge */}
         <div className="flex justify-center mb-6">
           <span className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-100 px-4 py-1.5 rounded-full text-sm font-medium">
-            ⚡ Hecho en San Luis, Argentina · Usado por PYMEs argentinas
+            ⚡ Agencia de IA · San Luis, Argentina · Para PYMEs
           </span>
         </div>
 
         {/* Headline */}
         <h1 className="text-center text-5xl sm:text-6xl font-black text-gray-900 leading-tight mb-6 max-w-4xl mx-auto">
-          Tu negocio atiende{' '}
-          <span className="text-indigo-600">solo, las 24 horas</span>
+          Tu negocio operando con{' '}
+          <span className="text-indigo-600">Inteligencia Artificial</span>
         </h1>
 
         {/* Subtítulo */}
         <p className="text-center text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Instalamos un chatbot con IA en tu web o WhatsApp. Responde consultas,
-          agenda turnos y cierra ventas <span className="text-gray-900 font-semibold">mientras dormís</span>.
+          Automatizamos la atención al cliente, las ventas y los procesos de tu empresa con IA.{' '}
+          <span className="text-gray-900 font-semibold">Resultados en días, no meses.</span>{' '}
+          Para PYMEs que quieren crecer.
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-          <Link href="/trial"
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-4 rounded-xl text-base transition-all shadow-lg shadow-indigo-100">
-            Probá gratis 14 días <ArrowRight size={18} />
-          </Link>
-          <a href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20ver%20una%20demo"
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+          <a
+            href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20una%20consulta%20gratuita%20de%2015%20minutos"
             target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold px-8 py-4 rounded-xl text-base transition-all hover:bg-gray-50">
-            <MessageCircle size={18} className="text-green-500" /> Ver demo por WhatsApp
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-4 rounded-xl text-base transition-all shadow-lg shadow-indigo-100">
+            Consulta gratuita de 15 min <ArrowRight size={18} />
           </a>
+          <Link href="/trial"
+            className="flex items-center gap-2 border border-gray-200 hover:border-indigo-300 text-gray-700 font-semibold px-8 py-4 rounded-xl text-base transition-all hover:bg-indigo-50">
+            <span className="text-indigo-600">🤖</span> Probar chatbot gratis
+          </Link>
         </div>
 
-        {/* Social proof */}
-        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400 mb-16">
-          <div className="flex items-center gap-1.5">
-            {[1,2,3,4,5].map(i => <span key={i} className="text-amber-400 text-xs">★</span>)}
-            <span>5/5 clientes satisfechos</span>
-          </div>
-          <span>·</span>
-          <span>Sin tarjeta de crédito</span>
-          <span>·</span>
-          <span>Instalación en 24hs</span>
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto mb-16">
+          {STATS.map((s) => (
+            <div key={s.value} className="text-center">
+              <p className="text-3xl sm:text-4xl font-black text-indigo-600 mb-1">{s.value}</p>
+              <p className="text-xs text-gray-500 leading-tight">{s.label}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Browser mockup */}
-        <div className="max-w-3xl mx-auto">
-          <div className="rounded-2xl border border-gray-200 shadow-2xl overflow-hidden bg-white">
-            {/* Barra del navegador */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-gray-100 border-b border-gray-200">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="flex-1 bg-white rounded border border-gray-200 px-3 py-1 text-xs text-gray-400 text-center">
-                tu-negocio.com.ar
-              </div>
-            </div>
-
-            {/* Contenido del sitio simulado */}
-            <div className="bg-gray-50 px-8 py-10 flex items-center justify-center min-h-[140px]">
-              <div className="text-center">
-                <div className="w-32 h-3 bg-gray-200 rounded mx-auto mb-3" />
-                <div className="w-48 h-2 bg-gray-200 rounded mx-auto mb-2" />
-                <div className="w-40 h-2 bg-gray-200 rounded mx-auto" />
-              </div>
-            </div>
-
-            {/* Chat widget — barra inferior del sitio */}
-            <div className="border-t border-gray-200 bg-white">
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-600 to-purple-600">
-                <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">D</div>
+        {/* Proceso en 4 pasos — compacto */}
+        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-6 max-w-3xl mx-auto">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide text-center mb-4">Cómo trabajamos</p>
+          <div className="grid sm:grid-cols-4 gap-4">
+            {[
+              { n: '1', title: 'Charlamos', desc: '15 min por WhatsApp o videollamada' },
+              { n: '2', title: 'Te proponemos', desc: 'Propuesta en 24hs con precio y timeline' },
+              { n: '3', title: 'Lo construimos', desc: 'El equipo implementa mientras operás' },
+              { n: '4', title: 'Listo, funciona', desc: 'Entrega, capacitación y 30 días de soporte' },
+            ].map((step) => (
+              <div key={step.n} className="flex sm:flex-col items-start sm:items-center sm:text-center gap-3 sm:gap-2">
+                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  {step.n}
+                </div>
                 <div>
-                  <p className="text-white text-sm font-semibold">Asistente DIVINIA</p>
-                  <p className="text-indigo-200 text-xs">● En línea ahora</p>
+                  <p className="text-sm font-bold text-gray-900">{step.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{step.desc}</p>
                 </div>
               </div>
-              <div className="px-6 py-4 bg-gray-50">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">D</div>
-                  <div className="bg-white rounded-2xl rounded-tl-sm border border-gray-100 px-4 py-3 max-w-xs shadow-sm">
-                    <p className="text-gray-800 text-sm">¡Hola! ¿En qué puedo ayudarte hoy? 😊 Preguntame sobre horarios, precios o reservas.</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-400">
-                    Escribí tu mensaje...
-                  </div>
-                  <div className="bg-indigo-600 text-white rounded-xl w-10 h-10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">➤</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 

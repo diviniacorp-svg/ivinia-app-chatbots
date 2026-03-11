@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Turnos Online</title>
+</head>
+<body>
+<script>
+/* ════════════════════════════════════════════════════════════════
+   ██████╗  ██████╗ ███╗   ██╗███████╗██╗ ██████╗
+   ██╔══██╗██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
+   ██║  ██║██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
+   ██║  ██║██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
+   ██████╔╝╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
+   ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
+   Sistema de Turnos Online · divinia.com.ar
+   ════════════════════════════════════════════════════════════════
+
+   ✏️  CONFIGURACIÓN — editá solo este bloque para personalizar
+
+   ════════════════════════════════════════════════════════════════ */
+var CONFIG = {
+
+  /* ── NEGOCIO ─────────────────────────────────────────── */
+  nombre:        'Tu Espacio Estética',
+  slogan:        'San Luis Capital',
+  emoji:         '🌸',                         // Emoji del negocio
+  instagram:     'https://www.instagram.com/tuespacioestetica.sl/',
+  ig_handle:     '@tuespacioestetica.sl',
+
+  /* ── CONTACTO ──────────────────────────────────────────── */
+  wsp_duena:    '5492664910000',   // WhatsApp dueña: 549 + código área + número (sin 0 ni 15)
+  nombre_duena: 'Romi',
+
+  /* ── COLORES (podés usar cualquier color hex) ─────────── */
+  color1:        '#9b6070',        // Color oscuro principal (header, botones)
+  color2:        '#c4899a',        // Color medio (acentos)
+  color3:        '#f0d8df',        // Color claro (fondos)
+  color4:        '#8b6ab0',        // Color secundario (categorías)
+  color5:        '#fdf6f8',        // Color de fondo general
+
+  /* ── HORARIOS ─────────────────────────────────────────── */
+  hora_inicio:   9,                // Hora de apertura (número entero, 24hs)
+  hora_cierre:   21,               // Última hora disponible
+  turno_minutos: 30,               // Duración de cada slot en minutos
+
+  /* ── SUPABASE ─────────────────────────────────────────── */
+  sb_url:  'https://TU-PROYECTO.supabase.co',
+  sb_key:  'TU-ANON-KEY-AQUI',
+
+  /* ── SERVICIOS ─────────────────────────────────────────────────
+     Formato: { cat: 'Categoría', nombre: 'Servicio', precio: 0000 }
+     Podés agregar o quitar filas. El precio es en ARS.
+  ──────────────────────────────────────────────────────────────── */
+  servicios: [
+    { cat: 'Depilación a la cera', nombre: 'Bozo',            precio: 4000  },
+    { cat: 'Depilación a la cera', nombre: 'Axilas',           precio: 5000  },
+    { cat: 'Depilación a la cera', nombre: 'Cejas',            precio: 4000  },
+    { cat: 'Depilación a la cera', nombre: 'Bikini simple',    precio: 7000  },
+    { cat: 'Depilación a la cera', nombre: 'Bikini full',      precio: 12000 },
+    { cat: 'Depilación a la cera', nombre: 'Media pierna',     precio: 10000 },
+    { cat: 'Depilación a la cera', nombre: 'Piernas completas',precio: 18000 },
+    { cat: 'Depilación a la cera', nombre: 'Cuerpo completo',  precio: 38000 },
+    { cat: 'Facial',               nombre: 'Limpieza facial',  precio: 15000 },
+    { cat: 'Facial',               nombre: 'Hidratación',      precio: 12000 },
+    { cat: 'Cejas',                nombre: 'Diseño y depilación',precio: 5500},
+    { cat: 'Masajes',              nombre: 'Masaje relajante', precio: 18000 },
+  ]
+
+};
+/* ════════════════════════════════════════════════════════════════
+   FIN CONFIGURACIÓN · No hace falta editar nada más abajo
+   ════════════════════════════════════════════════════════════════ */
+</script>
+
+<style id="estilos">/* estilos inyectados por JS */</style>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p style="font-weight:600;font-size:.9rem">Enviando solicitud…</p>
+</div>
+
+<!-- SPLASH -->
+<div class="splash" id="splash" onclick="cerrarSplash()">
+  <div class="splash-logo" id="splashEmoji"></div>
+  <div class="splash-titulo" id="splashNombre"></div>
+  <div class="splash-sub"    id="splashSlogan"></div>
+  <div class="splash-hint">Tocá para continuar</div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="h-logo" id="hLogo"></div>
+  <div class="h-info">
+    <h1 id="hNombre"></h1>
+    <p  id="hSlogan"></p>
+  </div>
+  <a class="h-ig" id="hIg" target="_blank" rel="noopener">📷 Instagram</a>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <h2>Reservá tu turno online ✨</h2>
+  <p id="heroSub"></p>
+</div>
+
+<!-- APP -->
+<div id="appContenido">
+  <div class="booking-grid">
+    <div class="panel">
+      <div class="panel-header"><span class="badge-paso">1</span> Elegí el servicio</div>
+      <div class="panel-body" id="serviciosBody" style="max-height:480px;overflow-y:auto"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="badge-paso">2</span> Elegí la fecha</div>
+      <div class="panel-body">
+        <div class="cal-nav">
+          <button class="cal-btn" onclick="cambiarMes(-1)">‹</button>
+          <span class="cal-mes" id="calMes"></span>
+          <button class="cal-btn" onclick="cambiarMes(1)">›</button>
+        </div>
+        <div class="cal-sem"><span>D</span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span></div>
+        <div class="cal-dias" id="calDias"></div>
+        <div class="cal-leyenda">
+          <div class="cal-ley"><div class="cal-dot" id="dotDisp"></div>Disponible</div>
+          <div class="cal-ley"><div class="cal-dot" style="background:#e8e8e8"></div>Sin turnos</div>
+        </div>
+        <div class="sin-dias-msg" id="sinDiasMsg" style="display:none">🗓️ Sin días disponibles este mes.<br><small>Pasá al mes siguiente.</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion" id="secHorarios" style="display:none">
+    <div class="panel">
+      <div class="panel-header"><span class="badge-paso">3</span> Elegí el horario — <span id="fechaSelLabel" style="font-weight:400;font-size:.83rem;margin-left:.3rem"></span></div>
+      <div class="panel-body">
+        <div id="horasContainer"><div style="color:#6b6b6b;font-size:.85rem">⏳ Cargando horarios…</div></div>
+        <p id="horasInfo" style="margin-top:.6rem;font-size:.7rem;color:#6b6b6b"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion" id="secForm" style="display:none;padding-bottom:2rem">
+    <div class="form-grid">
+      <div class="panel">
+        <div class="panel-header"><span class="badge-paso">4</span> Tus datos</div>
+        <div class="panel-body">
+          <div class="form-group"><label>Nombre completo *</label><input type="text" id="inpNombre" placeholder="Ej: María González" autocomplete="name"/></div>
+          <div class="form-group"><label>WhatsApp *</label><input type="tel" id="inpTel" placeholder="Ej: 266 XXX XXX" inputmode="tel"/></div>
+          <div class="form-group"><label>Notas (opcional)</label><textarea id="inpNotas" placeholder="Consultas, alergias, preferencias…"></textarea></div>
+          <div class="msg-info" id="msgInfo"></div>
+          <div class="msg-error" id="msgError"></div>
+          <button class="btn btn-rosa" id="btnEnviar" onclick="enviarSolicitud()">✅ Confirmar solicitud</button>
+        </div>
+      </div>
+      <div><div class="resumen-box" id="resumenBox"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMACIÓN -->
+<div class="confirmacion" id="confirmacion">
+  <div class="conf-ico">🎉</div>
+  <p class="conf-titulo">¡Solicitud enviada!</p>
+  <p class="conf-sub" id="confSub"></p>
+  <div class="conf-card" id="confCard"></div>
+  <button class="btn btn-wsp" onclick="abrirWspDuena()">💬 Abrir WhatsApp</button>
+  <button class="btn btn-outline" onclick="nuevaReserva()">+ Hacer otra reserva</button>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo" id="fLogo"></div>
+  <p style="font-weight:700;color:#fff;margin-bottom:.2rem" id="fNombre"></p>
+  <a id="fIg" target="_blank" rel="noopener" style="color:rgba(255,255,255,.9);text-decoration:none"></a>
+  <p style="margin-top:.5rem;opacity:.55">© 2025 · Reservas online</p>
+</footer>
+
+<script>
+/* ── APLICAR CONFIG ── */
+document.getElementById('pageTitle').textContent = CONFIG.nombre + ' · Turnos';
+document.getElementById('splashEmoji').textContent  = CONFIG.emoji;
+document.getElementById('splashNombre').textContent = CONFIG.nombre;
+document.getElementById('splashSlogan').textContent = CONFIG.slogan;
+document.getElementById('hLogo').textContent    = CONFIG.emoji;
+document.getElementById('hNombre').textContent  = CONFIG.nombre;
+document.getElementById('hSlogan').textContent  = CONFIG.slogan + ' · Reservas online';
+document.getElementById('hIg').href             = CONFIG.instagram;
+document.getElementById('hIg').textContent      = '📷 Instagram';
+document.getElementById('heroSub').textContent  = 'Elegí el servicio y la fecha — ' + CONFIG.nombre_duena + ' te confirma por WhatsApp';
+document.getElementById('msgInfo').innerHTML    = '💬 ' + CONFIG.nombre_duena + ' te contacta por WhatsApp para confirmar el turno y coordinar el pago de la seña.';
+document.getElementById('horasInfo').textContent= 'Lunes a viernes · ' + CONFIG.hora_inicio + ':00 a ' + (CONFIG.hora_cierre+1) + ':00 · Turnos de ' + CONFIG.turno_minutos + ' min';
+document.getElementById('fLogo').textContent    = CONFIG.emoji;
+document.getElementById('fNombre').textContent  = CONFIG.nombre;
+var fIg = document.getElementById('fIg');
+fIg.href = CONFIG.instagram; fIg.textContent = '📷 ' + CONFIG.ig_handle;
+document.getElementById('dotDisp').style.cssText = 'width:9px;height:9px;border-radius:50%;background:'+CONFIG.color3+';border:1.5px solid '+CONFIG.color2;
+
+/* ── INYECTAR ESTILOS CON COLORES DE CONFIG ── */
+document.getElementById('estilos').textContent = `
+:root {
+  --rosa: ${CONFIG.color2}; --rosa-claro: ${CONFIG.color3}; --rosa-oscuro: ${CONFIG.color1};
+  --vio: ${CONFIG.color4}; --vio-claro: #ede0f5; --vio-oscuro: #6a4d8f;
+  --crema: ${CONFIG.color5}; --gris: #6b6b6b; --gris-claro: #e8e8e8;
+  --blanco: #fff; --verde: #52b788;
+  --sombra: 0 4px 24px rgba(155,96,112,.13); --radio: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--crema); color: #333; min-height: 100vh; }
+.splash { position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#5a1e30 0%,var(--rosa-oscuro) 45%,var(--rosa) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;cursor:pointer;transition:opacity .8s ease,visibility .8s ease; }
+.splash.oculto { opacity:0;visibility:hidden;pointer-events:none; }
+.splash-logo { font-size:5rem;animation:flotar 2.2s ease-in-out infinite;filter:drop-shadow(0 0 25px rgba(255,255,255,.5)); }
+@keyframes flotar { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.splash-titulo { font-size:clamp(1.6rem,6vw,3rem);font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#fff;text-align:center; }
+.splash-sub { font-size:clamp(.8rem,2.5vw,1rem);color:rgba(255,255,255,.75);letter-spacing:.25em;text-transform:uppercase; }
+.splash-hint { margin-top:1.5rem;font-size:.75rem;color:rgba(255,255,255,.45);letter-spacing:.15em;text-transform:uppercase;animation:pulsar 2s 2s infinite; }
+@keyframes pulsar { 0%,100%{opacity:.45} 50%{opacity:.9} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+header { background:linear-gradient(135deg,var(--rosa-oscuro),var(--rosa));color:#fff;padding:.9rem 1.4rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 2px 12px rgba(155,96,112,.25);position:sticky;top:0;z-index:100; }
+.h-logo { font-size:1.8rem; }
+.h-info h1 { font-size:1rem;font-weight:700; }
+.h-info p { font-size:.73rem;opacity:.82; }
+.h-ig { margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:.4rem .8rem;font-size:.78rem;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:.35rem;transition:background .15s;white-space:nowrap; }
+.h-ig:hover { background:rgba(255,255,255,.28); }
+.hero { background:linear-gradient(160deg,var(--rosa-claro) 0%,var(--vio-claro) 100%);padding:1.8rem 1.4rem 1.4rem;text-align:center; }
+.hero h2 { font-size:clamp(1.2rem,4vw,1.7rem);color:var(--rosa-oscuro);font-weight:800;margin-bottom:.4rem; }
+.hero p { color:var(--gris);font-size:.9rem; }
+.booking-grid { display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;max-width:1000px;margin:1.4rem auto 0;padding:0 1.2rem; }
+@media(max-width:700px) { .booking-grid { grid-template-columns:1fr; } }
+.panel { background:#fff;border-radius:var(--radio);box-shadow:var(--sombra);overflow:hidden; }
+.panel-header { padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.88rem;border-bottom:1.5px solid var(--rosa-claro);background:linear-gradient(135deg,var(--rosa-claro),#fce8ed);color:var(--rosa-oscuro); }
+.panel-body { padding:.9rem; }
+.serv-cat { font-size:.68rem;font-weight:700;color:var(--vio);text-transform:uppercase;letter-spacing:.08em;margin:.7rem 0 .3rem; }
+.serv-cat:first-child { margin-top:0; }
+.serv-item { display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;border-radius:9px;cursor:pointer;border:1.5px solid transparent;transition:all .16s;margin-bottom:.3rem;background:var(--crema); }
+.serv-item:hover { border-color:var(--rosa);background:var(--rosa-claro); }
+.serv-item.sel { border-color:var(--rosa-oscuro);background:var(--rosa-claro);box-shadow:0 2px 8px rgba(155,96,112,.18); }
+.serv-check { width:18px;height:18px;border-radius:50%;border:1.5px solid var(--gris-claro);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:transparent;flex-shrink:0;transition:all .15s; }
+.serv-item.sel .serv-check { background:var(--rosa-oscuro);border-color:var(--rosa-oscuro);color:#fff; }
+.serv-nombre { font-size:.84rem;font-weight:600; }
+.serv-precio { font-size:.84rem;font-weight:700;color:var(--rosa-oscuro);white-space:nowrap;margin-left:.5rem; }
+.serv-sena { font-size:.68rem;color:var(--gris); }
+.cal-nav { display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem; }
+.cal-mes { font-weight:700;color:var(--rosa-oscuro);font-size:.9rem; }
+.cal-btn { background:var(--rosa);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:background .15s; }
+.cal-btn:hover { background:var(--rosa-oscuro); }
+.cal-sem { display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:.6rem;font-weight:700;color:var(--rosa);text-transform:uppercase;margin-bottom:.3rem; }
+.cal-dias { display:grid;grid-template-columns:repeat(7,1fr);gap:3px; }
+.cal-dia { aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:.78rem;font-weight:500;color:#ccc;transition:all .16s;cursor:default; }
+.cal-dia.disp { background:var(--rosa-claro);color:var(--rosa-oscuro);font-weight:700;cursor:pointer;border:1.5px solid transparent; }
+.cal-dia.disp:hover { border-color:var(--rosa);background:var(--rosa);color:#fff; }
+.cal-dia.sel { background:var(--rosa-oscuro) !important;color:#fff !important;box-shadow:0 2px 8px rgba(155,96,112,.35); }
+.cal-dia.hoy { outline:2px solid var(--vio);outline-offset:-2px; }
+.cal-leyenda { display:flex;gap:.8rem;margin-top:.7rem; }
+.cal-ley { display:flex;align-items:center;gap:.3rem;font-size:.67rem;color:var(--gris); }
+.sin-dias-msg { text-align:center;color:var(--gris);font-size:.82rem;padding:1.2rem 0; }
+.seccion { max-width:1000px;margin:1.2rem auto 0;padding:0 1.2rem;animation:fadeIn .35s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.horas-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem; }
+@media(max-width:600px){ .horas-grid { grid-template-columns:repeat(4,1fr); } }
+.hora-btn { background:#fff;border:1.5px solid var(--gris-claro);border-radius:8px;padding:.48rem .2rem;text-align:center;font-size:.8rem;font-weight:600;cursor:pointer;color:#333;transition:all .16s; }
+.hora-btn:hover:not(.ocup) { border-color:var(--vio);background:var(--vio-claro);color:var(--vio-oscuro); }
+.hora-btn.sel { background:var(--vio);border-color:var(--vio-oscuro);color:#fff;box-shadow:0 2px 8px rgba(139,106,176,.3); }
+.hora-btn.ocup { opacity:.38;cursor:not-allowed;text-decoration:line-through;font-size:.7rem; }
+.form-grid { display:grid;grid-template-columns:1fr 1fr;gap:1.2rem; }
+@media(max-width:600px){ .form-grid { grid-template-columns:1fr; } }
+.form-group { margin-bottom:.9rem; }
+.form-group label { display:block;font-size:.8rem;font-weight:600;color:var(--gris);margin-bottom:.35rem; }
+.form-group input,.form-group textarea { width:100%;padding:.7rem .9rem;border:1.5px solid var(--gris-claro);border-radius:9px;font-size:.92rem;font-family:inherit;background:#fff;transition:border-color .16s; }
+.form-group input:focus,.form-group textarea:focus { outline:none;border-color:var(--rosa); }
+.form-group textarea { resize:vertical;min-height:72px; }
+.resumen-box { background:linear-gradient(135deg,var(--rosa-claro),var(--vio-claro));border-radius:var(--radio);padding:1rem 1.1rem;border:1.5px solid var(--rosa); }
+.res-titulo { font-size:.78rem;font-weight:700;color:var(--rosa-oscuro);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.7rem; }
+.res-row { display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.4rem;font-size:.85rem; }
+.res-ico { font-size:.95rem;flex-shrink:0; }
+.res-lbl { color:var(--gris);font-size:.74rem; }
+.res-val { font-weight:600; }
+.sena-bloque { margin-top:.7rem;padding-top:.7rem;border-top:1.5px dashed rgba(155,96,112,.3); }
+.sena-monto { font-size:1.1rem;font-weight:800;color:var(--rosa-oscuro); }
+.sena-desc { font-size:.72rem;color:var(--gris);line-height:1.5;margin-top:.2rem; }
+.btn { display:block;width:100%;padding:.88rem;border:none;border-radius:11px;font-size:.98rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit; }
+.btn-rosa { background:linear-gradient(135deg,var(--rosa-oscuro),var(--rosa));color:#fff;box-shadow:0 4px 14px rgba(155,96,112,.38); }
+.btn-rosa:hover { transform:translateY(-1px);box-shadow:0 6px 18px rgba(155,96,112,.48); }
+.btn-rosa:disabled { opacity:.5;cursor:not-allowed;transform:none; }
+.btn-wsp { background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;box-shadow:0 4px 14px rgba(37,211,102,.33);display:flex;align-items:center;justify-content:center;gap:.6rem; }
+.btn-wsp:hover { transform:translateY(-1px); }
+.btn-outline { background:transparent;border:2px solid var(--rosa);color:var(--rosa-oscuro);margin-top:.5rem; }
+.btn-outline:hover { background:var(--rosa-claro); }
+.loading-overlay { position:fixed;inset:0;background:rgba(253,246,248,.85);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem;color:var(--rosa-oscuro); }
+.loading-overlay.activo { display:flex; }
+.spinner { width:42px;height:42px;border:4px solid var(--rosa-claro);border-top-color:var(--rosa);border-radius:50%;animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.confirmacion { display:none;max-width:540px;margin:2rem auto;padding:0 1.2rem 3rem;text-align:center; }
+.confirmacion.activa { display:block;animation:fadeIn .5s ease; }
+.conf-ico { font-size:4rem; }
+.conf-titulo { font-size:1.45rem;font-weight:800;color:var(--rosa-oscuro);margin:.8rem 0 .4rem; }
+.conf-sub { color:var(--gris);font-size:.9rem;line-height:1.65;max-width:370px;margin:0 auto 1.4rem; }
+.conf-card { background:#fff;border-radius:var(--radio);box-shadow:var(--sombra);padding:1.1rem;text-align:left;margin-bottom:1.1rem; }
+.msg-info { background:var(--vio-claro);border:1.5px solid var(--vio);border-radius:9px;padding:.7rem .9rem;font-size:.8rem;color:var(--vio-oscuro);margin-bottom:.9rem;line-height:1.5; }
+.msg-error { background:#fdecea;border:1.5px solid #e07070;border-radius:9px;padding:.7rem .9rem;font-size:.8rem;color:#c0392b;margin-bottom:.9rem;display:none; }
+footer { background:linear-gradient(135deg,var(--rosa-oscuro),#5a1e30);color:rgba(255,255,255,.8);text-align:center;padding:1.4rem 1rem;font-size:.76rem;margin-top:2.5rem; }
+.f-logo { font-size:1.4rem;margin-bottom:.3rem; }
+.badge-paso { display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--rosa-oscuro);color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0; }
+`;
+
+/* ── SUPABASE ── */
+var SB_URL = CONFIG.sb_url;
+var SB_KEY = CONFIG.sb_key;
+var SB_HDR = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+
+/* ── ESTADO ── */
+var est = { servicios: [], fecha: null, hora: null, diasDisp: [], mesViendo: new Date() };
+
+/* ── UTILS ── */
+function fmt(n) { return '$' + n.toLocaleString('es-AR'); }
+function padZ(n) { return String(n).padStart(2,'0'); }
+function isoHoy() { var h=new Date(); return h.getFullYear()+'-'+padZ(h.getMonth()+1)+'-'+padZ(h.getDate()); }
+function fmtFecha(iso) {
+  var p=iso.split('-');
+  var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  return dias[d.getDay()]+' '+parseInt(p[2])+' de '+meses[+p[1]-1]+' '+p[0];
+}
+
+/* ── SPLASH ── */
+function cerrarSplash() { document.getElementById('splash').classList.add('oculto'); }
+setTimeout(cerrarSplash, 4000);
+
+/* ── RENDER SERVICIOS ── */
+(function(){
+  var cats=[], map={};
+  CONFIG.servicios.forEach(function(s){ if(!map[s.cat]){cats.push(s.cat);map[s.cat]=[];} map[s.cat].push(s); });
+  var html='';
+  cats.forEach(function(cat){
+    html+='<div class="serv-cat">'+cat+'</div>';
+    map[cat].forEach(function(s){
+      var sena=Math.round(s.precio*.2);
+      var eid='s_'+encodeURIComponent(s.cat+s.nombre);
+      html+='<div class="serv-item" id="'+eid+'" onclick="selServicio(this,\''+encodeURIComponent(JSON.stringify(s))+'\')">'
+          +'<div style="display:flex;align-items:center;gap:.5rem"><span class="serv-check">✓</span><div><div class="serv-nombre">'+s.nombre+'</div><div class="serv-sena">Seña: '+fmt(sena)+'</div></div></div>'
+          +'<div class="serv-precio">'+fmt(s.precio)+'</div>'
+          +'</div>';
+    });
+  });
+  document.getElementById('serviciosBody').innerHTML=html;
+})();
+
+function selServicio(el,dataEnc){
+  var s=JSON.parse(decodeURIComponent(dataEnc));
+  var key=s.cat+'|'+s.nombre;
+  var idx=est.servicios.findIndex(function(x){return x.cat+'|'+x.nombre===key;});
+  if(idx!==-1){ est.servicios.splice(idx,1); el.classList.remove('sel'); }
+  else { est.servicios.push(s); el.classList.add('sel'); }
+  actualizarResumen();
+}
+
+/* ── CALENDARIO ── */
+function diasHabilesDefault(){
+  var dias=[], cur=new Date(), end=new Date();
+  end.setMonth(end.getMonth()+4);
+  while(cur<=end){
+    var dow=cur.getDay();
+    if(dow>=1&&dow<=5) dias.push(cur.getFullYear()+'-'+padZ(cur.getMonth()+1)+'-'+padZ(cur.getDate()));
+    cur.setDate(cur.getDate()+1);
+  }
+  return dias;
+}
+async function cargarDias(){
+  try{
+    var hoy=isoHoy();
+    var r=await fetch(SB_URL+'/rest/v1/dias_disponibles?fecha=gte.'+hoy+'&order=fecha.asc&select=fecha',{headers:SB_HDR});
+    var data=await r.json();
+    est.diasDisp=(Array.isArray(data)&&data.length>0)?data.map(function(d){return d.fecha;}):diasHabilesDefault();
+  }catch(e){ est.diasDisp=diasHabilesDefault(); }
+  renderCal();
+}
+function cambiarMes(dir){ est.mesViendo=new Date(est.mesViendo.getFullYear(),est.mesViendo.getMonth()+dir,1); renderCal(); }
+function renderCal(){
+  var mv=est.mesViendo, anio=mv.getFullYear(), mes=mv.getMonth();
+  var meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calMes').textContent=meses[mes]+' '+anio;
+  var hoy=isoHoy(), primero=new Date(anio,mes,1).getDay(), total=new Date(anio,mes+1,0).getDate();
+  var html='', hayDisp=false;
+  for(var i=0;i<primero;i++) html+='<div class="cal-dia"></div>';
+  for(var d=1;d<=total;d++){
+    var iso=anio+'-'+padZ(mes+1)+'-'+padZ(d);
+    var cls='cal-dia', oc='';
+    if(iso<hoy){ cls+=' pasado'; }
+    else if(est.diasDisp.indexOf(iso)!==-1){ cls+=' disp'; hayDisp=true; if(iso===est.fecha) cls+=' sel'; oc='onclick="selFecha(\''+iso+'\')"'; }
+    if(iso===hoy) cls+=' hoy';
+    html+='<div class="'+cls+'" '+oc+'>'+d+'</div>';
+  }
+  document.getElementById('calDias').innerHTML=html;
+  document.getElementById('sinDiasMsg').style.display=hayDisp?'none':'block';
+}
+function selFecha(iso){
+  est.fecha=iso; est.hora=null;
+  renderCal();
+  document.getElementById('fechaSelLabel').textContent=fmtFecha(iso);
+  document.getElementById('secHorarios').style.display='block';
+  document.getElementById('secForm').style.display='none';
+  document.getElementById('secHorarios').scrollIntoView({behavior:'smooth',block:'start'});
+  cargarHorarios();
+}
+
+/* ── HORARIOS ── */
+async function cargarHorarios(){
+  var cont=document.getElementById('horasContainer');
+  cont.innerHTML='<div style="color:#6b6b6b;font-size:.85rem">⏳ Verificando disponibilidad…</div>';
+  var ocupadas=[];
+  try{
+    var [rSol,rTur]=await Promise.all([
+      fetch(SB_URL+'/rest/v1/solicitudes?fecha=eq.'+est.fecha+'&estado=neq.cancelado&select=hora_preferida',{headers:SB_HDR}),
+      fetch(SB_URL+'/rest/v1/turnos?fecha=eq.'+est.fecha+'&select=hora_ini',{headers:SB_HDR})
+    ]);
+    var sol=await rSol.json(), tur=await rTur.json();
+    if(Array.isArray(sol)) sol.forEach(function(s){if(s.hora_preferida)ocupadas.push(s.hora_preferida.substring(0,5));});
+    if(Array.isArray(tur)) tur.forEach(function(t){if(t.hora_ini)ocupadas.push(t.hora_ini.substring(0,5));});
+  }catch(e){}
+  var slots=[], paso=CONFIG.turno_minutos;
+  for(var h=CONFIG.hora_inicio;h<=CONFIG.hora_cierre;h++){
+    for(var m=0;m<60;m+=paso){ if(h*60+m <= CONFIG.hora_cierre*60) slots.push(padZ(h)+':'+padZ(m)); }
+  }
+  var html='<div class="horas-grid">';
+  slots.forEach(function(s){
+    var ocup=ocupadas.indexOf(s)!==-1, sel=s===est.hora;
+    html+='<div class="hora-btn'+(ocup?' ocup':'')+(sel?' sel':'')+'"'+(ocup?'':' onclick="selHora(\''+s+'\')"')+'>'+s+'</div>';
+  });
+  html+='</div>';
+  cont.innerHTML=html;
+}
+function selHora(h){
+  est.hora=h;
+  document.querySelectorAll('.hora-btn').forEach(function(b){b.classList.remove('sel');});
+  event.target.classList.add('sel');
+  document.getElementById('secForm').style.display='block';
+  actualizarResumen();
+  setTimeout(function(){ document.getElementById('secForm').scrollIntoView({behavior:'smooth',block:'start'}); },100);
+}
+
+/* ── RESUMEN ── */
+function totalServicios(){ return est.servicios.reduce(function(a,s){return a+s.precio;},0); }
+function actualizarResumen(){
+  if(!est.servicios.length||!est.fecha||!est.hora) return;
+  var total=totalServicios(), sena=Math.round(total*.2);
+  var srvHtml=est.servicios.map(function(s){
+    return '<div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.2rem"><span>'+s.nombre+'</span><span style="font-weight:600">'+fmt(s.precio)+'</span></div>';
+  }).join('');
+  document.getElementById('resumenBox').innerHTML=
+    '<div class="res-titulo">📋 Resumen de tu turno</div>'
+    +'<div class="res-row"><span class="res-ico">💆</span><div><div class="res-lbl">Servicios</div>'+srvHtml+'</div></div>'
+    +'<div class="res-row"><span class="res-ico">📅</span><div><div class="res-lbl">Fecha</div><div class="res-val" style="text-transform:capitalize">'+fmtFecha(est.fecha)+'</div></div></div>'
+    +'<div class="res-row"><span class="res-ico">🕐</span><div><div class="res-lbl">Horario</div><div class="res-val">'+est.hora+' hs</div></div></div>'
+    +'<div class="res-row"><span class="res-ico">💰</span><div><div class="res-lbl">Total</div><div class="res-val">'+fmt(total)+'</div></div></div>'
+    +'<div class="sena-bloque"><div class="res-lbl">Seña requerida (20%)</div>'
+    +'<div class="sena-monto">'+fmt(sena)+'</div>'
+    +'<div class="sena-desc">'+CONFIG.nombre_duena+' te contacta por WhatsApp para coordinar el pago.</div></div>';
+}
+
+/* ── ENVIAR ── */
+async function enviarSolicitud(){
+  var nombre=document.getElementById('inpNombre').value.trim();
+  var tel=document.getElementById('inpTel').value.trim();
+  var notas=document.getElementById('inpNotas').value.trim();
+  var errDiv=document.getElementById('msgError');
+  errDiv.style.display='none';
+  if(!est.servicios.length){ mostrarError('Seleccioná al menos un servicio.'); return; }
+  if(!est.fecha){ mostrarError('Seleccioná una fecha.'); return; }
+  if(!est.hora){ mostrarError('Seleccioná un horario.'); return; }
+  if(!nombre){ mostrarError('Ingresá tu nombre.'); return; }
+  if(!tel||tel.length<6){ mostrarError('Ingresá tu WhatsApp.'); return; }
+
+  document.getElementById('loadingOverlay').classList.add('activo');
+  document.getElementById('btnEnviar').disabled=true;
+
+  var total=totalServicios(), sena=Math.round(total*.2);
+  var srvNombres=est.servicios.map(function(s){return s.nombre;}).join(' + ');
+  var genId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID()
+    :'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16);});
+  var payload={
+    id:genId, nombre:nombre, tel:tel, servicio:srvNombres,
+    fecha:est.fecha, hora_preferida:est.hora+':00',
+    notas:(notas?notas+'\n':'')+'Total: '+fmt(total)+' | Seña: '+fmt(sena),
+    estado:'pendiente'
+  };
+  var guardadoOk=false, errDetalle='';
+  try{
+    var res=await fetch(SB_URL+'/rest/v1/solicitudes',{
+      method:'POST', headers:Object.assign({},SB_HDR,{'Prefer':'return=minimal'}), body:JSON.stringify(payload)
+    });
+    guardadoOk=(res.status===201||res.status===200||res.ok);
+    if(!guardadoOk){ errDetalle=await res.text(); }
+  }catch(e){ errDetalle=String(e); }
+  document.getElementById('loadingOverlay').classList.remove('activo');
+  mostrarConfirmacion(nombre,tel,total,sena,guardadoOk,errDetalle);
+}
+function mostrarError(msg){ var d=document.getElementById('msgError'); d.textContent='⚠️ '+msg; d.style.display='block'; d.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+/* ── CONFIRMACIÓN ── */
+function mostrarConfirmacion(nombre,tel,total,sena,guardadoOk,errDetalle){
+  document.getElementById('appContenido').style.display='none';
+  document.getElementById('confSub').textContent='Tu solicitud fue enviada, '+nombre+'. '+CONFIG.nombre_duena+' te va a contactar al '+tel+' por WhatsApp para confirmar.'
+    +(guardadoOk===false?' (Nota: WhatsApp enviado, pero hubo un problema al guardar en sistema)':'');
+  var srvHtml=est.servicios.map(function(s){return '<span style="display:block">• '+s.nombre+'</span>';}).join('');
+  document.getElementById('confCard').innerHTML=
+    '<div style="font-size:.75rem;font-weight:700;color:#6b6b6b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.7rem">Detalle</div>'
+    +'<div class="res-row"><span class="res-ico">💆</span><div><div class="res-lbl">Servicios</div><div class="res-val">'+srvHtml+'</div></div></div>'
+    +'<div class="res-row"><span class="res-ico">📅</span><div><div class="res-lbl">Fecha</div><div class="res-val" style="text-transform:capitalize">'+fmtFecha(est.fecha)+'</div></div></div>'
+    +'<div class="res-row"><span class="res-ico">🕐</span><div><div class="res-lbl">Horario</div><div class="res-val">'+est.hora+' hs</div></div></div>'
+    +'<div class="res-row"><span class="res-ico">💵</span><div><div class="res-lbl">Seña a pagar</div><div class="res-val" style="color:var(--rosa-oscuro);font-size:1.05rem">'+fmt(sena)+'</div></div></div>';
+  document.getElementById('confirmacion').classList.add('activa');
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(abrirWspDuena,800);
+}
+function abrirWspDuena(){
+  var nombre=document.getElementById('inpNombre').value.trim();
+  var tel=document.getElementById('inpTel').value.trim();
+  var total=totalServicios(), sena=Math.round(total*.2);
+  var srvNombres=est.servicios.map(function(s){return s.nombre;}).join(' + ');
+  var msg=CONFIG.emoji+' *Nueva solicitud de turno*\n\n'
+    +'👤 *Cliente:* '+nombre+'\n'+'📱 *WhatsApp:* '+tel+'\n'
+    +'💆 *Servicios:* '+srvNombres+'\n'+'📅 *Fecha:* '+fmtFecha(est.fecha)+'\n'
+    +'🕐 *Hora:* '+est.hora+' hs\n'+'💰 *Total:* '+fmt(total)+'\n'
+    +'💵 *Seña (20%):* '+fmt(sena)+'\n\n'+'_Solicitud web_';
+  window.open('https://wa.me/'+CONFIG.wsp_duena+'?text='+encodeURIComponent(msg),'_blank');
+}
+function nuevaReserva(){
+  est={servicios:[],fecha:null,hora:null,diasDisp:est.diasDisp,mesViendo:new Date()};
+  document.getElementById('appContenido').style.display='block';
+  document.getElementById('confirmacion').classList.remove('activa');
+  document.getElementById('secHorarios').style.display='none';
+  document.getElementById('secForm').style.display='none';
+  document.querySelectorAll('.serv-item').forEach(function(i){i.classList.remove('sel');});
+  document.getElementById('inpNombre').value='';
+  document.getElementById('inpTel').value='';
+  document.getElementById('inpNotas').value='';
+  document.getElementById('btnEnviar').disabled=false;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── INIT ── */
+cargarDias();
+</script>
+</body>
+</html>

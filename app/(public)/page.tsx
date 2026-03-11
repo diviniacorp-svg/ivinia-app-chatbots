@@ -3,6 +3,7 @@ import ProblemSolution from '@/components/public/ProblemSolution'
 import RubrosGrid from '@/components/public/RubrosGrid'
 import HowItWorks from '@/components/public/HowItWorks'
 import PricingCards from '@/components/public/PricingCards'
+import ProductosSection from '@/components/public/ProductosSection'
 import ChatbotDemo from '@/components/public/ChatbotDemo'
 import FAQ from '@/components/public/FAQ'
 import TrialCTA from '@/components/public/TrialCTA'
@@ -14,6 +15,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-white">
       <Navbar />
       <Hero />
+      <ProductosSection />
       <ProblemSolution />
       <RubrosGrid />
       <HowItWorks />

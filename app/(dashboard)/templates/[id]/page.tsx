@@ -55,6 +55,55 @@ function parseSections(systemPrompt: string): { title: string; items: string[] }
   return sections
 }
 
+function extractVariables(text: string): string[] {
+  const matches = text.match(/\{[A-Z_]+\}/g) || []
+  return [...new Set(matches)].map(v => v.replace(/[{}]/g, ''))
+}
+
+const STEP_ICONS: Record<number, string> = {
+  0: '👋', 1: '🔍', 2: '💬', 3: '📋', 4: '✅', 5: '📞', 6: '🎯', 7: '📅', 8: '💰',
+}
+
+const VAR_LABELS: Record<string, { label: string; placeholder: string }> = {
+  NOMBRE_NEGOCIO: { label: 'Nombre del negocio', placeholder: 'Ej: La Trattoria' },
+  CIUDAD: { label: 'Ciudad', placeholder: 'Ej: San Luis' },
+  DIRECCION: { label: 'Dirección', placeholder: 'Ej: Rivadavia 123' },
+  TELEFONO: { label: 'Teléfono', placeholder: 'Ej: 266 4123456' },
+  WHATSAPP: { label: 'WhatsApp', placeholder: 'Ej: 5492664123456' },
+  EMAIL: { label: 'Email', placeholder: 'Ej: info@negocio.com' },
+  HORARIO: { label: 'Horario de atención', placeholder: 'Ej: Lun-Vie 9-18hs' },
+  MENU: { label: 'Menú / Carta', placeholder: 'Ej: Pasta, Pizzas, Ensaladas...' },
+  PRECIOS: { label: 'Precios', placeholder: 'Ej: Platos desde $5.000' },
+  DELIVERY_INFO: { label: 'Info delivery', placeholder: 'Ej: Por PedidosYa y Rappi' },
+  ESPECIALIDADES: { label: 'Especialidades / Servicios', placeholder: 'Ej: Cardiología, Clínica General' },
+  OBRAS_SOCIALES: { label: 'Obras sociales', placeholder: 'Ej: OSDE, Swiss Medical, PAMI' },
+  PRECIO_CONSULTA: { label: 'Precio consulta', placeholder: 'Ej: $10.000' },
+  ESPECIALIDAD: { label: 'Especialidad', placeholder: 'Ej: Cocina italiana' },
+  HABITACIONES: { label: 'Tipos de habitación', placeholder: 'Ej: Simple, Doble, Suite' },
+  TARIFAS: { label: 'Tarifas', placeholder: 'Ej: Desde $50.000/noche' },
+  CHECK_IN: { label: 'Hora check-in', placeholder: 'Ej: 14:00' },
+  CHECK_OUT: { label: 'Hora check-out', placeholder: 'Ej: 11:00' },
+  SERVICIOS: { label: 'Servicios', placeholder: 'Ej: Corte, Color, Peinado' },
+  SERVICIOS_PRECIOS: { label: 'Servicios y precios', placeholder: 'Ej: Corte $5.000, Color $15.000' },
+  STAFF: { label: 'Equipo / Personal', placeholder: 'Ej: Marta, Lorena, Javier' },
+  PRECIO_CORTE: { label: 'Precio corte', placeholder: 'Ej: $4.500' },
+  PLANES_PRECIOS: { label: 'Planes y precios', placeholder: 'Ej: Mensual $30.000, Trimestral $80.000' },
+  CLASES: { label: 'Clases disponibles', placeholder: 'Ej: Spinning, Yoga, Funcional' },
+  PROPIEDADES: { label: 'Propiedades disponibles', placeholder: 'Ej: Dptos 2-3 ambientes, Casas' },
+  ZONAS: { label: 'Zonas de operación', placeholder: 'Ej: Centro, Juana Koslay, La Punta' },
+  NOMBRE_CONTADOR: { label: 'Nombre del contador', placeholder: 'Ej: CP Martínez Juan' },
+  PRECIO_MONO: { label: 'Precio monotributo', placeholder: 'Ej: $8.000/mes' },
+  GUARDIA: { label: 'Guardia / Urgencias', placeholder: 'Ej: 24hs en {TELEFONO}' },
+  SERVICIOS_EXTRAS: { label: 'Servicios extras', placeholder: 'Ej: Medición de presión, inyectables' },
+  HORARIOS: { label: 'Horarios', placeholder: 'Ej: Lunes a Viernes 9-18hs' },
+  TRATAMIENTOS: { label: 'Tratamientos', placeholder: 'Ej: Limpieza, Blanqueamiento, Ortodoncia' },
+  CATEGORIAS: { label: 'Categorías de productos', placeholder: 'Ej: Ropa, Calzado, Accesorios' },
+  INFO_ENVIOS: { label: 'Info de envíos', placeholder: 'Ej: 24-48hs a todo el país via OCA' },
+  MEDIOS_PAGO: { label: 'Medios de pago', placeholder: 'Ej: Tarjeta, MercadoPago, transferencia' },
+  WEB: { label: 'Sitio web', placeholder: 'Ej: www.minegocio.com.ar' },
+  TRATAMIENTOS_DENTAL: { label: 'Tratamientos dentales', placeholder: 'Ej: Limpieza, ortodoncia, blanqueamiento' },
+}
+
 export default function TemplatePreviewPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -129,6 +178,7 @@ export default function TemplatePreviewPage() {
   const sections = parseSections(template.system_prompt)
   const emoji = RUBRO_EMOJIS[template.rubro] || '🤖'
   const color = template.color_primary || '#6366f1'
+  const allVars = extractVariables(template.system_prompt + ' ' + template.welcome_message)
 
   return (
     <div>
@@ -252,52 +302,157 @@ export default function TemplatePreviewPage() {
 
       {/* Tab: Flujo */}
       {tab === 'flujo' && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Flow steps */}
-          {flowSteps.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h3 className="font-bold text-gray-900 mb-5">Flujo de conversación</h3>
-              <div className="space-y-3">
+        <div className="grid lg:grid-cols-5 gap-6">
+          {/* Diagrama de flujo — ocupa 3 cols */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Mensaje de bienvenida */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Inicio de conversación</p>
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ backgroundColor: color }}>
+                  {emoji}
+                </div>
+                <div className="flex-1 bg-gray-50 rounded-xl rounded-tl-sm px-4 py-3">
+                  <p className="text-sm text-gray-700 italic leading-relaxed">
+                    "{template.welcome_message
+                      .replace(/\{NOMBRE_NEGOCIO\}/g, template.name.replace('Chatbot para ', ''))
+                      .replace(/\{[^}]+\}/g, '...')}"
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Flecha */}
+            <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-px h-4 bg-gray-300" />
+                <div className="text-gray-300 text-xs">▼</div>
+              </div>
+            </div>
+
+            {/* Pasos del flujo */}
+            {flowSteps.length > 0 ? (
+              <div className="relative">
                 {flowSteps.map((step, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                      style={{ backgroundColor: color }}>
-                      {i + 1}
+                  <div key={i}>
+                    <div className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-4 items-start shadow-sm hover:shadow-md transition-shadow">
+                      {/* Número + icono */}
+                      <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                          style={{ backgroundColor: color }}>
+                          {i + 1}
+                        </div>
+                        <span className="text-base">{STEP_ICONS[i] || '💬'}</span>
+                      </div>
+                      {/* Texto */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Paso {i + 1}</p>
+                        <p className="text-sm text-gray-800 leading-relaxed">{step}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 bg-gray-50 rounded-xl px-4 py-3">
-                      <p className="text-sm text-gray-700">{step}</p>
-                    </div>
+                    {/* Conector entre pasos */}
+                    {i < flowSteps.length - 1 && (
+                      <div className="flex justify-center py-1">
+                        <div className="flex flex-col items-center gap-0">
+                          <div className="w-px h-3 bg-gray-200" />
+                          <div className="text-gray-300 text-xs leading-none">▼</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              /* Si no hay pasos numerados, mostrar secciones del prompt */
+              <div className="space-y-3">
+                {sections.slice(0, 3).map((section, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{section.title}</p>
+                    <ul className="space-y-1">
+                      {section.items.slice(0, 5).map((item, j) => (
+                        <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
+                          <span className="mt-1 flex-shrink-0" style={{ color }}>●</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {/* Sections */}
-          <div className="space-y-4">
-            {sections.slice(0, 4).map((section, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h4 className="font-bold text-gray-800 text-sm mb-3">{section.title}</h4>
-                <ul className="space-y-1.5">
-                  {section.items.map((item, j) => (
-                    <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
-                      <span className="text-xs mt-0.5" style={{ color }}>●</span>
+            {/* Cierre */}
+            <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-px h-4 bg-gray-300" />
+                <div className="text-gray-300 text-xs">▼</div>
+              </div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="text-sm font-bold text-green-800">Conversación resuelta</p>
+                <p className="text-xs text-green-600">El cliente obtuvo la información o agendó su turno</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel lateral: Variables a personalizar — ocupa 2 cols */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white rounded-2xl border border-indigo-100 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🔧</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">Variables a personalizar</h3>
+                  <p className="text-xs text-gray-400">{allVars.length} campos para reemplazar</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {allVars.map(v => {
+                  const info = VAR_LABELS[v]
+                  return (
+                    <div key={v} className="bg-gray-50 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-700">{info?.label || v}</p>
+                        <p className="text-xs text-gray-400 truncate">{info?.placeholder || `{${v}}`}</p>
+                      </div>
+                      <code className="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono flex-shrink-0">
+                        {`{${v}}`}
+                      </code>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Instrucción de cómo usar */}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <p className="text-xs font-bold text-amber-800 mb-2">¿Cómo personalizar este flujo?</p>
+              <ol className="space-y-1.5 text-xs text-amber-700">
+                <li><span className="font-bold">1.</span> Andá al tab <strong>⚙️ Prompt</strong></li>
+                <li><span className="font-bold">2.</span> Copiá el texto completo</li>
+                <li><span className="font-bold">3.</span> Pegalo en un editor de texto</li>
+                <li><span className="font-bold">4.</span> Reemplazá cada <code className="bg-amber-100 px-1 rounded">{'{VARIABLE}'}</code> con los datos del cliente</li>
+                <li><span className="font-bold">5.</span> Usá el prompt personalizado al crear el cliente en <strong>/clientes</strong></li>
+              </ol>
+            </div>
+
+            {/* Secciones de info del prompt */}
+            {sections.slice(0, 2).map((section, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{section.title}</p>
+                <ul className="space-y-1">
+                  {section.items.slice(0, 4).map((item, j) => (
+                    <li key={j} className="flex items-start gap-2 text-xs text-gray-600">
+                      <span className="mt-0.5 flex-shrink-0" style={{ color }}>●</span>
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
-
-            {/* Welcome message */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h4 className="font-bold text-gray-800 text-sm mb-3">Mensaje de bienvenida</h4>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-sm text-gray-600 italic">
-                  "{template.welcome_message.replace(/\{NOMBRE_NEGOCIO\}/g, template.name.replace('Chatbot para ', '')).replace(/\{[^}]+\}/g, '...')}"
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       )}

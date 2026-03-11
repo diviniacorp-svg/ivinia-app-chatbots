@@ -1,9 +1,118 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { BookingConfig, Service, formatDateAR, formatPriceARS, getNextAvailableDates } from '@/lib/bookings'
 
 type Step = 'service' | 'date' | 'time' | 'info' | 'confirm' | 'done'
+
+const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
+function MiniCalendar({
+  availableDates,
+  selectedDate,
+  onSelect,
+  color,
+}: {
+  availableDates: string[]
+  selectedDate: string
+  onSelect: (date: string) => void
+  color: string
+}) {
+  const today = new Date()
+  const [viewYear, setViewYear] = useState(today.getFullYear())
+  const [viewMonth, setViewMonth] = useState(today.getMonth())
+
+  const availableSet = useMemo(() => new Set(availableDates), [availableDates])
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay()
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
+    else setViewMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
+    else setViewMonth(m => m + 1)
+  }
+
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* Header mes */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <button onClick={prevMonth} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 font-bold transition-colors">
+          ‹
+        </button>
+        <span className="font-bold text-gray-900 text-sm">{MESES[viewMonth]} {viewYear}</span>
+        <button onClick={nextMonth} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 font-bold transition-colors">
+          ›
+        </button>
+      </div>
+      {/* Días de la semana */}
+      <div className="grid grid-cols-7 px-2 pt-2">
+        {DIAS.map(d => (
+          <div key={d} className="text-center text-xs font-semibold text-gray-400 pb-1">{d}</div>
+        ))}
+      </div>
+      {/* Celdas */}
+      <div className="grid grid-cols-7 gap-0.5 px-2 pb-3">
+        {cells.map((day, i) => {
+          if (!day) return <div key={`empty-${i}`} />
+          const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const isAvailable = availableSet.has(dateStr)
+          const isSelected = dateStr === selectedDate
+          const isPast = new Date(dateStr + 'T12:00:00') < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
+          return (
+            <button
+              key={dateStr}
+              disabled={!isAvailable || isPast}
+              onClick={() => isAvailable && !isPast && onSelect(dateStr)}
+              className={`
+                aspect-square w-full rounded-lg text-sm font-medium transition-all
+                ${isSelected ? 'text-white font-bold scale-110 shadow-md' : ''}
+                ${isAvailable && !isPast && !isSelected ? 'text-gray-800 hover:scale-105' : ''}
+                ${!isAvailable || isPast ? 'text-gray-300 cursor-default' : 'cursor-pointer'}
+              `}
+              style={
+                isSelected
+                  ? { backgroundColor: color }
+                  : isAvailable && !isPast
+                  ? { backgroundColor: color + '15', color: color }
+                  : {}
+              }
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+      {/* Leyenda */}
+      <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-50 bg-gray-50">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: color + '25' }} />
+          <span className="text-xs text-gray-500">Disponible</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-gray-200" />
+          <span className="text-xs text-gray-400">No disponible</span>
+        </div>
+        {selectedDate && (
+          <div className="flex items-center gap-1.5 ml-auto">
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
+            <span className="text-xs text-gray-600 font-medium">Seleccionado</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function BookingWizard({
   clientId,
@@ -134,29 +243,20 @@ export default function BookingWizard({
         <div>
           <button onClick={() => setStep('service')} className="text-sm text-gray-400 mb-4 flex items-center gap-1">← Volver</button>
           <h2 className="text-xl font-bold text-gray-900 mb-1">¿Qué día preferís?</h2>
-          <p className="text-gray-500 text-sm mb-6">Días disponibles para {selectedService!.name}</p>
-          <div className="grid grid-cols-3 gap-2">
-            {availableDates.slice(0, 21).map(date => {
-              const d = new Date(date + 'T12:00:00')
-              const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-              const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-              return (
-                <button
-                  key={date}
-                  onClick={async () => {
-                    setSelectedDate(date)
-                    await loadSlots(date, selectedService!)
-                    setStep('time')
-                  }}
-                  className="border-2 border-gray-200 hover:border-indigo-400 rounded-xl p-3 text-center transition-all"
-                >
-                  <p className="text-xs text-gray-400">{dias[d.getDay()]}</p>
-                  <p className="text-lg font-bold text-gray-900">{d.getDate()}</p>
-                  <p className="text-xs text-gray-400">{meses[d.getMonth()]}</p>
-                </button>
-              )
-            })}
-          </div>
+          <p className="text-gray-500 text-sm mb-4">Seleccioná una fecha disponible para <strong>{selectedService!.name}</strong></p>
+          <MiniCalendar
+            availableDates={availableDates}
+            selectedDate={selectedDate}
+            onSelect={async (date) => {
+              setSelectedDate(date)
+              await loadSlots(date, selectedService!)
+              setStep('time')
+            }}
+            color={color}
+          />
+          <p className="text-xs text-gray-400 text-center mt-3">
+            Próximos {config.advance_booking_days || 30} días disponibles
+          </p>
         </div>
       )}
 
