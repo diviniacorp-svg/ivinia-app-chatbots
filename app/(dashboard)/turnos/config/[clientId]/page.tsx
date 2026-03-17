@@ -58,6 +58,8 @@ export default function TurnosConfigPage() {
   })
   const [slotDuration, setSlotDuration] = useState(30)
   const [advanceDays, setAdvanceDays] = useState(30)
+  const [ownerPhone, setOwnerPhone] = useState('')
+  const [ownerPin, setOwnerPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -73,6 +75,8 @@ export default function TurnosConfigPage() {
         setSchedule(data.config.schedule || {})
         setSlotDuration(data.config.slot_duration_minutes || 30)
         setAdvanceDays(data.config.advance_booking_days || 30)
+        setOwnerPhone(data.config.owner_phone || '')
+        setOwnerPin(data.config.owner_pin || '')
       }
     }
   }, [])
@@ -140,6 +144,8 @@ export default function TurnosConfigPage() {
           schedule,
           slot_duration_minutes: slotDuration,
           advance_booking_days: advanceDays,
+          owner_phone: ownerPhone,
+          owner_pin: ownerPin || '1234',
           is_active: true,
         }),
       })
@@ -368,6 +374,47 @@ export default function TurnosConfigPage() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Acceso del dueño */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5 shadow-sm">
+        <h2 className="font-bold text-gray-900 mb-1">Panel del dueño del negocio</h2>
+        <p className="text-xs text-gray-400 mb-4">Con esto el cliente puede ver y gestionar sus propios turnos sin necesitar tu clave.</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+              WhatsApp del dueño
+            </label>
+            <input
+              type="tel"
+              value={ownerPhone}
+              onChange={e => setOwnerPhone(e.target.value)}
+              placeholder="5492665286110"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200"
+            />
+            <p className="text-xs text-gray-400 mt-1">Sin + ni espacios. Ej: 5492665000000</p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+              PIN de acceso (4 dígitos)
+            </label>
+            <input
+              type="text"
+              value={ownerPin}
+              onChange={e => setOwnerPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="1234"
+              maxLength={4}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200 font-mono tracking-widest"
+            />
+          </div>
+        </div>
+        {configId && ownerPhone && (
+          <div className="mt-3 p-3 bg-purple-50 rounded-lg">
+            <p className="text-xs font-semibold text-purple-700 mb-1">Link del panel del dueño:</p>
+            <p className="text-xs text-purple-900 font-mono break-all">{typeof window !== 'undefined' ? `${window.location.origin}/panel/${configId}` : `/panel/${configId}`}</p>
+            <p className="text-xs text-purple-500 mt-1">PIN: <span className="font-mono font-bold">{ownerPin || '1234'}</span> — Mandárselo al cliente para que entre a su panel.</p>
+          </div>
+        )}
       </div>
 
       {error && <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg mb-4">{error}</div>}

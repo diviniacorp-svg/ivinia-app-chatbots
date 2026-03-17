@@ -27,6 +27,8 @@ export type BookingConfig = {
   services: Service[]
   blocked_dates: string[]
   advance_booking_days: number
+  owner_phone?: string   // WhatsApp del dueño del negocio (para notificaciones)
+  owner_pin?: string     // PIN de 4 dígitos para acceder al panel del dueño
 }
 
 export type Appointment = {

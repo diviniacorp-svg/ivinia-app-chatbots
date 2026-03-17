@@ -68,17 +68,50 @@ export default function BookingWizard({
   const btnStyle = { backgroundColor: color }
 
   if (step === 'done') {
+    const waMsg = encodeURIComponent(
+      `Hola ${companyName}! 👋 Acabo de reservar un turno:\n\n` +
+      `📌 Servicio: ${selectedService!.name}\n` +
+      `📅 Fecha: ${formatDateAR(selectedDate)}\n` +
+      `⏰ Hora: ${selectedTime}\n` +
+      `👤 Nombre: ${form.name}\n` +
+      (form.phone ? `📱 Teléfono: ${form.phone}\n` : '') +
+      (form.notes ? `📝 Nota: ${form.notes}\n` : '') +
+      `\n¡Ahí estaré!`
+    )
+    const waLink = config.owner_phone
+      ? `https://wa.me/${config.owner_phone}?text=${waMsg}`
+      : null
+
     return (
-      <div className="text-center py-12 px-4">
+      <div className="text-center py-10 px-4">
         <div className="text-6xl mb-4">✅</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Turno confirmado!</h2>
-        <p className="text-gray-600 mb-6">
-          {selectedService!.name} el {formatDateAR(selectedDate)} a las {selectedTime}
+        <p className="text-gray-600 mb-2">
+          <strong>{selectedService!.name}</strong>
         </p>
-        <p className="text-gray-500 text-sm">Te esperamos en {companyName}.</p>
+        <p className="text-gray-500 text-sm mb-6">
+          📅 {formatDateAR(selectedDate)} · ⏰ {selectedTime}
+        </p>
+
+        {waLink && (
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ backgroundColor: color }}
+            className="inline-flex items-center gap-2 text-white font-bold px-6 py-4 rounded-xl text-base w-full justify-center mb-3"
+          >
+            💬 Confirmar por WhatsApp a {companyName}
+          </a>
+        )}
+
+        <p className="text-gray-400 text-xs mb-8">
+          {waLink ? 'Tocá el botón para avisarle al negocio por WhatsApp.' : `Te esperamos en ${companyName}.`}
+        </p>
+
         <button
-          onClick={() => { setStep('service'); setSelectedService(null); setSelectedDate(''); setSelectedTime('') }}
-          className="mt-8 text-sm text-indigo-600 underline"
+          onClick={() => { setStep('service'); setSelectedService(null); setSelectedDate(''); setSelectedTime(''); setForm({ name: '', phone: '', email: '', notes: '' }) }}
+          className="text-sm text-gray-400 underline"
         >
           Reservar otro turno
         </button>
