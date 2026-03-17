@@ -9,6 +9,8 @@ interface TurnosClient {
   client_id: string
   is_active: boolean
   slot_duration_minutes: number
+  owner_pin: string
+  owner_phone: string
   services: { id: string; name: string; duration_minutes: number; price_ars: number }[]
   created_at: string
   clients: {
@@ -48,6 +50,7 @@ export default function TurnosDashboard() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('confirmed')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [copiedPanel, setCopiedPanel] = useState<string | null>(null)
 
   const fetchTurnosClients = useCallback(async () => {
     setLoading(true)
@@ -84,6 +87,20 @@ export default function TurnosDashboard() {
     navigator.clipboard.writeText(url)
     setCopiedId(configId)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  function copyPanelAll(cfg: TurnosClient) {
+    const origin = window.location.origin
+    const pin = cfg.owner_pin || '1234'
+    const msg =
+      `¡Hola! Acá están los links de tu sistema de turnos 🎉\n\n` +
+      `📅 *Link para que tus clientes reserven:*\n${origin}/reservas/${cfg.id}\n\n` +
+      `⚙️ *Tu panel de administración:*\n${origin}/panel/${cfg.id}\n\n` +
+      `🔑 PIN de acceso: ${pin}\n\n` +
+      `Guardá estos links, son tuyos para siempre.`
+    navigator.clipboard.writeText(msg)
+    setCopiedPanel(cfg.id)
+    setTimeout(() => setCopiedPanel(null), 2000)
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -187,16 +204,22 @@ export default function TurnosDashboard() {
                       onClick={() => copyLink(cfg.id)}
                       className="flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 border border-purple-100 px-3 py-1.5 rounded-lg hover:bg-purple-100 font-medium"
                     >
-                      {copiedId === cfg.id ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar link</>}
+                      {copiedId === cfg.id ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Link reservas</>}
                     </button>
                     <a
-                      href={`/reservas/${cfg.id}`}
+                      href={`/panel/${cfg.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs bg-gray-50 text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 font-medium"
+                      className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-medium"
                     >
-                      <ExternalLink size={12} /> Ver página
+                      <ExternalLink size={12} /> Panel dueño
                     </a>
+                    <button
+                      onClick={() => copyPanelAll(cfg)}
+                      className="flex items-center gap-1.5 text-xs bg-green-50 text-green-700 border border-green-100 px-3 py-1.5 rounded-lg hover:bg-green-100 font-medium"
+                    >
+                      {copiedPanel === cfg.id ? <><Check size={12} /> Copiado!</> : <><Copy size={12} /> Copiar todo</>}
+                    </button>
                   </div>
                 </div>
               </div>

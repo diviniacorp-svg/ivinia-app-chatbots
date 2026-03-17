@@ -63,7 +63,7 @@ export default function TurnosConfigPage() {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
 
   const loadConfig = useCallback(async (cId: string) => {
     const res = await fetch(`/api/bookings/${cId}/config`)
@@ -162,11 +162,23 @@ export default function TurnosConfigPage() {
     }
   }
 
-  function copyPublicLink() {
+  function copyText(text: string, key: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(key)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  function copyAll() {
     if (!configId) return
-    navigator.clipboard.writeText(`${window.location.origin}/reservas/${configId}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    const origin = window.location.origin
+    const pin = ownerPin || '1234'
+    const msg =
+      `¡Hola! Acá están los links de tu sistema de turnos 🎉\n\n` +
+      `📅 *Link para que tus clientes reserven:*\n${origin}/reservas/${configId}\n\n` +
+      `⚙️ *Tu panel de administración:*\n${origin}/panel/${configId}\n\n` +
+      `🔑 PIN de acceso: ${pin}\n\n` +
+      `Guardá estos links, son tuyos para siempre.`
+    copyText(msg, 'all')
   }
 
   return (
@@ -225,22 +237,62 @@ export default function TurnosConfigPage() {
         </div>
       )}
 
-      {/* Link público (si ya tiene config) */}
+      {/* Panel de entrega — dos links listos para mandar al cliente */}
       {configId && (
-        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-0.5">Link público de turnos</p>
-            <p className="text-sm text-purple-900 font-mono break-all">{typeof window !== 'undefined' ? `${window.location.origin}/reservas/${configId}` : `/reservas/${configId}`}</p>
+        <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-5">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-green-600 text-lg">✅</span>
+            <p className="font-bold text-green-800 text-sm">Sistema listo — enviá estos links al cliente</p>
           </div>
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <button onClick={copyPublicLink} className="flex items-center gap-1 text-xs bg-white border border-purple-200 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-100 font-medium">
-              {copied ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
-            </button>
-            <a href={`/reservas/${configId}`} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs bg-white border border-purple-200 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-100 font-medium">
-              <ExternalLink size={11} /> Ver página
-            </a>
+
+          {/* Link de reservas */}
+          <div className="bg-white border border-green-100 rounded-lg p-3 mb-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">📅 Link para que sus clientes reserven</p>
+            <p className="text-sm text-gray-800 font-mono break-all mb-2">
+              {typeof window !== 'undefined' ? `${window.location.origin}/reservas/${configId}` : `/reservas/${configId}`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyText(`${window.location.origin}/reservas/${configId}`, 'public')}
+                className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 border border-purple-100 px-3 py-1.5 rounded-lg hover:bg-purple-100 font-medium"
+              >
+                {copied === 'public' ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
+              </button>
+              <a href={`/reservas/${configId}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 font-medium">
+                <ExternalLink size={11} /> Ver
+              </a>
+            </div>
           </div>
+
+          {/* Link del panel */}
+          <div className="bg-white border border-green-100 rounded-lg p-3 mb-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">⚙️ Panel del dueño (admin)</p>
+            <p className="text-sm text-gray-800 font-mono break-all mb-1">
+              {typeof window !== 'undefined' ? `${window.location.origin}/panel/${configId}` : `/panel/${configId}`}
+            </p>
+            <p className="text-xs text-gray-400 mb-2">🔑 PIN de acceso: <span className="font-mono font-bold text-gray-700">{ownerPin || '1234'}</span></p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyText(`${window.location.origin}/panel/${configId}`, 'panel')}
+                className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 border border-purple-100 px-3 py-1.5 rounded-lg hover:bg-purple-100 font-medium"
+              >
+                {copied === 'panel' ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
+              </button>
+              <a href={`/panel/${configId}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 font-medium">
+                <ExternalLink size={11} /> Ver panel
+              </a>
+            </div>
+          </div>
+
+          {/* Copiar todo de una */}
+          <button
+            onClick={copyAll}
+            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-lg text-sm transition-colors"
+          >
+            {copied === 'all' ? <><Check size={14} /> ¡Copiado! Pegalo en WhatsApp</> : <><Copy size={14} /> Copiar todo para enviar por WhatsApp</>}
+          </button>
         </div>
       )}
 
@@ -408,13 +460,6 @@ export default function TurnosConfigPage() {
             />
           </div>
         </div>
-        {configId && ownerPhone && (
-          <div className="mt-3 p-3 bg-purple-50 rounded-lg">
-            <p className="text-xs font-semibold text-purple-700 mb-1">Link del panel del dueño:</p>
-            <p className="text-xs text-purple-900 font-mono break-all">{typeof window !== 'undefined' ? `${window.location.origin}/panel/${configId}` : `/panel/${configId}`}</p>
-            <p className="text-xs text-purple-500 mt-1">PIN: <span className="font-mono font-bold">{ownerPin || '1234'}</span> — Mandárselo al cliente para que entre a su panel.</p>
-          </div>
-        )}
       </div>
 
       {error && <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg mb-4">{error}</div>}
