@@ -64,22 +64,27 @@ export default async function TurnosPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#f9f5f6' }}>
       {/* Header */}
-      <div className="text-white py-8 px-4 text-center" style={{ backgroundColor: color }}>
-        <h1 className="text-2xl font-bold">{companyName}</h1>
-        <p className="text-white/80 text-sm mt-1">Reservá tu turno online</p>
+      <div className="text-white px-6 py-4 shadow-sm" style={{ backgroundColor: color }}>
+        <div className="max-w-4xl mx-auto flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-base shrink-0">
+            {companyName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-base font-bold leading-tight">{companyName}</h1>
+            <p className="text-white/70 text-xs">Reservas online</p>
+          </div>
+        </div>
       </div>
 
       {/* Wizard */}
-      <div className="max-w-lg mx-auto p-4 pt-8 pb-16">
-        <BookingWizard
-          clientId={clientId}
-          config={config}
-          companyName={companyName}
-          color={color}
-        />
-      </div>
+      <BookingWizard
+        clientId={clientId}
+        config={config}
+        companyName={companyName}
+        color={color}
+      />
     </div>
   )
 }
