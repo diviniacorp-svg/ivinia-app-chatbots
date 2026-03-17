@@ -35,7 +35,7 @@ export async function GET(
     .select('appointment_time, service_duration_minutes')
     .eq('client_id', params.clientId)
     .eq('appointment_date', date)
-    .eq('status', 'confirmed')
+    .in('status', ['confirmed', 'pending'])
 
   const slots = getAvailableSlots(config as BookingConfig, date, service.duration_minutes, existing || [])
 
@@ -86,7 +86,7 @@ export async function POST(
       .select('appointment_time, service_duration_minutes')
       .eq('client_id', params.clientId)
       .eq('appointment_date', date)
-      .eq('status', 'confirmed')
+      .in('status', ['confirmed', 'pending'])
 
     const slots = getAvailableSlots(config as BookingConfig, date, service.duration_minutes, existing || [])
     if (!slots.includes(time)) {
@@ -108,7 +108,7 @@ export async function POST(
         customer_phone: safePhone,
         customer_email: safeEmail,
         customer_notes: safeNotes,
-        status: 'confirmed',
+        status: 'pending',
       })
       .select()
       .single()
