@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateChatbotId, generateEmbedCode } from '@/lib/utils'
 import { TEMPLATES_DATA } from '@/lib/templates-data'
+import { sendTrialNotification, sendWelcomeEmail } from '@/lib/resend'
 
 export async function GET() {
   try {
@@ -103,6 +104,27 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) throw error
+
+    // Notificaciones en paralelo (no bloquean la respuesta)
+    Promise.all([
+      sendTrialNotification({
+        company_name,
+        contact_name: contact_name || '',
+        email,
+        phone: phone || '',
+        rubro: rubro || '',
+        city: city || '',
+        chatbot_id,
+      }),
+      sendWelcomeEmail({
+        company_name,
+        contact_name: contact_name || '',
+        email,
+        chatbot_id,
+        embed_code,
+        trial_end,
+      }),
+    ]).catch(err => console.error('Email notification error:', err))
 
     return NextResponse.json({ client: data })
   } catch (error) {

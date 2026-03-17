@@ -21,7 +21,7 @@ export default function TrialCTA() {
               💬 Hablar con Joaco
             </a>
           </div>
-          <p className="text-indigo-300 text-sm mt-6">Más de 10 negocios en San Luis ya usan DIVINIA</p>
+          <p className="text-indigo-300 text-sm mt-6">Sin tarjeta · Sin contrato · Cancelás cuando querés</p>
         </div>
       </div>
     </section>
