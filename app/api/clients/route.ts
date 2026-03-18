@@ -61,19 +61,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generar chatbot ID único
+    // Generar chatbot ID Ãºnico
     const chatbot_id = generateChatbotId()
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
     const embed_code = generateEmbedCode(chatbot_id, appUrl)
 
-    // Configuración del chatbot (mezcla del template con customizaciones)
+    // ConfiguraciÃ³n del chatbot (mezcla del template con customizaciones)
     const custom_config = {
       company_name,
       city: city || '',
       rubro: rubro || '',
       horario: custom_horario || '',
-      system_prompt: templateData?.system_prompt || `Sos el asistente de ${company_name}. Respondé consultas con amabilidad.`,
-      welcome_message: templateData?.welcome_message || `¡Hola! Soy el asistente de ${company_name}. ¿En qué puedo ayudarte?`,
+      system_prompt: templateData?.system_prompt || `Sos el asistente de ${company_name}. RespondÃ© consultas con amabilidad.`,
+      welcome_message: templateData?.welcome_message || `Â¡Hola! Soy el asistente de ${company_name}. Â¿En quÃ© puedo ayudarte?`,
       faqs: templateData?.faqs || [],
       color: templateData?.color_primary || '#6366f1',
     }
