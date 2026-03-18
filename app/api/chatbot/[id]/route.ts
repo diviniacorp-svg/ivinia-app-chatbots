@@ -62,7 +62,6 @@ export async function POST(
     if (client.status === 'trial' && client.trial_end) {
       const trialEnd = new Date(client.trial_end)
       if (new Date() > trialEnd) {
-        // Actualizar status a expired
         await supabaseAdmin
           .from('clients')
           .update({ status: 'expired' })
@@ -77,16 +76,16 @@ export async function POST(
     const config = client.custom_config as Record<string, unknown>
     const replacePlaceholders = (text: string) =>
       text.replace(/\{NOMBRE_NEGOCIO\}/g, client.company_name || '')
-           .replace(/\{CIUDAD\}/g, 'Argentina')
-           .replace(/\{DIRECCION\}/g, '')
-           .replace(/\{HORARIO\}/g, '')
-           .replace(/\{TELEFONO\}/g, '')
-           .replace(/\{EMAIL\}/g, '')
-           .replace(/\{WHATSAPP\}/g, '')
+           .replace(/\{CIUDAD\}/g, (config?.city as string) || 'Argentina')
+           .replace(/\{DIRECCION\}/g, (config?.direccion as string) || '')
+           .replace(/\{HORARIO\}/g, (config?.horario as string) || '')
+           .replace(/\{TELEFONO\}/g, (config?.telefono as string) || (config?.phone as string) || '')
+           .replace(/\{EMAIL\}/g, (config?.email as string) || '')
+           .replace(/\{WHATSAPP\}/g, (config?.whatsapp as string) || (config?.whatsapp_number as string) || '')
     const rawPrompt = (config?.system_prompt as string) || `Sos el asistente de ${client.company_name}. Respondé consultas con amabilidad y brevedad (máximo 3-4 líneas). Usá español argentino.`
     const systemPrompt = replacePlaceholders(rawPrompt)
 
-    const conversationHistory: Message[] = (history as Message[]).slice(-10) // últimas 10 mensajes
+    const conversationHistory: Message[] = (history as Message[]).slice(-10)
 
     const response = await generateChatbotResponse(
       systemPrompt,
@@ -123,12 +122,12 @@ export async function GET(
     const config = client.custom_config as Record<string, unknown>
     const replacePlaceholders = (text: string) =>
       text.replace(/\{NOMBRE_NEGOCIO\}/g, client.company_name || '')
-           .replace(/\{CIUDAD\}/g, 'Argentina')
-           .replace(/\{DIRECCION\}/g, '')
-           .replace(/\{HORARIO\}/g, '')
-           .replace(/\{TELEFONO\}/g, '')
-           .replace(/\{EMAIL\}/g, '')
-           .replace(/\{WHATSAPP\}/g, '')
+           .replace(/\{CIUDAD\}/g, (config?.city as string) || 'Argentina')
+           .replace(/\{DIRECCION\}/g, (config?.direccion as string) || '')
+           .replace(/\{HORARIO\}/g, (config?.horario as string) || '')
+           .replace(/\{TELEFONO\}/g, (config?.telefono as string) || (config?.phone as string) || '')
+           .replace(/\{EMAIL\}/g, (config?.email as string) || '')
+           .replace(/\{WHATSAPP\}/g, (config?.whatsapp as string) || (config?.whatsapp_number as string) || '')
     const rawWelcome = (config?.welcome_message as string) || `¡Hola! Soy el asistente de ${client.company_name}. ¿En qué puedo ayudarte?`
     return NextResponse.json({
       welcome: replacePlaceholders(rawWelcome),
