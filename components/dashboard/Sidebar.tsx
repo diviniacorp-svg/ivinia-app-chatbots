@@ -1,9 +1,10 @@
 'use client'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
-  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu
+  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu, X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -21,15 +22,21 @@ const productItems = [
   { href: '/turnos', label: 'Sistema de Turnos', icon: CalendarCheck, color: 'bg-purple-600' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
+  // Cierra sidebar en mobile al navegar
+  useEffect(() => {
+    onClose?.()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
+
   return (
-    <aside className="w-56 bg-gray-900 flex flex-col h-full flex-shrink-0">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-gray-800">
+    <aside className="w-64 lg:w-56 bg-gray-900 flex flex-col h-full flex-shrink-0">
+      {/* Logo + botón cerrar (solo mobile) */}
+      <div className="px-4 py-4 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shrink-0">
             <Bot size={16} className="text-white" />
           </div>
           <div>
@@ -37,10 +44,19 @@ export default function Sidebar() {
             <p className="text-gray-500 text-xs">Panel Interno</p>
           </div>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
+            aria-label="Cerrar menú"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
           return (
@@ -83,6 +99,20 @@ export default function Sidebar() {
           )
         })}
 
+        {/* Sub-item: Configurador de Turnos */}
+        <Link
+          href="/turnos/configurador"
+          className={cn(
+            'flex items-center gap-3 pl-8 pr-3 py-2 rounded-lg text-xs font-medium transition-all',
+            pathname === '/turnos/configurador'
+              ? 'bg-purple-700 text-white'
+              : 'text-gray-500 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Settings2 size={14} />
+          Configurador
+        </Link>
+
         {/* Agentes IA */}
         <div className="pt-3 pb-1">
           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3">Agentes IA</p>
@@ -99,24 +129,10 @@ export default function Sidebar() {
           <Cpu size={17} />
           Oficina de Agentes
         </Link>
-
-        {/* Sub-item: Configurador de Turnos */}
-        <Link
-          href="/turnos/configurador"
-          className={cn(
-            'flex items-center gap-3 pl-8 pr-3 py-2 rounded-lg text-xs font-medium transition-all',
-            pathname === '/turnos/configurador'
-              ? 'bg-purple-700 text-white'
-              : 'text-gray-500 hover:text-white hover:bg-gray-800'
-          )}
-        >
-          <Settings2 size={14} />
-          Configurador
-        </Link>
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-gray-800 space-y-1">
+      <div className="px-3 py-4 border-t border-gray-800">
         <Link
           href="/"
           target="_blank"

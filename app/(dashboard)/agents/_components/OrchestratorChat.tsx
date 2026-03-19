@@ -6,10 +6,10 @@ import { Send, Loader2, Bot, User } from 'lucide-react'
 import type { ChatMessage } from '@/lib/agents/types'
 
 const SUGGESTIONS = [
+  'Mostrá el reporte de DIVINIA de hoy',
   'Buscá restaurantes en San Luis',
   'Enviá emails a leads nuevos',
-  'Chequeá trials por vencer',
-  '¿Cuántos leads tenemos sin contactar?',
+  'Monitoreá trials de clientes',
 ]
 
 interface OrchestratorChatProps {

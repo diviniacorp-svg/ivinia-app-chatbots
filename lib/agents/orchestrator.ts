@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase'
 import { ProspectorAgent } from './prospector'
 import { SalesAgent } from './sales'
 import { MonitorAgent } from './monitor'
+import { ReporterAgent } from './reporter'
 
 function getOpenRouter(): OpenAI {
   return new OpenAI({
@@ -15,47 +16,90 @@ function getOpenRouter(): OpenAI {
   })
 }
 
-const SYSTEM_PROMPT = `Sos el Agente Orquestador de DIVINIA, empresa de IA para PYMEs argentinas de San Luis.
+const BASE_SYSTEM_PROMPT = `Sos el Agente Orquestador de DIVINIA, empresa de IA para PYMEs argentinas fundada por Joaco en San Luis, Argentina.
 
-Podés activar estos sub-agentes:
-- **Prospector** 🔍: busca leads nuevos en Google Maps por rubro y ciudad. Pedí rubro y ciudad si no los tenés.
-- **Ventas** 📧: genera y envía emails de outreach a leads nuevos sin contactar. Podés pedirle límite.
-- **Monitor** 📊: revisa qué clientes tienen trials venciendo en 3 días o ya vencidos.
+## Sobre DIVINIA
+- Vende chatbots con IA (desde $150.000 ARS), sistemas de turnos online ($150.000-$400.000) y automatizaciones
+- Clientes target: PYMEs de San Luis y toda Argentina (restaurantes, clínicas, estéticas, talleres, hoteles, etc.)
+- Cobro: MercadoPago (50% adelanto, 50% entrega). Precios en ARS.
+- Trial gratuito: 14 días sin tarjeta
+- Stack: Next.js, Supabase, Claude/OpenRouter, Resend, Apify, MercadoPago
 
-Cuando Joaco pida activar un agente:
-1. Avisá que lo vas a ejecutar y qué va a hacer
-2. Aclarale que el resultado va a aparecer en el mismo mensaje
-3. Reportá el resultado de forma clara y accionable
+## Sub-agentes disponibles
+- **Prospector** 🔍: busca leads nuevos en Google Maps por rubro + ciudad usando Apify. Guardá en la DB.
+- **Ventas** 📧: genera emails de outreach personalizados con IA y los envía con Resend a leads sin contactar.
+- **Monitor** 📊: revisa clientes con trials venciendo en 3 días o ya expirados. Devuelve lista.
+- **Reporter** 📋: genera reporte completo del estado de DIVINIA (clientes, leads, turnos, KPIs).
 
-También podés dar información sobre:
-- Estado actual de los agentes y últimas ejecuciones
-- Estrategias de ventas y outreach
-- Consejos sobre cómo usar DIVINIA
+## Cómo delegar
+Cuando Joaco pida algo que requiera un agente:
+1. Indicá qué agente vas a activar y por qué
+2. Ejecutalo (el resultado aparece en el mismo mensaje)
+3. Interpretá el resultado y sugerí el próximo paso accionable
 
-Usá español argentino (vos, sos, tenés). Sé directo, útil y conciso.
-Si algo está fuera de tu alcance, explicalo brevemente y sugerí alternativa.`
+## Conocimiento del negocio
+Podés responder sobre:
+- Estrategias de ventas para PYMEs argentinas
+- Cómo vender chatbots y sistemas de turnos
+- Qué rubros tienen más potencial (estéticas, clínicas, restaurantes, talleres)
+- Pricing y propuestas comerciales
+- Cómo hacer seguimiento de leads
+- Qué decir en un primer contacto por WhatsApp o email
+
+Usá español argentino (vos, sos, tenés). Sé directo, breve y accionable.`
+
+async function getDiviniaContext(): Promise<string> {
+  try {
+    const db = createAdminClient()
+    const today = new Date().toISOString().split('T')[0]
+
+    const [{ data: clients }, { data: leads }] = await Promise.all([
+      db.from('clients').select('status, trial_end'),
+      db.from('leads').select('status, outreach_sent, score'),
+    ])
+
+    const activeClients = clients?.filter(c => c.status === 'active').length ?? 0
+    const trialClients = clients?.filter(c => c.status === 'trial').length ?? 0
+    const expiringIn3 = clients?.filter(c => {
+      if (c.status !== 'trial' || !c.trial_end) return false
+      const days = Math.ceil((new Date(c.trial_end).getTime() - Date.now()) / 86400000)
+      return days >= 0 && days <= 3
+    }).length ?? 0
+
+    const newLeads = leads?.filter(l => l.status === 'new' && !l.outreach_sent).length ?? 0
+    const highScore = leads?.filter(l => (l.score ?? 0) >= 70).length ?? 0
+    const totalLeads = leads?.length ?? 0
+
+    return `\n\n## Estado actual de DIVINIA (${today})
+- Clientes activos: ${activeClients} | En trial: ${trialClients}${expiringIn3 > 0 ? ` | ⚠️ ${expiringIn3} trial(s) vencen en 3 días` : ''}
+- Leads totales: ${totalLeads} | Sin contactar: ${newLeads} | Score ≥70: ${highScore}`
+  } catch {
+    return ''
+  }
+}
 
 export async function* chat(userMessage: string): AsyncGenerator<string> {
   const db = createAdminClient()
   await db.from('agent_chats').insert({ role: 'user', content: userMessage })
 
-  const { data: history } = await db
-    .from('agent_chats')
-    .select('role, content')
-    .order('created_at', { ascending: false })
-    .limit(20)
+  const [{ data: history }, context] = await Promise.all([
+    db.from('agent_chats')
+      .select('role, content')
+      .order('created_at', { ascending: false })
+      .limit(20),
+    getDiviniaContext(),
+  ])
 
   const messages = (history ?? []).reverse()
+  const systemPrompt = BASE_SYSTEM_PROMPT + context
 
-  // Detect agent intent before streaming
   const agentAction = detectAgentAction(userMessage)
 
   let agentOutput = ''
   if (agentAction) {
-    yield `\n> Activando **${agentAction.label}**...\n\n`
-    const result = await runAgent(agentAction)
-    agentOutput = result
-    yield result
+    yield `> Activando **${agentAction.label}**...\n\n`
+    agentOutput = await runAgent(agentAction)
+    yield agentOutput
     yield '\n\n---\n\n'
   }
 
@@ -64,12 +108,14 @@ export async function* chat(userMessage: string): AsyncGenerator<string> {
     max_tokens: 800,
     stream: true,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT + (agentOutput ? `\n\nResultado del agente ejecutado:\n${agentOutput}` : '') },
+      { role: 'system', content: systemPrompt + (agentOutput ? `\n\nResultado del agente:\n${agentOutput}` : '') },
       ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     ],
   })
 
-  let fullResponse = (agentOutput ? `> Activando **${agentAction?.label}**...\n\n${agentOutput}\n\n---\n\n` : '')
+  let fullResponse = agentOutput
+    ? `> Activando **${agentAction?.label}**...\n\n${agentOutput}\n\n---\n\n`
+    : ''
 
   for await (const chunk of stream) {
     const text = chunk.choices[0]?.delta?.content ?? ''
@@ -82,18 +128,25 @@ export async function* chat(userMessage: string): AsyncGenerator<string> {
   await db.from('agent_chats').insert({ role: 'assistant', content: fullResponse })
 }
 
-type AgentAction = { type: 'prospector'; label: string; params: Record<string, unknown> }
+type AgentAction =
+  | { type: 'prospector'; label: string; params: Record<string, unknown> }
   | { type: 'sales'; label: string; params: Record<string, unknown> }
   | { type: 'monitor'; label: string; params: Record<string, unknown> }
+  | { type: 'reporter'; label: string; params: Record<string, unknown> }
 
 // Solo dispara con verbos de acción explícitos + contexto de ejecución.
-// Preguntas como "¿cuántos leads tenemos?" NO deben activar agentes.
 function detectAgentAction(message: string): AgentAction | null {
   const lower = message.toLowerCase()
 
-  // Prospector: requiere verbo imperativo de búsqueda/scraping explícito
-  if (/\b(busca|buscá|prospecta|prospectá|scrapea|scrapeá|encontrá|conseg[uí]|trae|traé)\b/.test(lower) &&
-      /\b(lead|negocio|empresa|contact|cliente|restau|clínic|comerci|farmaci|veterina|hotel|peluqu|taller|odont|gimnas|inmobi)\b/.test(lower)) {
+  // Reporter: reporte, resumen, estado general, KPIs
+  if (/\b(reporte|report|resumen|estado|kpi|dashboard|cómo estamos|como estamos|mostrá|mostra)\b/.test(lower) &&
+      /\b(divinia|negocio|semana|hoy|clientes|leads|turnos|general|todo)\b/.test(lower)) {
+    return { type: 'reporter', label: 'Agente Reporter 📋', params: {} }
+  }
+
+  // Prospector: verbo imperativo de búsqueda + contexto de rubro/leads
+  if (/\b(busca|buscá|prospecta|prospectá|scrapea|scrapeá|encontrá|trae|traé|conseguí)\b/.test(lower) &&
+      /\b(lead|negocio|empresa|contacto|cliente|restau|clínic|comerci|farmaci|veterina|hotel|peluqu|taller|odont|gimnas|inmobi|empresa)\b/.test(lower)) {
     const rubroM = lower.match(/(?:de|para)\s+([\w\s]+?)\s+en\b/)
     const ciudadM = lower.match(/\ben\s+([\w\s]+?)(?:\s*$|\s*[,.]|\s+(?:limit|\d))/)
     return {
@@ -107,8 +160,8 @@ function detectAgentAction(message: string): AgentAction | null {
     }
   }
 
-  // Ventas: requiere verbo imperativo de envío explícito
-  if (/\b(enviá|envia|manda|mandá|lanza|lanzá|ejecuta|ejecutá)\b/.test(lower) &&
+  // Ventas: verbo imperativo de envío + email/outreach
+  if (/\b(enviá|envia|manda|mandá|lanzá|lanza|ejecutá|ejecuta)\b/.test(lower) &&
       /\b(email|outreach|campaña|emails|contacto)\b/.test(lower)) {
     const limitM = lower.match(/(\d+)\s+(?:email|lead|contact)/)
     return {
@@ -118,7 +171,7 @@ function detectAgentAction(message: string): AgentAction | null {
     }
   }
 
-  // Monitor: requiere verbo imperativo de revisión explícito
+  // Monitor: verbo imperativo de revisión + trials/clientes
   if (/\b(monitorea|monitoreá|chequea|chequeá|revisa|revisá|verificá|verifica)\b/.test(lower) &&
       /\b(trial|triales|vencimiento|vence|expirac|cliente|clientes)\b/.test(lower)) {
     return { type: 'monitor', label: 'Agente Monitor 📊', params: {} }
@@ -130,29 +183,34 @@ function detectAgentAction(message: string): AgentAction | null {
 async function runAgent(action: AgentAction): Promise<string> {
   try {
     switch (action.type) {
+      case 'reporter': {
+        const result = await new ReporterAgent().run()
+        return result.message
+      }
       case 'prospector': {
-        const agent = new ProspectorAgent()
         const p = action.params as unknown as { rubro: string; ciudad: string; limit?: number }
-        const result = await agent.run({ rubro: p.rubro ?? 'negocios', ciudad: p.ciudad ?? 'San Luis', limit: p.limit })
+        const result = await new ProspectorAgent().run({
+          rubro: p.rubro ?? 'negocios',
+          ciudad: p.ciudad ?? 'San Luis',
+          limit: p.limit,
+        })
         return `**Prospector:** ${result.message}`
       }
       case 'sales': {
-        const agent = new SalesAgent()
         const p = action.params as unknown as { limit?: number }
-        const result = await agent.run({ limit: p.limit })
+        const result = await new SalesAgent().run({ limit: p.limit })
         return `**Ventas:** ${result.message}`
       }
       case 'monitor': {
-        const agent = new MonitorAgent()
-        const result = await agent.run()
+        const result = await new MonitorAgent().run()
         if (result.data) {
-          const d = result.data as { expiring_list?: {name:string;trial_end:string}[]; expired_list?: {name:string;trial_end:string}[] }
+          const d = result.data as { expiring_list?: { name: string; trial_end: string }[]; expired_list?: { name: string; trial_end: string }[] }
           let detail = `**Monitor:** ${result.message}`
           if (d.expiring_list?.length) {
-            detail += '\n\nVencen pronto: ' + d.expiring_list.map(c => `${c.name} (${c.trial_end})`).join(', ')
+            detail += '\n\nVencen pronto:\n' + d.expiring_list.map(c => `  • ${c.name} (${c.trial_end})`).join('\n')
           }
           if (d.expired_list?.length) {
-            detail += '\nYa vencidos: ' + d.expired_list.map(c => c.name).join(', ')
+            detail += '\n\nYa vencidos:\n' + d.expired_list.map(c => `  • ${c.name}`).join('\n')
           }
           return detail
         }

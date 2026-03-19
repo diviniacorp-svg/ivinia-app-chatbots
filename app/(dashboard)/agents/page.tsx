@@ -14,14 +14,14 @@ export default async function AgentsPage() {
   ])
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-3rem)]">
-      {/* Left: Virtual Office */}
-      <div className="w-72 shrink-0 bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-5rem)] lg:h-[calc(100vh-3rem)]">
+      {/* Oficina virtual — en mobile se achica, en desktop columna fija */}
+      <div className="lg:w-72 lg:shrink-0 h-48 lg:h-full bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
         <VirtualOffice runs={(runs ?? []) as AgentRun[]} />
       </div>
 
-      {/* Right: Orchestrator Chat */}
-      <div className="flex-1 bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+      {/* Chat — ocupa el resto */}
+      <div className="flex-1 min-h-0 bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
         <OrchestratorChat initialMessages={(chats ?? []) as ChatMessage[]} />
       </div>
     </div>
