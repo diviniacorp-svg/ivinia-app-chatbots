@@ -71,6 +71,19 @@ CREATE TABLE IF NOT EXISTS whatsapp_conversations (
 );
 CREATE INDEX IF NOT EXISTS idx_wa_conv_phone ON whatsapp_conversations(phone, wa_number);
 
+-- Leads generados por WhatsApp (una fila por número que inicia conversación)
+CREATE TABLE IF NOT EXISTS whatsapp_leads (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone text NOT NULL,
+  wa_number text NOT NULL,
+  company_name text DEFAULT '',
+  summary text DEFAULT '',
+  interested_in text DEFAULT '',
+  status text DEFAULT 'nuevo' CHECK (status IN ('nuevo','en_conversacion','interesado','cerrado')),
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(phone, wa_number)
+);
+
 -- Pagos
 CREATE TABLE IF NOT EXISTS payments (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,

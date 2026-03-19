@@ -12,6 +12,8 @@ const SUGGESTIONS = [
   'Monitoreá trials de clientes',
 ]
 
+const STREAM_TIMEOUT_MS = 45_000 // 45s máximo de espera
+
 interface OrchestratorChatProps {
   initialMessages: ChatMessage[]
 }
@@ -22,13 +24,19 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
   const [streaming, setStreaming] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  function setAssistantContent(id: string, updater: (prev: string) => string) {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, content: updater(m.content) } : m))
+  }
+
   async function sendMessage(text: string) {
     if (!text.trim() || streaming) return
+
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -42,6 +50,15 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
     const assistantId = (Date.now() + 1).toString()
     setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', created_at: new Date().toISOString() }])
 
+    // Timeout: si en 45s no llegó ningún chunk, mostrar error
+    const timeoutId = setTimeout(() => {
+      readerRef.current?.cancel()
+      setAssistantContent(assistantId, c =>
+        c || '⏱ El orquestador tardó demasiado. Los agentes pueden seguir corriendo en background. Intentá de nuevo.'
+      )
+      setStreaming(false)
+    }, STREAM_TIMEOUT_MS)
+
     try {
       const res = await fetch('/api/agents/chat', {
         method: 'POST',
@@ -49,33 +66,55 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
         body: JSON.stringify({ message: text.trim() }),
       })
 
-      if (!res.body) throw new Error('No stream')
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
+      if (!res.ok) {
+        const body = await res.text()
+        throw new Error(body || `HTTP ${res.status}`)
+      }
 
-      while (true) {
+      if (!res.body) throw new Error('Sin stream')
+
+      const reader = res.body.getReader()
+      readerRef.current = reader
+      const decoder = new TextDecoder()
+      let receivedAny = false
+
+      outer: while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        const lines = decoder.decode(value).split('\n')
+
+        const lines = decoder.decode(value, { stream: true }).split('\n')
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
-          const payload = line.slice(6)
-          if (payload === '[DONE]') continue
+          const payload = line.slice(6).trim()
+          if (payload === '[DONE]') break outer
+
           try {
-            const { text: chunk, error } = JSON.parse(payload)
-            if (error) {
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: `❌ ${error}` } : m))
-            } else if (chunk) {
-              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: m.content + chunk } : m))
+            const parsed = JSON.parse(payload)
+            if (parsed.error) {
+              setAssistantContent(assistantId, () => `❌ ${parsed.error}`)
+              receivedAny = true
+            } else if (parsed.text) {
+              setAssistantContent(assistantId, c => c + parsed.text)
+              receivedAny = true
             }
-          } catch { /* ignore parse errors */ }
+          } catch { /* ignore malformed chunks */ }
         }
       }
-    } catch {
-      setMessages(prev => prev.map(m =>
-        m.id === assistantId ? { ...m, content: '❌ Error de conexión. Intentá de nuevo.' } : m
-      ))
+
+      // Si el stream terminó pero no llegó nada, mostrar aviso
+      if (!receivedAny) {
+        setAssistantContent(assistantId, () =>
+          '⚠️ El modelo no devolvió respuesta. Puede que el agente haya corrido igual. Revisá la actividad en la oficina.'
+        )
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido'
+      setAssistantContent(assistantId, c =>
+        c || `❌ ${msg}`
+      )
     } finally {
+      clearTimeout(timeoutId)
+      readerRef.current = null
       setStreaming(false)
       inputRef.current?.focus()
     }
@@ -99,11 +138,17 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
             Online · Puede activar sub-agentes
           </p>
         </div>
+        {streaming && (
+          <div className="ml-auto flex items-center gap-1.5 text-xs text-yellow-400">
+            <Loader2 size={12} className="animate-spin" />
+            <span>Procesando...</span>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {messages.length === 0 && (
+        {messages.length === 0 && !streaming && (
           <div className="text-center py-8">
             <div className="text-4xl mb-3">🧠</div>
             <p className="text-gray-400 text-sm font-medium">Hola Joaco, soy tu Orquestador.</p>
@@ -120,16 +165,12 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
               transition={{ duration: 0.2 }}
               className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
             >
-              {/* Avatar */}
               <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs ${
-                msg.role === 'user'
-                  ? 'bg-indigo-600'
-                  : 'bg-gradient-to-br from-purple-600 to-indigo-600'
+                msg.role === 'user' ? 'bg-indigo-600' : 'bg-gradient-to-br from-purple-600 to-indigo-600'
               }`}>
                 {msg.role === 'user' ? <User size={13} /> : <Bot size={13} />}
               </div>
 
-              {/* Bubble */}
               <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-indigo-600 text-white rounded-tr-sm'
@@ -137,7 +178,7 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
               }`}>
                 {msg.content === '' && msg.role === 'assistant' ? (
                   <span className="flex gap-1 items-center py-0.5">
-                    {[0,1,2].map(i => (
+                    {[0, 1, 2].map(i => (
                       <motion.span
                         key={i}
                         className="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block"
@@ -173,10 +214,7 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
 
       {/* Input */}
       <div className="px-4 py-3 border-t border-gray-700">
-        <form
-          onSubmit={e => { e.preventDefault(); sendMessage(input) }}
-          className="flex gap-2"
-        >
+        <form onSubmit={e => { e.preventDefault(); sendMessage(input) }} className="flex gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -191,7 +229,9 @@ export default function OrchestratorChat({ initialMessages }: OrchestratorChatPr
             disabled={!input.trim() || streaming}
             className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center transition-colors shrink-0"
           >
-            {streaming ? <Loader2 size={16} className="text-white animate-spin" /> : <Send size={16} className="text-white" />}
+            {streaming
+              ? <Loader2 size={16} className="text-white animate-spin" />
+              : <Send size={16} className="text-white" />}
           </button>
         </form>
       </div>
