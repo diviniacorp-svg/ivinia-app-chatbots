@@ -86,12 +86,16 @@ type AgentAction = { type: 'prospector'; label: string; params: Record<string, u
   | { type: 'sales'; label: string; params: Record<string, unknown> }
   | { type: 'monitor'; label: string; params: Record<string, unknown> }
 
+// Solo dispara con verbos de acción explícitos + contexto de ejecución.
+// Preguntas como "¿cuántos leads tenemos?" NO deben activar agentes.
 function detectAgentAction(message: string): AgentAction | null {
   const lower = message.toLowerCase()
 
-  if (/busca|prospecta|encontrá|scrape|lead/.test(lower)) {
+  // Prospector: requiere verbo imperativo de búsqueda/scraping explícito
+  if (/\b(busca|buscá|prospecta|prospectá|scrapea|scrapeá|encontrá|conseg[uí]|trae|traé)\b/.test(lower) &&
+      /\b(lead|negocio|empresa|contact|cliente|restau|clínic|comerci|farmaci|veterina|hotel|peluqu|taller|odont|gimnas|inmobi)\b/.test(lower)) {
     const rubroM = lower.match(/(?:de|para)\s+([\w\s]+?)\s+en\b/)
-    const ciudadM = lower.match(/\ben\s+([\w\s]+?)(?:\s*$|\s*,|\s+limit|\s+\d)/)
+    const ciudadM = lower.match(/\ben\s+([\w\s]+?)(?:\s*$|\s*[,.]|\s+(?:limit|\d))/)
     return {
       type: 'prospector',
       label: 'Agente Prospector 🔍',
@@ -103,7 +107,9 @@ function detectAgentAction(message: string): AgentAction | null {
     }
   }
 
-  if (/envía|email|outreach|contacta|mandá/.test(lower)) {
+  // Ventas: requiere verbo imperativo de envío explícito
+  if (/\b(enviá|envia|manda|mandá|lanza|lanzá|ejecuta|ejecutá)\b/.test(lower) &&
+      /\b(email|outreach|campaña|emails|contacto)\b/.test(lower)) {
     const limitM = lower.match(/(\d+)\s+(?:email|lead|contact)/)
     return {
       type: 'sales',
@@ -112,7 +118,9 @@ function detectAgentAction(message: string): AgentAction | null {
     }
   }
 
-  if (/monitor|trial|venc|chequea|revisa|expir/.test(lower)) {
+  // Monitor: requiere verbo imperativo de revisión explícito
+  if (/\b(monitorea|monitoreá|chequea|chequeá|revisa|revisá|verificá|verifica)\b/.test(lower) &&
+      /\b(trial|triales|vencimiento|vence|expirac|cliente|clientes)\b/.test(lower)) {
     return { type: 'monitor', label: 'Agente Monitor 📊', params: {} }
   }
 

@@ -10,6 +10,7 @@ const ADMIN_ROUTES = [
   '/pagos',
   '/templates',
   '/outreach',
+  '/agents',
 ]
 
 const PROTECTED_API_ROUTES = [
@@ -23,6 +24,7 @@ const PROTECTED_API_ROUTES = [
   '/api/bookings/appointments',
   '/api/bookings/configs',
   '/api/turnos/generar-landing',
+  '/api/agents',
 ]
 
 export function middleware(request: NextRequest) {
@@ -30,7 +32,6 @@ export function middleware(request: NextRequest) {
 
   const validSecret = process.env.ADMIN_SECRET
   if (!validSecret) {
-    // En producción, si no hay ADMIN_SECRET configurado, bloqueamos todo acceso admin
     if (process.env.NODE_ENV === 'production') {
       return NextResponse.json({ error: 'Servidor mal configurado' }, { status: 503 })
     }
@@ -74,6 +75,8 @@ export const config = {
     '/pagos/:path*',
     '/templates/:path*',
     '/outreach/:path*',
+    '/agents',
+    '/agents/:path*',
     '/api/seed',
     '/api/seed/:path*',
     '/api/clients',
@@ -93,5 +96,7 @@ export const config = {
     '/api/bookings/configs',
     '/api/bookings/configs/:path*',
     '/api/turnos/generar-landing',
+    '/api/agents',
+    '/api/agents/:path*',
   ],
 }
