@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
-  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2
+  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -82,6 +82,23 @@ export default function Sidebar() {
             </Link>
           )
         })}
+
+        {/* Agentes IA */}
+        <div className="pt-3 pb-1">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3">Agentes IA</p>
+        </div>
+        <Link
+          href="/agents"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            pathname === '/agents' || pathname.startsWith('/agents/')
+              ? 'bg-violet-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Cpu size={17} />
+          Oficina de Agentes
+        </Link>
 
         {/* Sub-item: Configurador de Turnos */}
         <Link
