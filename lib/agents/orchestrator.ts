@@ -1,19 +1,12 @@
-import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase'
 import { ProspectorAgent } from './prospector'
 import { SalesAgent } from './sales'
 import { MonitorAgent } from './monitor'
 import { ReporterAgent } from './reporter'
 
-function getOpenRouter(): OpenAI {
-  return new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY || '',
-    baseURL: 'https://openrouter.ai/api/v1',
-    defaultHeaders: {
-      'HTTP-Referer': 'https://divinia.vercel.app',
-      'X-Title': 'DIVINIA Orquestador',
-    },
-  })
+function getAnthropic(): Anthropic {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
 }
 
 const BASE_SYSTEM_PROMPT = `Sos el Agente Orquestador de DIVINIA, empresa de IA para PYMEs argentinas fundada por Joaco en San Luis, Argentina.
@@ -103,25 +96,24 @@ export async function* chat(userMessage: string): AsyncGenerator<string> {
     yield '\n\n---\n\n'
   }
 
-  const stream = await getOpenRouter().chat.completions.create({
-    model: 'liquid/lfm-2.5-1.2b-instruct:free',
-    max_tokens: 800,
-    stream: true,
-    messages: [
-      { role: 'system', content: systemPrompt + (agentOutput ? `\n\nResultado del agente:\n${agentOutput}` : '') },
-      ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-    ],
+  const stream = getAnthropic().messages.stream({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1200,
+    system: systemPrompt + (agentOutput ? `\n\nResultado del agente:\n${agentOutput}` : ''),
+    messages: messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
   })
 
   let fullResponse = agentOutput
     ? `> Activando **${agentAction?.label}**...\n\n${agentOutput}\n\n---\n\n`
     : ''
 
-  for await (const chunk of stream) {
-    const text = chunk.choices[0]?.delta?.content ?? ''
-    if (text) {
-      fullResponse += text
-      yield text
+  for await (const event of stream) {
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      const text = event.delta.text
+      if (text) {
+        fullResponse += text
+        yield text
+      }
     }
   }
 
