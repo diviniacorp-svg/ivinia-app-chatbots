@@ -26,6 +26,7 @@ export async function GET() {
     chatbot_id: chatbotId,
     company_name: 'Rufina Nails',
     contact_name: 'Rufina',
+    email: 'rufina@rufinaunas.com',
     status: 'active',
     plan: 'pro',
     custom_config: {
