@@ -1,5 +1,5 @@
 export type AgentStatus = 'idle' | 'running' | 'completed' | 'error'
-export type AgentName = 'prospector' | 'sales' | 'monitor' | 'orchestrator'
+export type AgentName = 'prospector' | 'sales' | 'monitor' | 'orchestrator' | 'reporter' | 'followup'
 
 export interface AgentResult {
   success: boolean

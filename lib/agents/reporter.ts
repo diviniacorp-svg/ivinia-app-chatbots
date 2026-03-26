@@ -3,7 +3,7 @@ import { BaseAgent } from './base-agent'
 import type { AgentResult } from './types'
 
 export class ReporterAgent extends BaseAgent {
-  constructor() { super('monitor') } // reutiliza 'monitor' como agent_name por ahora
+  constructor() { super('reporter') }
 
   async run(): Promise<AgentResult> {
     await this.logStart()

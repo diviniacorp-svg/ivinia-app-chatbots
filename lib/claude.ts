@@ -1,13 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 
-function getAnthropic(): Anthropic {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
+function getOpenRouter(): OpenAI {
+  return new OpenAI({
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: {
+      'HTTP-Referer': 'https://divinia.vercel.app',
+      'X-Title': 'DIVINIA Chatbots',
+    },
+  })
 }
 
-// Haiku para chatbots (rápido y barato ~$0.001/1k tokens)
-export const CHATBOT_MODEL = 'claude-haiku-4-5-20251001'
-// Sonnet para outreach (mejor redacción)
-export const OUTREACH_MODEL = 'claude-sonnet-4-6'
+// Gemini Flash gratis — rápido y mucho mejor que el modelo anterior
+export const CHATBOT_MODEL = 'google/gemini-2.0-flash-exp:free'
+// Llama 3.3 70B gratis — excelente razonamiento para outreach
+export const OUTREACH_MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
 
 const GROUNDING_INSTRUCTION = `
 
@@ -22,18 +29,17 @@ export async function generateChatbotResponse(
   conversationHistory: { role: 'user' | 'assistant'; content: string }[],
   userMessage: string
 ): Promise<string> {
-  const response = await getAnthropic().messages.create({
+  const response = await getOpenRouter().chat.completions.create({
     model: CHATBOT_MODEL,
     max_tokens: 500,
-    system: systemPrompt + GROUNDING_INSTRUCTION,
     messages: [
+      { role: 'system', content: systemPrompt + GROUNDING_INSTRUCTION },
       ...conversationHistory,
       { role: 'user', content: userMessage },
     ],
   })
 
-  const block = response.content[0]
-  return block?.type === 'text' ? block.text : 'No pude procesar tu consulta. Por favor contactanos directamente.'
+  return response.choices[0]?.message?.content || 'No pude procesar tu consulta. Por favor contactanos directamente.'
 }
 
 export async function generateOutreachEmail(params: {
@@ -67,14 +73,13 @@ Reglas del email:
 Respondé SOLO con JSON en este formato exacto:
 {"subject": "...", "body": "..."}`
 
-  const response = await getAnthropic().messages.create({
+  const response = await getOpenRouter().chat.completions.create({
     model: OUTREACH_MODEL,
     max_tokens: 800,
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const block = response.content[0]
-  const text = block?.type === 'text' ? block.text : ''
+  const text = response.choices[0]?.message?.content || ''
   const jsonMatch = text.match(/\{[\s\S]*\}/)
   const json = JSON.parse(jsonMatch?.[0] || text)
   return { subject: json.subject, body: json.body }
@@ -100,14 +105,11 @@ Reglas:
 
 Devolvé SOLO el mensaje, sin comillas ni explicaciones.`
 
-  const response = await getAnthropic().messages.create({
+  const response = await getOpenRouter().chat.completions.create({
     model: CHATBOT_MODEL,
     max_tokens: 300,
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const block = response.content[0]
-  return block?.type === 'text'
-    ? block.text
-    : `Hola! Soy Joaco de DIVINIA. Vi ${params.companyName} y me surgió una idea para que recepten más consultas automáticamente. ¿Tenés 5 minutos para contarte?`
+  return response.choices[0]?.message?.content || `Hola! Soy Joaco de DIVINIA. Vi ${params.companyName} y me surgió una idea para que recepten más consultas automáticamente. ¿Tenés 5 minutos para contarte?`
 }

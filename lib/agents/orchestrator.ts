@@ -1,12 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { createAdminClient } from '@/lib/supabase'
 import { ProspectorAgent } from './prospector'
 import { SalesAgent } from './sales'
 import { MonitorAgent } from './monitor'
 import { ReporterAgent } from './reporter'
+import { FollowUpAgent } from './followup'
 
-function getAnthropic(): Anthropic {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
+function getOpenRouter(): OpenAI {
+  return new OpenAI({
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: {
+      'HTTP-Referer': 'https://divinia.vercel.app',
+      'X-Title': 'DIVINIA Orquestador',
+    },
+  })
 }
 
 const BASE_SYSTEM_PROMPT = `Sos el Agente Orquestador de DIVINIA, empresa de IA para PYMEs argentinas fundada por Joaco en San Luis, Argentina.
@@ -16,13 +24,14 @@ const BASE_SYSTEM_PROMPT = `Sos el Agente Orquestador de DIVINIA, empresa de IA 
 - Clientes target: PYMEs de San Luis y toda Argentina (restaurantes, clínicas, estéticas, talleres, hoteles, etc.)
 - Cobro: MercadoPago (50% adelanto, 50% entrega). Precios en ARS.
 - Trial gratuito: 14 días sin tarjeta
-- Stack: Next.js, Supabase, Claude/OpenRouter, Resend, Apify, MercadoPago
+- Stack: Next.js, Supabase, OpenRouter, Resend, Apify, MercadoPago
 
 ## Sub-agentes disponibles
-- **Prospector** 🔍: busca leads nuevos en Google Maps por rubro + ciudad usando Apify. Guardá en la DB.
-- **Ventas** 📧: genera emails de outreach personalizados con IA y los envía con Resend a leads sin contactar.
-- **Monitor** 📊: revisa clientes con trials venciendo en 3 días o ya expirados. Devuelve lista.
+- **Prospector** 🔍: busca leads nuevos en Google Maps por rubro + ciudad usando Apify.
+- **Ventas** 📧: genera emails de outreach con IA y los envía a leads sin contactar.
+- **Monitor** 📊: revisa clientes con trials venciendo en 3 días o ya expirados.
 - **Reporter** 📋: genera reporte completo del estado de DIVINIA (clientes, leads, turnos, KPIs).
+- **Seguimiento** 🔄: detecta leads contactados hace +3 días sin respuesta y genera mensajes de follow-up.
 
 ## Cómo delegar
 Cuando Joaco pida algo que requiera un agente:
@@ -96,24 +105,25 @@ export async function* chat(userMessage: string): AsyncGenerator<string> {
     yield '\n\n---\n\n'
   }
 
-  const stream = getAnthropic().messages.stream({
-    model: 'claude-sonnet-4-6',
+  const stream = await getOpenRouter().chat.completions.create({
+    model: 'meta-llama/llama-3.3-70b-instruct:free',
     max_tokens: 1200,
-    system: systemPrompt + (agentOutput ? `\n\nResultado del agente:\n${agentOutput}` : ''),
-    messages: messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    stream: true,
+    messages: [
+      { role: 'system', content: systemPrompt + (agentOutput ? `\n\nResultado del agente:\n${agentOutput}` : '') },
+      ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ],
   })
 
   let fullResponse = agentOutput
     ? `> Activando **${agentAction?.label}**...\n\n${agentOutput}\n\n---\n\n`
     : ''
 
-  for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-      const text = event.delta.text
-      if (text) {
-        fullResponse += text
-        yield text
-      }
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content ?? ''
+    if (text) {
+      fullResponse += text
+      yield text
     }
   }
 
@@ -125,18 +135,23 @@ type AgentAction =
   | { type: 'sales'; label: string; params: Record<string, unknown> }
   | { type: 'monitor'; label: string; params: Record<string, unknown> }
   | { type: 'reporter'; label: string; params: Record<string, unknown> }
+  | { type: 'followup'; label: string; params: Record<string, unknown> }
 
-// Solo dispara con verbos de acción explícitos + contexto de ejecución.
 function detectAgentAction(message: string): AgentAction | null {
   const lower = message.toLowerCase()
 
-  // Reporter: reporte, resumen, estado general, KPIs
+  // Reporter
   if (/\b(reporte|report|resumen|estado|kpi|dashboard|cómo estamos|como estamos|mostrá|mostra)\b/.test(lower) &&
       /\b(divinia|negocio|semana|hoy|clientes|leads|turnos|general|todo)\b/.test(lower)) {
     return { type: 'reporter', label: 'Agente Reporter 📋', params: {} }
   }
 
-  // Prospector: verbo imperativo de búsqueda + contexto de rubro/leads
+  // Seguimiento / Follow-up
+  if (/\b(seguimiento|follow.?up|seguí|segui|contactar de nuevo|re.?contact|sin respuesta|no respondieron)\b/.test(lower)) {
+    return { type: 'followup', label: 'Agente de Seguimiento 🔄', params: {} }
+  }
+
+  // Prospector
   if (/\b(busca|buscá|prospecta|prospectá|scrapea|scrapeá|encontrá|trae|traé|conseguí)\b/.test(lower) &&
       /\b(lead|negocio|empresa|contacto|cliente|restau|clínic|comerci|farmaci|veterina|hotel|peluqu|taller|odont|gimnas|inmobi|empresa)\b/.test(lower)) {
     const rubroM = lower.match(/(?:de|para)\s+([\w\s]+?)\s+en\b/)
@@ -152,7 +167,7 @@ function detectAgentAction(message: string): AgentAction | null {
     }
   }
 
-  // Ventas: verbo imperativo de envío + email/outreach
+  // Ventas
   if (/\b(enviá|envia|manda|mandá|lanzá|lanza|ejecutá|ejecuta)\b/.test(lower) &&
       /\b(email|outreach|campaña|emails|contacto)\b/.test(lower)) {
     const limitM = lower.match(/(\d+)\s+(?:email|lead|contact)/)
@@ -163,7 +178,7 @@ function detectAgentAction(message: string): AgentAction | null {
     }
   }
 
-  // Monitor: verbo imperativo de revisión + trials/clientes
+  // Monitor
   if (/\b(monitorea|monitoreá|chequea|chequeá|revisa|revisá|verificá|verifica)\b/.test(lower) &&
       /\b(trial|triales|vencimiento|vence|expirac|cliente|clientes)\b/.test(lower)) {
     return { type: 'monitor', label: 'Agente Monitor 📊', params: {} }
@@ -177,6 +192,10 @@ async function runAgent(action: AgentAction): Promise<string> {
     switch (action.type) {
       case 'reporter': {
         const result = await new ReporterAgent().run()
+        return result.message
+      }
+      case 'followup': {
+        const result = await new FollowUpAgent().run()
         return result.message
       }
       case 'prospector': {
