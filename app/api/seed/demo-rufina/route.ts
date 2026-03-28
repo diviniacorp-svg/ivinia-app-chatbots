@@ -1,17 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
-function uuidv4(): string {
-  return crypto.randomUUID()
-}
-
 // GET /api/seed/demo-rufina
 // Crea (o actualiza) el cliente demo Rufina Nails con su booking config completa
 export async function GET() {
   const db = createAdminClient()
 
   const chatbotId = 'rufina-nails-demo'
-  const configId = 'rufina-nails-config'
 
   // 1. Crear o actualizar cliente
   const { data: existing } = await db
@@ -59,23 +54,28 @@ export async function GET() {
     await db.from('clients').update(clientData).eq('id', clientId)
   }
 
-  // 2. Crear o actualizar booking config
+  // 2. Crear o actualizar booking config — buscar si ya existe para este cliente
+  const { data: existingCfg } = await db
+    .from('booking_configs')
+    .select('id')
+    .eq('client_id', clientId)
+    .maybeSingle()
+
   const services = [
-    { id: uuidv4(), category: 'Esmaltado', name: 'Semipermanente manos', description: 'Duración hasta 3 semanas', duration_minutes: 60, price_ars: 16000, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Esmaltado', name: 'Esmaltado común manos', description: 'Acabado brillante o mate', duration_minutes: 45, price_ars: 9000, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Esmaltado', name: 'Semipermanente pies', description: 'Con limpieza incluida', duration_minutes: 60, price_ars: 13000, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Esmaltado', name: 'Esmaltado común pies', description: '', duration_minutes: 45, price_ars: 7500, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Esculpidas', name: 'Uñas en gel', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 28000, deposit_percentage: 30 },
-    { id: uuidv4(), category: 'Esculpidas', name: 'Uñas en acrílico', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 26000, deposit_percentage: 30 },
-    { id: uuidv4(), category: 'Remoción', name: 'Remoción semipermanente', description: 'Incluye hidratación', duration_minutes: 30, price_ars: 5500, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Remoción', name: 'Remoción esculpidas', description: 'Con cuidado de la uña natural', duration_minutes: 45, price_ars: 8000, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Extras', name: 'Diseño nail art', description: 'Diseños personalizados, precio por consultar', duration_minutes: 30, price_ars: 0, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Manicura & Pedicura', name: 'Manicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 60, price_ars: 13000, deposit_percentage: 0 },
-    { id: uuidv4(), category: 'Manicura & Pedicura', name: 'Pedicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 75, price_ars: 17000, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Esmaltado', name: 'Semipermanente manos', description: 'Duración hasta 3 semanas', duration_minutes: 60, price_ars: 16000, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Esmaltado', name: 'Esmaltado común manos', description: 'Acabado brillante o mate', duration_minutes: 45, price_ars: 9000, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Esmaltado', name: 'Semipermanente pies', description: 'Con limpieza incluida', duration_minutes: 60, price_ars: 13000, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Esmaltado', name: 'Esmaltado común pies', description: '', duration_minutes: 45, price_ars: 7500, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Esculpidas', name: 'Uñas en gel', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 28000, deposit_percentage: 30 },
+    { id: crypto.randomUUID(), category: 'Esculpidas', name: 'Uñas en acrílico', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 26000, deposit_percentage: 30 },
+    { id: crypto.randomUUID(), category: 'Remoción', name: 'Remoción semipermanente', description: 'Incluye hidratación', duration_minutes: 30, price_ars: 5500, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Remoción', name: 'Remoción esculpidas', description: 'Con cuidado de la uña natural', duration_minutes: 45, price_ars: 8000, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Extras', name: 'Diseño nail art', description: 'Diseños personalizados, precio por consultar', duration_minutes: 30, price_ars: 0, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Manicura & Pedicura', name: 'Manicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 60, price_ars: 13000, deposit_percentage: 0 },
+    { id: crypto.randomUUID(), category: 'Manicura & Pedicura', name: 'Pedicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 75, price_ars: 17000, deposit_percentage: 0 },
   ]
 
-  const bookingConfig = {
-    id: configId,
+  const bookingConfigData = {
     client_id: clientId,
     is_active: true,
     slot_duration_minutes: 15,
@@ -94,23 +94,45 @@ export async function GET() {
     services,
   }
 
-  const { error: cfgError } = await db
-    .from('booking_configs')
-    .upsert(bookingConfig, { onConflict: 'id' })
+  let configId: string
 
-  if (cfgError) {
-    return NextResponse.json({ error: 'Error creando booking config', detail: cfgError.message }, { status: 500 })
+  if (existingCfg) {
+    // Actualizar la config existente (mantener el UUID)
+    configId = existingCfg.id
+    const { error: cfgError } = await db
+      .from('booking_configs')
+      .update(bookingConfigData)
+      .eq('id', configId)
+
+    if (cfgError) {
+      return NextResponse.json({ error: 'Error actualizando booking config', detail: cfgError.message }, { status: 500 })
+    }
+  } else {
+    // Insertar nueva config (Supabase genera el UUID)
+    const { data: newCfg, error: cfgError } = await db
+      .from('booking_configs')
+      .insert(bookingConfigData)
+      .select('id')
+      .single()
+
+    if (cfgError || !newCfg) {
+      return NextResponse.json({ error: 'Error creando booking config', detail: cfgError?.message }, { status: 500 })
+    }
+    configId = newCfg.id
   }
 
   return NextResponse.json({
     success: true,
     message: 'Demo Rufina Nails creado correctamente',
     urls: {
-      booking: `/turnos/${configId}`,
-      booking_full: `https://divinia.vercel.app/turnos/${configId}`,
+      reservas: `/reservas/${configId}`,
+      reservas_full: `https://divinia.vercel.app/reservas/${configId}`,
+      panel: `/panel/${configId}`,
+      panel_full: `https://divinia.vercel.app/panel/${configId}`,
       chatbot_widget_id: chatbotId,
     },
     client_id: clientId,
+    config_id: configId,
     services_count: services.length,
   })
 }

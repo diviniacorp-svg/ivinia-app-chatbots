@@ -70,6 +70,8 @@ export default async function TurnosPage({ params }: { params: { id: string } })
   const introTagline = customCfg.intro_tagline || 'Reservá tu turno online'
   const introStyle = (customCfg.intro_style as 'bubbles' | 'sparkles' | 'petals') || 'bubbles'
   const depositsEnabled = customCfg.deposits_enabled === 'true'
+  const instagram = customCfg.instagram || ''
+  const ownerPhone = customCfg.whatsapp || config.owner_phone || ''
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,7 +81,7 @@ export default async function TurnosPage({ params }: { params: { id: string } })
         <p className="text-white/80 text-sm mt-1">Reservá tu turno online</p>
       </div>
 
-      <div className="max-w-lg mx-auto p-4 pt-8 pb-16">
+      <div className="max-w-5xl mx-auto p-4 pt-8 pb-16">
         <BookingWizard
           clientId={clientId}
           config={config}
@@ -90,6 +92,8 @@ export default async function TurnosPage({ params }: { params: { id: string } })
           introTagline={introTagline}
           introStyle={introStyle}
           depositsEnabled={depositsEnabled}
+          instagram={instagram}
+          ownerPhone={ownerPhone}
         />
       </div>
     </div>

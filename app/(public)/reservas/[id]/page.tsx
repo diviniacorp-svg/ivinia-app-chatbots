@@ -3,14 +3,14 @@ import { createAdminClient } from '@/lib/supabase'
 import { BookingConfig } from '@/lib/bookings'
 import BookingWizard from './BookingWizard'
 
-export default async function TurnosPage({ params }: { params: { id: string } }) {
+export default async function ReservasPage({ params }: { params: { id: string } }) {
   const db = createAdminClient()
 
-  // Buscar booking_config por id (URL principal) o por client chatbot_id (compat)
   let config: BookingConfig | null = null
   let companyName = ''
   let color = '#6366f1'
   let clientId = ''
+  let customCfg: Record<string, string> = {}
 
   // Opción 1: el id ES el booking_config.id
   const { data: cfgById } = await db
@@ -25,7 +25,8 @@ export default async function TurnosPage({ params }: { params: { id: string } })
     clientId = cfgById.client_id
     const client = cfgById.clients as { company_name: string; custom_config: Record<string, string> } | null
     companyName = client?.company_name || ''
-    color = client?.custom_config?.color || '#6366f1'
+    customCfg = (client?.custom_config as Record<string, string>) || {}
+    color = customCfg.color || '#6366f1'
   } else {
     // Opción 2: el id es chatbot_id del cliente (compatibilidad hacia atrás)
     const { data: client } = await db
@@ -37,7 +38,8 @@ export default async function TurnosPage({ params }: { params: { id: string } })
     if (client) {
       clientId = client.id
       companyName = client.company_name
-      color = (client.custom_config as Record<string, string>)?.color || '#6366f1'
+      customCfg = (client.custom_config as Record<string, string>) || {}
+      color = customCfg.color || '#6366f1'
 
       const { data: cfg } = await db
         .from('booking_configs')
@@ -63,28 +65,35 @@ export default async function TurnosPage({ params }: { params: { id: string } })
     )
   }
 
+  const introEmoji = customCfg.intro_emoji || '📅'
+  const introTagline = customCfg.intro_tagline || 'Reservá tu turno online'
+  const introStyle = (customCfg.intro_style as 'bubbles' | 'sparkles' | 'petals') || 'bubbles'
+  const depositsEnabled = customCfg.deposits_enabled === 'true'
+  const instagram = customCfg.instagram || ''
+  const ownerPhone = customCfg.whatsapp || config.owner_phone || ''
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f9f5f6' }}>
-      {/* Header */}
-      <div className="text-white px-6 py-4 shadow-sm" style={{ backgroundColor: color }}>
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-base shrink-0">
-            {companyName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h1 className="text-base font-bold leading-tight">{companyName}</h1>
-            <p className="text-white/70 text-xs">Reservas online</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="text-white py-8 px-4 text-center" style={{ backgroundColor: color }}>
+        <h1 className="text-2xl font-bold">{companyName}</h1>
+        <p className="text-white/80 text-sm mt-1">Reservá tu turno online</p>
       </div>
 
-      {/* Wizard */}
-      <BookingWizard
-        clientId={clientId}
-        config={config}
-        companyName={companyName}
-        color={color}
-      />
+      <div className="max-w-5xl mx-auto p-4 pt-8 pb-16">
+        <BookingWizard
+          clientId={clientId}
+          config={config}
+          companyName={companyName}
+          color={color}
+          configId={params.id}
+          introEmoji={introEmoji}
+          introTagline={introTagline}
+          introStyle={introStyle}
+          depositsEnabled={depositsEnabled}
+          instagram={instagram}
+          ownerPhone={ownerPhone}
+        />
+      </div>
     </div>
   )
 }
