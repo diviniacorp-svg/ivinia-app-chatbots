@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { BookingConfig, Service, formatDateAR, formatPriceARS, getNextAvailableDates } from '@/lib/bookings'
+import SplashIntro from './SplashIntro'
 
 type Step = 'service' | 'date' | 'time' | 'info' | 'done'
 
@@ -80,14 +81,19 @@ function MiniCalendar({ availableDates, selectedDate, onSelect, color }: {
   )
 }
 
-export default function BookingWizard({ clientId, config, companyName, color, configId }: {
+export default function BookingWizard({ clientId, config, companyName, color, configId, introEmoji, introTagline, introStyle, depositsEnabled }: {
   clientId: string
   config: BookingConfig
   companyName: string
   color: string
   configId: string
+  introEmoji?: string
+  introTagline?: string
+  introStyle?: 'bubbles' | 'sparkles' | 'petals'
+  depositsEnabled?: boolean
 }) {
   const searchParams = useSearchParams()
+  const [splashDone, setSplashDone] = useState(false)
   const [step, setStep] = useState<Step>('service')
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedDate, setSelectedDate] = useState('')
@@ -196,7 +202,10 @@ export default function BookingWizard({ clientId, config, companyName, color, co
     }
   }
 
-  const depositPct = selectedService?.deposit_percentage ?? 0
+  // Seña: solo activa si depositsEnabled=true Y el servicio tiene deposit_percentage > 0
+  const depositPct = (depositsEnabled && selectedService?.deposit_percentage)
+    ? selectedService.deposit_percentage
+    : 0
   const depositAmount = depositPct > 0 && selectedService?.price_ars
     ? Math.round((selectedService.price_ars * depositPct) / 100)
     : 0
@@ -207,6 +216,20 @@ export default function BookingWizard({ clientId, config, companyName, color, co
     setStep('service'); setSelectedService(null); setSelectedDate('')
     setSelectedTime(''); setForm({ name: '', phone: '', email: '', notes: '' })
     setPaidSuccess(false); setHistory([])
+  }
+
+  // Mostrar splash intro si aún no terminó
+  if (!splashDone) {
+    return (
+      <SplashIntro
+        companyName={companyName}
+        tagline={introTagline || 'Reservá tu turno online'}
+        color={color}
+        emoji={introEmoji || '📅'}
+        style={introStyle || 'bubbles'}
+        onDone={() => setSplashDone(true)}
+      />
+    )
   }
 
   if (step === 'done') {

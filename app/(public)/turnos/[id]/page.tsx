@@ -6,11 +6,11 @@ import BookingWizard from './BookingWizard'
 export default async function TurnosPage({ params }: { params: { id: string } }) {
   const db = createAdminClient()
 
-  // Buscar booking_config por id (URL principal) o por client chatbot_id (compat)
   let config: BookingConfig | null = null
   let companyName = ''
   let color = '#6366f1'
   let clientId = ''
+  let customCfg: Record<string, string> = {}
 
   // Opción 1: el id ES el booking_config.id
   const { data: cfgById } = await db
@@ -25,9 +25,10 @@ export default async function TurnosPage({ params }: { params: { id: string } })
     clientId = cfgById.client_id
     const client = cfgById.clients as { company_name: string; custom_config: Record<string, string> } | null
     companyName = client?.company_name || ''
-    color = client?.custom_config?.color || '#6366f1'
+    customCfg = (client?.custom_config as Record<string, string>) || {}
+    color = customCfg.color || '#6366f1'
   } else {
-    // Opción 2: el id es chatbot_id del cliente (compatibilidad hacia atrás)
+    // Opción 2: el id es chatbot_id del cliente
     const { data: client } = await db
       .from('clients')
       .select('id, company_name, custom_config')
@@ -37,7 +38,8 @@ export default async function TurnosPage({ params }: { params: { id: string } })
     if (client) {
       clientId = client.id
       companyName = client.company_name
-      color = (client.custom_config as Record<string, string>)?.color || '#6366f1'
+      customCfg = (client.custom_config as Record<string, string>) || {}
+      color = customCfg.color || '#6366f1'
 
       const { data: cfg } = await db
         .from('booking_configs')
@@ -63,15 +65,20 @@ export default async function TurnosPage({ params }: { params: { id: string } })
     )
   }
 
+  // Config de intro desde custom_config del cliente
+  const introEmoji = customCfg.intro_emoji || '📅'
+  const introTagline = customCfg.intro_tagline || 'Reservá tu turno online'
+  const introStyle = (customCfg.intro_style as 'bubbles' | 'sparkles' | 'petals') || 'bubbles'
+  const depositsEnabled = customCfg.deposits_enabled === 'true'
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header (oculto mientras el splash está activo, se ve después) */}
       <div className="text-white py-8 px-4 text-center" style={{ backgroundColor: color }}>
         <h1 className="text-2xl font-bold">{companyName}</h1>
         <p className="text-white/80 text-sm mt-1">Reservá tu turno online</p>
       </div>
 
-      {/* Wizard */}
       <div className="max-w-lg mx-auto p-4 pt-8 pb-16">
         <BookingWizard
           clientId={clientId}
@@ -79,6 +86,10 @@ export default async function TurnosPage({ params }: { params: { id: string } })
           companyName={companyName}
           color={color}
           configId={params.id}
+          introEmoji={introEmoji}
+          introTagline={introTagline}
+          introStyle={introStyle}
+          depositsEnabled={depositsEnabled}
         />
       </div>
     </div>

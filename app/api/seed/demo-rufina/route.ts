@@ -37,6 +37,10 @@ export async function GET() {
       direccion: 'San Luis Capital',
       whatsapp: '5492664000000',
       instagram: 'rufinaunas1',
+      intro_emoji: '💅',
+      intro_tagline: 'Tus uñas, tu estilo',
+      intro_style: 'sparkles',
+      deposits_enabled: 'true',
     },
   }
 
