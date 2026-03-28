@@ -78,6 +78,7 @@ export default async function TurnosPage({ params }: { params: { id: string } })
           config={config}
           companyName={companyName}
           color={color}
+          configId={params.id}
         />
       </div>
     </div>

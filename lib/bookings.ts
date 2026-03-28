@@ -4,6 +4,7 @@ export type Service = {
   duration_minutes: number
   price_ars: number
   description: string
+  deposit_percentage?: number  // 0-100 — si > 0, habilita pago de seña
 }
 
 export type DaySchedule = { open: string; close: string } | null

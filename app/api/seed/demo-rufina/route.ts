@@ -57,17 +57,17 @@ export async function GET() {
 
   // 2. Crear o actualizar booking config
   const services = [
-    { id: uuidv4(), name: 'Esmaltado semipermanente manos', description: 'Duración hasta 3 semanas', duration_minutes: 60, price_ars: 16000 },
-    { id: uuidv4(), name: 'Esmaltado común manos', description: 'Acabado brillante o mate', duration_minutes: 45, price_ars: 9000 },
-    { id: uuidv4(), name: 'Esmaltado semipermanente pies', description: 'Con limpieza incluida', duration_minutes: 60, price_ars: 13000 },
-    { id: uuidv4(), name: 'Esmaltado común pies', description: '', duration_minutes: 45, price_ars: 7500 },
-    { id: uuidv4(), name: 'Uñas esculpidas en gel', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 28000 },
-    { id: uuidv4(), name: 'Uñas esculpidas en acrílico', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 26000 },
-    { id: uuidv4(), name: 'Remoción semipermanente', description: 'Incluye hidratación', duration_minutes: 30, price_ars: 5500 },
-    { id: uuidv4(), name: 'Remoción esculpidas', description: 'Con cuidado de la uña natural', duration_minutes: 45, price_ars: 8000 },
-    { id: uuidv4(), name: 'Diseño nail art (manos)', description: 'Diseños personalizados, precio por consultar', duration_minutes: 30, price_ars: 0 },
-    { id: uuidv4(), name: 'Manicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 60, price_ars: 13000 },
-    { id: uuidv4(), name: 'Pedicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 75, price_ars: 17000 },
+    { id: uuidv4(), name: 'Esmaltado semipermanente manos', description: 'Duración hasta 3 semanas', duration_minutes: 60, price_ars: 16000, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Esmaltado común manos', description: 'Acabado brillante o mate', duration_minutes: 45, price_ars: 9000, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Esmaltado semipermanente pies', description: 'Con limpieza incluida', duration_minutes: 60, price_ars: 13000, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Esmaltado común pies', description: '', duration_minutes: 45, price_ars: 7500, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Uñas esculpidas en gel', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 28000, deposit_percentage: 30 },
+    { id: uuidv4(), name: 'Uñas esculpidas en acrílico', description: 'Manos completas, diseño incluido', duration_minutes: 90, price_ars: 26000, deposit_percentage: 30 },
+    { id: uuidv4(), name: 'Remoción semipermanente', description: 'Incluye hidratación', duration_minutes: 30, price_ars: 5500, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Remoción esculpidas', description: 'Con cuidado de la uña natural', duration_minutes: 45, price_ars: 8000, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Diseño nail art (manos)', description: 'Diseños personalizados, precio por consultar', duration_minutes: 30, price_ars: 0, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Manicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 60, price_ars: 13000, deposit_percentage: 0 },
+    { id: uuidv4(), name: 'Pedicura completa', description: 'Limpieza + cutícula + esmaltado', duration_minutes: 75, price_ars: 17000, deposit_percentage: 0 },
   ]
 
   const bookingConfig = {
