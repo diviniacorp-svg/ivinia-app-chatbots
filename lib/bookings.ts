@@ -1,6 +1,7 @@
 export type Service = {
   id: string
   name: string
+  category?: string            // opcional — para agrupar servicios por categoría
   duration_minutes: number
   price_ars: number
   description: string
@@ -105,13 +106,13 @@ export function getAvailableSlots(
   })
 }
 
-// Genera los próximos N días disponibles (con al menos 1 slot libre)
-export function getNextAvailableDates(config: BookingConfig, daysAhead = 30): string[] {
+// Genera los próximos N días disponibles
+export function getNextAvailableDates(config: BookingConfig, daysAhead = 90): string[] {
   const dates: string[] = []
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  for (let i = 1; i <= daysAhead; i++) {
+  for (let i = 0; i <= daysAhead; i++) {
     const d = new Date(today)
     d.setDate(today.getDate() + i)
     const dateStr = d.toISOString().split('T')[0]
@@ -125,6 +126,17 @@ export function getNextAvailableDates(config: BookingConfig, daysAhead = 30): st
   }
 
   return dates
+}
+
+// Devuelve el primer mes con fechas disponibles { year, month } (0-indexed)
+export function getFirstAvailableMonth(availableDates: string[]): { year: number; month: number } {
+  if (!availableDates.length) {
+    const today = new Date()
+    return { year: today.getFullYear(), month: today.getMonth() }
+  }
+  const first = availableDates[0]
+  const [y, m] = first.split('-').map(Number)
+  return { year: y, month: m - 1 }
 }
 
 export function formatDateAR(dateStr: string): string {
