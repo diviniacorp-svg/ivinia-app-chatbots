@@ -27,14 +27,9 @@ function MiniCalendar({ availableDates, selectedDate, onSelect, color }: {
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const availableSet = useMemo(() => new Set(availableDates), [availableDates])
-
   const firstDay = new Date(viewYear, viewMonth, 1).getDay()
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
-
-  const cells: (number | null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ]
+  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -95,7 +90,12 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   const searchParams = useSearchParams()
   const [splashDone, setSplashDone] = useState(false)
   const [step, setStep] = useState<Step>('service')
-  const [selectedService, setSelectedService] = useState<Service | null>(null)
+
+  // Multi-servicio
+  const [selectedServices, setSelectedServices] = useState<Service[]>([])
+  const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0)
+  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price_ars, 0)
+
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [slots, setSlots] = useState<string[]>([])
@@ -105,22 +105,25 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   const [error, setError] = useState('')
   const [paidSuccess, setPaidSuccess] = useState(false)
 
-  // Historial de clienta
   const [history, setHistory] = useState<PastAppt[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const historyRef = useRef<AbortController | null>(null)
 
   const availableDates = getNextAvailableDates(config, config.advance_booking_days || 30)
 
-  // Detectar retorno de MercadoPago
   useEffect(() => {
     const paid = searchParams.get('paid')
     const apptId = searchParams.get('appt')
-    if (paid === 'true' && apptId) {
-      setPaidSuccess(true)
-      setStep('done')
-    }
+    if (paid === 'true' && apptId) { setPaidSuccess(true); setStep('done') }
   }, [searchParams])
+
+  function toggleService(service: Service) {
+    setSelectedServices(prev =>
+      prev.find(s => s.id === service.id)
+        ? prev.filter(s => s.id !== service.id)
+        : [...prev, service]
+    )
+  }
 
   async function fetchHistory(phone: string) {
     if (phone.replace(/\D/g, '').length < 8) { setHistory([]); return }
@@ -128,22 +131,15 @@ export default function BookingWizard({ clientId, config, companyName, color, co
     historyRef.current = new AbortController()
     setLoadingHistory(true)
     try {
-      const res = await fetch(`/api/bookings/${clientId}/history?phone=${encodeURIComponent(phone)}`, {
-        signal: historyRef.current.signal
-      })
+      const res = await fetch(`/api/bookings/${clientId}/history?phone=${encodeURIComponent(phone)}`, { signal: historyRef.current.signal })
       const data = await res.json()
       setHistory(data.appointments || [])
-    } catch {
-      // abortado o error — no mostrar nada
-    } finally {
-      setLoadingHistory(false)
-    }
+    } catch { /* abortado */ } finally { setLoadingHistory(false) }
   }
 
-  async function loadSlots(date: string, service: Service) {
-    setLoadingSlots(true)
-    setSlots([])
-    const res = await fetch(`/api/bookings/${clientId}?date=${date}&serviceId=${service.id}`)
+  async function loadSlots(date: string) {
+    setLoadingSlots(true); setSlots([])
+    const res = await fetch(`/api/bookings/${clientId}?date=${date}&totalDuration=${totalDuration}`)
     const data = await res.json()
     setSlots(data.slots || [])
     setLoadingSlots(false)
@@ -151,24 +147,22 @@ export default function BookingWizard({ clientId, config, companyName, color, co
 
   async function handleSubmit() {
     if (!form.name.trim()) { setError('El nombre es requerido'); return }
-    setSubmitting(true)
-    setError('')
+    setSubmitting(true); setError('')
     const res = await fetch(`/api/bookings/${clientId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        serviceId: selectedService!.id,
-        date: selectedDate,
-        time: selectedTime,
-        customerName: form.name,
-        customerPhone: form.phone,
-        customerEmail: form.email,
-        customerNotes: form.notes,
+        serviceIds: selectedServices.map(s => s.id),
+        serviceNames: selectedServices.map(s => s.name).join(' + '),
+        totalDuration,
+        totalPrice,
+        date: selectedDate, time: selectedTime,
+        customerName: form.name, customerPhone: form.phone,
+        customerEmail: form.email, customerNotes: form.notes,
       }),
     })
-    if (res.ok) {
-      setStep('done')
-    } else {
+    if (res.ok) { setStep('done') }
+    else {
       const data = await res.json()
       setError(data.error || 'Error al reservar. Intentá de nuevo.')
       setSubmitting(false)
@@ -177,58 +171,47 @@ export default function BookingWizard({ clientId, config, companyName, color, co
 
   async function handlePayDeposit() {
     if (!form.name.trim()) { setError('El nombre es requerido'); return }
-    setSubmitting(true)
-    setError('')
+    setSubmitting(true); setError('')
     const res = await fetch(`/api/bookings/${clientId}/deposit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        serviceId: selectedService!.id,
-        date: selectedDate,
-        time: selectedTime,
-        customerName: form.name,
-        customerPhone: form.phone,
-        customerEmail: form.email,
-        customerNotes: form.notes,
+        serviceIds: selectedServices.map(s => s.id),
+        serviceNames: selectedServices.map(s => s.name).join(' + '),
+        totalDuration, totalPrice,
+        date: selectedDate, time: selectedTime,
+        customerName: form.name, customerPhone: form.phone,
+        customerEmail: form.email, customerNotes: form.notes,
         configId,
       }),
     })
     const data = await res.json()
-    if (res.ok && data.initPoint) {
-      window.location.href = data.initPoint
-    } else {
-      setError(data.error || 'Error al procesar la seña')
-      setSubmitting(false)
-    }
+    if (res.ok && data.initPoint) { window.location.href = data.initPoint }
+    else { setError(data.error || 'Error al procesar la seña'); setSubmitting(false) }
   }
 
-  // Seña: solo activa si depositsEnabled=true Y el servicio tiene deposit_percentage > 0
-  const depositPct = (depositsEnabled && selectedService?.deposit_percentage)
-    ? selectedService.deposit_percentage
+  // Seña: activa si depositsEnabled y algún servicio seleccionado tiene deposit_percentage > 0
+  const maxDepositPct = depositsEnabled
+    ? Math.max(...selectedServices.map(s => s.deposit_percentage ?? 0), 0)
     : 0
-  const depositAmount = depositPct > 0 && selectedService?.price_ars
-    ? Math.round((selectedService.price_ars * depositPct) / 100)
+  const depositAmount = maxDepositPct > 0 && totalPrice > 0
+    ? Math.round((totalPrice * maxDepositPct) / 100)
     : 0
 
   const btnStyle = { backgroundColor: color }
 
   function reset() {
-    setStep('service'); setSelectedService(null); setSelectedDate('')
-    setSelectedTime(''); setForm({ name: '', phone: '', email: '', notes: '' })
+    setStep('service'); setSelectedServices([])
+    setSelectedDate(''); setSelectedTime('')
+    setForm({ name: '', phone: '', email: '', notes: '' })
     setPaidSuccess(false); setHistory([])
   }
 
-  // Mostrar splash intro si aún no terminó
   if (!splashDone) {
     return (
-      <SplashIntro
-        companyName={companyName}
-        tagline={introTagline || 'Reservá tu turno online'}
-        color={color}
-        emoji={introEmoji || '📅'}
-        style={introStyle || 'bubbles'}
-        onDone={() => setSplashDone(true)}
-      />
+      <SplashIntro companyName={companyName} tagline={introTagline || 'Reservá tu turno online'}
+        color={color} emoji={introEmoji || '📅'} style={introStyle || 'bubbles'}
+        onDone={() => setSplashDone(true)} />
     )
   }
 
@@ -239,96 +222,116 @@ export default function BookingWizard({ clientId, config, companyName, color, co
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           {paidSuccess ? '¡Seña confirmada!' : '¡Turno reservado!'}
         </h2>
-        {selectedService && selectedDate && selectedTime ? (
-          <p className="text-gray-600 mb-2">
-            {selectedService.name} el {formatDateAR(selectedDate)} a las {selectedTime}
-          </p>
-        ) : null}
-        {paidSuccess && (
-          <p className="text-green-600 text-sm font-medium mb-2">Tu pago fue procesado correctamente.</p>
-        )}
+        <p className="text-gray-600 mb-2">
+          {selectedServices.map(s => s.name).join(' + ') || 'Servicio'} · {formatDateAR(selectedDate)} a las {selectedTime}
+        </p>
+        {paidSuccess && <p className="text-green-600 text-sm font-medium mb-2">Tu pago fue procesado correctamente.</p>}
         <p className="text-gray-500 text-sm mt-2">Te esperamos en {companyName} 💅</p>
-        <button onClick={reset} className="mt-8 text-sm underline" style={{ color }}>
-          Reservar otro turno
-        </button>
+        <button onClick={reset} className="mt-8 text-sm underline" style={{ color }}>Reservar otro turno</button>
       </div>
     )
   }
 
   return (
     <div className="max-w-lg mx-auto">
-      {/* Progress bar */}
+      {/* Progress */}
       <div className="flex gap-1 mb-8">
         {(['service', 'date', 'time', 'info'] as Step[]).map((s, i) => (
-          <div key={s} className={`flex-1 h-1.5 rounded-full transition-colors ${
-            ['service', 'date', 'time', 'info'].indexOf(step) >= i ? '' : 'bg-gray-200'
-          }`} style={['service', 'date', 'time', 'info'].indexOf(step) >= i ? { backgroundColor: color } : {}} />
+          <div key={s} className="flex-1 h-1.5 rounded-full transition-all"
+            style={['service','date','time','info'].indexOf(step) >= i ? { backgroundColor: color } : { backgroundColor: '#e5e7eb' }} />
         ))}
       </div>
 
-      {/* Step 1: Servicio */}
+      {/* STEP 1: Multi-servicio */}
       {step === 'service' && (
         <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">¿Qué servicio necesitás?</h2>
-          <p className="text-gray-500 text-sm mb-6">Elegí una opción para continuar</p>
-          <div className="space-y-3">
-            {config.services.map(service => (
-              <button key={service.id} onClick={() => { setSelectedService(service); setStep('date') }}
-                className="w-full text-left border-2 border-gray-200 hover:border-indigo-400 rounded-xl p-4 transition-all group">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold text-gray-900">{service.name}</p>
-                    {service.description && <p className="text-sm text-gray-500 mt-0.5">{service.description}</p>}
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-sm text-gray-400">⏱ {service.duration_minutes} min</span>
-                      {(service.deposit_percentage ?? 0) > 0 && (
-                        <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                          Requiere seña {service.deposit_percentage}%
-                        </span>
-                      )}
+          <h2 className="text-xl font-bold text-gray-900 mb-1">¿Qué servicios querés?</h2>
+          <p className="text-gray-500 text-sm mb-5">Podés elegir más de uno</p>
+          <div className="space-y-2.5">
+            {config.services.map(service => {
+              const isSelected = selectedServices.some(s => s.id === service.id)
+              return (
+                <button key={service.id} onClick={() => toggleService(service)}
+                  className={`w-full text-left rounded-xl p-4 border-2 transition-all ${isSelected ? 'border-current bg-opacity-5' : 'border-gray-200 hover:border-gray-300'}`}
+                  style={isSelected ? { borderColor: color, backgroundColor: color + '0d' } : {}}>
+                  <div className="flex items-center gap-3">
+                    {/* Checkbox */}
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-current' : 'border-gray-300'}`}
+                      style={isSelected ? { borderColor: color, backgroundColor: color } : {}}>
+                      {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm">{service.name}</p>
+                      {service.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{service.description}</p>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-400">⏱ {service.duration_minutes} min</span>
+                        {depositsEnabled && (service.deposit_percentage ?? 0) > 0 && (
+                          <span className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-full">Seña {service.deposit_percentage}%</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold ml-2 whitespace-nowrap flex-shrink-0" style={{ color }}>
+                      {formatPriceARS(service.price_ars)}
+                    </span>
                   </div>
-                  <span className="text-sm font-bold ml-4 whitespace-nowrap" style={{ color }}>
-                    {formatPriceARS(service.price_ars)}
-                  </span>
-                </div>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
+
+          {/* Barra de total */}
+          {selectedServices.length > 0 && (
+            <div className="mt-6 p-4 rounded-2xl" style={{ backgroundColor: color + '12' }}>
+              <div className="flex justify-between items-center mb-3 text-sm">
+                <span className="text-gray-600">{selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''} · ⏱ {totalDuration} min</span>
+                <span className="font-black text-lg" style={{ color }}>{formatPriceARS(totalPrice)}</span>
+              </div>
+              <div className="text-xs text-gray-500 mb-3">
+                {selectedServices.map(s => s.name).join(' + ')}
+              </div>
+              <button onClick={() => setStep('date')} style={btnStyle}
+                className="w-full text-white font-bold py-3.5 rounded-xl text-base">
+                Elegir fecha y hora →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Step 2: Fecha */}
+      {/* STEP 2: Fecha */}
       {step === 'date' && (
         <div>
           <button onClick={() => setStep('service')} className="text-sm text-gray-400 mb-4 flex items-center gap-1">← Volver</button>
           <h2 className="text-xl font-bold text-gray-900 mb-1">¿Qué día preferís?</h2>
-          <p className="text-gray-500 text-sm mb-4">Para <strong>{selectedService!.name}</strong></p>
+          <p className="text-gray-500 text-sm mb-4">
+            {selectedServices.map(s => s.name).join(' + ')} · {totalDuration} min
+          </p>
           <MiniCalendar availableDates={availableDates} selectedDate={selectedDate}
-            onSelect={async (date) => { setSelectedDate(date); await loadSlots(date, selectedService!); setStep('time') }}
+            onSelect={async (date) => { setSelectedDate(date); await loadSlots(date); setStep('time') }}
             color={color} />
           <p className="text-xs text-gray-400 text-center mt-3">Próximos {config.advance_booking_days || 30} días disponibles</p>
         </div>
       )}
 
-      {/* Step 3: Hora */}
+      {/* STEP 3: Hora */}
       {step === 'time' && (
         <div>
           <button onClick={() => setStep('date')} className="text-sm text-gray-400 mb-4 flex items-center gap-1">← Volver</button>
           <h2 className="text-xl font-bold text-gray-900 mb-1">¿A qué hora?</h2>
-          <p className="text-gray-500 text-sm mb-6">{formatDateAR(selectedDate)} — {selectedService!.name}</p>
+          <p className="text-gray-500 text-sm mb-6">{formatDateAR(selectedDate)} · {totalDuration} min en total</p>
           {loadingSlots ? (
             <p className="text-gray-400 text-center py-8">Cargando horarios...</p>
           ) : slots.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No hay turnos disponibles este día.</p>
+              <p className="text-gray-500">No hay turnos disponibles este día para {totalDuration} min.</p>
               <button onClick={() => setStep('date')} className="mt-4 text-sm underline" style={{ color }}>Elegir otro día</button>
             </div>
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {slots.map(slot => (
                 <button key={slot} onClick={() => { setSelectedTime(slot); setStep('info') }}
-                  className="border-2 border-gray-200 hover:border-indigo-400 rounded-lg py-3 text-sm font-medium text-gray-700 transition-all">
+                  className="border-2 border-gray-200 hover:border-opacity-100 rounded-lg py-3 text-sm font-medium text-gray-700 transition-all"
+                  style={{ '--hover-border': color } as React.CSSProperties}>
                   {slot}
                 </button>
               ))}
@@ -337,57 +340,58 @@ export default function BookingWizard({ clientId, config, companyName, color, co
         </div>
       )}
 
-      {/* Step 4: Datos + historial + seña */}
+      {/* STEP 4: Datos */}
       {step === 'info' && (
         <div>
           <button onClick={() => setStep('time')} className="text-sm text-gray-400 mb-4 flex items-center gap-1">← Volver</button>
           <h2 className="text-xl font-bold text-gray-900 mb-1">Tus datos</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            {selectedService!.name} · {formatDateAR(selectedDate)} · {selectedTime}
+          <p className="text-gray-500 text-sm mb-5">
+            {selectedServices.map(s => s.name).join(' + ')} · {formatDateAR(selectedDate)} · {selectedTime}
           </p>
+
+          {/* Resumen */}
+          <div className="mb-5 p-3 rounded-xl border" style={{ borderColor: color + '30', backgroundColor: color + '08' }}>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Total estimado</span>
+              <span className="font-bold" style={{ color }}>{formatPriceARS(totalPrice)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>{totalDuration} min · {selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''}</span>
+              <span>{selectedTime}hs</span>
+            </div>
+          </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-              <input type="text" value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500"
                 placeholder="Tu nombre completo" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp / Teléfono</label>
-              <input type="tel" value={form.phone}
-                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                 onBlur={e => fetchHistory(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500"
                 placeholder="+54 9 266..." />
-
-              {/* Historial de clienta */}
-              {loadingHistory && (
-                <p className="text-xs text-gray-400 mt-2">Buscando tus visitas anteriores...</p>
-              )}
+              {loadingHistory && <p className="text-xs text-gray-400 mt-2">Buscando visitas anteriores...</p>}
               {!loadingHistory && history.length > 0 && (
                 <div className="mt-3 p-3 rounded-xl border" style={{ borderColor: color + '40', backgroundColor: color + '08' }}>
-                  <p className="text-xs font-semibold mb-2" style={{ color }}>
-                    ¡Bienvenida de vuelta! Tus últimas visitas:
-                  </p>
-                  <div className="space-y-1.5">
-                    {history.map((h, i) => (
-                      <div key={i} className="flex justify-between items-center text-xs text-gray-600">
-                        <span className="font-medium">{h.service_name}</span>
-                        <span className="text-gray-400">{formatDateAR(h.appointment_date)} {h.appointment_time}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs font-semibold mb-2" style={{ color }}>¡Bienvenida de vuelta! Últimas visitas:</p>
+                  {history.map((h, i) => (
+                    <div key={i} className="flex justify-between text-xs text-gray-600 mt-1">
+                      <span className="font-medium truncate">{h.service_name}</span>
+                      <span className="text-gray-400 ml-2 flex-shrink-0">{formatDateAR(h.appointment_date)}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email (opcional)</label>
-              <input type="email" value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500"
                 placeholder="tu@email.com" />
             </div>
@@ -401,27 +405,22 @@ export default function BookingWizard({ clientId, config, companyName, color, co
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
-            {/* Botones de acción: con/sin seña */}
             {depositAmount > 0 ? (
               <div className="space-y-3">
-                <button onClick={handlePayDeposit} disabled={submitting || !form.name.trim()}
-                  style={btnStyle}
-                  className="w-full text-white font-bold py-4 rounded-xl disabled:opacity-50 transition-opacity text-base flex flex-col items-center">
+                <button onClick={handlePayDeposit} disabled={submitting || !form.name.trim()} style={btnStyle}
+                  className="w-full text-white font-bold py-4 rounded-xl disabled:opacity-50 flex flex-col items-center">
                   <span>{submitting ? 'Procesando...' : `Pagar seña ${formatPriceARS(depositAmount)} y confirmar`}</span>
-                  <span className="text-xs opacity-80 font-normal mt-0.5">
-                    {depositPct}% del total · tu turno queda asegurado
-                  </span>
+                  <span className="text-xs opacity-80 font-normal mt-0.5">{maxDepositPct}% del total · tu lugar queda asegurado</span>
                 </button>
                 <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
-                  className="w-full border-2 font-semibold py-3.5 rounded-xl disabled:opacity-50 transition-all text-sm"
+                  className="w-full border-2 font-semibold py-3.5 rounded-xl disabled:opacity-50 text-sm"
                   style={{ borderColor: color, color }}>
-                  {submitting ? 'Reservando...' : 'Reservar sin seña (pendiente de confirmación)'}
+                  Reservar sin seña (pendiente de confirmación)
                 </button>
               </div>
             ) : (
-              <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
-                style={btnStyle}
-                className="w-full text-white font-semibold py-4 rounded-xl disabled:opacity-50 transition-opacity text-lg">
+              <button onClick={handleSubmit} disabled={submitting || !form.name.trim()} style={btnStyle}
+                className="w-full text-white font-semibold py-4 rounded-xl disabled:opacity-50 text-lg">
                 {submitting ? 'Confirmando...' : 'Confirmar turno'}
               </button>
             )}
