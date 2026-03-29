@@ -1,7 +1,3 @@
-import { ApifyClient } from 'apify-client'
-
-const client = new ApifyClient({ token: process.env.APIFY_API_TOKEN })
-
 export interface ScrapedLead {
   company_name: string
   contact_name: string
@@ -28,6 +24,10 @@ function calculateScore(lead: Partial<ScrapedLead> & { rating?: number; reviews?
 }
 
 export async function scrapeLeads(rubro: string, city: string, maxItems = 20): Promise<ScrapedLead[]> {
+  // Importación dinámica para evitar que proxy-agent falle en build time
+  const { ApifyClient } = await import('apify-client')
+  const client = new ApifyClient({ token: process.env.APIFY_API_TOKEN })
+
   const searchQuery = `${rubro} en ${city}`
 
   const run = await client.actor('apify/google-maps-scraper').call({

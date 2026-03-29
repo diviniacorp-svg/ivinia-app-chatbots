@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
+  UserCheck,
   CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu, X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/clientes', label: 'Clientes', icon: UserCheck },
   { href: '/templates', label: 'Templates', icon: FileText },
   { href: '/leads', label: 'Leads', icon: Users },
   { href: '/crm', label: 'CRM', icon: Kanban },
