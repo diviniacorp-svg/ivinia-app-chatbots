@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('clients')
-      .select('*')
+      .select('*, booking_configs(id, is_active)')
       .order('created_at', { ascending: false })
 
     if (error) throw error
