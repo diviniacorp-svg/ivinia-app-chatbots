@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Plus, Trash2, Save, ArrowLeft, ExternalLink, Copy, Check, Bot } from 'lucide-react'
+import { Plus, Trash2, Save, ArrowLeft, ExternalLink, Copy, Check, Bot, Smile, X } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false })
 
 const DIAS = [
   { key: 'lun', label: 'Lunes' },
@@ -65,10 +68,38 @@ export default function TurnosConfigPage() {
   const [introTagline, setIntroTagline] = useState('')
   const [introStyle, setIntroStyle] = useState('bubbles')
   const [instagram, setInstagram] = useState('')
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showEmojiPicker) return
+    function handleClick(e: MouseEvent) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showEmojiPicker])
+
+  function addEmoji(emojiData: { emoji: string }) {
+    const current = introEmoji.split(',').map(e => e.trim()).filter(Boolean)
+    if (current.length >= 3) return
+    if (current.includes(emojiData.emoji)) return
+    const next = [...current, emojiData.emoji]
+    setIntroEmoji(next.join(','))
+  }
+
+  function removeEmoji(emoji: string) {
+    const next = introEmoji.split(',').map(e => e.trim()).filter(e => e && e !== emoji)
+    setIntroEmoji(next.join(','))
+  }
+
+  const emojiList = introEmoji.split(',').map(e => e.trim()).filter(Boolean)
 
   const loadConfig = useCallback(async (cId: string) => {
     const [cfgRes, clientRes] = await Promise.all([
@@ -534,16 +565,53 @@ export default function TurnosConfigPage() {
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
-              Emojis de la intro (separados por coma)
+              Emojis de la intro
             </label>
-            <input
-              type="text"
-              value={introEmoji}
-              onChange={e => setIntroEmoji(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200"
-              placeholder="✂️,💇‍♀️,💈"
-            />
-            <p className="text-xs text-gray-400 mt-1">Pueden ser 1, 2 o 3 emojis. Aparecen flotando en la pantalla de bienvenida.</p>
+            <div className="relative" ref={emojiPickerRef}>
+              <div className="flex flex-wrap items-center gap-2 min-h-[42px] border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                {emojiList.map(e => (
+                  <span
+                    key={e}
+                    className="flex items-center gap-1 bg-purple-50 border border-purple-100 rounded-full px-2 py-0.5 text-lg"
+                  >
+                    {e}
+                    <button
+                      type="button"
+                      onClick={() => removeEmoji(e)}
+                      className="text-gray-400 hover:text-red-500 transition-colors ml-0.5"
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(v => !v)}
+                  title={emojiList.length >= 3 ? 'Eliminá uno para agregar otro' : 'Agregar emoji'}
+                  className={`flex items-center justify-center w-8 h-8 rounded-full border transition-colors text-xl ${
+                    showEmojiPicker
+                      ? 'bg-purple-100 border-purple-300 text-purple-700'
+                      : 'bg-gray-50 border-gray-200 hover:bg-purple-50 hover:border-purple-200'
+                  }`}
+                >
+                  😊
+                </button>
+              </div>
+              {showEmojiPicker && (
+                <div className="absolute z-50 top-full mt-1 left-0 shadow-xl rounded-xl overflow-hidden">
+                  <EmojiPicker
+                    onEmojiClick={(emojiData) => {
+                      addEmoji(emojiData)
+                      if (emojiList.length + 1 >= 3) setShowEmojiPicker(false)
+                    }}
+                    searchPlaceholder="Buscar emoji..."
+                    height={380}
+                    width={320}
+                  />
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Hasta 3 emojis. Aparecen flotando en la pantalla de bienvenida.</p>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
