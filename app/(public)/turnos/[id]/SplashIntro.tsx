@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from 'react'
 
-// Genera burbujas con posiciones/tamaños aleatorios pero seeded para no cambiar en cada render
 const BUBBLES = Array.from({ length: 12 }, (_, i) => ({
-  size: 12 + ((i * 37) % 32),
+  size: 14 + ((i * 37) % 28),
   left: 4 + ((i * 73) % 88),
   delay: (i * 0.35) % 2.8,
   duration: 3.5 + ((i * 19) % 2.5),
-  opacity: 0.12 + ((i * 7) % 20) / 100,
+  opacity: 0.55 + ((i * 7) % 30) / 100,
 }))
 
 const SPARKLES = ['✨', '💫', '⭐', '🌟', '✦', '✧']
 const SPARKLE_POS = Array.from({ length: 10 }, (_, i) => ({
-  char: SPARKLES[i % SPARKLES.length],
   top: 5 + ((i * 53) % 80),
   left: 3 + ((i * 71) % 90),
   delay: (i * 0.4) % 3,
@@ -39,6 +37,10 @@ export default function SplashIntro({
 }) {
   const [fading, setFading] = useState(false)
 
+  // Soporte multi-emoji: "✂️,💇‍♀️,💈" → ['✂️', '💇‍♀️', '💈']
+  const emojis = emoji.split(',').map(e => e.trim()).filter(Boolean)
+  const mainEmoji = emojis[0] || '📅'
+
   function close() {
     if (fading) return
     setFading(true)
@@ -56,7 +58,7 @@ export default function SplashIntro({
         @keyframes bubble-rise {
           0%   { transform: translateY(0) scale(1); opacity: var(--op); }
           80%  { opacity: var(--op); }
-          100% { transform: translateY(-110vh) scale(0.6); opacity: 0; }
+          100% { transform: translateY(-110vh) scale(0.7); opacity: 0; }
         }
         @keyframes sparkle-float {
           0%, 100% { transform: translateY(0) rotate(0deg); opacity: var(--op); }
@@ -71,8 +73,12 @@ export default function SplashIntro({
           100% { opacity: 0.82; }
         }
         @keyframes splash-emoji {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-14px); }
+          0%, 100% { transform: translateY(0) scale(1); }
+          50%       { transform: translateY(-14px) scale(1.1); }
+        }
+        @keyframes splash-emoji2 {
+          0%, 100% { transform: translateY(0) scale(1) rotate(-5deg); }
+          50%       { transform: translateY(-10px) scale(1.08) rotate(5deg); }
         }
         @keyframes splash-hint {
           0%, 100% { opacity: 0.35; }
@@ -93,21 +99,21 @@ export default function SplashIntro({
           background: `linear-gradient(150deg, color-mix(in srgb, ${color} 55%, #000) 0%, ${color} 55%, color-mix(in srgb, ${color} 75%, #fff) 100%)`,
         }}
       >
-        {/* Decoración de fondo según estilo */}
+        {/* Partículas de fondo — siempre usa los emojis del negocio */}
         {introStyle === 'bubbles' && BUBBLES.map((b, i) => (
           <div
             key={i}
-            className="absolute rounded-full pointer-events-none"
+            className="absolute pointer-events-none leading-none"
             style={{
-              width: b.size,
-              height: b.size,
+              fontSize: b.size,
               left: `${b.left}%`,
               bottom: '-60px',
-              background: 'rgba(255,255,255,0.18)',
               ['--op' as string]: b.opacity,
               animation: `bubble-rise ${b.duration}s ${b.delay}s ease-in infinite`,
             }}
-          />
+          >
+            {emojis[i % emojis.length] || mainEmoji}
+          </div>
         ))}
 
         {introStyle === 'sparkles' && SPARKLE_POS.map((s, i) => (
@@ -122,7 +128,8 @@ export default function SplashIntro({
               animation: `sparkle-float ${2.5 + s.delay}s ${s.delay}s ease-in-out infinite`,
             }}
           >
-            {s.char}
+            {/* Alterna entre los emojis del negocio y sparkles decorativos */}
+            {i % 2 === 0 ? (emojis[Math.floor(i / 2) % emojis.length] || SPARKLES[i % SPARKLES.length]) : SPARKLES[i % SPARKLES.length]}
           </div>
         ))}
 
@@ -138,16 +145,25 @@ export default function SplashIntro({
               animation: `sparkle-float ${3 + s.delay}s ${s.delay}s ease-in-out infinite`,
             }}
           >
-            🌸
+            {emojis.length > 1 ? emojis[i % emojis.length] : '🌸'}
           </div>
         ))}
 
-        {/* Emoji flotante */}
-        <div
-          className="text-7xl mb-6 filter drop-shadow-lg"
-          style={{ animation: 'splash-emoji 2.2s ease-in-out infinite' }}
-        >
-          {emoji}
+        {/* Emoji(s) central(es) */}
+        <div className="flex items-center gap-3 mb-6 filter drop-shadow-lg">
+          {emojis.slice(0, 3).map((e, i) => (
+            <div
+              key={i}
+              className="text-6xl"
+              style={{
+                animation: i % 2 === 0
+                  ? 'splash-emoji 2.2s ease-in-out infinite'
+                  : `splash-emoji2 ${2.5 + i * 0.3}s ${i * 0.4}s ease-in-out infinite`,
+              }}
+            >
+              {e}
+            </div>
+          ))}
         </div>
 
         {/* Nombre del negocio */}
@@ -162,7 +178,6 @@ export default function SplashIntro({
           {companyName}
         </h1>
 
-        {/* Tagline */}
         {tagline && (
           <p
             className="text-white/80 text-center mt-3 px-10 tracking-widest uppercase"
@@ -175,7 +190,6 @@ export default function SplashIntro({
           </p>
         )}
 
-        {/* Hint */}
         <p
           className="absolute bottom-10 text-white/60 text-xs tracking-widest uppercase"
           style={{ animation: 'splash-hint 2s 2s ease-in-out infinite' }}

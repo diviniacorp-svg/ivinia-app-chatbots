@@ -60,15 +60,23 @@ export default function TurnosConfigPage() {
   const [advanceDays, setAdvanceDays] = useState(30)
   const [ownerPhone, setOwnerPhone] = useState('')
   const [ownerPin, setOwnerPin] = useState('')
+  const [displayColor, setDisplayColor] = useState('#6366f1')
+  const [introEmoji, setIntroEmoji] = useState('📅')
+  const [introTagline, setIntroTagline] = useState('')
+  const [introStyle, setIntroStyle] = useState('bubbles')
+  const [instagram, setInstagram] = useState('')
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
 
   const loadConfig = useCallback(async (cId: string) => {
-    const res = await fetch(`/api/bookings/${cId}/config`)
-    if (res.ok) {
-      const data = await res.json()
+    const [cfgRes, clientRes] = await Promise.all([
+      fetch(`/api/bookings/${cId}/config`),
+      fetch(`/api/clients/${cId}`),
+    ])
+    if (cfgRes.ok) {
+      const data = await cfgRes.json()
       if (data.config) {
         setConfigId(data.config.id)
         setServices(data.config.services?.length ? data.config.services : [{ id: crypto.randomUUID(), name: '', duration_minutes: 30, price_ars: 0 }])
@@ -78,6 +86,15 @@ export default function TurnosConfigPage() {
         setOwnerPhone(data.config.owner_phone || '')
         setOwnerPin(data.config.owner_pin || '')
       }
+    }
+    if (clientRes.ok) {
+      const data = await clientRes.json()
+      const cfg = (data.client?.custom_config || {}) as Record<string, string>
+      setDisplayColor(cfg.color || '#6366f1')
+      setIntroEmoji(cfg.intro_emoji || '📅')
+      setIntroTagline(cfg.intro_tagline || '')
+      setIntroStyle(cfg.intro_style || 'bubbles')
+      setInstagram(cfg.instagram || '')
     }
   }, [])
 
@@ -136,21 +153,35 @@ export default function TurnosConfigPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`/api/bookings/${effectiveClientId}/config`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          services: validServices,
-          schedule,
-          slot_duration_minutes: slotDuration,
-          advance_booking_days: advanceDays,
-          owner_phone: ownerPhone,
-          owner_pin: ownerPin || '1234',
-          is_active: true,
+      const [cfgRes] = await Promise.all([
+        fetch(`/api/bookings/${effectiveClientId}/config`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            services: validServices,
+            schedule,
+            slot_duration_minutes: slotDuration,
+            advance_booking_days: advanceDays,
+            owner_phone: ownerPhone,
+            owner_pin: ownerPin || '1234',
+            is_active: true,
+          }),
         }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+        fetch(`/api/clients/${effectiveClientId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            color: displayColor,
+            intro_emoji: introEmoji,
+            intro_tagline: introTagline,
+            intro_style: introStyle,
+            instagram: instagram,
+            whatsapp: ownerPhone,
+          }),
+        }),
+      ])
+      const data = await cfgRes.json()
+      if (!cfgRes.ok) throw new Error(data.error || 'Error al guardar')
       setConfigId(data.config?.id || null)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -458,6 +489,91 @@ export default function TurnosConfigPage() {
               maxLength={4}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200 font-mono tracking-widest"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Apariencia e intro animada */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5 shadow-sm">
+        <h2 className="font-bold text-gray-900 mb-1">Apariencia e intro animada</h2>
+        <p className="text-xs text-gray-400 mb-4">Cómo se ve la página pública de reservas para los clientes del negocio.</p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+                Color del negocio
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={displayColor}
+                  onChange={e => setDisplayColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                />
+                <input
+                  type="text"
+                  value={displayColor}
+                  onChange={e => setDisplayColor(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-200 font-mono"
+                  placeholder="#6366f1"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+                Instagram (sin @)
+              </label>
+              <input
+                type="text"
+                value={instagram}
+                onChange={e => setInstagram(e.target.value.replace('@', ''))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200"
+                placeholder="facoiffeur"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+              Emojis de la intro (separados por coma)
+            </label>
+            <input
+              type="text"
+              value={introEmoji}
+              onChange={e => setIntroEmoji(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200"
+              placeholder="✂️,💇‍♀️,💈"
+            />
+            <p className="text-xs text-gray-400 mt-1">Pueden ser 1, 2 o 3 emojis. Aparecen flotando en la pantalla de bienvenida.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+              Tagline / slogan de bienvenida
+            </label>
+            <input
+              type="text"
+              value={introTagline}
+              onChange={e => setIntroTagline(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200"
+              placeholder="Reservá tu turno online"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
+              Estilo de la animación
+            </label>
+            <select
+              value={introStyle}
+              onChange={e => setIntroStyle(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-200 bg-white"
+            >
+              <option value="bubbles">Burbujas flotantes (los emojis suben)</option>
+              <option value="sparkles">Destellos (emojis + brillos)</option>
+              <option value="petals">Pétalos (emojis flotantes suaves)</option>
+            </select>
+          </div>
+          {/* Preview del color */}
+          <div className="rounded-xl p-3 text-white text-sm font-semibold text-center" style={{ backgroundColor: displayColor }}>
+            Vista previa: {selectedClient?.company_name || 'Nombre del negocio'} — {introEmoji}
           </div>
         </div>
       </div>
