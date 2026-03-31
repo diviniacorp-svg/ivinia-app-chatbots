@@ -6,6 +6,7 @@ export type Service = {
   price_ars: number
   description: string
   deposit_percentage?: number  // 0-100 — si > 0, habilita pago de seña
+  max_capacity?: number        // 1 = individual (default), >1 = clase/grupo (múltiples personas mismo slot)
 }
 
 export type DaySchedule = { open: string; close: string } | null
@@ -79,11 +80,13 @@ function minutesToTime(m: number): string {
 }
 
 // Genera todos los slots posibles para una fecha dado un config y servicio
+// maxCapacity=1 → individual (bloquea solapamientos), >1 → clase/grupo (permite N personas mismo slot)
 export function getAvailableSlots(
   config: BookingConfig,
   date: string,        // YYYY-MM-DD
   serviceDurationMinutes: number,
-  existingAppointments: { appointment_time: string; service_duration_minutes: number }[]
+  existingAppointments: { appointment_time: string; service_duration_minutes: number }[],
+  maxCapacity = 1
 ): string[] {
   // Verificar si la fecha está bloqueada
   if (config.blocked_dates.includes(date)) return []
@@ -104,7 +107,15 @@ export function getAvailableSlots(
     allSlots.push(minutesToTime(t))
   }
 
-  // Filtrar slots que se solapan con turnos existentes
+  if (maxCapacity > 1) {
+    // Modo clase/grupo: slot disponible si la cantidad de reservas en ese horario exacto < cupo
+    return allSlots.filter(slot => {
+      const count = existingAppointments.filter(a => a.appointment_time === slot).length
+      return count < maxCapacity
+    })
+  }
+
+  // Modo individual: filtrar slots que se solapan con turnos existentes
   return allSlots.filter(slot => {
     const slotStart = timeToMinutes(slot)
     const slotEnd = slotStart + serviceDurationMinutes

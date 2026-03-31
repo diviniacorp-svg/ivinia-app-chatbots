@@ -94,6 +94,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [slots, setSlots] = useState<string[]>([])
+  const [slotCounts, setSlotCounts] = useState<Record<string, number>>({})
+  const [slotMaxCapacity, setSlotMaxCapacity] = useState(1)
   const [loadingSlots, setLoadingSlots] = useState(false)
 
   const availableDates = useMemo(() => getNextAvailableDates(config, config.advance_booking_days || 60), [config])
@@ -131,13 +133,16 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   function prevMonth() { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }
   function nextMonth() { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) } else setViewMonth(m => m + 1) }
 
-  async function loadSlotsFor(date: string, duration: number, profId?: string) {
+  async function loadSlotsFor(date: string, duration: number, profId?: string, serviceId?: string) {
     if (duration === 0) { setSlots([]); return }
     setLoadingSlots(true); setSlots([])
     const profParam = profId ? `&professionalId=${profId}` : ''
-    const res = await fetch(`/api/bookings/${clientId}?date=${date}&totalDuration=${duration}${profParam}`)
+    const svcParam = serviceId ? `&serviceId=${serviceId}` : ''
+    const res = await fetch(`/api/bookings/${clientId}?date=${date}&totalDuration=${duration}${profParam}${svcParam}`)
     const data = await res.json()
     setSlots(data.slots || [])
+    setSlotCounts(data.slotCounts || {})
+    setSlotMaxCapacity(data.maxCapacity || 1)
     setLoadingSlots(false)
   }
 
@@ -153,7 +158,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
       const profId = selectedProfessional !== null
         ? (selectedProfessional === 'any' ? 'any' : selectedProfessional.id)
         : undefined
-      loadSlotsFor(selectedDate, newDuration, profId)
+      const primarySvcId = newServices[0]?.id
+      loadSlotsFor(selectedDate, newDuration, profId, primarySvcId)
     }
   }
 
@@ -163,7 +169,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
     const profId = selectedProfessional !== null
       ? (selectedProfessional === 'any' ? 'any' : selectedProfessional.id)
       : undefined
-    await loadSlotsFor(date, totalDuration, profId)
+    const primarySvcId = selectedServices[0]?.id
+    await loadSlotsFor(date, totalDuration, profId, primarySvcId)
   }
 
   function selectProfessional(prof: Professional | 'any') {
@@ -171,7 +178,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
     setSelectedTime('')
     if (selectedDate && totalDuration > 0) {
       const profId = prof === 'any' ? 'any' : prof.id
-      loadSlotsFor(selectedDate, totalDuration, profId)
+      const primarySvcId = selectedServices[0]?.id
+      loadSlotsFor(selectedDate, totalDuration, profId, primarySvcId)
     }
   }
 
@@ -522,16 +530,25 @@ export default function BookingWizard({ clientId, config, companyName, color, co
                   No hay horarios para {totalDuration} min este día.
                 </p>
               ) : (
-                <div className="grid grid-cols-4 gap-2">
-                  {slots.map(slot => (
-                    <button key={slot} onClick={() => setSelectedTime(slot)}
-                      className="py-3 rounded-xl text-sm font-medium border-2 transition-all"
-                      style={selectedTime === slot
-                        ? { backgroundColor: color, borderColor: color, color: 'white' }
-                        : { borderColor: '#e5e7eb', color: '#374151' }}>
-                      {slot}
-                    </button>
-                  ))}
+                <div className={`grid gap-2 ${slotMaxCapacity > 1 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                  {slots.map(slot => {
+                    const booked = slotCounts[slot] || 0
+                    const remaining = slotMaxCapacity > 1 ? slotMaxCapacity - booked : null
+                    return (
+                      <button key={slot} onClick={() => setSelectedTime(slot)}
+                        className="py-2.5 rounded-xl text-sm font-medium border-2 transition-all flex flex-col items-center leading-tight"
+                        style={selectedTime === slot
+                          ? { backgroundColor: color, borderColor: color, color: 'white' }
+                          : { borderColor: '#e5e7eb', color: '#374151' }}>
+                        <span>{slot}</span>
+                        {remaining !== null && (
+                          <span className="text-[10px] font-normal mt-0.5 opacity-80">
+                            {remaining} cupo{remaining !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>

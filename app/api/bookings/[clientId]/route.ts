@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 import { getAvailableSlots, BookingConfig } from '@/lib/bookings'
 
-// GET /api/bookings/[clientId]?date=YYYY-MM-DD&totalDuration=60&professionalId=xxx
+// GET /api/bookings/[clientId]?date=YYYY-MM-DD&totalDuration=60&professionalId=xxx&serviceId=xxx
 export async function GET(
   request: NextRequest,
   { params }: { params: { clientId: string } }
@@ -12,6 +12,7 @@ export async function GET(
   const date = searchParams.get('date')
   const totalDuration = parseInt(searchParams.get('totalDuration') || '0', 10)
   const professionalId = searchParams.get('professionalId')
+  const serviceId = searchParams.get('serviceId')
 
   const { data: config } = await db
     .from('booking_configs')
@@ -27,6 +28,12 @@ export async function GET(
     return NextResponse.json({ config })
   }
 
+  const typedConfig = config as BookingConfig
+
+  // Detectar cupo máximo del servicio principal
+  const service = serviceId ? (typedConfig.services || []).find((s: { id: string }) => s.id === serviceId) : null
+  const maxCapacity: number = (service as { max_capacity?: number } | null)?.max_capacity ?? 1
+
   // Turnos existentes ese día
   const { data: existing } = await db
     .from('appointments')
@@ -36,14 +43,13 @@ export async function GET(
     .in('status', ['confirmed', 'pending', 'pending_payment'])
 
   const allExisting = existing || []
-  const typedConfig = config as BookingConfig
 
   // Si hay profesionales y el id es 'any': unión de slots de todos los profesionales
   if (professionalId === 'any' && typedConfig.professionals && typedConfig.professionals.length > 0) {
     const slotSet = new Set<string>()
     for (const prof of typedConfig.professionals) {
       const profExisting = allExisting.filter(a => a.professional_id === prof.id)
-      const profSlots = getAvailableSlots(typedConfig, date, totalDuration, profExisting)
+      const profSlots = getAvailableSlots(typedConfig, date, totalDuration, profExisting, maxCapacity)
       profSlots.forEach(s => slotSet.add(s))
     }
     const slots = Array.from(slotSet).sort()
@@ -55,9 +61,19 @@ export async function GET(
     ? allExisting.filter(a => a.professional_id === professionalId)
     : allExisting
 
-  const slots = getAvailableSlots(typedConfig, date, totalDuration, filtered)
+  const slots = getAvailableSlots(typedConfig, date, totalDuration, filtered, maxCapacity)
 
-  return NextResponse.json({ slots })
+  // Para servicios con cupo > 1, retornar también la cantidad ocupada por slot (para mostrar "X cupos disponibles")
+  let slotCounts: Record<string, number> | undefined
+  if (maxCapacity > 1) {
+    slotCounts = {}
+    for (const appt of filtered) {
+      const t = appt.appointment_time
+      slotCounts[t] = (slotCounts[t] || 0) + 1
+    }
+  }
+
+  return NextResponse.json({ slots, slotCounts, maxCapacity: maxCapacity > 1 ? maxCapacity : undefined })
 }
 
 // POST /api/bookings/[clientId] — crear turno (multi-servicio)
@@ -110,7 +126,11 @@ export async function POST(
       ? allExisting.filter((a: { professional_id?: string }) => a.professional_id === professionalId)
       : allExisting
 
-    const slots = getAvailableSlots(config as BookingConfig, date, safeDuration, filteredForCheck)
+    const typedCfg = config as BookingConfig
+    const primaryService = safeServiceId ? (typedCfg.services || []).find((s: { id: string }) => s.id === safeServiceId) : null
+    const maxCap: number = (primaryService as { max_capacity?: number } | null)?.max_capacity ?? 1
+
+    const slots = getAvailableSlots(typedCfg, date, safeDuration, filteredForCheck, maxCap)
     if (!slots.includes(time)) {
       return NextResponse.json({ error: 'El turno ya no está disponible' }, { status: 409 })
     }
