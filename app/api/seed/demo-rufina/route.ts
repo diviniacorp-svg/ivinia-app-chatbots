@@ -92,6 +92,10 @@ export async function GET() {
       dom: null,
     },
     services,
+    professionals: [
+      { id: crypto.randomUUID(), name: 'Rufina', emoji: '💅', color: '#d63384', bio: 'Especialista en uñas esculpidas y nail art', service_ids: [] },
+      { id: crypto.randomUUID(), name: 'Valentina', emoji: '✨', color: '#9333ea', bio: 'Experta en semipermanente y manicura', service_ids: [] },
+    ],
   }
 
   let configId: string

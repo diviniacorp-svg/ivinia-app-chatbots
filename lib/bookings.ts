@@ -20,6 +20,15 @@ export type Schedule = {
   dom: DaySchedule
 }
 
+export type Professional = {
+  id: string
+  name: string
+  emoji?: string   // e.g. "💅" "✂️" "💆"
+  color?: string   // optional personal color
+  bio?: string
+  service_ids?: string[]  // which services — empty means all
+}
+
 export type BookingConfig = {
   id: string
   client_id: string
@@ -31,6 +40,7 @@ export type BookingConfig = {
   advance_booking_days: number
   owner_phone?: string   // WhatsApp del dueño del negocio (para notificaciones)
   owner_pin?: string     // PIN de 4 dígitos para acceder al panel del dueño
+  professionals?: Professional[]
 }
 
 export type Appointment = {
@@ -47,6 +57,8 @@ export type Appointment = {
   customer_notes: string
   status: 'confirmed' | 'cancelled' | 'completed' | 'no_show'
   created_at: string
+  professional_id?: string
+  professional_name?: string
 }
 
 const DAY_MAP: Record<number, keyof Schedule> = {

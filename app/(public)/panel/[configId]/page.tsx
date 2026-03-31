@@ -16,6 +16,8 @@ interface Appointment {
   status: 'pending' | 'pending_payment' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
   sena_ars?: number
   created_at: string
+  professional_id?: string
+  professional_name?: string
 }
 
 interface PanelData {
@@ -283,7 +285,7 @@ export default function OwnerPanel() {
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-gray-400 font-semibold">⏰ {appt.appointment_time} · {appt.service_duration_minutes}min</p>
                             <p className="font-bold text-gray-900 text-sm">{appt.customer_name}</p>
-                            <p className="text-xs text-gray-600 truncate">💅 {appt.service_name}</p>
+                            <p className="text-xs text-gray-600 truncate">💅 {appt.service_name}{appt.professional_name && <span className="text-xs text-gray-400"> · {appt.professional_name}</span>}</p>
                             {appt.customer_phone&&<a href={`https://wa.me/${appt.customer_phone.replace(/\D/g,'')}`}
                               target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 mt-0.5 inline-block">
                               💬 {appt.customer_phone}</a>}
@@ -368,7 +370,7 @@ export default function OwnerPanel() {
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div>
                             <p className="font-black text-gray-900">{appt.customer_name}</p>
-                            <p className="text-sm text-gray-700">{appt.service_name}</p>
+                            <p className="text-sm text-gray-700">{appt.service_name}{appt.professional_name && <span className="text-xs text-gray-400"> · {appt.professional_name}</span>}</p>
                             <p className="text-sm font-bold mt-0.5" style={{color}}>📅 {fDate(appt.appointment_date)} · ⏰ {appt.appointment_time}</p>
                             {appt.service_price_ars>0&&<p className="text-xs text-gray-500 mt-0.5">💰 {fARS(appt.service_price_ars)}</p>}
                           </div>

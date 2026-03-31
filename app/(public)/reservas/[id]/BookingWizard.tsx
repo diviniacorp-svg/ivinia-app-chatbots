@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { BookingConfig, Service, formatDateAR, formatPriceARS, getNextAvailableDates, getFirstAvailableMonth } from '@/lib/bookings'
+import { BookingConfig, Service, Professional, formatDateAR, formatPriceARS, getNextAvailableDates, getFirstAvailableMonth } from '@/lib/bookings'
 import SplashIntro from './SplashIntro'
 
 type Step = 'select' | 'form' | 'done'
@@ -89,6 +89,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0)
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price_ars, 0)
 
+  const [selectedProfessional, setSelectedProfessional] = useState<Professional | 'any' | null>(null)
+
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [slots, setSlots] = useState<string[]>([])
@@ -129,10 +131,11 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   function prevMonth() { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }
   function nextMonth() { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) } else setViewMonth(m => m + 1) }
 
-  async function loadSlotsFor(date: string, duration: number) {
+  async function loadSlotsFor(date: string, duration: number, profId?: string) {
     if (duration === 0) { setSlots([]); return }
     setLoadingSlots(true); setSlots([])
-    const res = await fetch(`/api/bookings/${clientId}?date=${date}&totalDuration=${duration}`)
+    const profParam = profId ? `&professionalId=${profId}` : ''
+    const res = await fetch(`/api/bookings/${clientId}?date=${date}&totalDuration=${duration}${profParam}`)
     const data = await res.json()
     setSlots(data.slots || [])
     setLoadingSlots(false)
@@ -147,14 +150,29 @@ export default function BookingWizard({ clientId, config, companyName, color, co
     setSelectedServices(newServices)
     if (selectedDate) {
       const newDuration = newServices.reduce((sum, s) => sum + s.duration_minutes, 0)
-      loadSlotsFor(selectedDate, newDuration)
+      const profId = selectedProfessional !== null
+        ? (selectedProfessional === 'any' ? 'any' : selectedProfessional.id)
+        : undefined
+      loadSlotsFor(selectedDate, newDuration, profId)
     }
   }
 
   async function onSelectDate(date: string) {
     setSelectedDate(date)
     setSelectedTime('')
-    await loadSlotsFor(date, totalDuration)
+    const profId = selectedProfessional !== null
+      ? (selectedProfessional === 'any' ? 'any' : selectedProfessional.id)
+      : undefined
+    await loadSlotsFor(date, totalDuration, profId)
+  }
+
+  function selectProfessional(prof: Professional | 'any') {
+    setSelectedProfessional(prof)
+    setSelectedTime('')
+    if (selectedDate && totalDuration > 0) {
+      const profId = prof === 'any' ? 'any' : prof.id
+      loadSlotsFor(selectedDate, totalDuration, profId)
+    }
   }
 
   async function fetchHistory(phone: string) {
@@ -172,6 +190,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   async function handleSubmit() {
     if (!form.name.trim()) { setError('El nombre es requerido'); return }
     setSubmitting(true); setError('')
+    const profId = selectedProfessional === null ? undefined : selectedProfessional === 'any' ? 'any' : selectedProfessional.id
+    const profName = selectedProfessional !== null && selectedProfessional !== 'any' && typeof selectedProfessional === 'object' ? selectedProfessional.name : undefined
     const res = await fetch(`/api/bookings/${clientId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -182,6 +202,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
         date: selectedDate, time: selectedTime,
         customerName: form.name, customerPhone: form.phone,
         customerEmail: form.email, customerNotes: form.notes,
+        professionalId: profId,
+        professionalName: profName,
       }),
     })
     if (res.ok) setStep('done')
@@ -191,6 +213,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   async function handlePayDeposit() {
     if (!form.name.trim()) { setError('El nombre es requerido'); return }
     setSubmitting(true); setError('')
+    const profId = selectedProfessional === null ? undefined : selectedProfessional === 'any' ? 'any' : selectedProfessional.id
+    const profName = selectedProfessional !== null && selectedProfessional !== 'any' && typeof selectedProfessional === 'object' ? selectedProfessional.name : undefined
     const res = await fetch(`/api/bookings/${clientId}/deposit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -202,6 +226,8 @@ export default function BookingWizard({ clientId, config, companyName, color, co
         customerName: form.name, customerPhone: form.phone,
         customerEmail: form.email, customerNotes: form.notes,
         configId,
+        professionalId: profId,
+        professionalName: profName,
       }),
     })
     const data = await res.json()
@@ -212,9 +238,12 @@ export default function BookingWizard({ clientId, config, companyName, color, co
   function reset() {
     setStep('select'); setSelectedServices([]); setSelectedDate(''); setSelectedTime('')
     setForm({ name: '', phone: '', email: '', notes: '' }); setPaidSuccess(false); setHistory([])
+    setSelectedProfessional(null)
   }
 
-  const canContinue = selectedServices.length > 0 && selectedDate && selectedTime
+  const hasProfessionals = (config.professionals?.length ?? 0) > 0
+  const canContinue = selectedServices.length > 0 && selectedDate && selectedTime &&
+    (!hasProfessionals || selectedProfessional !== null)
   const btnStyle = { backgroundColor: color }
 
   if (!splashDone) {
@@ -228,6 +257,7 @@ export default function BookingWizard({ clientId, config, companyName, color, co
       `Hola ${companyName}! 👋 Acabo de pedir un turno:\n` +
       (selectedServices.length ? `📌 ${selectedServices.map(s => s.name).join(' + ')}\n` : '') +
       (selectedDate ? `📅 ${formatDateAR(selectedDate)} · ${selectedTime}hs\n` : '') +
+      (typeof selectedProfessional === 'object' && selectedProfessional ? `👩‍💼 Profesional: ${selectedProfessional.name}\n` : '') +
       `👤 ${form.name}\n¡Gracias!`
     )
     return (
@@ -339,6 +369,11 @@ export default function BookingWizard({ clientId, config, companyName, color, co
                 <div className="flex items-center gap-2 text-gray-600">
                   <span>⏱</span><span>{totalDuration} minutos en total</span>
                 </div>
+                {selectedProfessional && selectedProfessional !== 'any' && typeof selectedProfessional === 'object' && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <span>👩‍💼</span><span className="font-medium">{selectedProfessional.name}</span>
+                  </div>
+                )}
               </div>
               {depositAmount > 0 && (
                 <div className="border-t pt-3">
@@ -425,6 +460,38 @@ export default function BookingWizard({ clientId, config, companyName, color, co
                 <span className="font-black" style={{ color }}>{formatPriceARS(totalPrice)}</span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5 truncate">{selectedServices.map(s => s.name).join(' + ')}</p>
+            </div>
+          )}
+
+          {config.professionals && config.professionals.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                {config.professionals.length === 1 ? 'Profesional' : '¿Con quién?'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {config.professionals.map(prof => {
+                  const isSel = typeof selectedProfessional === 'object' && selectedProfessional?.id === prof.id
+                  return (
+                    <button key={prof.id} onClick={() => selectProfessional(prof)}
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
+                      style={isSel
+                        ? { borderColor: color, backgroundColor: color, color: '#fff' }
+                        : { borderColor: '#e5e7eb', color: '#374151', backgroundColor: '#fff' }}>
+                      <span>{prof.emoji || '👤'}</span>
+                      {prof.name}
+                    </button>
+                  )
+                })}
+                {config.professionals.length > 1 && (
+                  <button onClick={() => selectProfessional('any')}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all"
+                    style={selectedProfessional === 'any'
+                      ? { borderColor: color, backgroundColor: color + '18', color }
+                      : { borderColor: '#e5e7eb', color: '#9ca3af' }}>
+                    Sin preferencia
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
