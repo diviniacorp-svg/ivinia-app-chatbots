@@ -101,18 +101,18 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
           )
         })}
 
-        {/* Sub-item: Configurador de Turnos */}
+        {/* Sub-item: Nuevo cliente de turnos */}
         <Link
-          href="/turnos/configurador"
+          href="/turnos/config/nuevo"
           className={cn(
             'flex items-center gap-3 pl-8 pr-3 py-2 rounded-lg text-xs font-medium transition-all',
-            pathname === '/turnos/configurador'
+            pathname.startsWith('/turnos/config')
               ? 'bg-purple-700 text-white'
               : 'text-gray-500 hover:text-white hover:bg-gray-800'
           )}
         >
           <Settings2 size={14} />
-          Configurador
+          Nuevo cliente
         </Link>
 
         {/* Agentes IA */}
