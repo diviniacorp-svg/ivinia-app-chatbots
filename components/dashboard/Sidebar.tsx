@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, FileText, Users, Kanban,
   UserCheck,
-  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu, X
+  CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu, X,
+  Clapperboard, Instagram
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -113,6 +114,35 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         >
           <Settings2 size={14} />
           Nuevo cliente
+        </Link>
+
+        {/* Contenido & Redes */}
+        <div className="pt-3 pb-1">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3">Marketing</p>
+        </div>
+        <Link
+          href="/contenido"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            pathname === '/contenido' || pathname.startsWith('/contenido/')
+              ? 'bg-amber-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Clapperboard size={17} />
+          Fábrica de Contenidos
+        </Link>
+        <Link
+          href="/redes"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            pathname === '/redes' || pathname.startsWith('/redes/')
+              ? 'bg-pink-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Instagram size={17} />
+          Redes Sociales
         </Link>
 
         {/* Agentes IA */}
