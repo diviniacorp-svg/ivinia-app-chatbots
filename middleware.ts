@@ -11,6 +11,8 @@ const ADMIN_ROUTES = [
   '/templates',
   '/outreach',
   '/agents',
+  '/contenido',
+  '/redes',
 ]
 
 const PROTECTED_API_ROUTES = [
@@ -77,6 +79,10 @@ export const config = {
     '/outreach/:path*',
     '/agents',
     '/agents/:path*',
+    '/contenido',
+    '/contenido/:path*',
+    '/redes',
+    '/redes/:path*',
     '/api/seed',
     '/api/seed/:path*',
     '/api/clients',
