@@ -1,9 +1,7 @@
 import Hero from '@/components/public/Hero'
-import ProblemSolution from '@/components/public/ProblemSolution'
 import ProductosSection from '@/components/public/ProductosSection'
 import RubrosGrid from '@/components/public/RubrosGrid'
 import HowItWorks from '@/components/public/HowItWorks'
-import ChatbotDemo from '@/components/public/ChatbotDemo'
 import PricingCards from '@/components/public/PricingCards'
 import FAQ from '@/components/public/FAQ'
 import TrialCTA from '@/components/public/TrialCTA'
@@ -14,23 +12,19 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
       <Navbar />
-      {/* 1. Atención: propuesta de valor */}
+      {/* 1. Hero — propuesta de valor + before/after + mock UI */}
       <Hero />
-      {/* 2. Interés: agitar el dolor */}
-      <ProblemSolution />
-      {/* 3. Deseo: mostrar solución + productos disponibles */}
+      {/* 2. Turnero (producto principal) + Chatbot */}
       <ProductosSection />
-      {/* 4. Para tu rubro específico */}
+      {/* 3. Rubros específicos */}
       <RubrosGrid />
-      {/* 5. Cómo funciona */}
+      {/* 4. Cómo funciona — 3 pasos */}
       <HowItWorks />
-      {/* 6. Demo interactiva */}
-      <ChatbotDemo />
-      {/* 7. Precios */}
+      {/* 5. Precios detallados */}
       <PricingCards />
-      {/* 8. Resolver objeciones */}
+      {/* 6. FAQ */}
       <FAQ />
-      {/* 9. CTA final de conversión */}
+      {/* 7. CTA final */}
       <TrialCTA />
       <Footer />
     </main>
