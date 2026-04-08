@@ -6,7 +6,7 @@ import {
   LayoutDashboard, FileText, Users, Kanban,
   UserCheck,
   CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu, X,
-  Clapperboard, Instagram
+  Clapperboard, Instagram, Calendar
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -131,6 +131,18 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         >
           <Clapperboard size={17} />
           Fábrica de Contenidos
+        </Link>
+        <Link
+          href="/calendario"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            pathname === '/calendario' || pathname.startsWith('/calendario/')
+              ? 'bg-emerald-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Calendar size={17} />
+          Calendario
         </Link>
         <Link
           href="/redes"

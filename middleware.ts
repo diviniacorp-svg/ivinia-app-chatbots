@@ -13,6 +13,7 @@ const ADMIN_ROUTES = [
   '/agents',
   '/contenido',
   '/redes',
+  '/calendario',
 ]
 
 const PROTECTED_API_ROUTES = [
@@ -83,6 +84,8 @@ export const config = {
     '/contenido/:path*',
     '/redes',
     '/redes/:path*',
+    '/calendario',
+    '/calendario/:path*',
     '/api/seed',
     '/api/seed/:path*',
     '/api/clients',
