@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server'
 import { chat } from '@/lib/agents/orchestrator'
 
+export const dynamic = 'force-dynamic'
+
 export const runtime = 'nodejs'
 export const maxDuration = 60
 

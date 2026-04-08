@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase'
 import { getAvailableSlots, BookingConfig } from '@/lib/bookings'
 import { createPaymentPreference } from '@/lib/mercadopago'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/bookings/[clientId]/deposit
 // Crea el turno como 'pending_payment' y genera link de pago de seña
 export async function POST(

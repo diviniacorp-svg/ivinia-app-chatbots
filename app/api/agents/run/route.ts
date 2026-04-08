@@ -3,6 +3,8 @@ import { ProspectorAgent } from '@/lib/agents/prospector'
 import { SalesAgent } from '@/lib/agents/sales'
 import { MonitorAgent } from '@/lib/agents/monitor'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   const { agent, params } = await request.json()
 

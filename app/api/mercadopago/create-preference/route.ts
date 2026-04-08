@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPaymentPreference } from '@/lib/mercadopago'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { title, amount, clientEmail, clientName, externalRef, backUrls } = await request.json()

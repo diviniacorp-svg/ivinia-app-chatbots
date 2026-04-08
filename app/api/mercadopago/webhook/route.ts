@@ -3,6 +3,8 @@ import { getPaymentById } from '@/lib/mercadopago'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createHmac } from 'crypto'
 
+export const dynamic = 'force-dynamic'
+
 function verifyMPSignature(request: NextRequest, rawBody: string): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET
   if (!secret) return true // sin secret configurado → dev mode

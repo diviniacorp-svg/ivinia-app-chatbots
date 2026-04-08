@@ -4,6 +4,8 @@ import { generateChatbotId, generateEmbedCode } from '@/lib/utils'
 import { TEMPLATES_DATA } from '@/lib/templates-data'
 import { sendTrialNotification, sendWelcomeEmail } from '@/lib/resend'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin

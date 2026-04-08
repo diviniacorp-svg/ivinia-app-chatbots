@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/seed/demo-rufina
 // Crea (o actualiza) el cliente demo Rufina Nails con su booking config completa
 export async function GET() {

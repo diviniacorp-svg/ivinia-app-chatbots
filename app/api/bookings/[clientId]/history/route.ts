@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/bookings/[clientId]/history?phone=xxx
 // Devuelve los últimos turnos de un cliente por su número de teléfono
 export async function GET(

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scrapeLeads } from '@/lib/apify'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { rubro, city, maxItems = 20 } = await request.json()

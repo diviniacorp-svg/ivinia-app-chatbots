@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateOutreachEmail, generateWhatsAppMessage } from '@/lib/claude'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { companyName, rubro, city, website, contactName, type } = await request.json()

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendOutreachEmail } from '@/lib/resend'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { to, subject, body, leadId, campaignId } = await request.json()

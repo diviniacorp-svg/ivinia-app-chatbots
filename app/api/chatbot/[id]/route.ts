@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateChatbotResponse } from '@/lib/claude'
 
+export const dynamic = 'force-dynamic'
+
 interface Message {
   role: 'user' | 'assistant'
   content: string

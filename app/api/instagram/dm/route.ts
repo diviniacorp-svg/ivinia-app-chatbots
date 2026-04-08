@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { qualifyLead, generateDMResponse, generateProposal, handleObjection } from '@/agents/instagram/sales-dm'
 import type { InstagramLead } from '@/agents/instagram/types'
 
+export const dynamic = 'force-dynamic'
+
 // En memoria para el prototipo — en producción esto va a Supabase
 const leadsCache = new Map<string, InstagramLead>()
 

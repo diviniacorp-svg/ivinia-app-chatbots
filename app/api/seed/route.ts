@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { TEMPLATES_DATA } from '@/lib/templates-data'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   // Doble check: middleware + header secreto
   const secret = process.env.ADMIN_SECRET || 'divinia2024'

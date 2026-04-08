@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/bookings/appointments?clientId=xxx&date=YYYY-MM-DD&status=confirmed
 export async function GET(request: NextRequest) {
   const db = createAdminClient()

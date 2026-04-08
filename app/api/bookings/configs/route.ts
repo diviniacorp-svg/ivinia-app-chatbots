@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/bookings/configs — lista todos los booking_configs con info del cliente
 export async function GET() {
   const db = createAdminClient()

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 async function verifyPin(db: ReturnType<typeof createAdminClient>, configId: string, pin: string) {
   const { data: config } = await db
     .from('booking_configs')

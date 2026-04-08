@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
+export const dynamic = 'force-dynamic'
+
 // Escapa comillas simples y backslashes para inserción segura en strings JS
 function esc(val: unknown): string {
   return String(val ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")
