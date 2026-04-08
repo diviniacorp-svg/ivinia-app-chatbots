@@ -1,10 +1,13 @@
 import Link from 'next/link'
+import { Check } from 'lucide-react'
+import Reveal from './Reveal'
 
 const PLANES_CHATBOT = [
   {
     name: 'Starter',
-    price: 50000,
-    desc: 'Chatbot SaaS · Para arrancar',
+    price: '$50.000',
+    billing: '/mes',
+    desc: 'Para arrancar',
     popular: false,
     features: [
       '14 días gratis, sin tarjeta',
@@ -14,193 +17,191 @@ const PLANES_CHATBOT = [
       'Dashboard básico',
       'Soporte por WhatsApp',
     ],
-    cta: 'Probar 14 días gratis',
+    cta: 'Probar gratis 14 días',
     href: '/trial',
   },
   {
     name: 'Pro',
-    price: 100000,
-    desc: 'Chatbot SaaS · Para crecer',
+    price: '$100.000',
+    billing: '/mes',
+    desc: 'El más elegido',
     popular: true,
     features: [
-      '14 días gratis, sin tarjeta',
       'Todo lo del plan Starter',
       'Conversaciones ilimitadas',
-      'Sistema de turnos integrado',
+      'Turnero integrado (sistema de turnos)',
       'Respuestas avanzadas con IA',
-      'Reportes mensuales',
+      'Multicanal: web + WhatsApp',
       'Soporte prioritario',
     ],
-    cta: 'Probar 14 días gratis',
-    href: '/trial',
+    cta: 'Empezar con Pro',
+    href: '/trial?plan=pro',
   },
   {
     name: 'Enterprise',
-    price: 200000,
-    desc: 'Chatbot SaaS · Solución total',
+    price: '$200.000',
+    billing: '/mes',
+    desc: 'Multi-sucursal',
     popular: false,
     features: [
-      '14 días gratis, sin tarjeta',
       'Todo lo del plan Pro',
-      'Multi-sucursal / multi-negocio',
-      'Integración con tus sistemas',
-      'CRM y automatizaciones',
-      'Capacitación del equipo',
-      'Soporte dedicado 24/7',
+      'Múltiples sucursales',
+      'Agente IA personalizado',
+      'Integración con tu sistema',
+      'CRM con IA incluido',
+      'Soporte dedicado + onboarding',
     ],
-    cta: 'Hablar con ventas',
+    cta: 'Consultar Enterprise',
     href: 'https://wa.me/5492665286110?text=Quiero%20info%20del%20plan%20Enterprise',
   },
 ]
 
 const SOPORTE = [
   {
-    name: 'Soporte Básico',
-    price: 30000,
-    features: ['1 ajuste/mes al prompt o servicios', 'Monitoreo mensual', 'Respuesta en 48hs'],
+    name: 'Básico',
+    price: '$30.000',
+    features: ['1 ajuste/mes', 'Monitoreo mensual', 'Respuesta en 48hs'],
   },
   {
-    name: 'Soporte Pro',
-    price: 60000,
-    features: ['Ajustes ilimitados', 'Monitoreo semanal', 'Respuesta en 24hs', 'Reportes de uso'],
+    name: 'Pro',
+    price: '$60.000',
+    features: ['Ajustes ilimitados', 'Monitoreo semanal', 'Respuesta en 24hs'],
   },
   {
-    name: 'Asistencia Total',
-    price: 100000,
-    features: ['Todo lo del Pro', 'Nuevas funciones mensuales', 'Respuesta en 4hs', 'Reunión mensual de revisión'],
+    name: 'Total',
+    price: '$100.000',
+    features: ['Todo lo del Pro', 'Nuevas funciones/mes', 'Respuesta en 4hs'],
   },
 ]
 
 export default function PricingCards() {
   return (
-    <section id="precios" className="py-20 bg-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+    <section id="precios" className="py-32 bg-white border-t border-gray-100">
+      <div className="max-w-5xl mx-auto px-6">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide mb-4">
-            Precios
-          </span>
-          <h2 className="text-4xl font-black text-gray-900 mb-3">Todo en pesos argentinos</h2>
-          <p className="text-gray-500 text-lg">
-            Chatbot SaaS con suscripción mensual. Proyectos a medida con precio único. Sin sorpresas.
-          </p>
-        </div>
-
-        {/* === CHATBOT SAAS === */}
-        <div className="mb-4">
-          <div className="flex items-center gap-3 mb-5">
-            <span className="text-xl">🤖</span>
-            <div>
-              <h3 className="font-black text-gray-900">Chatbot SaaS — Suscripción mensual</h3>
-              <p className="text-sm text-gray-500">14 días gratis en todos los planes · Sin tarjeta de crédito</p>
-            </div>
+        <Reveal>
+          <div className="mb-16">
+            <p className="text-sm font-bold text-purple-600 uppercase tracking-[0.15em] mb-4">Chatbot SaaS</p>
+            <h2 className="text-5xl sm:text-6xl font-black text-gray-900 leading-tight mb-6">
+              Tu asistente IA,<br />
+              por suscripción mensual
+            </h2>
+            <p className="text-xl text-gray-500 max-w-lg leading-relaxed">
+              Para los que prefieren empezar sin inversión inicial.
+              14 días gratis en todos los planes, sin tarjeta.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
-            {PLANES_CHATBOT.map((p) => (
-              <div key={p.name}
-                className={`rounded-2xl p-6 flex flex-col border-2 ${p.popular ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
-                {p.popular && (
-                  <div className="text-center mb-3">
-                    <span className="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">MÁS POPULAR</span>
+        </Reveal>
+
+        {/* Planes */}
+        <div className="grid sm:grid-cols-3 gap-5 mb-20">
+          {PLANES_CHATBOT.map((plan, i) => (
+            <Reveal key={plan.name} delay={i * 80}>
+              <div className={`relative flex flex-col rounded-3xl h-full p-7 ${
+                plan.popular
+                  ? 'bg-purple-600 text-white shadow-2xl shadow-purple-200 scale-105'
+                  : 'bg-gray-50 border border-gray-200'
+              }`}>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="bg-amber-400 text-amber-900 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wide">
+                      Más elegido
+                    </span>
                   </div>
                 )}
-                <div className="mb-4">
-                  <h4 className={`font-bold text-lg mb-0.5 ${p.popular ? 'text-white' : 'text-gray-900'}`}>{p.name}</h4>
-                  <p className={`text-xs ${p.popular ? 'text-indigo-200' : 'text-gray-500'}`}>{p.desc}</p>
+
+                <div className="mb-6">
+                  <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${plan.popular ? 'text-purple-300' : 'text-gray-400'}`}>
+                    {plan.desc}
+                  </p>
+                  <h4 className={`text-2xl font-black mb-3 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
+                    {plan.name}
+                  </h4>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className={`text-4xl font-black ${plan.popular ? 'text-white' : 'text-purple-600'}`}>{plan.price}</span>
+                    <span className={`text-sm ${plan.popular ? 'text-purple-300' : 'text-gray-400'}`}>{plan.billing}</span>
+                  </div>
                 </div>
-                <div className={`pb-4 mb-4 border-b ${p.popular ? 'border-indigo-500' : 'border-gray-100'}`}>
-                  <span className={`text-3xl font-black ${p.popular ? 'text-white' : 'text-gray-900'}`}>
-                    ${p.price.toLocaleString('es-AR')}
-                  </span>
-                  <span className={`text-sm ml-1 ${p.popular ? 'text-indigo-200' : 'text-gray-400'}`}>/mes</span>
-                </div>
-                <ul className="space-y-2 mb-6 flex-1">
-                  {p.features.map((f, i) => (
-                    <li key={i} className={`flex items-start gap-2 text-sm ${p.popular ? 'text-indigo-100' : 'text-gray-600'}`}>
-                      <span className={`font-bold flex-shrink-0 mt-0.5 ${p.popular ? 'text-green-300' : 'text-indigo-600'}`}>✓</span>
+
+                <ul className="space-y-3 flex-1 mb-8">
+                  {plan.features.map(f => (
+                    <li key={f} className={`flex items-start gap-2.5 text-sm ${plan.popular ? 'text-purple-100' : 'text-gray-600'}`}>
+                      <Check size={14} className={`shrink-0 mt-0.5 ${plan.popular ? 'text-purple-300' : 'text-purple-500'}`} />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <Link href={p.href}
-                  className={`block text-center font-bold py-3 rounded-xl text-sm transition-all ${p.popular ? 'bg-white text-indigo-600 hover:bg-indigo-50' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
-                  {p.cta}
-                </Link>
+
+                <a
+                  href={plan.href}
+                  target={plan.href.startsWith('http') ? '_blank' : undefined}
+                  rel={plan.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className={`block text-center font-bold py-4 rounded-2xl text-sm transition-all ${
+                    plan.popular
+                      ? 'bg-white text-purple-700 hover:bg-purple-50'
+                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }`}
+                >
+                  {plan.cta}
+                </a>
               </div>
-            ))}
-          </div>
+            </Reveal>
+          ))}
         </div>
 
-        {/* === SISTEMA DE TURNOS === */}
-        <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-6 mb-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📅</span>
-              <div>
-                <h3 className="font-black text-gray-900">Sistema de Turnos Online</h3>
-                <p className="text-sm text-gray-600 mt-0.5">Pago único · Setup personalizado · Deploy en Vercel</p>
-                <ul className="mt-2 space-y-1">
-                  {['Página de reservas con calendario', 'Aviso por WhatsApp al dueño', 'Personalizado con tus colores y servicios', '30 días de soporte incluidos'].map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-purple-600 font-bold">✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
-              <p className="text-2xl font-black text-purple-700">$150.000</p>
-              <p className="text-xs text-gray-500">Pago único · Listo en 24hs</p>
-              <a href="https://wa.me/5492665286110?text=Quiero%20un%20sistema%20de%20turnos%20online"
-                target="_blank" rel="noopener noreferrer"
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
-                Consultar
-              </a>
+        {/* Asistencia técnica mensual */}
+        <Reveal>
+          <div className="mb-8">
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.12em] mb-6">
+              Asistencia técnica mensual — opcional para cualquier producto
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {SOPORTE.map((s, i) => (
+                <div key={s.name} className="bg-gray-50 border border-gray-100 rounded-2xl p-6">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{s.name}</p>
+                  <p className="text-3xl font-black text-gray-900 mb-4">
+                    {s.price}<span className="text-sm font-normal text-gray-400">/mes</span>
+                  </p>
+                  <ul className="space-y-2">
+                    {s.features.map(f => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
+                        <Check size={13} className="text-indigo-500 shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* === ASISTENCIA TÉCNICA MENSUAL === */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-xl">🛠️</span>
-            <div>
-              <h3 className="font-black text-gray-900">Asistencia técnica mensual</h3>
-              <p className="text-sm text-gray-500">Opcional · Para cualquier producto o proyecto de DIVINIA</p>
-            </div>
-          </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {SOPORTE.map((s) => (
-              <div key={s.name} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                <h4 className="font-bold text-gray-900 text-sm mb-1">{s.name}</h4>
-                <p className="text-xl font-black text-gray-800 mb-3">${s.price.toLocaleString('es-AR')}<span className="text-sm font-normal text-gray-400">/mes</span></p>
-                <ul className="space-y-1.5">
-                  {s.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                      <span className="text-indigo-600 font-bold flex-shrink-0">✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
+        </Reveal>
 
         {/* Proyectos a medida */}
-        <div className="bg-gray-900 rounded-2xl p-6 text-center">
-          <p className="text-white font-black text-lg mb-1">¿Necesitás algo a medida?</p>
-          <p className="text-gray-400 text-sm mb-4">Agentes IA, automatizaciones, CRM, sistemas multi-agente. Presupuesto sin compromiso en 24hs.</p>
-          <a href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20un%20presupuesto%20a%20medida"
-            target="_blank" rel="noopener noreferrer"
-            className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors">
-            Pedir presupuesto gratis →
-          </a>
-        </div>
+        <Reveal>
+          <div className="bg-gray-950 rounded-3xl p-10 text-center">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.15em] mb-4">¿Necesitás algo a medida?</p>
+            <h3 className="text-3xl font-black text-white mb-4">
+              Agentes IA · Automatizaciones · CRM · Apps
+            </h3>
+            <p className="text-gray-400 max-w-md mx-auto mb-8 leading-relaxed">
+              Presupuesto sin compromiso en 24hs.
+              Somos de San Luis, Argentina — conocemos bien lo que necesita una PYME.
+            </p>
+            <a
+              href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20un%20presupuesto%20a%20medida"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all"
+            >
+              Pedir presupuesto gratis →
+            </a>
+            <p className="text-gray-600 text-sm mt-5">
+              Pagás con MercadoPago · 50% adelanto, 50% en entrega · Cancelás cuando querés
+            </p>
+          </div>
+        </Reveal>
 
-        <p className="text-center text-gray-400 text-sm mt-6">
-          Pagás con MercadoPago · 50% adelanto, 50% en entrega · Cancelás cuando querés
-        </p>
       </div>
     </section>
   )

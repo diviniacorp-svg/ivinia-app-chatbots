@@ -13,7 +13,7 @@ export default function Footer() {
               <span className="font-bold text-xl">DIVINIA</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-xs">
-              IA y automatización para PYMEs argentinas. Chatbots, turnos online y más. Hecho en San Luis.
+              Turnero y automatización IA para PYMEs argentinas. Tus clientes reservan solos. Hecho en San Luis, Argentina.
             </p>
             <div className="flex gap-4">
               <a href="https://wa.me/5492665286110" target="_blank" rel="noopener noreferrer"
@@ -26,11 +26,13 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Producto</h4>
+            <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Turnero</h4>
             <ul className="space-y-2 text-sm text-gray-400">
+              <li><a href="#turnero" className="hover:text-white transition-colors">Qué es Turnero</a></li>
               <li><a href="#rubros" className="hover:text-white transition-colors">Rubros</a></li>
+              <li><a href="#como-funciona" className="hover:text-white transition-colors">Cómo funciona</a></li>
               <li><a href="#precios" className="hover:text-white transition-colors">Precios</a></li>
-              <li><Link href="/trial" className="hover:text-white transition-colors">Prueba gratis</Link></li>
+              <li><Link href="/trial" className="hover:text-white transition-colors">Probalo gratis</Link></li>
             </ul>
           </div>
           <div>
