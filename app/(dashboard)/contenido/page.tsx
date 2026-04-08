@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Calendar, Film, Image, Clock, CheckCircle2, Circle,
   ExternalLink, Copy, Check, Play, Package, Palette,
-  Clapperboard, FileText, ChevronDown, ChevronUp, Video, Sparkles
+  Clapperboard, FileText, ChevronDown, ChevronUp, Video, Sparkles, AlertCircle
 } from 'lucide-react'
 
 // ─── Datos Semana 1 ──────────────────────────────────────────────────────────
@@ -361,12 +361,20 @@ export default function ContenidoPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const [copiedRender, setCopiedRender] = useState<string | null>(null)
+
   function showRender(id: string, frames: number, requiere: string | null) {
-    const msg = requiere
-      ? `npx remotion render ${id} out/${id}.mp4\n\nRequiere: /public/nanobanana/${requiere}`
-      : `npx remotion render ${id} out/${id}.mp4`
-    setRenderInfo(renderInfo === id ? null : msg)
-    void id
+    // Toggle: show/hide command
+    setRenderInfo(renderInfo === id ? null : id)
+    void frames
+    void requiere
+  }
+
+  function copyRenderCmd(id: string, requiere: string | null) {
+    const cmd = `npx remotion render ${id} out/${id}.mp4`
+    navigator.clipboard.writeText(cmd)
+    setCopiedRender(id)
+    setTimeout(() => setCopiedRender(null), 2000)
   }
 
   // Stats semana 1
@@ -535,7 +543,7 @@ export default function ContenidoPage() {
                   { label: 'Abrir carpeta Carruseles', url: 'https://www.canva.com/folder/FAHFpcOd82M' },
                   { label: 'Abrir carpeta Historias', url: 'https://www.canva.com/folder/FAHFpd43YX4' },
                   { label: 'Abrir todos los logos', url: 'https://www.canva.com/folder/FAHFpa6KWII' },
-                  { label: 'Planificador Canva', url: 'https://www.canva.com/content-planner/' },
+                  { label: 'Planificador de contenido', url: 'https://www.canva.com/create/social-media-calendars/' },
                 ].map(({ label, url }) => (
                   <a
                     key={label}
@@ -575,15 +583,10 @@ export default function ContenidoPage() {
                 </span>
               </div>
 
-              <a
-                href="https://nanobanana.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-purple-700 hover:bg-purple-600 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors mb-4 group"
-              >
-                Abrir Nanobanana
-                <ExternalLink size={13} className="group-hover:translate-x-0.5 transition-transform" />
-              </a>
+              <div className="bg-amber-950/30 border border-amber-700/40 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
+                <AlertCircle size={13} className="text-amber-400 shrink-0" />
+                <p className="text-[11px] text-amber-300">Pegá la URL correcta de Nanobanana en el código para activar este botón.</p>
+              </div>
 
               {/* Instrucciones */}
               <div className="bg-purple-900/30 border border-purple-800/40 rounded-lg p-3">
@@ -639,16 +642,24 @@ export default function ContenidoPage() {
                   )}
                   <button
                     onClick={() => showRender(comp.id, comp.frames, comp.requiere)}
-                    className="flex items-center justify-center gap-1.5 bg-gray-700 hover:bg-indigo-600 border border-gray-600 hover:border-indigo-500 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-300 hover:text-white transition-all"
+                    className="flex items-center justify-center gap-1.5 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-300 hover:text-white transition-all"
                   >
-                    <Play size={10} />
-                    Previsualizar
+                    <FileText size={10} />
+                    Comando render
                   </button>
-                  {isActive && renderInfo && (
-                    <div className="bg-gray-900 border border-gray-600 rounded-lg p-2 mt-1">
-                      <pre className="text-[9px] text-green-400 font-mono whitespace-pre-wrap leading-relaxed">
-                        {renderInfo}
+                  {isActive && (
+                    <div className="bg-gray-900 border border-gray-700 rounded-lg p-2 mt-1 space-y-2">
+                      <p className="text-[9px] text-gray-500 uppercase tracking-wide">Correr en terminal (C:/divinia)</p>
+                      <pre className="text-[9px] text-green-400 font-mono">
+                        {`npx remotion render ${comp.id} out/${comp.id}.mp4`}
                       </pre>
+                      <button
+                        onClick={() => copyRenderCmd(comp.id, comp.requiere)}
+                        className="flex items-center gap-1 text-[9px] text-gray-500 hover:text-white transition-colors"
+                      >
+                        {copiedRender === comp.id ? <Check size={9} className="text-green-400" /> : <Copy size={9} />}
+                        {copiedRender === comp.id ? 'Copiado' : 'Copiar'}
+                      </button>
                     </div>
                   )}
                 </div>
