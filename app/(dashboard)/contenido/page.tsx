@@ -583,10 +583,15 @@ export default function ContenidoPage() {
                 </span>
               </div>
 
-              <div className="bg-amber-950/30 border border-amber-700/40 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
-                <AlertCircle size={13} className="text-amber-400 shrink-0" />
-                <p className="text-[11px] text-amber-300">Pegá la URL correcta de Nanobanana en el código para activar este botón.</p>
-              </div>
+              <a
+                href="https://gemini.google.com/app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-purple-700 hover:bg-purple-600 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors mb-4 group"
+              >
+                Abrir Gemini (Nanobanana)
+                <ExternalLink size={13} className="group-hover:translate-x-0.5 transition-transform" />
+              </a>
 
               {/* Instrucciones */}
               <div className="bg-purple-900/30 border border-purple-800/40 rounded-lg p-3">
