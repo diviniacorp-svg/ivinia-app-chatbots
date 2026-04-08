@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
   Sparkles, ExternalLink, Copy, Check, ChevronDown, ChevronUp,
-  Play, Brain, Vote, Palette, Film, Zap, Terminal
+  Play, Brain, Vote, Palette, Film, Zap, Terminal, Eye
 } from 'lucide-react'
 
 // ─── Canva links ──────────────────────────────────────────────────────────────
@@ -14,7 +14,7 @@ const CANVA_LINKS = [
   { label: 'Carruseles', url: 'https://www.canva.com/folder/FAHFpcOd82M' },
   { label: 'Historias / Stories', url: 'https://www.canva.com/folder/FAHFpd43YX4' },
   { label: 'Logos y marca', url: 'https://www.canva.com/folder/FAHFpa6KWII' },
-  { label: 'Planificador de contenido', url: 'https://www.canva.com/create/social-media-calendars/' },
+  { label: 'Planificador Canva', url: 'https://www.canva.com/planner' },
 ]
 
 // ─── Composiciones Remotion ───────────────────────────────────────────────────
@@ -199,10 +199,18 @@ export default function ContenidoPage() {
               <div className="w-9 h-9 bg-violet-700 rounded-xl flex items-center justify-center shrink-0">
                 <Film size={17} className="text-white" />
               </div>
-              <div className="text-left">
+              <div className="text-left flex-1">
                 <h2 className="font-bold text-white">Reels con Remotion</h2>
-                <p className="text-gray-500 text-xs">{COMPOSICIONES.length} composiciones — renderizar localmente</p>
+                <p className="text-gray-500 text-xs">{COMPOSICIONES.length} composiciones</p>
               </div>
+              <Link
+                href="/contenido/preview"
+                onClick={e => e.stopPropagation()}
+                className="shrink-0 flex items-center gap-1.5 bg-violet-700 hover:bg-violet-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Eye size={12} />
+                Preview
+              </Link>
             </div>
             {remotionOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
           </button>
