@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   Calendar, Film, Image, Clock, CheckCircle2, Circle,
   ExternalLink, Copy, Check, Play, Package, Palette,
-  Clapperboard, FileText, ChevronDown, ChevronUp, Video
+  Clapperboard, FileText, ChevronDown, ChevronUp, Video, Sparkles
 } from 'lucide-react'
 
 // ─── Datos Semana 1 ──────────────────────────────────────────────────────────
@@ -387,6 +388,15 @@ export default function ContenidoPage() {
             <h1 className="text-2xl font-black text-white">Fabrica de Contenidos</h1>
           </div>
           <p className="text-gray-400 ml-12">Instagram @autom_atia — Semana 1 — Turnero by DIVINIA</p>
+          <div className="ml-12 mt-3">
+            <Link
+              href="/contenido/pipeline"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <Sparkles size={15} />
+              Pipeline IA — Generar mes completo
+            </Link>
+          </div>
         </div>
 
         {/* ── SECCION 1: Estado del Calendario ─────────────────────────────── */}

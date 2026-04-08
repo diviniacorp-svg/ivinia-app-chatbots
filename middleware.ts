@@ -28,6 +28,7 @@ const PROTECTED_API_ROUTES = [
   '/api/bookings/configs',
   '/api/turnos/generar-landing',
   '/api/agents',
+  '/api/instagram/pipeline',
 ]
 
 export function middleware(request: NextRequest) {
@@ -107,5 +108,7 @@ export const config = {
     '/api/turnos/generar-landing',
     '/api/agents',
     '/api/agents/:path*',
+    '/api/instagram/pipeline',
+    '/api/instagram/pipeline/:path*',
   ],
 }
