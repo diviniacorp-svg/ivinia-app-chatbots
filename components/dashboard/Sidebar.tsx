@@ -6,7 +6,7 @@ import {
   LayoutDashboard, FileText, Users, Kanban,
   UserCheck,
   CreditCard, Send, ExternalLink, Bot, CalendarCheck, Settings2, Cpu, X,
-  Clapperboard, Instagram, Calendar
+  Clapperboard, Instagram, Calendar, Zap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -155,6 +155,23 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         >
           <Instagram size={17} />
           Redes Sociales
+        </Link>
+
+        {/* Empresa */}
+        <div className="pt-3 pb-1">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-3">Empresa</p>
+        </div>
+        <Link
+          href="/orquestacion"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+            pathname === '/orquestacion' || pathname.startsWith('/orquestacion/')
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800'
+          )}
+        >
+          <Zap size={17} />
+          Orquestación
         </Link>
 
         {/* Agentes IA */}

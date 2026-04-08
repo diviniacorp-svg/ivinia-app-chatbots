@@ -14,6 +14,7 @@ const ADMIN_ROUTES = [
   '/contenido',
   '/redes',
   '/calendario',
+  '/orquestacion',
 ]
 
 const PROTECTED_API_ROUTES = [
@@ -87,6 +88,8 @@ export const config = {
     '/redes/:path*',
     '/calendario',
     '/calendario/:path*',
+    '/orquestacion',
+    '/orquestacion/:path*',
     '/api/seed',
     '/api/seed/:path*',
     '/api/clients',
