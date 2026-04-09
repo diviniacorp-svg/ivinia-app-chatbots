@@ -12,9 +12,10 @@ export async function GET(
     .from('booking_configs')
     .select('*')
     .eq('client_id', params.clientId)
-    .maybeSingle()
+    .order('created_at', { ascending: false })
+    .limit(1)
 
-  return NextResponse.json({ config: data })
+  return NextResponse.json({ config: data?.[0] ?? null })
 }
 
 export async function PUT(

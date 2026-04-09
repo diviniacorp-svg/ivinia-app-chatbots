@@ -16,12 +16,14 @@ export async function GET(
   const professionalId = searchParams.get('professionalId')
   const serviceId = searchParams.get('serviceId')
 
-  const { data: config } = await db
+  const { data: configs } = await db
     .from('booking_configs')
     .select('*')
     .eq('client_id', params.clientId)
     .eq('is_active', true)
-    .maybeSingle()
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const config = configs?.[0] ?? null
 
   if (!config) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 
@@ -39,29 +41,13 @@ export async function GET(
   // Turnos existentes ese día
   const { data: existing } = await db
     .from('appointments')
-    .select('appointment_time, service_duration_minutes, professional_id')
+    .select('appointment_time, service_duration_minutes')
     .eq('client_id', params.clientId)
     .eq('appointment_date', date)
     .in('status', ['confirmed', 'pending', 'pending_payment'])
 
   const allExisting = existing || []
-
-  // Si hay profesionales y el id es 'any': unión de slots de todos los profesionales
-  if (professionalId === 'any' && typedConfig.professionals && typedConfig.professionals.length > 0) {
-    const slotSet = new Set<string>()
-    for (const prof of typedConfig.professionals) {
-      const profExisting = allExisting.filter(a => a.professional_id === prof.id)
-      const profSlots = getAvailableSlots(typedConfig, date, totalDuration, profExisting, maxCapacity)
-      profSlots.forEach(s => slotSet.add(s))
-    }
-    const slots = Array.from(slotSet).sort()
-    return NextResponse.json({ slots })
-  }
-
-  // Profesional específico: filtrar turnos por ese profesional
-  const filtered = professionalId && professionalId !== 'any'
-    ? allExisting.filter(a => a.professional_id === professionalId)
-    : allExisting
+  const filtered = allExisting
 
   const slots = getAvailableSlots(typedConfig, date, totalDuration, filtered, maxCapacity)
 
@@ -85,7 +71,7 @@ export async function POST(
 ) {
   try {
     const body = await request.json()
-    const { serviceIds, serviceNames, totalDuration, totalPrice, date, time, customerName, customerPhone, customerEmail, customerNotes, professionalId, professionalName } = body
+    const { serviceIds, serviceNames, totalDuration, totalPrice, date, time, customerName, customerPhone, customerEmail, customerNotes } = body
 
     if (!serviceIds?.length || !date || !time || !customerName || !totalDuration) {
       return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
@@ -106,27 +92,27 @@ export async function POST(
 
     const db = createAdminClient()
 
-    const { data: config } = await db
+    const { data: cfgs } = await db
       .from('booking_configs')
       .select('*')
       .eq('client_id', params.clientId)
       .eq('is_active', true)
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
+    const config = cfgs?.[0] ?? null
 
     if (!config) return NextResponse.json({ error: 'Negocio no disponible' }, { status: 404 })
 
     // Verificar que el slot sigue disponible con la duración total
     const { data: existing } = await db
       .from('appointments')
-      .select('appointment_time, service_duration_minutes, professional_id')
+      .select('appointment_time, service_duration_minutes')
       .eq('client_id', params.clientId)
       .eq('appointment_date', date)
       .in('status', ['confirmed', 'pending', 'pending_payment'])
 
     const allExisting = existing || []
-    const filteredForCheck = professionalId && professionalId !== 'any'
-      ? allExisting.filter((a: { professional_id?: string }) => a.professional_id === professionalId)
-      : allExisting
+    const filteredForCheck = allExisting
 
     const typedCfg = config as BookingConfig
     const primaryService = safeServiceId ? (typedCfg.services || []).find((s: { id: string }) => s.id === safeServiceId) : null
@@ -153,8 +139,6 @@ export async function POST(
         customer_email: safeEmail,
         customer_notes: safeNotes,
         status: 'pending',
-        professional_id: professionalId || null,
-        professional_name: professionalName || null,
       })
       .select()
       .single()

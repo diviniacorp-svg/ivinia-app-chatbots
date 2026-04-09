@@ -69,8 +69,19 @@ ALTER TABLE booking_configs ADD COLUMN IF NOT EXISTS owner_pin text DEFAULT '123
 -- Agregar seña a appointments existente
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS sena_ars integer DEFAULT 0;
 
--- Actualizar status check para incluir 'pending' si no estaba
--- (Supabase permite esto sin recrear la tabla)
+-- Agregar saldo_ars generado (solo si sena_ars ya existe)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'appointments' AND column_name = 'saldo_ars'
+  ) THEN
+    ALTER TABLE appointments
+      ADD COLUMN saldo_ars integer GENERATED ALWAYS AS (service_price_ars - sena_ars) STORED;
+  END IF;
+END $$;
+
+-- Actualizar status check para incluir 'pending' y 'pending_payment'
 ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
 ALTER TABLE appointments ADD CONSTRAINT appointments_status_check
-  CHECK (status IN ('pending','confirmed','cancelled','completed','no_show'));
+  CHECK (status IN ('pending','pending_payment','confirmed','cancelled','completed','no_show'));
