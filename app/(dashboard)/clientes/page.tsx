@@ -435,6 +435,7 @@ export default function ClientesPage() {
       setSeeding(true)
       try {
         await fetch('/api/seed')
+        await fetch('/api/seed/demo-clientes')
         await fetch('/api/seed/demo-rufina')
         await fetch('/api/seed/demo-top-quality')
         const res2 = await fetch('/api/clients')
@@ -456,6 +457,7 @@ export default function ClientesPage() {
     setSeedMsg('')
     try {
       await fetch('/api/seed')
+      await fetch('/api/seed/demo-clientes')
       await fetch('/api/seed/demo-rufina')
       await fetch('/api/seed/demo-top-quality')
       await loadClients()
