@@ -425,33 +425,51 @@ export default function ClientesPage() {
   const [seeding, setSeeding] = useState(false)
   const [seedMsg, setSeedMsg] = useState('')
 
-  async function loadClients() {
+  async function loadClients(autoSeedIfEmpty = false) {
     const res = await fetch('/api/clients')
     const data = await res.json()
-    setClients(data.clients || [])
+    const list: Client[] = data.clients || []
+
+    // Si no hay clientes, sembrar demos automáticamente
+    if (list.length === 0 && autoSeedIfEmpty) {
+      setSeeding(true)
+      try {
+        await fetch('/api/seed')
+        await fetch('/api/seed/demo-rufina')
+        await fetch('/api/seed/demo-top-quality')
+        const res2 = await fetch('/api/clients')
+        const data2 = await res2.json()
+        setClients(data2.clients || [])
+      } catch {
+        setClients([])
+      } finally {
+        setSeeding(false)
+      }
+    } else {
+      setClients(list)
+    }
     setLoading(false)
   }
 
   async function cargarDemos() {
     setSeeding(true)
-    setSeedMsg('Cargando...')
+    setSeedMsg('')
     try {
       await fetch('/api/seed')
-      const r = await fetch('/api/seed/demo-rufina')
-      const r2 = await fetch('/api/seed/demo-top-quality')
-      const d2 = await r2.json()
-      const turnosUrl = d2?.urls?.reservas_full || ''
-      setSeedMsg(`✅ Demos cargados${turnosUrl ? ` — Top Quality: ${turnosUrl}` : ''}`)
+      await fetch('/api/seed/demo-rufina')
+      await fetch('/api/seed/demo-top-quality')
       await loadClients()
+      setSeedMsg('✅ Clientes recargados')
+      setTimeout(() => setSeedMsg(''), 3000)
     } catch {
-      setSeedMsg('❌ Error — revisá que Supabase esté activo')
+      setSeedMsg('❌ Error — Supabase no conecta')
     } finally {
       setSeeding(false)
     }
   }
 
   useEffect(() => {
-    loadClients()
+    loadClients(true)
     fetch('/api/templates').then(r => r.json()).then(d => setTemplates(d.templates || []))
   }, [])
 
@@ -522,20 +540,24 @@ export default function ClientesPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
-              <p className="text-4xl mb-3">👥</p>
-              <h3 className="font-bold text-gray-700 mb-1">{search ? 'Sin resultados' : 'No hay clientes todavía'}</h3>
-              <p className="text-gray-400 text-sm mb-4">{search ? 'Probá con otro término' : 'Creá tu primer cliente para empezar'}</p>
-              {!search && (
-                <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-                  <button onClick={cargarDemos} disabled={seeding}
-                    className="bg-gray-900 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-800 disabled:opacity-50">
-                    {seeding ? '⏳ Cargando demos...' : '🔄 Cargar demos (Rufina + Top Quality)'}
-                  </button>
-                  <button onClick={() => setTab('nuevo')}
-                    className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700">
-                    + Crear cliente nuevo
-                  </button>
-                </div>
+              {seeding ? (
+                <>
+                  <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
+                  <p className="font-bold text-gray-700 mb-1">Cargando clientes...</p>
+                  <p className="text-gray-400 text-sm">Reconectando con la base de datos</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-4xl mb-3">👥</p>
+                  <h3 className="font-bold text-gray-700 mb-1">{search ? 'Sin resultados' : 'No hay clientes todavía'}</h3>
+                  <p className="text-gray-400 text-sm mb-4">{search ? 'Probá con otro término' : 'Creá tu primer cliente para empezar'}</p>
+                  {!search && (
+                    <button onClick={() => setTab('nuevo')}
+                      className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700">
+                      + Crear cliente nuevo
+                    </button>
+                  )}
+                </>
               )}
             </div>
           ) : (
