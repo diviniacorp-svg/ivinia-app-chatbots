@@ -422,12 +422,32 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'lista' | 'nuevo'>('lista')
   const [search, setSearch] = useState('')
+  const [seeding, setSeeding] = useState(false)
+  const [seedMsg, setSeedMsg] = useState('')
 
   async function loadClients() {
     const res = await fetch('/api/clients')
     const data = await res.json()
     setClients(data.clients || [])
     setLoading(false)
+  }
+
+  async function cargarDemos() {
+    setSeeding(true)
+    setSeedMsg('Cargando...')
+    try {
+      await fetch('/api/seed')
+      const r = await fetch('/api/seed/demo-rufina')
+      const r2 = await fetch('/api/seed/demo-top-quality')
+      const d2 = await r2.json()
+      const turnosUrl = d2?.urls?.reservas_full || ''
+      setSeedMsg(`✅ Demos cargados${turnosUrl ? ` — Top Quality: ${turnosUrl}` : ''}`)
+      await loadClients()
+    } catch {
+      setSeedMsg('❌ Error — revisá que Supabase esté activo')
+    } finally {
+      setSeeding(false)
+    }
   }
 
   useEffect(() => {
@@ -456,17 +476,32 @@ export default function ClientesPage() {
             {clients.length} clientes · {countActive} activos · {countTrial} en trial · {countTurnos} con turnos · {countChatbot} con chatbot
           </p>
         </div>
-        <button
-          onClick={() => setTab(tab === 'nuevo' ? 'lista' : 'nuevo')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
-            tab === 'nuevo'
-              ? 'bg-gray-100 text-gray-600'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700'
-          }`}>
-          <Plus size={16} />
-          {tab === 'nuevo' ? 'Ver clientes' : 'Nuevo cliente'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={cargarDemos}
+            disabled={seeding}
+            title="Recarga los clientes demo (Rufina Nails + Top Quality)"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-semibold text-sm border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50">
+            {seeding ? '⏳' : '🔄'} Demos
+          </button>
+          <button
+            onClick={() => setTab(tab === 'nuevo' ? 'lista' : 'nuevo')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+              tab === 'nuevo'
+                ? 'bg-gray-100 text-gray-600'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }`}>
+            <Plus size={16} />
+            {tab === 'nuevo' ? 'Ver clientes' : 'Nuevo cliente'}
+          </button>
+        </div>
       </div>
+
+      {seedMsg && (
+        <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-medium ${seedMsg.startsWith('✅') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          {seedMsg}
+        </div>
+      )}
 
       {tab === 'nuevo' ? (
         <Suspense fallback={null}>
@@ -491,10 +526,16 @@ export default function ClientesPage() {
               <h3 className="font-bold text-gray-700 mb-1">{search ? 'Sin resultados' : 'No hay clientes todavía'}</h3>
               <p className="text-gray-400 text-sm mb-4">{search ? 'Probá con otro término' : 'Creá tu primer cliente para empezar'}</p>
               {!search && (
-                <button onClick={() => setTab('nuevo')}
-                  className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700">
-                  + Crear primer cliente
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                  <button onClick={cargarDemos} disabled={seeding}
+                    className="bg-gray-900 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-800 disabled:opacity-50">
+                    {seeding ? '⏳ Cargando demos...' : '🔄 Cargar demos (Rufina + Top Quality)'}
+                  </button>
+                  <button onClick={() => setTab('nuevo')}
+                    className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700">
+                    + Crear cliente nuevo
+                  </button>
+                </div>
               )}
             </div>
           ) : (
