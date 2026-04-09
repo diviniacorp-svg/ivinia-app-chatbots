@@ -2,58 +2,81 @@ import Link from 'next/link'
 import { Check, ArrowRight, Clock, Smartphone, Bell, BarChart2 } from 'lucide-react'
 
 export const metadata = {
-  title: 'Propuesta para Top Quality — Sistema de Turnos Online | DIVINIA',
-  description: 'Propuesta personalizada de sistema de reservas online para Top Quality, local de mantenimiento y productos para piscinas.',
+  title: 'Propuesta para Top Quality Piscinas — Sistema de Turnos Online | DIVINIA',
+  description: 'Propuesta personalizada de sistema de reservas online para Top Quality Piscinas, San Luis.',
 }
 
 const FEATURES = [
   {
     icon: Smartphone,
-    title: 'Reservas 24/7 sin teléfono',
-    desc: 'Tus clientes sacan turno desde el celular cuando quieran. Vos no necesitás atender llamadas.',
+    title: 'Reservas 24/7 desde el celular',
+    desc: 'Tus clientes piden visita técnica o turno desde el celular a cualquier hora. Vos recibís el aviso por WhatsApp.',
   },
   {
     icon: Bell,
     title: 'Recordatorio automático por WhatsApp',
-    desc: 'El sistema avisa al cliente 24hs antes de su turno. Menos ausencias, más trabajo confirmado.',
+    desc: 'El sistema avisa al cliente el día anterior. Menos olvidos, más visitas confirmadas.',
   },
   {
     icon: Clock,
-    title: 'Disponibilidad en tiempo real',
-    desc: 'Los clientes ven exactamente qué días y horarios tenés libres. Sin llamadas para preguntar.',
+    title: 'Tu disponibilidad en tiempo real',
+    desc: 'El cliente ve exactamente qué días tenés libres. Sin llamar para preguntar si tenés horario.',
   },
   {
     icon: BarChart2,
-    title: 'Panel de gestión simple',
-    desc: 'Ves todos tus turnos del día, semana y mes. Podés confirmar, cancelar o reprogramar.',
+    title: 'Panel del técnico — todo organizado',
+    desc: 'Ves todos los turnos del día y la semana. Podés reprogramar o cancelar con un click.',
   },
 ]
 
-const SERVICIOS_EJEMPLO = [
-  { nombre: 'Mantenimiento mensual de pileta', precio: 'Consultar', duracion: '2 hs' },
-  { nombre: 'Análisis de agua + tratamiento', precio: 'Consultar', duracion: '1 hs' },
-  { nombre: 'Limpieza y aspirado', precio: 'Consultar', duracion: '1.5 hs' },
-  { nombre: 'Instalación de equipo', precio: 'Consultar', duracion: '3 hs' },
-  { nombre: 'Visita técnica diagnóstico', precio: 'Consultar', duracion: '1 hs' },
+const SERVICIOS_REALES = [
+  { nombre: 'Limpieza y aspirado completo', detalle: 'Fondo, paredes y skimmer' },
+  { nombre: 'Desinfección de piscina', detalle: 'Tratamiento completo' },
+  { nombre: 'Mantenimiento mensual', detalle: 'Químicos + revisión de equipos' },
+  { nombre: 'Tratamiento de agua verde', detalle: 'Choque + algicida + limpieza' },
+  { nombre: 'Instalación de bomba', detalle: 'Instalación y puesta en marcha' },
+  { nombre: 'Cambio de cuarzo filtrante', detalle: 'Vaciado + recarga' },
+  { nombre: 'Pintura de piscina', detalle: 'Preparación + aplicación' },
+  { nombre: 'Arreglos y reparaciones', detalle: 'Pérdidas, grietas y daños' },
+  { nombre: 'Visita técnica de diagnóstico', detalle: 'Evaluación completa' },
+  { nombre: 'Apertura de temporada', detalle: 'Puesta en marcha para el verano' },
+  { nombre: 'Cierre de temporada', detalle: 'Preparación para el invierno' },
 ]
 
 export default function PropuestaTopQuality() {
   return (
     <main className="min-h-screen bg-white">
 
-      {/* Header */}
-      <div className="bg-cyan-600 text-white">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Header — colores marca Top Quality: azul + amarillo */}
+      <div style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)' }} className="text-white">
+        <div className="max-w-4xl mx-auto px-6 py-10">
+          <div className="flex items-start justify-between flex-wrap gap-6">
             <div>
-              <p className="text-cyan-200 text-sm font-semibold mb-1">Propuesta exclusiva · DIVINIA</p>
-              <h1 className="text-3xl sm:text-4xl font-black">Top Quality 🏊</h1>
-              <p className="text-cyan-200 mt-1">Mantenimiento y productos para piscinas · San Luis, Argentina</p>
+              {/* Badge estilo logo */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-black"
+                  style={{ background: 'linear-gradient(135deg, #fbbf24, #f59e0b)' }}>
+                  🏊
+                </div>
+                <div>
+                  <p className="text-blue-200 text-xs font-bold uppercase tracking-widest">Propuesta exclusiva · DIVINIA</p>
+                  <h1 className="text-2xl sm:text-3xl font-black leading-tight">Top Quality Piscinas</h1>
+                </div>
+              </div>
+              <p className="text-blue-200 text-base">
+                Limpieza y mantenimiento de piscinas · San Luis Capital
+              </p>
+              <p className="text-blue-300 text-sm mt-1 flex items-center gap-2">
+                <span>📱 (266) 486-4731</span>
+                <span>·</span>
+                <span>📘 /topqualitypiscina</span>
+              </p>
             </div>
-            <div className="bg-white/10 border border-white/20 rounded-2xl px-5 py-3 text-center">
-              <p className="text-cyan-200 text-xs font-semibold uppercase tracking-wide mb-1">Inversión</p>
-              <p className="text-3xl font-black">$150.000</p>
-              <p className="text-cyan-200 text-sm">pago único · sin mensualidades</p>
+            <div className="rounded-2xl px-6 py-4 text-center border border-white/20"
+              style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <p className="text-blue-200 text-xs font-bold uppercase tracking-wide mb-1">Inversión única</p>
+              <p className="text-4xl font-black" style={{ color: '#fbbf24' }}>$150.000</p>
+              <p className="text-blue-200 text-sm mt-1">sin mensualidades · para siempre</p>
             </div>
           </div>
         </div>
@@ -61,38 +84,39 @@ export default function PropuestaTopQuality() {
 
       {/* Problema que resuelve */}
       <div className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-12">
-          <h2 className="text-2xl font-black text-gray-900 mb-6">¿Qué problema resuelve?</h2>
+        <div className="max-w-4xl mx-auto px-6 py-14">
+          <h2 className="text-2xl font-black text-gray-900 mb-2">El problema de hoy</h2>
+          <p className="text-gray-500 mb-8">Lo que pasa cuando no tenés el sistema.</p>
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="bg-gray-900 rounded-2xl p-6">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Hoy sin el sistema</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-5">Sin el sistema</p>
               <ul className="space-y-3">
                 {[
-                  'El cliente llama para preguntar disponibilidad',
-                  'Tenés que anotar el turno a mano o en papel',
-                  'Si estás en una pileta, no podés atender el teléfono',
-                  'Los clientes no saben qué servicios ofrecés ni los precios',
-                  'A las 9 de la noche nadie atiende reservas',
+                  'El cliente llama para pedir turno — justo cuando estás en una piscina',
+                  'Anotás el turno en papel o en la cabeza y se superponen',
+                  'El cliente no sabe qué servicios ofrecés ni cuánto tardan',
+                  'Si estás ocupado no podés atender — el cliente llama a otro',
+                  'De noche o fin de semana, nadie registra pedidos de visita',
                 ].map(item => (
                   <li key={item} className="flex items-start gap-3 text-sm text-gray-400">
-                    <span className="text-gray-600 font-black mt-0.5">—</span>
+                    <span className="text-gray-600 font-black mt-0.5 shrink-0">—</span>
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="bg-cyan-600 rounded-2xl p-6">
-              <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-4">Con el sistema Top Quality</p>
+            <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #1e3a8a, #1d4ed8)' }}>
+              <p className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-5">Con el sistema Top Quality</p>
               <ul className="space-y-3">
                 {[
-                  'Los clientes reservan solos desde el celular',
-                  'La agenda se organiza sola, sin papeles',
-                  'Recibís el turno por WhatsApp aunque estés trabajando',
-                  'Tu catálogo de servicios visible en la web 24/7',
-                  'Reservas a cualquier hora, fines de semana incluidos',
+                  'El cliente reserva la visita técnica solo, desde el celular',
+                  'La agenda se organiza sola — sin papeles ni errores',
+                  'Ve todos tus servicios con descripción — sabe exactamente qué pedir',
+                  'Mientras estás trabajando, el sistema capta el cliente',
+                  'Reservas a las 11 de la noche, fines de semana — siempre disponible',
                 ].map(item => (
                   <li key={item} className="flex items-start gap-3 text-sm text-white">
-                    <Check size={14} className="text-cyan-300 shrink-0 mt-0.5" />
+                    <Check size={14} className="text-yellow-300 shrink-0 mt-0.5" />
                     {item}
                   </li>
                 ))}
@@ -103,17 +127,17 @@ export default function PropuestaTopQuality() {
       </div>
 
       {/* Qué incluye */}
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Qué incluye el sistema</h2>
-        <p className="text-gray-500 mb-10">Todo configurado a medida de Top Quality. Sin que vos tengas que tocar código.</p>
+      <div className="max-w-4xl mx-auto px-6 py-14">
+        <h2 className="text-2xl font-black text-gray-900 mb-2">Qué incluye</h2>
+        <p className="text-gray-500 mb-10">Todo configurado a medida de Top Quality. Setup en 24hs.</p>
 
-        <div className="grid sm:grid-cols-2 gap-5 mb-12">
+        <div className="grid sm:grid-cols-2 gap-4 mb-14">
           {FEATURES.map(f => {
             const Icon = f.icon
             return (
               <div key={f.title} className="flex gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
                 <div className="w-11 h-11 bg-white border border-gray-200 rounded-xl flex items-center justify-center shrink-0">
-                  <Icon size={18} className="text-cyan-600" />
+                  <Icon size={18} className="text-blue-600" />
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1 text-sm">{f.title}</h3>
@@ -124,33 +148,33 @@ export default function PropuestaTopQuality() {
           })}
         </div>
 
-        {/* Servicios de ejemplo */}
-        <div className="bg-cyan-50 border border-cyan-100 rounded-2xl p-6 mb-12">
-          <h3 className="font-black text-gray-900 mb-1">Servicios que cargamos en el sistema</h3>
-          <p className="text-sm text-gray-500 mb-5">Los configuramos con los servicios reales de Top Quality. Estos son ejemplos:</p>
-          <div className="space-y-3">
-            {SERVICIOS_EJEMPLO.map(s => (
-              <div key={s.nombre} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-cyan-100">
+        {/* Servicios reales del local */}
+        <div className="rounded-2xl p-6 mb-14 border" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+          <h3 className="font-black text-gray-900 mb-1">Tus servicios ya están cargados en el demo</h3>
+          <p className="text-sm text-gray-500 mb-6">Configurados con los servicios reales de Top Quality Piscinas:</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {SERVICIOS_REALES.map(s => (
+              <div key={s.nombre} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-blue-100">
+                <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">{s.nombre}</p>
-                  <p className="text-xs text-gray-400">Duración estimada: {s.duracion}</p>
+                  <p className="text-xs text-gray-400">{s.detalle}</p>
                 </div>
-                <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full border border-cyan-200">
-                  {s.precio}
-                </span>
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-4">* Los precios y servicios se definen con Top Quality al momento del setup.</p>
+          <p className="text-xs text-gray-400 mt-4">
+            * Los precios se agregan cuando arranquemos. El cliente puede ver los servicios y pedir la visita.
+          </p>
         </div>
 
         {/* Cómo funciona */}
-        <h2 className="text-2xl font-black text-gray-900 mb-8">Cómo funciona el proceso</h2>
-        <div className="grid sm:grid-cols-3 gap-5 mb-16">
+        <h2 className="text-2xl font-black text-gray-900 mb-8">Cómo es el proceso</h2>
+        <div className="grid sm:grid-cols-3 gap-4 mb-14">
           {[
-            { n: '01', title: 'Confirmás y pagás', desc: 'Un solo pago de $150.000 por MercadoPago. Sin mensualidades ni sorpresas.' },
-            { n: '02', title: 'Configuramos juntos', desc: 'En 24/48hs cargamos tus servicios, precios y horarios. Vos solo validás.' },
-            { n: '03', title: 'Lo compartís y funciona', desc: 'Te damos el link de reservas. Lo mandás por WhatsApp o lo ponés en Instagram.' },
+            { n: '01', title: 'Confirmás y pagás', desc: '$150.000 por MercadoPago. Un solo pago, el sistema es tuyo para siempre.' },
+            { n: '02', title: 'Setup en 24hs', desc: 'Cargamos tus servicios, horarios y datos. En un día está listo para funcionar.' },
+            { n: '03', title: 'Lo empezás a usar', desc: 'Compartís el link por WhatsApp o en el local. Los turnos entran solos.' },
           ].map(s => (
             <div key={s.n} className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
               <p className="text-5xl font-black text-gray-100 leading-none mb-4 select-none">{s.n}</p>
@@ -161,21 +185,22 @@ export default function PropuestaTopQuality() {
         </div>
 
         {/* Precio y garantía */}
-        <div className="grid sm:grid-cols-2 gap-5 mb-12">
-          <div className="bg-cyan-600 rounded-3xl p-8 text-white">
-            <p className="text-cyan-200 text-sm font-bold uppercase tracking-wide mb-4">Inversión total</p>
-            <p className="text-6xl font-black mb-2">$150.000</p>
-            <p className="text-cyan-200 mb-6">pago único · sin mensualidades</p>
-            <ul className="space-y-2 text-sm text-cyan-100">
+        <div className="grid sm:grid-cols-2 gap-5 mb-14">
+          <div className="rounded-3xl p-8 text-white" style={{ background: 'linear-gradient(135deg, #1e3a8a, #1d4ed8)' }}>
+            <p className="text-blue-300 text-sm font-bold uppercase tracking-wide mb-4">Lo que pagás</p>
+            <p className="font-black mb-1" style={{ fontSize: '3.5rem', lineHeight: 1, color: '#fbbf24' }}>$150.000</p>
+            <p className="text-blue-200 mb-6">pago único · sin mensualidades</p>
+            <ul className="space-y-2 text-sm text-blue-100">
               {[
-                'Sistema de turnos personalizado',
-                'Setup y configuración incluidos',
-                'Link propio para compartir',
+                'Sistema de turnos personalizado Top Quality',
+                'Todos tus servicios cargados',
+                'Tu horario de atención configurado',
+                'Notificaciones a tu WhatsApp (266) 486-4731',
                 '6 meses de soporte incluidos',
                 'Pagás con MercadoPago',
               ].map(f => (
                 <li key={f} className="flex items-center gap-2">
-                  <Check size={13} className="text-cyan-300 shrink-0" />
+                  <Check size={13} className="text-yellow-300 shrink-0" />
                   {f}
                 </li>
               ))}
@@ -183,47 +208,48 @@ export default function PropuestaTopQuality() {
           </div>
           <div className="bg-gray-50 border border-gray-200 rounded-3xl p-8">
             <div className="text-4xl mb-4">🛡️</div>
-            <h3 className="font-black text-gray-900 text-xl mb-3">Sin contrato. Sin sorpresas.</h3>
+            <h3 className="font-black text-gray-900 text-xl mb-3">Sin riesgo.</h3>
             <p className="text-gray-500 text-sm leading-relaxed mb-4">
-              Pagás una sola vez y el sistema es tuyo para siempre.
-              Somos de San Luis — conocemos lo que cuesta cada gasto mensual.
+              Si en 30 días no ves resultados concretos — más clientes organizados,
+              menos llamadas — te devolvemos el dinero sin preguntas.
             </p>
             <p className="text-gray-500 text-sm leading-relaxed">
-              Si en 30 días no estás conforme con el sistema,
-              te devolvemos el dinero sin preguntas.
+              Somos de San Luis, somos vecinos. Esto no es una empresa
+              de Buenos Aires — nos conocemos de acá.
             </p>
           </div>
         </div>
 
         {/* CTA */}
         <div className="text-center">
-          <h2 className="text-3xl font-black text-gray-900 mb-4">
-            ¿Arrancamos mañana?
-          </h2>
-          <p className="text-gray-500 mb-8 text-lg">
-            Hablemos por WhatsApp y en 24hs el sistema está listo para Top Quality.
+          <h2 className="text-3xl font-black text-gray-900 mb-4">¿Lo probamos juntos ahora?</h2>
+          <p className="text-gray-500 mb-8 text-lg max-w-lg mx-auto">
+            Tenemos el demo de Top Quality Piscinas listo para que lo veas funcionar
+            en tu celular antes de decidir.
           </p>
           <a
-            href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20el%20sistema%20de%20turnos%20para%20Top%20Quality"
+            href="https://wa.me/5492665286110?text=Hola%2C%20soy%20de%20Top%20Quality%20Piscinas%2C%20quiero%20el%20sistema%20de%20turnos"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 bg-cyan-600 hover:bg-cyan-700 text-white font-black px-10 py-5 rounded-2xl text-lg transition-all shadow-xl shadow-cyan-200"
+            className="inline-flex items-center gap-3 text-white font-black px-10 py-5 rounded-2xl text-lg transition-all shadow-xl"
+            style={{ background: 'linear-gradient(135deg, #1e3a8a, #1d4ed8)', boxShadow: '0 20px 40px rgba(29,78,216,0.3)' }}
           >
-            Quiero el sistema para Top Quality <ArrowRight size={22} />
+            Quiero el sistema <ArrowRight size={22} />
           </a>
           <p className="text-gray-400 text-sm mt-5">
             Joaco · DIVINIA · San Luis, Argentina ·
-            <a href="https://wa.me/5492665286110" className="text-indigo-600 hover:underline ml-1">WhatsApp directo</a>
+            <a href="https://wa.me/5492665286110" className="text-blue-600 hover:underline ml-1">
+              (266) 528-6110
+            </a>
           </p>
         </div>
-
       </div>
 
-      {/* Footer minimal */}
+      {/* Footer */}
       <div className="border-t border-gray-100 py-8 text-center text-sm text-gray-400">
-        Propuesta preparada por DIVINIA para Top Quality · {new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        Propuesta preparada por DIVINIA para Top Quality Piscinas · San Luis
         <span className="block mt-1">
-          <Link href="/" className="text-indigo-600 hover:underline">Ver más en divinia.vercel.app</Link>
+          <Link href="/" className="text-blue-600 hover:underline">divinia.vercel.app</Link>
         </span>
       </div>
     </main>
