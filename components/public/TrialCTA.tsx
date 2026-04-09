@@ -23,22 +23,22 @@ export default function TrialCTA() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
                 <a
-                  href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20ver%20una%20demo%20de%20Turnero"
+                  href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-indigo-50 font-black px-10 py-5 rounded-2xl text-lg transition-all shadow-2xl"
                 >
-                  Ver demo en vivo <ArrowRight size={20} />
+                  Quiero mi Turnero — $80.000 <ArrowRight size={20} />
                 </a>
                 <Link
-                  href="/trial"
+                  href="/rubros"
                   className="flex items-center gap-2 border-2 border-white/30 hover:border-white/60 text-white font-bold px-10 py-5 rounded-2xl text-lg transition-all"
                 >
-                  Probalo gratis
+                  Ver demo de mi rubro
                 </Link>
               </div>
               <p className="text-indigo-300 text-sm">
-                Sin tarjeta · Setup en 24hs · Somos de San Luis, Argentina
+                Pago único · Setup en 24hs · Somos de San Luis, Argentina
               </p>
             </div>
           </div>

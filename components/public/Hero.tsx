@@ -42,18 +42,18 @@ export default function Hero() {
         <Reveal delay={280}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-5">
             <a
-              href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20ver%20una%20demo%20de%20Turnero"
+              href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-10 py-5 rounded-2xl text-lg transition-all shadow-xl shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5"
             >
-              Ver demo en vivo <ArrowRight size={20} />
+              Quiero mi Turnero <ArrowRight size={20} />
             </a>
             <Link
-              href="/trial"
+              href="/rubros"
               className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold px-10 py-5 rounded-2xl text-lg transition-all"
             >
-              Probalo gratis
+              Ver demo de mi rubro
             </Link>
           </div>
         </Reveal>
@@ -62,9 +62,9 @@ export default function Hero() {
         <Reveal delay={340}>
           <div className="flex items-center justify-center gap-8 flex-wrap mb-20">
             {[
-              'Sin tarjeta de crédito',
+              '$80.000 pago único',
               'Setup en 24hs',
-              'Pago único — sin mensualidades',
+              'Sin mensualidades',
             ].map(item => (
               <span key={item} className="flex items-center gap-2 text-sm text-gray-400 font-medium">
                 <Check size={15} className="text-emerald-500 shrink-0" />

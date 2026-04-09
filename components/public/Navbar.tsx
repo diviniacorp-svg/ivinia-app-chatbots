@@ -40,14 +40,15 @@ export default function Navbar() {
             <a href="#faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <a href="https://wa.me/5492665286110" target="_blank" rel="noopener noreferrer"
+            <a href="/rubros"
               className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
-              WhatsApp
+              Ver demos
             </a>
-            <Link href="/trial"
+            <a href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
+              target="_blank" rel="noopener noreferrer"
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-              Probá 14 días gratis
-            </Link>
+              Quiero mi Turnero
+            </a>
           </div>
           <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
             {open ? <X size={20} /> : <Menu size={20} />}
@@ -60,9 +61,11 @@ export default function Navbar() {
             <a href="#como-funciona" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Cómo funciona</a>
             <a href="#precios" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Precios</a>
             <a href="#faq" onClick={() => setOpen(false)} className="text-gray-700 font-medium">FAQ</a>
-            <Link href="/trial" className="bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-lg text-center">
-              Probá 14 días gratis
-            </Link>
+            <a href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
+              target="_blank" rel="noopener noreferrer"
+              className="bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-lg text-center">
+              Quiero mi Turnero
+            </a>
           </div>
         )}
       </div>
