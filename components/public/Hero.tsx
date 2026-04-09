@@ -81,9 +81,9 @@ export default function Hero() {
         <Reveal delay={0} y={48}>
           <div className="grid sm:grid-cols-2 gap-5">
 
-            {/* Sin Turnero */}
-            <div className="bg-red-50 border-2 border-red-100 rounded-3xl p-8">
-              <p className="text-xs font-black text-red-400 uppercase tracking-[0.15em] mb-6">Sin Turnero</p>
+            {/* Antes */}
+            <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8">
+              <p className="text-xs font-black text-gray-500 uppercase tracking-[0.15em] mb-6">Hoy, sin Turnero</p>
               <ul className="space-y-4">
                 {[
                   'El teléfono suena mientras trabajás con las manos',
@@ -92,8 +92,8 @@ export default function Hero() {
                   'Agenda en papel llena de errores y turnos dobles',
                   'A las 11 de la noche no hay nadie que atienda',
                 ].map(item => (
-                  <li key={item} className="flex items-start gap-3 text-base text-red-800">
-                    <span className="shrink-0 text-red-400 font-black text-lg leading-tight">✗</span>
+                  <li key={item} className="flex items-start gap-3 text-base text-gray-400">
+                    <span className="shrink-0 text-gray-600 font-black text-lg leading-tight">—</span>
                     {item}
                   </li>
                 ))}
@@ -101,7 +101,7 @@ export default function Hero() {
             </div>
 
             {/* Con Turnero */}
-            <div className="bg-indigo-600 border-2 border-indigo-600 rounded-3xl p-8">
+            <div className="bg-indigo-600 border-2 border-indigo-500 rounded-3xl p-8">
               <p className="text-xs font-black text-indigo-300 uppercase tracking-[0.15em] mb-6">Con Turnero</p>
               <ul className="space-y-4">
                 {[
