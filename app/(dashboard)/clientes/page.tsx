@@ -434,14 +434,18 @@ export default function ClientesPage() {
     if (list.length === 0 && autoSeedIfEmpty) {
       setSeeding(true)
       try {
-        await fetch('/api/seed')
-        await fetch('/api/seed/demo-clientes')
+        const r1 = await fetch('/api/seed/demo-clientes')
+        const d1 = await r1.json()
+        if (!d1.success) throw new Error(JSON.stringify(d1))
         await fetch('/api/seed/demo-rufina')
         await fetch('/api/seed/demo-top-quality')
         const res2 = await fetch('/api/clients')
         const data2 = await res2.json()
-        setClients(data2.clients || [])
-      } catch {
+        const final: Client[] = data2.clients || []
+        if (final.length === 0) throw new Error('Seed corrió pero BD devuelve 0 clientes — revisá SUPABASE_SERVICE_ROLE_KEY en Vercel')
+        setClients(final)
+      } catch (e) {
+        setSeedMsg('❌ ' + (e instanceof Error ? e.message : 'Error conectando con Supabase — revisá SUPABASE_SERVICE_ROLE_KEY en Vercel → Settings → Environment Variables'))
         setClients([])
       } finally {
         setSeeding(false)
@@ -547,6 +551,21 @@ export default function ClientesPage() {
                   <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
                   <p className="font-bold text-gray-700 mb-1">Cargando clientes...</p>
                   <p className="text-gray-400 text-sm">Reconectando con la base de datos</p>
+                </>
+              ) : seedMsg ? (
+                <>
+                  <p className="text-4xl mb-3">⚠️</p>
+                  <p className="font-bold text-red-600 mb-2">Error al cargar clientes</p>
+                  <p className="text-gray-500 text-sm mb-2 max-w-sm">
+                    Falta <code className="bg-gray-100 px-1 rounded font-mono text-xs">SUPABASE_SERVICE_ROLE_KEY</code> en las variables de entorno de Vercel.
+                  </p>
+                  <p className="text-gray-400 text-xs mb-4">
+                    Vercel → Settings → Environment Variables → agregá la key del proyecto Supabase
+                  </p>
+                  <button onClick={cargarDemos} disabled={seeding}
+                    className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-indigo-700 disabled:opacity-50">
+                    🔄 Reintentar
+                  </button>
                 </>
               ) : (
                 <>
