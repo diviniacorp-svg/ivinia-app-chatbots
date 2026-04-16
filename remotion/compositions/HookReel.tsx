@@ -123,9 +123,10 @@ const SceneCTA: React.FC<{ opacity: number }> = ({ opacity }) => {
     <AbsoluteFill style={{ background: C.bg, justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 32, padding: '0 60px', opacity }}>
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 50%, ${C.purple}44 0%, transparent 60%)` }} />
       <div style={{ textAlign: 'center', transform: `scale(${s})` }}>
-        <div style={{ fontFamily: F, fontSize: 108, fontWeight: 900, color: C.white, letterSpacing: -4, lineHeight: 1 }}>14 días</div>
-        <div style={{ fontFamily: F, fontSize: 108, fontWeight: 900, color: C.purple, letterSpacing: -4, lineHeight: 1 }}>gratis</div>
-        <div style={{ fontFamily: F, fontSize: 28, color: C.gray, marginTop: 12 }}>Sin tarjeta. Sin compromiso.</div>
+        <div style={{ fontFamily: F, fontSize: 72, fontWeight: 900, color: C.gray, letterSpacing: -2, lineHeight: 1 }}>desde</div>
+        <div style={{ fontFamily: F, fontSize: 108, fontWeight: 900, color: C.purple, letterSpacing: -4, lineHeight: 1 }}>$43.000</div>
+        <div style={{ fontFamily: F, fontSize: 36, color: C.white, fontWeight: 700, marginTop: 4 }}>por mes · o $100.000 único</div>
+        <div style={{ fontFamily: F, fontSize: 24, color: C.gray, marginTop: 8 }}>Setup en 24hs. Sin permanencia.</div>
       </div>
       <div style={{ background: C.purple, borderRadius: 24, padding: '20px 56px', transform: `scale(${pulse})`, boxShadow: `0 0 60px ${C.purple}88` }}>
         <div style={{ fontFamily: F, fontSize: 30, fontWeight: 900, color: C.white }}>Escribinos por DM →</div>

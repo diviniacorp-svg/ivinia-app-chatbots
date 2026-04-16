@@ -183,7 +183,7 @@ export default function RubrosPage() {
             rel="noopener noreferrer"
             className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors"
           >
-            Quiero mi Turnero — $80.000
+            Quiero mi Turnero — desde $43.000/mes
           </a>
         </div>
       </div>
@@ -249,7 +249,7 @@ export default function RubrosPage() {
             Hablemos por WhatsApp <ArrowRight size={18} />
           </a>
           <p className="text-indigo-300/60 text-sm mt-4">
-            $80.000 pago único · Sin mensualidades · Esta semana
+            $43.000/mes · o $100.000 pago único · Setup en 24hs
           </p>
         </div>
 

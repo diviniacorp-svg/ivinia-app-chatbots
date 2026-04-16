@@ -35,14 +35,14 @@ export default function PricingCards() {
           <div className="mb-16">
             <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-sm font-bold mb-6">
               <Zap size={14} className="fill-amber-500 text-amber-500" />
-              Precio especial de lanzamiento — solo esta semana
+              Setup en 24hs · Sin permanencia · Cancelás cuando querés
             </div>
             <h2 className="text-5xl sm:text-6xl font-black text-gray-900 leading-tight mb-6">
-              Un solo pago.<br />
-              <span className="text-indigo-600">Tuyo para siempre.</span>
+              Desde $43.000/mes.<br />
+              <span className="text-indigo-600">O $100.000 único.</span>
             </h2>
             <p className="text-xl text-gray-500 max-w-lg leading-relaxed">
-              Sin mensualidades. Sin contratos. Pagás una vez y el sistema funciona para siempre.
+              Elegís cómo pagar. Suscripción mensual sin permanencia, o pago único y tuyo para siempre.
             </p>
           </div>
         </Reveal>
@@ -63,9 +63,9 @@ export default function PricingCards() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-indigo-300 text-sm font-bold line-through mb-1">$150.000</div>
-                  <div className="text-6xl font-black text-white leading-none">$80.000</div>
-                  <div className="text-indigo-300 text-sm font-medium mt-1">pago único · esta semana</div>
+                  <div className="text-indigo-300 text-sm font-bold mb-1">desde</div>
+                  <div className="text-6xl font-black text-white leading-none">$43.000</div>
+                  <div className="text-indigo-300 text-sm font-medium mt-1">/mes · o $100.000 único</div>
                 </div>
               </div>
 
@@ -93,7 +93,7 @@ export default function PricingCards() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-white text-indigo-700 hover:bg-indigo-50 font-black px-8 py-4 rounded-2xl text-base transition-all shadow-xl"
               >
-                Quiero mi Turnero — $80.000 <ArrowRight size={18} />
+                Quiero mi Turnero — desde $43.000/mes <ArrowRight size={18} />
               </a>
             </div>
           </div>
