@@ -6,6 +6,7 @@ import { BeforeAfterReel } from './compositions/BeforeAfterReel'
 import { ProductDemoReel } from './compositions/ProductDemoReel'
 import { TextAnimReel } from './compositions/TextAnimReel'
 import { NanoReel } from './compositions/NanoReel'
+import { InstaReel } from './compositions/InstaReel'
 
 const W = 1080, H = 1920, FPS = 30
 
@@ -27,6 +28,21 @@ export const RemotionRoot: React.FC = () => (
     />
     <Composition id="Nano-Turnero-CTA" component={NanoReel} durationInFrames={300} fps={FPS} width={W} height={H}
       defaultProps={{ videoFile: 'turnero-fondo-9x16.mp4', headline: 'Tu Turnero personalizado', subtext: 'Pago único. Setup en 48hs. Sin mensualidades.', cta: 'Escribinos por DM →' }}
+    />
+
+    {/* ——— InstaReel — posts Instagram mes 1 ——— */}
+    {/* Correr después de que Joaco suba los videos de Freepik a public/reels/ */}
+    <Composition id="Insta-Post4-Demo" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
+      defaultProps={{ videoFile: 'post4-demo-reserva.mp4', badge: 'Demo real', headline: 'Reservá en 30 segundos', subtext: 'Sin llamar. Sin WhatsApp. Sin esperar.', cta: 'DM para tu demo →' }}
+    />
+    <Composition id="Insta-Post7-Toggle" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
+      defaultProps={{ videoFile: 'post7-toggle.mp4', badge: 'La diferencia', headline: 'Estrés OFF. Turnero ON.', subtext: 'Tus clientes reservan solos las 24hs.', cta: 'Escribinos hoy →' }}
+    />
+    <Composition id="Insta-Post13-Rubros" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
+      defaultProps={{ videoFile: 'post13-rubros.mp4', badge: '¿Para quién?', headline: 'Si tenés agenda, es para vos', subtext: '✂️ 💅 🦷 🐾 💪 🧘 🔧 📸 y más', cta: 'Comentá tu rubro →' }}
+    />
+    <Composition id="Insta-Post15-CTA" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
+      defaultProps={{ videoFile: 'post15-mockup-giro.mp4', badge: 'Mes 1 cerrado', headline: 'Tu turno', subtext: '$43.000/mes · Setup 24hs · Sin permanencia', cta: 'Escribinos ahora →', ctaColor: '#EC4899' }}
     />
 
     {/* ——— ProductDemo — 4 rubros ——— */}
