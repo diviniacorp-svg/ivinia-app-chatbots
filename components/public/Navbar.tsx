@@ -1,73 +1,53 @@
 'use client'
-import { useState, useCallback } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+
+import { useState, useEffect } from 'react'
+import Orb from './Orb'
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false)
-  const [secretClicks, setSecretClicks] = useState(0)
-  const router = useRouter()
+  const [scrolled, setScrolled] = useState(false)
 
-  const handleLogoClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    const next = secretClicks + 1
-    if (next >= 5) {
-      setSecretClicks(0)
-      router.push('/login')
-    } else {
-      setSecretClicks(next)
-      // Reset si no completa en 3 segundos
-      setTimeout(() => setSecretClicks(0), 3000)
-    }
-  }, [secretClicks, router])
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          <button onClick={handleLogoClick} className="flex items-center gap-2 select-none">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
-            </div>
-            <span className="font-bold text-lg text-gray-900">DIVINIA</span>
-          </button>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            <a href="#productos" className="hover:text-indigo-600 transition-colors">Servicios</a>
-            <a href="#rubros" className="hover:text-indigo-600 transition-colors">Rubros</a>
-            <a href="#como-funciona" className="hover:text-indigo-600 transition-colors">Cómo funciona</a>
-            <a href="#precios" className="hover:text-indigo-600 transition-colors">Precios</a>
-            <a href="#faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
-          </div>
-          <div className="hidden md:flex items-center gap-3">
-            <a href="/rubros"
-              className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
-              Ver demos
-            </a>
-            <a href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
-              target="_blank" rel="noopener noreferrer"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-              Quiero mi Turnero
-            </a>
-          </div>
-          <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
+    <nav
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        padding: '18px 0',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        background: scrolled ? 'rgba(246,245,242,0.9)' : 'rgba(246,245,242,0.72)',
+        borderBottom: scrolled ? '1px solid var(--line)' : '1px solid transparent',
+        transition: 'all 0.3s ease',
+        fontFamily: 'var(--f-display)',
+      }}
+    >
+      <div className="wrap-v2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Logo */}
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
+          <Orb size={30} color="#C6FF3D" colorDeep="#9EE028" shade="rgba(0,0,0,0.28)" squash />
+          <span style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 21, letterSpacing: '-0.05em', color: 'var(--ink)' }}>
+            divinia<span style={{ color: 'var(--muted)' }}>.</span>
+          </span>
+        </a>
+
+        {/* Nav links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 36, fontSize: 14, color: 'var(--muted-2)' }}
+          className="hidden md:flex">
+          <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
+          <a href="#proceso" style={{ color: 'inherit', textDecoration: 'none' }}>Cómo trabajamos</a>
+          <a href="#casos" style={{ color: 'inherit', textDecoration: 'none' }}>Casos</a>
+          <a href="#manifiesto" style={{ color: 'inherit', textDecoration: 'none' }}>Manifiesto</a>
         </div>
-        {open && (
-          <div className="md:hidden py-4 border-t border-gray-100 flex flex-col gap-4 text-sm">
-            <a href="#productos" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Servicios</a>
-            <a href="#rubros" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Rubros</a>
-            <a href="#como-funciona" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Cómo funciona</a>
-            <a href="#precios" onClick={() => setOpen(false)} className="text-gray-700 font-medium">Precios</a>
-            <a href="#faq" onClick={() => setOpen(false)} className="text-gray-700 font-medium">FAQ</a>
-            <a href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
-              target="_blank" rel="noopener noreferrer"
-              className="bg-indigo-600 text-white font-semibold px-4 py-2.5 rounded-lg text-center">
-              Quiero mi Turnero
-            </a>
-          </div>
-        )}
+
+        {/* CTA */}
+        <a href="#demo" className="btn-v2 btn-ink" style={{ fontSize: 14, padding: '10px 16px 10px 18px' }}>
+          Hablemos
+          <span className="btn-arrow">↗</span>
+        </a>
       </div>
     </nav>
   )

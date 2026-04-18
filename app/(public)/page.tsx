@@ -1,29 +1,40 @@
-import Hero from '@/components/public/Hero'
-import RubrosGrid from '@/components/public/RubrosGrid'
-import HowItWorks from '@/components/public/HowItWorks'
-import PricingCards from '@/components/public/PricingCards'
-import FAQ from '@/components/public/FAQ'
-import Footer from '@/components/public/Footer'
 import Navbar from '@/components/public/Navbar'
-import NucleusSection from '@/components/public/NucleusSection'
+import Hero from '@/components/public/Hero'
+import Manifiesto from '@/components/public/Manifiesto'
+import ServicesV2 from '@/components/public/ServicesV2'
+import ProcessV2 from '@/components/public/ProcessV2'
+import CasesV2 from '@/components/public/CasesV2'
+import CTASection from '@/components/public/CTASection'
+import Footer from '@/components/public/Footer'
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#09090b]">
+    <main style={{ minHeight: '100vh', background: 'var(--paper)', color: 'var(--ink)', overflowX: 'hidden' }}>
+      {/* editorial grid overlay */}
+      <div className="grid-bg" />
+
+      {/* 1. Nav fija */}
       <Navbar />
-      {/* 1. Hero — propuesta de valor + before/after */}
+
+      {/* 2. Hero — propuesta + orb lime */}
       <Hero />
-      {/* 2. Servicios DIVINIA + demos por rubro + NUCLEUS + formulario */}
-      <NucleusSection />
-      {/* 3. Rubros específicos */}
-      <RubrosGrid />
-      {/* 4. Cómo funciona */}
-      <HowItWorks />
-      {/* 5. Precios */}
-      <PricingCards />
-      {/* 6. FAQ */}
-      <FAQ />
-      {/* 7. Footer */}
+
+      {/* 3. Manifiesto — editorial serif */}
+      <Manifiesto />
+
+      {/* 4. Servicios — lista tabla */}
+      <ServicesV2 />
+
+      {/* 5. Proceso — sección oscura */}
+      <ProcessV2 />
+
+      {/* 6. Casos — cards */}
+      <CasesV2 />
+
+      {/* 7. CTA + formulario */}
+      <CTASection />
+
+      {/* 8. Footer */}
       <Footer />
     </main>
   )

@@ -2,23 +2,27 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'DIVINIA - Chatbots con IA para tu negocio',
-  description: 'Automatizá la atención al cliente de tu PYME con inteligencia artificial. Chatbots personalizados para restaurantes, clínicas, inmobiliarias y más. Probalo gratis 14 días.',
-  keywords: 'chatbot IA Argentina, automatización WhatsApp, atención al cliente 24/7, San Luis',
+  title: 'DIVINIA — Automatizamos tu negocio con IA',
+  description: 'Automatizamos las operaciones de tu PYME con inteligencia artificial. En 90 días o no cobros. San Luis, Argentina.',
+  keywords: 'automatización IA Argentina, chatbot WhatsApp, agentes IA, San Luis, PYME',
   openGraph: {
-    title: 'DIVINIA - Chatbots con IA para tu negocio',
-    description: 'Automatizá la atención de tu negocio con IA. 14 días gratis.',
+    title: 'DIVINIA — Automatizamos tu negocio con IA',
+    description: 'En 90 días automatizamos lo que te hace perder tiempo y plata. O no te cobramos.',
     type: 'website',
   },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-AR">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital,wght@0,400;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>{children}</body>
     </html>
   )

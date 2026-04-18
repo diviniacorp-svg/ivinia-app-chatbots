@@ -1,52 +1,72 @@
-import Link from 'next/link'
+import Orb from './Orb'
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-          <div className="sm:col-span-2 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">D</span>
-              </div>
-              <span className="font-bold text-xl">DIVINIA</span>
+    <footer style={{ borderTop: '1px solid var(--line)', padding: '48px 0 32px', background: 'var(--paper-2)', fontFamily: 'var(--f-display)' }}>
+      <div className="wrap-v2">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 60, marginBottom: 80 }}
+          className="grid-cols-2 md:grid-cols-4">
+          {/* Brand */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+              <Orb size={26} color="#C6FF3D" colorDeep="#9EE028" shade="rgba(0,0,0,0.28)" />
+              <span style={{ fontWeight: 600, fontSize: 19, letterSpacing: '-0.05em', color: 'var(--ink)' }}>
+                divinia<span style={{ color: 'var(--muted)' }}>.</span>
+              </span>
             </div>
-            <p className="text-gray-400 text-sm leading-relaxed mb-4 max-w-xs">
-              Turnero y automatización IA para PYMEs argentinas. Tus clientes reservan solos. Hecho en San Luis, Argentina.
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--muted-2)', maxWidth: 260 }}>
+              Agencia de automatización con IA. San Luis, Argentina. Operando para PYMEs de LATAM desde 2024.
             </p>
-            <div className="flex gap-4">
-              <a href="https://wa.me/5492665286110" target="_blank" rel="noopener noreferrer"
-                className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors">
-                💬 WhatsApp
-              </a>
-              <a href="mailto:hola@divinia.ar" className="text-gray-400 hover:text-white text-sm transition-colors">
-                hola@divinia.ar
-              </a>
-            </div>
           </div>
-          <div>
-            <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Turnero</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#turnero" className="hover:text-white transition-colors">Qué es Turnero</a></li>
-              <li><a href="#rubros" className="hover:text-white transition-colors">Rubros</a></li>
-              <li><a href="#como-funciona" className="hover:text-white transition-colors">Cómo funciona</a></li>
-              <li><a href="#precios" className="hover:text-white transition-colors">Precios</a></li>
-              <li><Link href="/trial" className="hover:text-white transition-colors">Probalo gratis</Link></li>
+
+          {/* Explorar */}
+          <nav>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>Explorar</div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+              {[
+                { href: '#servicios', label: 'Servicios' },
+                { href: '#proceso', label: 'Proceso' },
+                { href: '#casos', label: 'Casos' },
+                { href: '#manifiesto', label: 'Manifiesto' },
+              ].map(l => (
+                <li key={l.label}><a href={l.href} style={{ color: 'var(--ink)', textDecoration: 'none' }}>{l.label}</a></li>
+              ))}
             </ul>
-          </div>
+          </nav>
+
+          {/* Productos */}
+          <nav>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>Productos</div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+              {[
+                { href: '/rubros', label: 'Turnero' },
+                { href: '/dashboard', label: 'Panel DIVINIA' },
+              ].map(l => (
+                <li key={l.label}><a href={l.href} style={{ color: 'var(--ink)', textDecoration: 'none' }}>{l.label}</a></li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Contacto */}
           <div>
-            <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Empresa</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><span>San Luis, Argentina</span></li>
-              <li><a href="mailto:hola@divinia.ar" className="hover:text-white transition-colors">Contacto</a></li>
-              <li><a href="https://wa.me/5492665286110" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">WhatsApp directo</a></li>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>Contacto</div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+              <li><a href="mailto:hola@divinia.com.ar" style={{ color: 'var(--ink)', textDecoration: 'none' }}>hola@divinia.com.ar</a></li>
+              <li><a href="https://wa.me/542665286110" style={{ color: 'var(--ink)', textDecoration: 'none' }}>+54 9 266 5286110</a></li>
+              <li style={{ color: 'var(--muted-2)' }}>San Luis · AR</li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
-          <span>© 2026 DIVINIA. Todos los derechos reservados.</span>
-          <span className="text-xs text-gray-600">Powered by Claude (Anthropic) · Hecho con ❤️ en Argentina</span>
+
+        {/* Bottom */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+          paddingTop: 24, borderTop: '1px solid var(--line)',
+          fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase',
+          letterSpacing: '0.08em', color: 'var(--muted)',
+        }}>
+          <span>© 2026 DIVINIA — todos los derechos reservados</span>
+          <span>Operando para PYMEs de LATAM · hecho en San Luis, AR</span>
         </div>
       </div>
     </footer>
