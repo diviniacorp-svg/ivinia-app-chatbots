@@ -25,7 +25,7 @@ Paleta: #0A0A0A negro, #8B5CF6 violeta, #EC4899 rosa, #10B981 verde.
 Tono: amiga tech argentina — directo, cálido, sin corporativo.
 Prohibido: "soluciones", "innovador", "robusto", "plataforma".
 Mercado: peluquerías, estéticas, negocios locales. San Luis → Cuyo → Nacional.
-Precio: Starter $25.000 ARS/mes, Pro $65.000, Todo DIVINIA $120.000. Sin free trial. Demo + cierre en el día.
+Precio: Turnero $43.000 ARS/mes (o $100.000 único), Chatbot básico $150.000, Pro $250.000. Sin free trial. Demo + cierre en el día.
 `.trim()
 
 // ─── Intent Parser (Haiku — mínimo tokens) ───────────────────────────────────
@@ -180,9 +180,11 @@ function getSystemStatus() {
       margin: '97%+',
     },
     pricing: {
-      starter: '$25.000 ARS/mes',
-      pro: '$65.000 ARS/mes',
-      todo_divinia: '$120.000 ARS/mes',
+      mensual: '$43.000 ARS/mes — cancela cuando quiere',
+      unico: '$100.000 ARS — pago único, para siempre',
+      chatbot_basico: '$150.000 ARS',
+      chatbot_pro: '$250.000 ARS',
+      landing: '$100.000 ARS',
       free_trial: 'ELIMINADO — se cobra desde el día 1',
     },
   }
