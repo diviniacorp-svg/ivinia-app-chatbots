@@ -5,16 +5,19 @@
  *
  * Props:
  *   videoFile: nombre del archivo en public/reels/ (sin path)
+ *   audioFile: nombre del archivo en public/audio/ (sin path, opcional)
+ *   audioVolume: volumen del audio 0-1 (default: 0.4)
+ *   showOverlay: mostrar textos encima (default: true)
  *   headline: texto principal (grande, bold, animado)
  *   subtext: texto secundario
  *   badge: texto del badge pill (ej: "Pagos", "Gestión")
  *   cta: texto del CTA (ej: "DM para empezar →")
  *   ctaColor: color del CTA pill (default: violeta)
- *   durationFrames: duración total (default: 240 = 8 seg)
+ *   overlayStart: frame en que aparece el overlay (default: 0, útil para antes/después)
  */
 import React from 'react'
 import {
-  AbsoluteFill, Video, interpolate, spring,
+  AbsoluteFill, Video, Audio, interpolate, spring,
   useCurrentFrame, useVideoConfig, staticFile,
 } from 'remotion'
 
@@ -162,6 +165,10 @@ function TurneroLogo({ frame, startFrame = 40 }: { frame: number; startFrame?: n
 // ——— COMPOSICIÓN PRINCIPAL ———
 export interface InstaReelProps {
   videoFile?: string
+  audioFile?: string
+  audioVolume?: number
+  showOverlay?: boolean
+  overlayStart?: number
   badge?: string
   headline?: string
   subtext?: string
@@ -171,6 +178,10 @@ export interface InstaReelProps {
 
 export const InstaReel: React.FC<InstaReelProps> = ({
   videoFile = '',
+  audioFile = '',
+  audioVolume = 0.4,
+  showOverlay = true,
+  overlayStart = 0,
   badge = 'Turnero',
   headline = 'Turnos online para tu negocio',
   subtext = 'Reservas 24hs · Señas por MercadoPago · Sin llamadas',
@@ -178,51 +189,77 @@ export const InstaReel: React.FC<InstaReelProps> = ({
   ctaColor = C.purple,
 }) => {
   const frame = useCurrentFrame()
+  const { durationInFrames, fps } = useVideoConfig()
+
+  // Fade out audio en los últimos 20 frames
+  const audioFade = interpolate(
+    frame,
+    [durationInFrames - 20, durationInFrames],
+    [audioVolume, 0],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  )
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden' }}>
+
+      {/* Audio de fondo */}
+      {audioFile && (
+        <Audio
+          src={staticFile(`audio/${audioFile}`)}
+          volume={audioFade}
+          loop
+        />
+      )}
 
       {/* Video de fondo (Freepik) */}
       {videoFile && (
         <AbsoluteFill>
           <Video
             src={staticFile(`reels/${videoFile}`)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
             muted
           />
           {/* Overlay oscuro para legibilidad del texto */}
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, #09090b99 0%, #09090b22 40%, #09090b99 100%)',
-          }} />
+          {showOverlay && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to bottom, #09090bcc 0%, #09090b11 35%, #09090bbb 100%)',
+            }} />
+          )}
         </AbsoluteFill>
       )}
 
-      {/* Círculo violeta grande arriba derecha */}
-      <DecoCircle frame={frame} color={C.purple} size={700} x="55%" y="-20%" opacity={0.3} />
+      {/* Círculos decorativos — solo si hay overlay */}
+      {showOverlay && (
+        <>
+          <DecoCircle frame={frame} color={C.purple} size={700} x="55%" y="-20%" opacity={0.25} />
+          <DecoCircle frame={frame} color={C.pink} size={350} x="-15%" y="72%" opacity={0.2} />
+        </>
+      )}
 
-      {/* Círculo rosa pequeño abajo izquierda */}
-      <DecoCircle frame={frame} color={C.pink} size={350} x="-15%" y="72%" opacity={0.25} />
+      {/* Contenido de texto — aparece en overlayStart */}
+      {showOverlay && (
+        <>
+          <AbsoluteFill style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '0 80px', gap: 28,
+          }}>
+            <BadgePill text={badge} frame={frame} startFrame={overlayStart} color={C.purple} />
+            <BounceText text={headline} frame={frame} startFrame={overlayStart + 8} fontSize={88} />
+            <SubText text={subtext} frame={frame} startFrame={overlayStart + 22} />
+            <CTAPill text={cta} frame={frame} startFrame={overlayStart + 36} color={ctaColor} />
+          </AbsoluteFill>
 
-      {/* Contenido centrado */}
-      <AbsoluteFill style={{
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '0 80px', gap: 28,
-      }}>
-        <BadgePill text={badge} frame={frame} startFrame={0} color={C.purple} />
-        <BounceText text={headline} frame={frame} startFrame={8} fontSize={88} />
-        <SubText text={subtext} frame={frame} startFrame={22} />
-        <CTAPill text={cta} frame={frame} startFrame={36} color={ctaColor} />
-      </AbsoluteFill>
-
-      {/* Logo abajo centrado */}
-      <div style={{
-        position: 'absolute', bottom: 60, left: 0, right: 0,
-        display: 'flex', justifyContent: 'center',
-      }}>
-        <TurneroLogo frame={frame} startFrame={45} />
-      </div>
+          {/* Logo abajo centrado */}
+          <div style={{
+            position: 'absolute', bottom: 60, left: 0, right: 0,
+            display: 'flex', justifyContent: 'center',
+          }}>
+            <TurneroLogo frame={frame} startFrame={overlayStart + 45} />
+          </div>
+        </>
+      )}
 
     </AbsoluteFill>
   )

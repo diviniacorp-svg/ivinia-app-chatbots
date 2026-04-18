@@ -31,7 +31,49 @@ export const RemotionRoot: React.FC = () => (
     />
 
     {/* ——— InstaReel — posts Instagram mes 1 ——— */}
-    {/* Correr después de que Joaco suba los videos de Freepik a public/reels/ */}
+    {/* Video de fondo va en public/reels/ · Audio en public/audio/ */}
+
+    {/* POST 1 — "El alivio" estética: manos estresadas → manos relajadas */}
+    <Composition id="Insta-Estetica-Alivio" component={InstaReel} durationInFrames={300} fps={FPS} width={W} height={H}
+      defaultProps={{
+        videoFile: 'estetica-alivio.mp4',
+        audioFile: 'ambient-chill.mp3',
+        audioVolume: 0.35,
+        overlayStart: 150,
+        badge: '¿Te suena esto?',
+        headline: 'Tu agenda, llena sola.',
+        subtext: 'Mientras vos trabajás · 24 horas · Sin WhatsApp',
+        cta: 'DM → probalo gratis',
+        ctaColor: '#8B5CF6',
+      }}
+    />
+
+    {/* POST 2 — "La dueña libre": trabaja sin mirar el teléfono */}
+    <Composition id="Insta-Duena-Libre" component={InstaReel} durationInFrames={360} fps={FPS} width={W} height={H}
+      defaultProps={{
+        videoFile: 'duena-libre.mp4',
+        audioFile: 'ambient-chill.mp3',
+        audioVolume: 0.35,
+        overlayStart: 180,
+        badge: 'Turnero',
+        headline: 'Llegaron 3 turnos. Vos ni miraste el celular.',
+        subtext: '$43.000/mes · Setup en 24hs · Sin permanencia',
+        cta: 'Escribinos →',
+        ctaColor: '#8B5CF6',
+      }}
+    />
+
+    {/* POST 3 — "El antes": hook puro, sin overlay de texto */}
+    <Composition id="Insta-Hook-Antes" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
+      defaultProps={{
+        videoFile: 'hook-antes.mp4',
+        audioFile: 'ambient-chill.mp3',
+        audioVolume: 0.2,
+        showOverlay: false,
+      }}
+    />
+
+    {/* Composiciones originales mes 1 — activar cuando lleguen los clips */}
     <Composition id="Insta-Post4-Demo" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
       defaultProps={{ videoFile: 'post4-demo-reserva.mp4', badge: 'Demo real', headline: 'Reservá en 30 segundos', subtext: 'Sin llamar. Sin WhatsApp. Sin esperar.', cta: 'DM para tu demo →' }}
     />

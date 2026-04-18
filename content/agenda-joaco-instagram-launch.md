@@ -16,7 +16,7 @@
 - Qué hacer:
   1. Foto de perfil: subir el logo de DIVINIA (fondo oscuro, isotipo)
   2. Bio: copiar el texto de la estrategia (sección 1)
-  3. Link en bio: poner https://divinia.vercel.app/trial
+  3. Link en bio: poner https://divinia.vercel.app
   4. Cambiar a cuenta de empresa/creador en configuración
   5. Conectar con Facebook si es posible (para Meta Ads en el futuro)
 - Por qué: El perfil completo da confianza. Una cuenta a medias genera desconfianza en los leads.
@@ -59,4 +59,4 @@ Las siguientes tareas las ejecuta el equipo sin necesitar acción de Joaco:
 - 04-CONTENT-FACTORY: Preparar los primeros 3 Reels con screengrab del sistema
 - 05-CLIENTES-SERVICIOS: Configurar el CRM de Instagram (archivo crm-leads-instagram.md)
 - 05-CLIENTES-SERVICIOS: Preparar templates de DM de prospección por rubro
-- 02-WEB-APPS: Verificar que divinia.vercel.app/trial funcione correctamente para el link en bio
+- 02-WEB-APPS: Verificar que divinia.vercel.app/ funcione correctamente para el link en bio

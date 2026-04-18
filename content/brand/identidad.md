@@ -137,7 +137,7 @@ Números reales, rubros específicos, situaciones que cualquier dueño de negoci
 ### Regla 4: Argentino de verdad, no inglés traducido
 El copy suena como habla alguien de San Luis o cualquier ciudad argentina — no como una startup de Silicon Valley traducida.
 
-- BIEN: "Dale, probalo 14 días gratis." / "No te comés la cabeza." / "Zafás del teléfono."
+- BIEN: "Dale, empezamos esta semana." / "No te comés la cabeza." / "Zafás del teléfono."
 - MAL: "Start your free trial today." / "Optimize your workflow." / "Boost your productivity."
 - MAL traducido: "Iniciá tu prueba gratuita." / "Optimizá tu flujo de trabajo." — suena a Google Translate
 

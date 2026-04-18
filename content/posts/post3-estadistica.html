@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a1a; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+  .post { width: 1080px; height: 1080px; background: #09090b; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px; }
+  .circle-purple { position: absolute; width: 700px; height: 700px; background: #8B5CF6; border-radius: 50%; top: -200px; right: -180px; opacity: 0.28; filter: blur(80px); }
+  .circle-pink { position: absolute; width: 380px; height: 380px; background: #EC4899; border-radius: 50%; bottom: -100px; left: -100px; opacity: 0.22; filter: blur(70px); }
+  .badge { display: inline-block; background: rgba(139,92,246,0.12); border: 1.5px solid rgba(139,92,246,0.45); border-radius: 999px; padding: 12px 32px; font-size: 24px; font-weight: 700; color: #8B5CF6; letter-spacing: 0.04em; margin-bottom: 32px; position: relative; z-index: 1; }
+  .big-number { font-size: 320px; font-weight: 900; color: #8B5CF6; letter-spacing: -16px; line-height: 0.85; text-align: center; position: relative; z-index: 1; text-shadow: 0 0 120px rgba(139,92,246,0.5); }
+  .headline { font-size: 52px; font-weight: 900; color: #ffffff; letter-spacing: -2px; line-height: 1.1; text-align: center; position: relative; z-index: 1; margin-top: 20px; margin-bottom: 28px; max-width: 860px; }
+  .headline .accent { color: #EC4899; }
+  .subtext { font-size: 30px; color: #a1a1aa; font-weight: 400; text-align: center; line-height: 1.5; max-width: 720px; position: relative; z-index: 1; margin-bottom: 52px; }
+  .subtext .highlight { color: #10B981; font-weight: 700; }
+  .cta { background: rgba(139,92,246,0.15); border: 1.5px solid rgba(139,92,246,0.4); border-radius: 20px; padding: 20px 56px; font-size: 28px; font-weight: 700; color: #8B5CF6; position: relative; z-index: 1; }
+  .logo { position: absolute; bottom: 52px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 24px; font-weight: 600; color: rgba(255,255,255,0.45); z-index: 1; }
+  .logo .by { font-weight: 400; font-size: 20px; color: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="circle-purple"></div>
+  <div class="circle-pink"></div>
+  <div class="badge">¿Sabías que...?</div>
+  <div class="big-number">3</div>
+  <div class="headline">de cada 10 turnos agendados<br>por WhatsApp <span class="accent">nunca se confirman.</span></div>
+  <div class="subtext">Tus clientes se olvidan, cancelan sin avisar<br>o directamente no aparecen.<br><span class="highlight">Turnero los confirma automáticamente.</span></div>
+  <div class="cta">¿Cuántos perdés vos por semana?</div>
+  <div class="logo"><span>◉</span><span>Turnero</span><span class="by">by DIVINIA</span></div>
+</div>
+</body>
+</html>

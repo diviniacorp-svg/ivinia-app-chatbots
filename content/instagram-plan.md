@@ -14,7 +14,7 @@
 Somos DIVINIA, empresa de IA de San Luis 🇦🇷
 Creamos chatbots que atienden a tus clientes las 24hs, responden preguntas, toman pedidos y agenda turnos.
 Todo automático. Vos te enfocás en lo que importa.
-👉 14 días gratis, sin tarjeta.
+👉 Esta semana: $80.000 ARS, pago único.
 ¿De qué tipo de negocio sos? 👇
 
 ---
@@ -27,7 +27,7 @@ No respondés hasta el día siguiente.
 Ya compró en otro lado. 😔
 Con un chatbot de IA, eso no pasa más.
 Respondé en segundos, siempre. 🤖
-Link en bio → 14 días gratis
+Link en bio → divinia.vercel.app
 
 ---
 
@@ -70,7 +70,7 @@ Un chatbot de IA trabaja:
 ✅ Sin descanso
 ✅ Sin errores
 ✅ Desde $50.000 ARS/mes
-Probalo 14 días gratis. Sin tarjeta. Sin compromiso.
+Turnero listo en 48hs. $80.000 ARS, pago único.
 Link en bio 👆
 
 ---
@@ -97,9 +97,9 @@ Todo esto mientras dormís. 😴
 ---
 
 ## DÍA 9 — Urgencia / escasez
-**Imagen:** "Solo 5 lugares disponibles este mes para prueba gratis"
+**Imagen:** "Solo 5 lugares disponibles esta semana"
 **Caption:**
-Este mes activamos máximo 5 chatbots nuevos en prueba gratuita.
+Esta semana activamos máximo 5 negocios nuevos. Precio de lanzamiento: $80.000 ARS.
 Queremos darle atención personalizada a cada negocio.
 Si tu negocio está en San Luis y querés ser uno de los 5:
 Escribinos hoy → +54 9 266 528 6110
@@ -112,7 +112,7 @@ Escribinos hoy → +54 9 266 528 6110
 **Caption:**
 Si llegaste hasta acá, tu negocio necesita un chatbot. 😄
 En 24hs te tenemos uno funcionando, personalizado con tu info, en tu web y WhatsApp.
-14 días gratis. Sin tarjeta.
+$80.000 ARS pago único. Sin mensualidades.
 Escribime ahora: +54 9 266 528 6110
 O probá el demo en: divinia.vercel.app
 

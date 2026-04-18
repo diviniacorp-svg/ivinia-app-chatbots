@@ -18,7 +18,7 @@ const SPARKLE_POS = Array.from({ length: 10 }, (_, i) => ({
   size: 12 + ((i * 13) % 16),
 }))
 
-type IntroStyle = 'bubbles' | 'sparkles' | 'petals'
+type IntroStyle = 'bubbles' | 'sparkles' | 'petals' | 'waves'
 
 export default function SplashIntro({
   companyName,
@@ -32,7 +32,7 @@ export default function SplashIntro({
   tagline: string
   color: string
   emoji: string
-  style?: IntroStyle
+  style?: IntroStyle | string
   onDone: () => void
 }) {
   const [fading, setFading] = useState(false)
@@ -100,7 +100,7 @@ export default function SplashIntro({
         }}
       >
         {/* Partículas de fondo — siempre usa los emojis del negocio */}
-        {introStyle === 'bubbles' && BUBBLES.map((b, i) => (
+        {(introStyle === 'bubbles' || introStyle === 'waves') && BUBBLES.map((b, i) => (
           <div
             key={i}
             className="absolute pointer-events-none leading-none"

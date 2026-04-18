@@ -123,7 +123,7 @@ Es tener (o no tener) el sistema correcto.
 Turnero es ese sistema. Y lo armamos para negocios como el tuyo: 
 peluquerías, clínicas, veterinarias, estéticas, talleres.
 
-Primera consulta gratis. Escribime por DM y te cuento cómo 
+Escribime por DM y te muestro la demo de tu negocio 
 funciona en 5 minutos.
 
 ¿Con cuál te identificás hoy? 👇

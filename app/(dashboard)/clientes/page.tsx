@@ -430,15 +430,25 @@ export default function ClientesPage() {
     const data = await res.json()
     const list: Client[] = data.clients || []
 
-    // Si no hay clientes, sembrar demos automáticamente
-    if (list.length === 0 && autoSeedIfEmpty) {
+    const countWithTurnos = list.filter(c => c.booking_configs && c.booking_configs.length > 0).length
+    // Sembrar si no hay clientes, o si hay más de 1 cliente y menos de (total-1) tienen turnos activos
+    // (el -1 es para Turnero que no tiene turnos por diseño)
+    const needsSeed = list.length === 0 || (list.length > 1 && countWithTurnos < list.length - 1)
+
+    if (needsSeed && autoSeedIfEmpty) {
       setSeeding(true)
       try {
         const r1 = await fetch('/api/seed/demo-clientes')
         const d1 = await r1.json()
-        if (!d1.success) throw new Error(JSON.stringify(d1))
-        await fetch('/api/seed/demo-rufina')
-        await fetch('/api/seed/demo-top-quality')
+        if (!d1.success) throw new Error('demo-clientes: ' + JSON.stringify(d1))
+        const cfgErrors = d1.results?.filter((r: {cfg_error?: string}) => r.cfg_error).map((r: {name: string; cfg_error: string}) => `${r.name}: ${r.cfg_error}`)
+        if (cfgErrors?.length > 0) throw new Error('Booking config error: ' + cfgErrors.join(' | '))
+        const r2 = await fetch('/api/seed/demo-rufina')
+        const d2 = await r2.json()
+        if (d2.error) throw new Error('demo-rufina: ' + d2.error + (d2.detail ? ' — ' + d2.detail : ''))
+        const r3 = await fetch('/api/seed/demo-top-quality')
+        const d3 = await r3.json()
+        if (d3.error) throw new Error('demo-top-quality: ' + d3.error + (d3.detail ? ' — ' + d3.detail : ''))
         const res2 = await fetch('/api/clients')
         const data2 = await res2.json()
         const final: Client[] = data2.clients || []

@@ -3,21 +3,9 @@ import { createAdminClient } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/seed/demo-rufina
-// Crea (o actualiza) el cliente demo Rufina Nails con su booking config completa
 export async function GET() {
   const db = createAdminClient()
-
   const chatbotId = 'rufina-nails-demo'
-
-  // 1. Crear o actualizar cliente
-  const { data: existing } = await db
-    .from('clients')
-    .select('id')
-    .eq('chatbot_id', chatbotId)
-    .maybeSingle()
-
-  let clientId = existing?.id
 
   const clientData = {
     chatbot_id: chatbotId,
@@ -34,34 +22,25 @@ export async function GET() {
       direccion: 'San Luis Capital',
       whatsapp: '5492664000000',
       instagram: 'rufinaunas1',
-      intro_emoji: '💅',
-      intro_tagline: 'Tus uñas, tu estilo',
+      intro_emoji: '💅,✨,💗',
+      intro_tagline: 'Tus uñas, tu estilo — Nail bar San Luis',
       intro_style: 'sparkles',
       deposits_enabled: 'true',
     },
   }
 
-  if (!clientId) {
-    const { data: newClient, error } = await db
-      .from('clients')
-      .insert(clientData)
-      .select('id')
-      .single()
+  // Upsert cliente — si ya existe por chatbot_id lo actualiza, si no lo crea
+  const { data: client, error: clientError } = await db
+    .from('clients')
+    .upsert(clientData, { onConflict: 'chatbot_id' })
+    .select('id')
+    .single()
 
-    if (error || !newClient) {
-      return NextResponse.json({ error: 'Error creando cliente', detail: error?.message }, { status: 500 })
-    }
-    clientId = newClient.id
-  } else {
-    await db.from('clients').update(clientData).eq('id', clientId)
+  if (clientError || !client) {
+    return NextResponse.json({ error: 'Error creando cliente', detail: clientError?.message }, { status: 500 })
   }
 
-  // 2. Crear o actualizar booking config — buscar si ya existe para este cliente
-  const { data: existingCfg } = await db
-    .from('booking_configs')
-    .select('id')
-    .eq('client_id', clientId)
-    .maybeSingle()
+  const clientId = client.id
 
   const services = [
     { id: crypto.randomUUID(), category: 'Esmaltado', name: 'Semipermanente manos', description: 'Duración hasta 3 semanas', duration_minutes: 60, price_ars: 16000, deposit_percentage: 0 },
@@ -84,6 +63,7 @@ export async function GET() {
     advance_booking_days: 60,
     blocked_dates: [],
     owner_phone: '5492664000000',
+    owner_pin: '3698',
     schedule: {
       lun: null,
       mar: { open: '09:00', close: '19:00' },
@@ -94,36 +74,24 @@ export async function GET() {
       dom: null,
     },
     services,
-    professionals: [
-      { id: crypto.randomUUID(), name: 'Rufina', emoji: '💅', color: '#d63384', bio: 'Especialista en uñas esculpidas y nail art', service_ids: [] },
-      { id: crypto.randomUUID(), name: 'Valentina', emoji: '✨', color: '#9333ea', bio: 'Experta en semipermanente y manicura', service_ids: [] },
-    ],
   }
+
+  // Buscar booking config existente con .limit(1) en lugar de maybeSingle
+  const { data: existingCfgs } = await db
+    .from('booking_configs')
+    .select('id')
+    .eq('client_id', clientId)
+    .limit(1)
 
   let configId: string
 
-  if (existingCfg) {
-    // Actualizar la config existente (mantener el UUID)
-    configId = existingCfg.id
-    const { error: cfgError } = await db
-      .from('booking_configs')
-      .update(bookingConfigData)
-      .eq('id', configId)
-
-    if (cfgError) {
-      return NextResponse.json({ error: 'Error actualizando booking config', detail: cfgError.message }, { status: 500 })
-    }
+  if (existingCfgs && existingCfgs.length > 0) {
+    configId = existingCfgs[0].id
+    const { error: cfgError } = await db.from('booking_configs').update(bookingConfigData).eq('id', configId)
+    if (cfgError) return NextResponse.json({ error: 'Error actualizando booking config', detail: cfgError.message }, { status: 500 })
   } else {
-    // Insertar nueva config (Supabase genera el UUID)
-    const { data: newCfg, error: cfgError } = await db
-      .from('booking_configs')
-      .insert(bookingConfigData)
-      .select('id')
-      .single()
-
-    if (cfgError || !newCfg) {
-      return NextResponse.json({ error: 'Error creando booking config', detail: cfgError?.message }, { status: 500 })
-    }
+    const { data: newCfg, error: cfgError } = await db.from('booking_configs').insert(bookingConfigData).select('id').single()
+    if (cfgError || !newCfg) return NextResponse.json({ error: 'Error creando booking config', detail: cfgError?.message }, { status: 500 })
     configId = newCfg.id
   }
 
@@ -135,10 +103,8 @@ export async function GET() {
       reservas_full: `https://divinia.vercel.app/reservas/${configId}`,
       panel: `/panel/${configId}`,
       panel_full: `https://divinia.vercel.app/panel/${configId}`,
-      chatbot_widget_id: chatbotId,
     },
     client_id: clientId,
     config_id: configId,
-    services_count: services.length,
   })
 }

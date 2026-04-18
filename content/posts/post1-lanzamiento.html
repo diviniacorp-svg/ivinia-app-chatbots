@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post 1 — Lanzamiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .post {
+    width: 1080px;
+    height: 1080px;
+    background: #09090b;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px;
+  }
+  /* Círculo violeta grande — arriba derecha */
+  .circle-purple {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    background: #8B5CF6;
+    border-radius: 50%;
+    top: -200px;
+    right: -180px;
+    opacity: 0.28;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  /* Círculo rosa — abajo izquierda */
+  .circle-pink {
+    position: absolute;
+    width: 380px;
+    height: 380px;
+    background: #EC4899;
+    border-radius: 50%;
+    bottom: -100px;
+    left: -100px;
+    opacity: 0.22;
+    filter: blur(70px);
+    pointer-events: none;
+  }
+  /* Badge pill */
+  .badge {
+    display: inline-block;
+    background: rgba(139, 92, 246, 0.12);
+    border: 1.5px solid rgba(139, 92, 246, 0.45);
+    border-radius: 999px;
+    padding: 12px 32px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #8B5CF6;
+    letter-spacing: 0.04em;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+  }
+  /* Titular */
+  .headline {
+    font-size: 108px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -4px;
+    line-height: 0.95;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 36px;
+  }
+  .headline .accent { color: #8B5CF6; }
+  /* Subtexto */
+  .subtext {
+    font-size: 32px;
+    color: #a1a1aa;
+    font-weight: 400;
+    text-align: center;
+    line-height: 1.5;
+    max-width: 780px;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 52px;
+  }
+  /* Lista de features */
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: center;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 52px;
+  }
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 28px;
+    color: #ffffff;
+    font-weight: 500;
+  }
+  .feature-item .check {
+    color: #10B981;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  /* CTA pill */
+  .cta {
+    background: #8B5CF6;
+    border-radius: 20px;
+    padding: 22px 64px;
+    font-size: 30px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 60px rgba(139, 92, 246, 0.4);
+    margin-bottom: 60px;
+  }
+  /* Logo footer */
+  .logo {
+    position: absolute;
+    bottom: 52px;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 24px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: -0.3px;
+    z-index: 1;
+  }
+  .logo .dot { font-size: 20px; color: rgba(139,92,246,0.6); }
+  .logo .by { font-weight: 400; font-size: 20px; color: rgba(255,255,255,0.25); }
+  /* Línea decorativa */
+  .divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #8B5CF6, #EC4899);
+    border-radius: 999px;
+    margin: 0 auto 44px;
+    position: relative;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="circle-purple"></div>
+  <div class="circle-pink"></div>
+
+  <div class="badge">Turnero by DIVINIA</div>
+
+  <div class="headline">Ya<br><span class="accent">llegamos.</span></div>
+
+  <div class="divider"></div>
+
+  <div class="subtext">
+    Turnos online para negocios con agenda.<br>
+    Sin llamadas. Sin WhatsApp. Sin olvidos.
+  </div>
+
+  <div class="features">
+    <div class="feature-item"><span class="check">✓</span> Tus clientes reservan solos, las 24hs</div>
+    <div class="feature-item"><span class="check">✓</span> Señas por MercadoPago incluidas</div>
+    <div class="feature-item"><span class="check">✓</span> Recordatorios automáticos antes del turno</div>
+    <div class="feature-item"><span class="check">✓</span> Setup en 24hs · Sin permanencia</div>
+  </div>
+
+  <div class="cta">Probalo gratis — link en bio ↓</div>
+
+  <div class="logo">
+    <span class="dot">◉</span>
+    <span>Turnero</span>
+    <span class="by">by DIVINIA</span>
+  </div>
+</div>
+</body>
+</html>

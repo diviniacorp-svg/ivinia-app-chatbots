@@ -23,8 +23,8 @@ const C = {
 }
 
 export interface NanoReelProps {
-  videoFile: string
-  headline: string
+  videoFile?: string
+  headline?: string
   subtext?: string
   cta?: string
 }
@@ -152,8 +152,8 @@ function CTAButton({ text, frame, fps }: { text: string; frame: number; fps: num
 
 // ——— Composición principal ———
 export const NanoReel: React.FC<NanoReelProps> = ({
-  videoFile,
-  headline,
+  videoFile = '',
+  headline = '',
   subtext,
   cta = 'Escribinos por DM →',
 }) => {
@@ -161,7 +161,7 @@ export const NanoReel: React.FC<NanoReelProps> = ({
   const { fps, durationInFrames } = useVideoConfig()
 
   const headlineStart = 18
-  const subtextStart = headlineStart + headline.split(' ').length * 6 + 10
+  const subtextStart = headlineStart + (headline ? headline.split(' ').length * 6 : 0) + 10
   const ctaStart = durationInFrames - 100
 
   return (

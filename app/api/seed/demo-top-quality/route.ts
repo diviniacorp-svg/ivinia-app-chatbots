@@ -34,33 +34,30 @@ export async function GET() {
       direccion: 'San Luis Capital',
       whatsapp: '5492664864731',
       facebook: 'topqualitypiscina',
-      intro_emoji: '🏊',
+      intro_emoji: '🏊,💧,🔵',
       intro_tagline: 'Limpieza y mantenimiento de piscinas todo el año',
       intro_style: 'waves',
     },
   }
 
-  if (!clientId) {
-    const { data: newClient, error } = await db
-      .from('clients')
-      .insert(clientData)
-      .select('id')
-      .single()
+  // Upsert cliente
+  const { data: upsertedClient, error: clientError } = await db
+    .from('clients')
+    .upsert(clientData, { onConflict: 'chatbot_id' })
+    .select('id')
+    .single()
 
-    if (error || !newClient) {
-      return NextResponse.json({ error: 'Error creando cliente', detail: error?.message }, { status: 500 })
-    }
-    clientId = newClient.id
-  } else {
-    await db.from('clients').update(clientData).eq('id', clientId)
+  if (clientError || !upsertedClient) {
+    return NextResponse.json({ error: 'Error creando cliente', detail: clientError?.message }, { status: 500 })
   }
+  clientId = upsertedClient.id
 
   // 2. Crear o actualizar booking config
-  const { data: existingCfg } = await db
+  const { data: existingCfgs } = await db
     .from('booking_configs')
     .select('id')
     .eq('client_id', clientId)
-    .maybeSingle()
+    .limit(1)
 
   const services = [
     {
@@ -170,7 +167,8 @@ export async function GET() {
     slot_duration_minutes: 30,
     advance_booking_days: 60,
     blocked_dates: [],
-    owner_phone: '5492665286110',
+    owner_phone: '5492664864731',
+    owner_pin: '4861',
     schedule: {
       lun: { open: '08:00', close: '18:00' },
       mar: { open: '08:00', close: '18:00' },
@@ -181,40 +179,17 @@ export async function GET() {
       dom: null,
     },
     services,
-    professionals: [
-      {
-        id: crypto.randomUUID(),
-        name: 'Técnico Top Quality',
-        emoji: '🔧',
-        color: '#1d4ed8',
-        bio: 'Especialista en limpieza, mantenimiento y equipos para piscinas',
-        service_ids: [],
-      },
-    ],
   }
 
   let configId: string
 
-  if (existingCfg) {
-    configId = existingCfg.id
-    const { error: cfgError } = await db
-      .from('booking_configs')
-      .update(bookingConfigData)
-      .eq('id', configId)
-
-    if (cfgError) {
-      return NextResponse.json({ error: 'Error actualizando booking config', detail: cfgError.message }, { status: 500 })
-    }
+  if (existingCfgs && existingCfgs.length > 0) {
+    configId = existingCfgs[0].id
+    const { error: cfgError } = await db.from('booking_configs').update(bookingConfigData).eq('id', configId)
+    if (cfgError) return NextResponse.json({ error: 'Error actualizando booking config', detail: cfgError.message }, { status: 500 })
   } else {
-    const { data: newCfg, error: cfgError } = await db
-      .from('booking_configs')
-      .insert(bookingConfigData)
-      .select('id')
-      .single()
-
-    if (cfgError || !newCfg) {
-      return NextResponse.json({ error: 'Error creando booking config', detail: cfgError?.message }, { status: 500 })
-    }
+    const { data: newCfg, error: cfgError } = await db.from('booking_configs').insert(bookingConfigData).select('id').single()
+    if (cfgError || !newCfg) return NextResponse.json({ error: 'Error creando booking config', detail: cfgError?.message }, { status: 500 })
     configId = newCfg.id
   }
 

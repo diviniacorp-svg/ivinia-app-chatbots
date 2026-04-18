@@ -23,10 +23,10 @@ Ve a instagram.com/@autom_atia → Editar perfil y configurá esto:
 📅 Turnos online para tu negocio
 Sin llamadas. Sin olvidos. 24hs.
 🏙️ San Luis, Argentina
-👇 Probá 14 días gratis
+👇 $80.000 ARS — pago único
 ```
 
-**Link en bio**: https://divinia.vercel.app/trial
+**Link en bio**: https://divinia.vercel.app
 
 **Categoría**: Software (o Producto/Servicio si no aparece)
 

@@ -16,11 +16,11 @@ Recomendación: usar **@divinia.ar** para no limitarse solo a turnos y poder exp
 ```
 Sistema de turnos con IA para tu negocio
 Clínicas · Peluquerías · Veterinarias · Talleres
-Probalo 14 días gratis 👇
+$80.000 ARS — pago único 👇
 ```
 
 ### Link en bio
-- Usar Linktree o un link directo: https://divinia.vercel.app/trial
+- Usar Linktree o un link directo: https://divinia.vercel.app
 - Alternativa: crear una landing `/turnos` en la web que explique el producto
 
 ### Foto de perfil
@@ -103,7 +103,7 @@ Sin llamadas. Sin papeles. Sin WhatsApps interminables.
 Tus clientes agendan online. Vos recibís notificaciones.
 Confirmaciones y recordatorios automáticos.
 
-14 días gratis, sin tarjeta.
+$80.000 ARS pago único. Sin mensualidades.
 ¿Cuál es tu rubro? 👇
 #turnos #agendaonline #pymes #sanluisargentina #divinia
 ```
@@ -122,7 +122,7 @@ Si tu respuesta es "demasiadas"... tenemos algo para vos.
 Un sistema que toma los turnos por vos, los confirma,
 manda recordatorios y te avisa cuando hay un cambio.
 Vos te enfocás en atender. El sistema se encarga del resto.
-Link en bio → probalo gratis 🔗
+Link en bio → turnero 🔗
 ```
 
 **Stories (todos los días)**
@@ -184,7 +184,7 @@ Caption:
 Con DIVINIA, tus clientes agendan con anticipación.
 Vos sabés exactamente qué entra cada día.
 Sin sorpresas. Sin solapamientos. Sin caos.
-Link en bio → 14 días gratis 🔧
+Link en bio → divinia.vercel.app 🔧
 ```
 
 **Stories semana 2**
@@ -231,7 +231,7 @@ DM o link en bio 🦷
 **Stories semana 3**
 - Martes: Encuesta "¿Sabías que podés tener el sistema listo en 48hs?"
 - Jueves: Behind the scenes — cómo se configura el sistema para un nuevo negocio
-- Sábado: Reminder de la prueba gratis de 14 días
+- Sábado: Reminder del precio de lanzamiento $80k
 
 ---
 
@@ -248,7 +248,7 @@ Plan base: $150.000 ARS (pago único) + mantenimiento opcional
 Plan pro: $250.000 ARS con configuración avanzada
 Plan enterprise: $400.000 ARS con integraciones y múltiples sedes
 
-14 días gratis para arrancar.
+$80.000 ARS pago único para arrancar.
 Link en bio 🔗
 ```
 
@@ -265,7 +265,7 @@ Esta semana podemos tener tu sistema de turnos listo.
 Rubros que ya usamos: estética, clínicas, peluquerías, veterinarias, talleres.
 ¿El tuyo también puede sumarse?
 DM ahora o escribí al +54 9 266 528 6110
-Instalamos en 48hs. Prueba gratis 14 días.
+Instalamos en 48hs. $80.000 ARS pago único.
 ```
 
 **Stories semana 4**
@@ -310,7 +310,7 @@ Mix de 3 tipos:
 El lead puede venir por:
 - Comenta en un post ("me interesa")
 - Manda DM directamente
-- Hace click en link de bio y llena el form de trial
+- Hace click en link de bio y escribe por WhatsApp
 
 ### Paso 2 — Calificación (DM o form)
 Preguntas de calificación a hacer en el DM:
@@ -360,7 +360,7 @@ que hace que tus clientes agendan solos, reciben recordatorios automáticos
 y vos tenés todo organizado en un panel.
 Ya lo usamos con otros negocios de la ciudad.
 ¿Te puedo mostrar cómo queda para una [peluquería/clínica/veterinaria]?
-Es gratis verlo 😊
+DM para ver la demo de tu rubro 😊
 ```
 
 ---
@@ -392,7 +392,7 @@ Responsabilidades:
 
 ### 02-WEB-APPS (Soporte técnico)
 Responsabilidades:
-- Asegurar que divinia.vercel.app/trial funcione perfectamente
+- Asegurar que divinia.vercel.app funcione perfectamente
 - Crear landing `/turnos` específica si se decide separar el producto
 - Generar demos configuradas por rubro para mostrar en ventas
 
