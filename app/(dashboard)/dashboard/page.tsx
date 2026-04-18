@@ -1,123 +1,102 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase'
-import { Users, UserCheck, CreditCard, TrendingUp } from 'lucide-react'
+import NeuralGraphClient from './_components/NeuralGraphClient'
+import KPIBand from '@/components/dashboard/KPIBand'
+import TodaySnapshot from '@/components/dashboard/TodaySnapshot'
 import Link from 'next/link'
 
-async function getMetrics() {
+async function getDashboardData() {
   const db = createAdminClient()
-  const [leadsRes, clientsRes, paymentsRes] = await Promise.all([
-    db.from('leads').select('id, status, score', { count: 'exact' }),
-    db.from('clients').select('id, status', { count: 'exact' }),
-    db.from('payments').select('amount, status'),
+  const today = new Date().toISOString().split('T')[0]
+  const [metricsRes, leadsRes, contentRes, agendaRes] = await Promise.all([
+    db.from('ceo_metrics').select('*').single(),
+    db.from('leads').select('id, nombre, negocio, score, status').gte('score', 60).order('score', { ascending: false }).limit(3),
+    db.from('content_calendar').select('id, titulo, tipo, plataforma, status').eq('fecha', today).eq('status', 'planificado').limit(4),
+    db.from('nucleus_memory').select('id, contenido, importancia').contains('tags', ['agenda']).eq('activo', true).order('importancia', { ascending: false }).limit(4),
   ])
-
-  const leads = leadsRes.data || []
-  const clients = clientsRes.data || []
-  const payments = paymentsRes.data || []
-
-  const totalRevenue = payments
-    .filter(p => p.status === 'approved')
-    .reduce((sum, p) => sum + (p.amount || 0), 0)
-
   return {
-    totalLeads: leadsRes.count || 0,
-    newLeads: leads.filter(l => l.status === 'nuevo').length,
-    totalClients: clientsRes.count || 0,
-    activeClients: clients.filter(c => c.status === 'active').length,
-    trialClients: clients.filter(c => c.status === 'trial').length,
-    totalRevenue,
+    metrics: metricsRes.data as any,
+    leads: (leadsRes.data ?? []) as any[],
+    content: (contentRes.data ?? []) as any[],
+    agenda: (agendaRes.data ?? []) as any[],
   }
 }
 
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Buenos días'
+  if (h < 19) return 'Buenas tardes'
+  return 'Buenas noches'
+}
+
 export default async function DashboardPage() {
-  let metrics = { totalLeads: 0, newLeads: 0, totalClients: 0, activeClients: 0, trialClients: 0, totalRevenue: 0 }
+  let data = { metrics: null as any, leads: [] as any[], content: [] as any[], agenda: [] as any[] }
+  try { data = await getDashboardData() } catch {}
 
-  try {
-    metrics = await getMetrics()
-  } catch {
-    // DB no configurada aún
-  }
-
-  const cards = [
-    { label: 'Total Leads', value: metrics.totalLeads, sub: `${metrics.newLeads} nuevos`, icon: Users, color: 'bg-blue-500', href: '/leads' },
-    { label: 'Clientes Activos', value: metrics.activeClients, sub: `${metrics.trialClients} en trial`, icon: UserCheck, color: 'bg-green-500', href: '/clientes' },
-    { label: 'Ingresos (ARS)', value: `$${metrics.totalRevenue.toLocaleString('es-AR')}`, sub: 'pagos aprobados', icon: CreditCard, color: 'bg-purple-500', href: '/pagos' },
-    { label: 'Conversion Rate', value: metrics.totalLeads > 0 ? `${Math.round((metrics.totalClients / metrics.totalLeads) * 100)}%` : '0%', sub: 'leads → clientes', icon: TrendingUp, color: 'bg-amber-500', href: '/crm' },
-  ]
-
-  const quickActions = [
-    { label: 'Buscar leads con Apify', href: '/leads', emoji: '🔍' },
-    { label: 'Enviar campaña email', href: '/outreach', emoji: '📧' },
-    { label: 'Crear nuevo cliente', href: '/clientes', emoji: '➕' },
-    { label: 'Generar link de pago', href: '/pagos', emoji: '💳' },
-  ]
+  const date = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  const leadsHoy = data.metrics?.leads_nuevos ?? 0
+  const mensajes = data.metrics?.mensajes_pendientes ?? 0
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-black text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Resumen operativo de DIVINIA</p>
-      </div>
+    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {cards.map((card) => (
-          <Link key={card.label} href={card.href}>
-            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{card.label}</p>
-                <div className={`w-8 h-8 ${card.color} bg-opacity-15 rounded-lg flex items-center justify-center`}>
-                  <card.icon size={16} className={`${card.color.replace('bg-', 'text-')}`} />
-                </div>
-              </div>
-              <p className="text-2xl font-black text-gray-900">{card.value}</p>
-              <p className="text-xs text-gray-400 mt-1">{card.sub}</p>
+      {/* Header editorial */}
+      <div style={{ padding: '36px 40px 28px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+              {date}
             </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Acciones rápidas */}
-      <div className="grid sm:grid-cols-2 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="font-bold text-gray-900 mb-4">Acciones rápidas</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action) => (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-indigo-50 rounded-xl text-center transition-colors group"
-              >
-                <span className="text-2xl">{action.emoji}</span>
-                <span className="text-xs font-semibold text-gray-600 group-hover:text-indigo-700 leading-tight">{action.label}</span>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 48px)', color: 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1.1, margin: 0 }}>
+              {getGreeting()}, Joaco.
+            </h1>
+            {(leadsHoy > 0 || mensajes > 0) && (
+              <p style={{ marginTop: 10, fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted-2)' }}>
+                {leadsHoy > 0 && `${leadsHoy} lead${leadsHoy > 1 ? 's' : ''} nuevo${leadsHoy > 1 ? 's' : ''} hoy`}
+                {leadsHoy > 0 && mensajes > 0 && ' · '}
+                {mensajes > 0 && `${mensajes} mensaje${mensajes > 1 ? 's' : ''} pendiente${mensajes > 1 ? 's' : ''}`}
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[
+              { href: '/leads', label: 'Nuevo lead' },
+              { href: '/crm', label: 'Propuesta' },
+              { href: '/contenido', label: 'Contenido' },
+              { href: '/agents', label: 'Agentes' },
+            ].map(a => (
+              <Link key={a.href} href={a.href} style={{
+                padding: '9px 18px', borderRadius: 8, border: '1px solid var(--line)',
+                fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: 'var(--ink)', textDecoration: 'none', background: 'var(--paper)', whiteSpace: 'nowrap',
+              }}>
+                {a.label}
               </Link>
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white">
-          <h2 className="font-bold mb-3">💡 Tip del día</h2>
-          <p className="text-indigo-200 text-sm leading-relaxed mb-4">
-            Buscá negocios en San Luis con Apify, generá emails personalizados con IA y enviálos en batch.
-            Cada campaña puede generar 5-10 leads calificados.
-          </p>
-          <Link
-            href="/leads"
-            className="inline-block bg-white text-indigo-700 font-semibold text-sm px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
-          >
-            Ir al buscador de leads →
-          </Link>
+      {/* KPI Band */}
+      <KPIBand metrics={data.metrics} />
+
+      {/* Neural Graph — ink section */}
+      <div style={{ background: 'var(--ink)', padding: '32px 40px 0' }}>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 16 }}>
+          Sistema DIVINIA · tiempo real · actualiza cada 30s
         </div>
+        <NeuralGraphClient />
       </div>
 
-      {/* Acceso a la BD */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-        <strong>⚠️ Primer uso:</strong> Asegurate de configurar las variables de entorno en{' '}
-        <code className="bg-amber-100 px-1 rounded">.env.local</code> y correr el SQL de{' '}
-        <code className="bg-amber-100 px-1 rounded">supabase-schema.sql</code> en tu Supabase.
-        Después ejecutá <code className="bg-amber-100 px-1 rounded">GET /api/seed</code> para cargar los templates.
+      {/* Today snapshot */}
+      <div style={{ padding: '32px 40px' }}>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
+          Estado de hoy
+        </div>
+        <TodaySnapshot leads={data.leads} content={data.content} agenda={data.agenda} />
       </div>
+
     </div>
   )
 }
