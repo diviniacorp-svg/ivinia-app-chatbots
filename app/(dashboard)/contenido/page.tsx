@@ -1,277 +1,331 @@
-'use client'
+export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { createAdminClient } from '@/lib/supabase'
 import Link from 'next/link'
-import {
-  Sparkles, ExternalLink, Copy, Check, ChevronDown, ChevronUp,
-  Play, Brain, Vote, Palette, Film, Zap, Terminal, Eye
-} from 'lucide-react'
 
-// ─── Canva links ──────────────────────────────────────────────────────────────
+async function getContentData() {
+  try {
+    const db = createAdminClient()
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).toISOString()
 
-const CANVA_LINKS = [
-  { label: 'Posts Semana 1', url: 'https://www.canva.com/folder/FAHFpVAfEXc' },
-  { label: 'Carruseles', url: 'https://www.canva.com/folder/FAHFpcOd82M' },
-  { label: 'Historias / Stories', url: 'https://www.canva.com/folder/FAHFpd43YX4' },
-  { label: 'Logos y marca', url: 'https://www.canva.com/folder/FAHFpa6KWII' },
-  { label: 'Planificador Canva', url: 'https://www.canva.com/planner' },
+    const { data } = await db
+      .from('content_calendar')
+      .select('id, titulo, tipo, plataforma, estado, fecha_publicacion, contenido')
+      .order('fecha_publicacion', { ascending: false })
+      .limit(20)
+
+    const items = (data ?? []) as any[]
+
+    const thisMonth = items.filter((i: any) => {
+      const d = i.fecha_publicacion
+      return d >= startOfMonth && d <= endOfMonth
+    })
+
+    const totalPlanificado = thisMonth.filter((i: any) => i.estado === 'planificado').length
+    const publicados = thisMonth.filter((i: any) => i.estado === 'publicado').length
+    const borradores = thisMonth.filter((i: any) => i.estado === 'borrador').length
+    const estaSemana = items.filter((i: any) => i.fecha_publicacion >= startOfWeek).length
+
+    const platCount: Record<string, number> = {}
+    items.forEach((i: any) => {
+      if (i.plataforma) platCount[i.plataforma] = (platCount[i.plataforma] ?? 0) + 1
+    })
+    const topPlats = Object.entries(platCount).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+    return { items, totalPlanificado, publicados, borradores, estaSemana, topPlats }
+  } catch {
+    return { items: [], totalPlanificado: 0, publicados: 0, borradores: 0, estaSemana: 0, topPlats: [] }
+  }
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  instagram: '#E1306C',
+  tiktok: '#000000',
+  linkedin: '#0077B5',
+  email: '#F59E0B',
+  blog: '#8B5CF6',
+  youtube: '#FF0000',
+}
+
+const ESTADO_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  planificado: { bg: 'var(--paper-2)', color: 'var(--ink)', label: 'Planificado' },
+  publicado: { bg: 'var(--lime)', color: 'var(--ink)', label: 'Publicado' },
+  borrador: { bg: '#FED7AA', color: '#92400E', label: 'Borrador' },
+}
+
+const QUICK_TEMPLATES = [
+  { label: 'Hook de problema', brief: 'Empezá con una pregunta o dolor del cliente objetivo' },
+  { label: 'Before/After', brief: 'Mostrá el antes y después de usar el producto/servicio' },
+  { label: 'CTA directo', brief: 'Post corto con llamada a la acción clara al final' },
 ]
 
-// ─── Composiciones Remotion ───────────────────────────────────────────────────
-
-const COMPOSICIONES = [
-  { id: 'HookReel', desc: 'Reel gancho animado con texto', requiere: null },
-  { id: 'StatsReel', desc: 'Stats animadas en pantalla', requiere: null },
-  { id: 'BeforeAfterReel', desc: 'Antes vs Después split', requiere: null },
-  { id: 'TextAnim-Dolor', desc: 'Texto animado — mensaje dolor', requiere: null },
-  { id: 'TextAnim-Stats', desc: 'Texto animado — estadísticas', requiere: null },
-  { id: 'TextAnim-Urgencia', desc: 'Texto animado — urgencia CTA', requiere: null },
-  { id: 'Nano-Turnero-Hook', desc: 'Hook con fondo 3D Gemini', requiere: 'turnero-fondo-9x16.mp4' },
-  { id: 'Nano-Turnero-CTA', desc: 'CTA con fondo 3D Gemini', requiere: 'turnero-fondo-9x16.mp4' },
-  { id: 'Demo-Peluqueria', desc: 'Demo producto — peluquería', requiere: null },
-  { id: 'Demo-Clinica', desc: 'Demo producto — clínica', requiere: null },
-  { id: 'Demo-Veterinaria', desc: 'Demo producto — veterinaria', requiere: null },
-  { id: 'Demo-Taller', desc: 'Demo producto — taller mecánico', requiere: null },
-]
-
-// ─── Prompt Chrome Extension ──────────────────────────────────────────────────
-
-const PROMPT_INSTAGRAM = `Sos mi asistente técnico. Tengo que publicar los posts de la semana en @autom_atia.
-
-CUENTA: @autom_atia (Instagram Business)
-PRODUCTO: Turnero by DIVINIA — sistema de turnos online para PYMEs argentinas
-
-Para cada post:
-1. Abrí instagram.com/@autom_atia
-2. Hacé click en "+" para crear publicación
-3. Subí la imagen indicada (ya la tengo en Canva)
-4. Pegá el caption exacto
-5. Agregá los hashtags al final
-6. Programalo en el horario indicado o publicalo ahora
-
-Confirmame cada post que publiques. Si hay error, decímelo y lo resolvemos juntos.`
-
-// ─── Componente ───────────────────────────────────────────────────────────────
-
-export default function ContenidoPage() {
-  const [copiedPrompt, setCopiedPrompt] = useState(false)
-  const [copiedCmd, setCopiedCmd] = useState<string | null>(null)
-  const [remotionOpen, setRemotionOpen] = useState(false)
-  const [promptOpen, setPromptOpen] = useState(false)
-
-  function copyPrompt() {
-    navigator.clipboard.writeText(PROMPT_INSTAGRAM)
-    setCopiedPrompt(true)
-    setTimeout(() => setCopiedPrompt(false), 2000)
-  }
-
-  function copyCmd(id: string) {
-    navigator.clipboard.writeText(`npx remotion render ${id} out/${id}.mp4`)
-    setCopiedCmd(id)
-    setTimeout(() => setCopiedCmd(null), 2000)
-  }
+export default async function ContenidoPage() {
+  const { items, totalPlanificado, publicados, borradores, estaSemana, topPlats } = await getContentData()
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
 
-        {/* Header */}
-        <div>
-          <h1 className="text-xl font-black text-white">Fábrica de Contenidos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Instagram @autom_atia — Turnero by DIVINIA</p>
+      {/* Header */}
+      <div style={{ padding: '36px 40px 28px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+          Dashboard · Contenido
         </div>
+        <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 'clamp(24px, 3vw, 36px)', color: 'var(--ink)', letterSpacing: '-0.03em', margin: 0 }}>
+          Fábrica de Contenido
+        </h1>
+        <p style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontSize: 15, color: 'var(--muted-2)', marginTop: 6 }}>
+          Tu pipeline de contenido en tiempo real
+        </p>
+      </div>
 
-        {/* ── 1. PIPELINE IA — ACCIÓN PRINCIPAL ─────────────────────────────── */}
-        <div className="bg-gradient-to-br from-indigo-950/60 to-purple-950/40 border border-indigo-700/40 rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-              <Sparkles size={20} className="text-white" />
-            </div>
-            <div>
-              <h2 className="font-bold text-white">Pipeline IA — 3 Agentes en cadena</h2>
-              <p className="text-indigo-300 text-xs">Estratega → Creador (×3 variantes) → Selector de calidad</p>
-            </div>
+      {/* 3-col layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 240px', gap: '24px', padding: '28px 40px', alignItems: 'start' }}>
+
+        {/* ── Col izquierda: Creación rápida ── */}
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+            Creación rápida
           </div>
 
-          {/* Cómo funciona */}
-          <div className="grid grid-cols-3 gap-3 my-5">
-            {[
-              { icon: Brain, label: 'Estratega', desc: 'Planifica 20 posts del mes con mix 40/30/20/10', color: 'text-blue-400' },
-              { icon: Sparkles, label: 'Creador', desc: 'Genera 3 variantes de caption por post (A/B/C)', color: 'text-purple-400' },
-              { icon: Vote, label: 'Selector', desc: 'Evalúa calidad, ortografía, originalidad y elige la mejor', color: 'text-emerald-400' },
-            ].map(({ icon: Icon, label, desc, color }) => (
-              <div key={label} className="bg-black/30 rounded-xl p-3 text-center">
-                <Icon size={20} className={`mx-auto mb-1.5 ${color}`} />
-                <p className="text-xs font-semibold text-white">{label}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">{desc}</p>
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              Tipo
+            </label>
+            <select style={{
+              width: '100%', padding: '8px 12px', border: '1px solid var(--line)',
+              borderRadius: 8, background: 'var(--paper-2)', color: 'var(--ink)',
+              fontFamily: 'var(--f-display)', fontSize: 14, outline: 'none',
+            }}>
+              <option value="post">Post</option>
+              <option value="reel">Reel</option>
+              <option value="story">Story</option>
+              <option value="email">Email</option>
+              <option value="blog">Blog</option>
+            </select>
           </div>
 
-          <div className="bg-indigo-900/20 border border-indigo-800/30 rounded-lg p-3 mb-5 text-xs text-indigo-300">
-            <strong>Control de calidad automático:</strong> el Selector detecta errores tipográficos, frases genéricas repetidas entre posts, hooks débiles y CTAs vagos. Si un post no supera score 6/10, lo rechaza y lo marca para revisión.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              Plataforma
+            </label>
+            <select style={{
+              width: '100%', padding: '8px 12px', border: '1px solid var(--line)',
+              borderRadius: 8, background: 'var(--paper-2)', color: 'var(--ink)',
+              fontFamily: 'var(--f-display)', fontSize: 14, outline: 'none',
+            }}>
+              <option value="instagram">Instagram</option>
+              <option value="tiktok">TikTok</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="email">Email</option>
+              <option value="blog">Blog</option>
+            </select>
           </div>
 
-          <Link
-            href="/contenido/pipeline"
-            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors text-sm"
-          >
-            <Play size={16} />
-            Ejecutar pipeline del mes
-          </Link>
-        </div>
-
-        {/* ── 2. DISEÑOS EN CANVA ───────────────────────────────────────────── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center shrink-0">
-              <Palette size={17} className="text-white" />
-            </div>
-            <div>
-              <h2 className="font-bold text-white">Diseños en Canva</h2>
-              <p className="text-gray-500 text-xs">Carpetas de la cuenta @autom_atia</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {CANVA_LINKS.map(({ label, url }) => (
-              <a
-                key={label}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between gap-2 bg-amber-950/20 hover:bg-amber-900/30 border border-amber-800/20 hover:border-amber-700/40 rounded-lg px-4 py-2.5 text-sm text-amber-200 hover:text-white transition-all group"
-              >
-                <span>{label}</span>
-                <ExternalLink size={13} className="text-amber-500 group-hover:text-amber-300 shrink-0" />
-              </a>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              Tema / Brief
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Describí de qué trata el contenido..."
+              style={{
+                width: '100%', padding: '10px 12px', border: '1px solid var(--line)',
+                borderRadius: 8, background: 'var(--paper-2)', color: 'var(--ink)',
+                fontFamily: 'var(--f-display)', fontSize: 14, resize: 'vertical',
+                outline: 'none', boxSizing: 'border-box',
+              }}
+            />
           </div>
 
-          <div className="mt-4 p-3 bg-amber-950/20 border border-amber-800/20 rounded-lg">
-            <p className="text-xs text-amber-400 font-medium mb-1">Flujo recomendado</p>
-            <p className="text-xs text-gray-400">
-              1. Ejecutá el pipeline → 2. Copiá el caption aprobado → 3. Abrí Canva → 4. Usá la plantilla base → 5. Pegá el texto exacto del pipeline (así no hay errores tipográficos)
-            </p>
-          </div>
-        </div>
-
-        {/* ── 3. PUBLICAR EN INSTAGRAM ─────────────────────────────────────── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
           <button
-            onClick={() => setPromptOpen(!promptOpen)}
-            className="w-full flex items-center justify-between gap-3"
+            onClick={() => console.log('Generar con IA')}
+            style={{
+              width: '100%', padding: '11px 0', borderRadius: 8,
+              background: 'var(--ink)', color: 'var(--lime)',
+              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
+              textTransform: 'uppercase', border: 'none', cursor: 'pointer',
+            }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-pink-600 rounded-xl flex items-center justify-center shrink-0">
-                <Film size={17} className="text-white" />
-              </div>
-              <div className="text-left">
-                <h2 className="font-bold text-white">Publicar en Instagram</h2>
-                <p className="text-gray-500 text-xs">Prompt para Claude con extensión Chrome</p>
-              </div>
-            </div>
-            {promptOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+            Generar con IA →
           </button>
 
-          {promptOpen && (
-            <div className="mt-4">
-              <div className="bg-gray-950 border border-gray-700 rounded-lg p-4 mb-3">
-                <pre className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed font-mono">{PROMPT_INSTAGRAM}</pre>
+          {/* Plantillas rápidas */}
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>
+              Plantillas rápidas
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {QUICK_TEMPLATES.map(t => (
+                <div
+                  key={t.label}
+                  style={{
+                    padding: '10px 12px', border: '1px solid var(--line)',
+                    borderRadius: 8, background: 'var(--paper-2)', cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', marginBottom: 3 }}>
+                    {t.label}
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)', lineHeight: 1.4 }}>
+                    {t.brief}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Col central: Calendario ── */}
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{
+            padding: '16px 20px', borderBottom: '1px solid var(--line)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              Calendario · últimos 20 items
+            </div>
+            <button style={{
+              width: 28, height: 28, borderRadius: 6, border: '1px solid var(--line)',
+              background: 'var(--paper-2)', color: 'var(--ink)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'var(--f-mono)', fontSize: 16, lineHeight: 1,
+            }}>
+              +
+            </button>
+          </div>
+
+          {items.length === 0 ? (
+            <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted-2)', marginBottom: 16 }}>
+                No hay contenido en el calendario todavía.
               </div>
-              <button
-                onClick={copyPrompt}
-                className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-              >
-                {copiedPrompt ? <Check size={14} /> : <Copy size={14} />}
-                {copiedPrompt ? 'Copiado' : 'Copiar prompt'}
-              </button>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em' }}>
+                Creá tu primer post con el panel de la izquierda →
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {items.map((item: any, i: number) => {
+                const platColor = PLATFORM_COLORS[item.plataforma?.toLowerCase()] ?? 'var(--muted)'
+                const estado = ESTADO_STYLES[item.estado?.toLowerCase()] ?? ESTADO_STYLES.borrador
+                const fecha = item.fecha_publicacion
+                  ? new Date(item.fecha_publicacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+                  : '—'
+
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: '14px 20px',
+                      borderBottom: i < items.length - 1 ? '1px solid var(--line)' : 'none',
+                      display: 'flex', alignItems: 'center', gap: 12,
+                    }}
+                  >
+                    {/* Platform badge */}
+                    <div style={{
+                      minWidth: 8, height: 8, borderRadius: '50%',
+                      background: platColor, flexShrink: 0,
+                    }} />
+
+                    {/* Platform name */}
+                    <div style={{
+                      fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                      textTransform: 'uppercase', color: platColor, minWidth: 72, flexShrink: 0,
+                    }}>
+                      {item.plataforma ?? '—'}
+                    </div>
+
+                    {/* Title */}
+                    <div style={{ flex: 1, fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)', lineHeight: 1.3 }}>
+                      {item.titulo ?? 'Sin título'}
+                    </div>
+
+                    {/* Fecha */}
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', minWidth: 48, textAlign: 'right' }}>
+                      {fecha}
+                    </div>
+
+                    {/* Estado badge */}
+                    <div style={{
+                      padding: '3px 8px', borderRadius: 4,
+                      background: estado.bg, color: estado.color,
+                      fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                      textTransform: 'uppercase', flexShrink: 0,
+                    }}>
+                      {estado.label}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
 
-        {/* ── 4. REELS CON REMOTION ────────────────────────────────────────── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-          <button
-            onClick={() => setRemotionOpen(!remotionOpen)}
-            className="w-full flex items-center justify-between gap-3"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-violet-700 rounded-xl flex items-center justify-center shrink-0">
-                <Film size={17} className="text-white" />
-              </div>
-              <div className="text-left flex-1">
-                <h2 className="font-bold text-white">Reels con Remotion</h2>
-                <p className="text-gray-500 text-xs">{COMPOSICIONES.length} composiciones</p>
-              </div>
-              <Link
-                href="/contenido/preview"
-                onClick={e => e.stopPropagation()}
-                className="shrink-0 flex items-center gap-1.5 bg-violet-700 hover:bg-violet-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <Eye size={12} />
-                Preview
-              </Link>
+        {/* ── Col derecha: Stats ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
+              Stats del mes
             </div>
-            {remotionOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
-          </button>
-
-          {remotionOpen && (
-            <div className="mt-4 space-y-3">
-              <div className="bg-violet-950/30 border border-violet-800/30 rounded-lg p-3 flex gap-2">
-                <Terminal size={14} className="text-violet-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-violet-300 font-medium">Para renderizar: abrí una terminal en C:/divinia y copiá el comando</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Los fondos 3D se generan en <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">Gemini (Nanobanana)</a> → guardar en /public/nanobanana/</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { label: 'Total planificado', value: totalPlanificado },
+                { label: 'Publicados', value: publicados },
+                { label: 'En borrador', value: borradores },
+                { label: 'Esta semana', value: estaSemana },
+              ].map(s => (
+                <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)' }}>
+                    {s.label}
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 22, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
+                    {s.value}
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {COMPOSICIONES.map(comp => (
-                  <div key={comp.id} className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className="text-xs font-semibold text-white">{comp.id}</p>
-                      {comp.requiere && (
-                        <span className="text-[9px] text-amber-400 bg-amber-900/30 px-1.5 py-0.5 rounded shrink-0">requiere MP4</span>
-                      )}
+          {topPlats.length > 0 && (
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
+                Plataformas activas
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {topPlats.map(([plat, count]) => (
+                  <div key={plat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: PLATFORM_COLORS[plat.toLowerCase()] ?? 'var(--muted)',
+                      }} />
+                      <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)', textTransform: 'capitalize' }}>
+                        {plat}
+                      </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 mb-2">{comp.desc}</p>
-                    <button
-                      onClick={() => copyCmd(comp.id)}
-                      className="w-full flex items-center justify-center gap-1.5 bg-gray-700 hover:bg-violet-700 border border-gray-600 hover:border-violet-600 rounded px-2 py-1 text-[10px] font-medium text-gray-300 hover:text-white transition-all"
-                    >
-                      {copiedCmd === comp.id ? <Check size={10} className="text-green-400" /> : <Copy size={10} />}
-                      {copiedCmd === comp.id ? 'Copiado' : 'Copiar comando'}
-                    </button>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>
+                      {count} posts
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* ── Link a Gemini ─────────────────────────────────────────────────── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-              <Zap size={17} className="text-white" />
-            </div>
-            <div>
-              <h2 className="font-bold text-white">Gemini — Fondos 3D (Nanobanana)</h2>
-              <p className="text-gray-500 text-xs">Generá videos 3D animados para los reels de Turnero</p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-            Usá Gemini para generar los fondos animados 3D. Exportá el MP4 y guardalo en <code className="bg-gray-800 px-1.5 py-0.5 rounded text-blue-300">C:/divinia/public/nanobanana/</code> para que Remotion lo use automáticamente.
-          </p>
-          <a
-            href="https://gemini.google.com/app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
+          <Link
+            href="/dashboard/contenido/pipeline"
+            style={{
+              display: 'block', padding: '12px 16px', borderRadius: 10,
+              background: 'var(--ink)', color: 'var(--lime)',
+              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
+              textTransform: 'uppercase', textDecoration: 'none', textAlign: 'center',
+            }}
           >
-            Abrir Gemini
-            <ExternalLink size={14} />
-          </a>
+            Pipeline IA →
+          </Link>
         </div>
 
       </div>
