@@ -1,16 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Orb from './Orb'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const clicks = useRef(0)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  function handleLogoClick(e: React.MouseEvent) {
+    clicks.current += 1
+    if (timer.current) clearTimeout(timer.current)
+    if (clicks.current >= 5) {
+      clicks.current = 0
+      e.preventDefault()
+      router.push('/dashboard')
+      return
+    }
+    timer.current = setTimeout(() => { clicks.current = 0 }, 1500)
+  }
 
   return (
     <nav
@@ -26,8 +42,8 @@ export default function Navbar() {
       }}
     >
       <div className="wrap-v2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Logo */}
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
+        {/* Logo — 5 clicks rápidos = /dashboard */}
+        <a href="/" onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
           <Orb size={30} color="#C6FF3D" colorDeep="#9EE028" shade="rgba(0,0,0,0.28)" squash />
           <span style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 21, letterSpacing: '-0.05em', color: 'var(--ink)' }}>
             divinia<span style={{ color: 'var(--muted)' }}>.</span>
@@ -40,7 +56,7 @@ export default function Navbar() {
           <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
           <a href="#proceso" style={{ color: 'inherit', textDecoration: 'none' }}>Cómo trabajamos</a>
           <a href="#casos" style={{ color: 'inherit', textDecoration: 'none' }}>Casos</a>
-          <a href="#manifiesto" style={{ color: 'inherit', textDecoration: 'none' }}>Manifiesto</a>
+          <a href="/academy" style={{ color: 'inherit', textDecoration: 'none' }}>Academy</a>
         </div>
 
         {/* CTA */}

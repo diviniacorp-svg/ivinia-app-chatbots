@@ -1,6 +1,5 @@
 import { createAdminClient } from '@/lib/supabase'
-import VirtualOffice from './_components/VirtualOffice'
-import OrchestratorChat from './_components/OrchestratorChat'
+import AgentsToggleView from './_components/AgentsToggleView'
 import type { AgentRun, ChatMessage } from '@/lib/agents/types'
 
 export const dynamic = 'force-dynamic'
@@ -26,54 +25,74 @@ export default async function AgentsPage() {
   } | null
 
   return (
-    <div className="flex flex-col gap-3 h-[calc(100vh-3.5rem)] p-0 sm:p-1">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: 'calc(100vh - 3.5rem)', padding: 0 }}>
+
+      {/* Header v2 */}
+      <div style={{ padding: '20px 12px 0', flexShrink: 0 }}>
+        <h1 style={{
+          fontFamily: 'var(--f-display)',
+          fontStyle: 'italic',
+          fontWeight: 700,
+          fontSize: 32,
+          letterSpacing: '-0.03em',
+          color: 'var(--ink)',
+          lineHeight: 1,
+          margin: 0,
+        }}>
+          Agentes
+        </h1>
+      </div>
 
       {/* Plan del CEO — solo si existe */}
       {dailyPlan?.resumen && (
-        <div className="mx-3 mt-3 sm:mx-0 sm:mt-0 bg-gradient-to-r from-purple-900/40 to-indigo-900/30 border border-purple-700/40 rounded-xl px-4 py-3 shrink-0">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl shrink-0">🧠</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-purple-300 text-xs font-semibold uppercase tracking-wider mb-1">Plan de hoy</p>
-              <p className="text-white text-sm leading-relaxed">{dailyPlan.resumen}</p>
+        <div style={{
+          margin: '0 12px',
+          background: 'var(--paper)',
+          border: '1px solid var(--line)',
+          borderRadius: 12,
+          padding: '12px 16px',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>🧠</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                fontFamily: 'var(--f-mono)',
+                fontSize: 10,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 4,
+              }}>Plan de hoy</p>
+              <p style={{ color: 'var(--ink)', fontSize: 13, lineHeight: 1.5 }}>{dailyPlan.resumen}</p>
               {dailyPlan.prioridad_joaco && (
-                <p className="text-yellow-300 text-xs mt-1.5">
+                <p style={{ color: 'var(--ink)', fontSize: 12, marginTop: 6, fontWeight: 600 }}>
                   🔴 Joaco: {dailyPlan.prioridad_joaco}
                 </p>
               )}
             </div>
             {dailyPlan.metricas && (
-              <div className="flex gap-3 shrink-0 text-center">
-                <div>
-                  <p className="text-white text-lg font-bold leading-none">{dailyPlan.metricas.leads_hoy}</p>
-                  <p className="text-gray-500 text-xs">leads</p>
-                </div>
-                <div>
-                  <p className="text-white text-lg font-bold leading-none">{dailyPlan.metricas.clientes_activos}</p>
-                  <p className="text-gray-500 text-xs">clientes</p>
-                </div>
-                <div>
-                  <p className="text-white text-lg font-bold leading-none">{dailyPlan.metricas.reservas_hoy}</p>
-                  <p className="text-gray-500 text-xs">reservas</p>
-                </div>
+              <div style={{ display: 'flex', gap: 16, flexShrink: 0, textAlign: 'center' }}>
+                {[
+                  { val: dailyPlan.metricas.leads_hoy, label: 'leads' },
+                  { val: dailyPlan.metricas.clientes_activos, label: 'clientes' },
+                  { val: dailyPlan.metricas.reservas_hoy, label: 'reservas' },
+                ].map(m => (
+                  <div key={m.label}>
+                    <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--ink)', lineHeight: 1 }}>{m.val}</p>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--f-mono)' }}>{m.label}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Main layout: oficina + chat */}
-      <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 px-3 sm:px-0 pb-3 sm:pb-0">
-        {/* Oficina virtual */}
-        <div className="lg:w-80 lg:shrink-0 h-[45vh] lg:h-full bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-          <VirtualOffice runs={(runs ?? []) as AgentRun[]} />
-        </div>
-
-        {/* Chat orquestador */}
-        <div className="flex-1 min-h-0 min-h-[40vh] bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-          <OrchestratorChat initialMessages={(chats ?? []) as ChatMessage[]} />
-        </div>
-      </div>
+      <AgentsToggleView
+        runs={(runs ?? []) as AgentRun[]}
+        chats={(chats ?? []) as ChatMessage[]}
+      />
     </div>
   )
 }
