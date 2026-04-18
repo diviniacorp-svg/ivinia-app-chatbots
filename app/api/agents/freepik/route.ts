@@ -23,7 +23,7 @@ function headers() {
 // Estrategia: anchor descriptors reutilizables + subject swap
 // Cada prompt: <80 palabras para máximo calidad/token ratio
 
-export const DIVINIA_PROMPT_TEMPLATES = {
+const DIVINIA_PROMPT_TEMPLATES = {
   // Template base que funciona para cualquier negocio local
   phone_notification: (business: string) =>
     `Smartphone on counter at night, WhatsApp notification glows: unread message. Pan to empty ${business} waiting area. Soft violet light sweep. Counter shows "missed appointment". Dramatic shift: phone screen shows AI auto-reply sent. Dark cinematic, #0A0A0A background, violet #8B5CF6 accent, 9:16 vertical, no text overlays, no people.`,
@@ -50,7 +50,7 @@ export const DIVINIA_PROMPT_TEMPLATES = {
 }
 
 // ─── Engine Selection Logic ───────────────────────────────────────────────────
-export function selectEngine(params: {
+function selectEngine(params: {
   topic?: string
   duration?: number
   quality?: 'fast' | 'cinematic'
