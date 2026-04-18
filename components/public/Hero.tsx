@@ -62,9 +62,9 @@ export default function Hero() {
         <Reveal delay={340}>
           <div className="flex items-center justify-center gap-8 flex-wrap mb-20">
             {[
-              '$80.000 pago único',
+              '$43.000/mes o $100.000 único',
               'Setup en 24hs',
-              'Sin mensualidades',
+              'Sin permanencia',
             ].map(item => (
               <span key={item} className="flex items-center gap-2 text-sm text-gray-400 font-medium">
                 <Check size={15} className="text-emerald-500 shrink-0" />
