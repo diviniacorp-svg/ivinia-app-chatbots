@@ -64,7 +64,7 @@ export default function UnirseMarketPage() {
         body: JSON.stringify(form),
       })
     } catch {
-      // handler can be console.log for now
+      // Ignorar error de red — el formulario igualmente confirma envío
     }
     setCargando(false)
     setEnviado(true)

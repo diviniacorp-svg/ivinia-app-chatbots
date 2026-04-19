@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
+// Solo permite letras, números, guiones y underscores — bloquea cualquier intento de path traversal
 function validateSegment(s: string): boolean {
-  return typeof s === 'string' && s.length > 0 && !s.includes('..')
+  return typeof s === 'string' && s.length > 0 && /^[a-zA-Z0-9_\-]+$/.test(s)
 }
 
 export async function GET(req: NextRequest) {
@@ -43,7 +44,13 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Parámetros inválidos (path traversal detectado)' }, { status: 400 })
   }
 
-  const filePath = path.join(process.cwd(), 'content', 'academy', track, 'lessons', lesson + '.md')
+  const baseDir = path.resolve(process.cwd(), 'content', 'academy')
+  const filePath = path.resolve(baseDir, track, 'lessons', lesson + '.md')
+
+  // Doble verificación: el path resuelto debe estar dentro del directorio base
+  if (!filePath.startsWith(baseDir + path.sep)) {
+    return NextResponse.json({ error: 'Ruta inválida' }, { status: 400 })
+  }
 
   try {
     fs.writeFileSync(filePath, content, 'utf-8')

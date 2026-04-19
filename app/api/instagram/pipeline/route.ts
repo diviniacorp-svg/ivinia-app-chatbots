@@ -32,9 +32,8 @@ export async function POST(req: NextRequest) {
     const result = await runMonthlyPipeline({
       month,
       focusRubro,
-      onProgress: (step, current, total) => {
-        // En producción esto se podría mandar a Server-Sent Events
-        console.log(`[Pipeline] ${step}: ${current}/${total}`)
+      onProgress: (_step, _current, _total) => {
+        // Progress tracking — se puede conectar a Server-Sent Events en el futuro
       },
     })
 

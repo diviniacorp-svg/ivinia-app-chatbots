@@ -5,6 +5,11 @@ import fs from 'fs'
 import path from 'path'
 import { notFound } from 'next/navigation'
 
+// Valida que el segmento de ruta solo contenga caracteres seguros (sin path traversal)
+function isValidPathSegment(s: unknown): s is string {
+  return typeof s === 'string' && s.length > 0 && /^[a-zA-Z0-9_\-]+$/.test(s)
+}
+
 function parseFrontmatter(raw: string): { meta: Record<string, any>; body: string } {
   const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
   if (!match) return { meta: {}, body: raw }
@@ -32,6 +37,8 @@ function markdownToHtml(md: string): string {
 }
 
 export default function LessonPage({ params }: { params: { track: string; lesson: string } }) {
+  if (!isValidPathSegment(params.track) || !isValidPathSegment(params.lesson)) notFound()
+
   const lessonPath = path.join(process.cwd(), 'content', 'academy', params.track, 'lessons', `${params.lesson}.md`)
   const trackPath = path.join(process.cwd(), 'content', 'academy', params.track, 'track.md')
 

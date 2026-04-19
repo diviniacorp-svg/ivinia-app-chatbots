@@ -36,8 +36,8 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    url_prefix: url?.slice(0, 40),
-    key_prefix: key?.slice(0, 20),
+    url_configured: true,
+    key_configured: true,
     read: readError ? { error: readError.message, code: readError.code } : { ok: true, count: clients?.length },
     write: writeError ? { error: writeError.message, code: writeError.code } : { ok: true },
   })

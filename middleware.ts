@@ -30,6 +30,12 @@ const PROTECTED_API_ROUTES = [
   '/api/turnos/generar-landing',
   '/api/agents',
   '/api/instagram/pipeline',
+  '/api/academy',
+  '/api/agenda-joaco',
+  '/api/ceo-metrics',
+  '/api/content',
+  '/api/sales',
+  '/api/instagram',
 ]
 
 export function middleware(request: NextRequest) {
@@ -113,5 +119,17 @@ export const config = {
     '/api/agents/:path*',
     '/api/instagram/pipeline',
     '/api/instagram/pipeline/:path*',
+    '/api/academy',
+    '/api/academy/:path*',
+    '/api/agenda-joaco',
+    '/api/agenda-joaco/:path*',
+    '/api/ceo-metrics',
+    '/api/ceo-metrics/:path*',
+    '/api/content',
+    '/api/content/:path*',
+    '/api/sales',
+    '/api/sales/:path*',
+    '/api/instagram',
+    '/api/instagram/:path*',
   ],
 }

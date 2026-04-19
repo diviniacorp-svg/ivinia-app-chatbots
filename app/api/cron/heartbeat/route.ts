@@ -345,21 +345,15 @@ export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://divinia.vercel.app'
 
   try {
-    console.log('[CEO] 🧠 Despertando DIVINIA...')
-
     const state = await getDIVINIAState()
-    console.log('[CEO] Estado leído:', state.metrics)
 
     const plan = await runCEO(state)
-    console.log('[CEO] Plan generado:', plan.prioridad_joaco)
 
     const [_guardado, _agentes, emailOk] = await Promise.all([
       guardarPlan(plan, state),
       activarAgentes(plan, baseUrl),
       enviarEmailJoaco(plan, state),
     ])
-
-    console.log('[CEO] Email enviado:', emailOk)
 
     return NextResponse.json({
       success: true,
