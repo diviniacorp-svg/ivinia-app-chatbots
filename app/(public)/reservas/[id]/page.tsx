@@ -72,64 +72,25 @@ export default async function ReservasPage({ params }: { params: { id: string } 
   const instagram = customCfg.instagram || ''
   const ownerPhone = customCfg.whatsapp || config.owner_phone || ''
 
-  const firstServiceName = config.services?.[0]?.name || ''
+  // Rubro del negocio para el tema oscuro por industria
+  const tipoNegocio: string = customCfg.rubro || (config as unknown as Record<string, string>).rubro || ''
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper)' }}>
-      {/* Header del negocio — standalone, sin navbar DIVINIA */}
-      <div style={{
-        borderBottom: '1px solid var(--line)',
-        padding: '20px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        maxWidth: 480,
-        margin: '0 auto',
-      }}>
-        {/* Logo circular del negocio */}
-        <div style={{
-          width: 48, height: 48, borderRadius: '50%',
-          background: color,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontFamily: 'var(--f-display)', fontWeight: 900,
-          fontSize: 20, flexShrink: 0,
-        }}>
-          {companyName.charAt(0).toUpperCase()}
-        </div>
-        <div>
-          <h1 style={{
-            fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20,
-            color: 'var(--ink)', margin: 0, lineHeight: 1.2,
-          }}>
-            {companyName}
-          </h1>
-          {firstServiceName && (
-            <p style={{
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em',
-              textTransform: 'uppercase', color: 'var(--muted)', marginTop: 3,
-            }}>
-              {firstServiceName}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Wizard */}
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 80px' }}>
-        <BookingWizard
-          clientId={clientId}
-          config={config}
-          companyName={companyName}
-          color={color}
-          configId={params.id}
-          introEmoji={introEmoji}
-          introTagline={introTagline}
-          introStyle={introStyle}
-          depositsEnabled={depositsEnabled}
-          instagram={instagram}
-          ownerPhone={ownerPhone}
-        />
-      </div>
+    <div style={{ minHeight: '100vh', background: '#080808' }}>
+      <BookingWizard
+        clientId={clientId}
+        config={config}
+        companyName={companyName}
+        color={color}
+        configId={params.id}
+        introEmoji={introEmoji}
+        introTagline={introTagline}
+        introStyle={introStyle}
+        depositsEnabled={depositsEnabled}
+        instagram={instagram}
+        ownerPhone={ownerPhone}
+        tipoNegocio={tipoNegocio}
+      />
     </div>
   )
 }

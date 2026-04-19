@@ -266,3 +266,16 @@ html { scroll-behavior: smooth; }
     font-size: clamp(40px, 12vw, 80px) !important;
   }
 }
+
+/* ── Turnero premium dark animations ── */
+@keyframes floatParticle {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.12; }
+  50% { transform: translateY(-24px) rotate(180deg); opacity: 0.25; }
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
