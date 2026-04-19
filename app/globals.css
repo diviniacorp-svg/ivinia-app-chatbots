@@ -179,3 +179,90 @@ html { scroll-behavior: smooth; }
   ::-webkit-scrollbar-track { background: #f1f5f9; }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 }
+
+/* ── Problem sticky header ── */
+.problem-sticky { position: sticky; top: 120px; }
+
+/* ── Responsive utilities ── */
+@media (max-width: 768px) {
+  .wrap-v2 {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .show-mobile-flex {
+    display: flex !important;
+  }
+
+  .show-only-mobile {
+    display: flex !important;
+  }
+
+  .service-row-inner {
+    display: none !important;
+  }
+
+  .grid-stats-mobile {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .grid-cols-2-mobile-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .grid-cols-3-mobile-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  .stack-mobile {
+    flex-direction: column !important;
+  }
+
+  .full-width-mobile {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .text-clamp-mobile {
+    font-size: clamp(32px, 8vw, 52px) !important;
+  }
+
+  .padding-mobile {
+    padding: 60px 20px !important;
+  }
+
+  .grid-market-mobile {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ServicesV2 table rows */
+  .service-row-mobile {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* ProcessV2 steps — 2 cols on mobile */
+  .grid-cols-4-mobile-2 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ProblemV2 sticky — disable on mobile */
+  .problem-sticky {
+    position: static !important;
+  }
+
+  /* ProblemV2 comparison table */
+  .problem-cols-mobile {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .h-display {
+    font-size: clamp(40px, 12vw, 80px) !important;
+  }
+}

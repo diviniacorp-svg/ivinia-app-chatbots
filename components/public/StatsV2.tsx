@@ -11,7 +11,7 @@ export default function StatsV2() {
   return (
     <section style={{ padding: '100px 0', background: 'var(--ink)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       <div className="wrap-v2">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }} className="grid-cols-2 md:grid-cols-4">
+        <div style={{ display: 'grid', gap: 2 }} className="grid-stats-mobile md:grid-cols-4">
           {stats.map((s, i) => (
             <div key={i} style={{
               padding: '48px 32px',

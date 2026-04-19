@@ -5,8 +5,8 @@ export default function CasesV2() {
     <section id="casos" style={{ padding: '140px 0', background: 'var(--paper)' }}>
       <div className="wrap-v2">
         {/* Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 80, marginBottom: 80 }}
-          className="grid-cols-1 md:grid-cols-[1fr_2fr]">
+        <div style={{ display: 'grid', gap: 40, marginBottom: 64 }}
+          className="grid-cols-2-mobile-1 md:grid-cols-[1fr_2fr]">
           <div>
             <div className="eyebrow" style={{ marginBottom: 20 }}>Casos — 04/04</div>
             <h2 className="h-title">Lo que ya <em>operamos</em>.</h2>
@@ -17,8 +17,8 @@ export default function CasesV2() {
         </div>
 
         {/* Cards grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr', gap: 24 }}
-          className="grid-cols-1 md:grid-cols-3">
+        <div style={{ display: 'grid', gap: 24 }}
+          className="grid-cols-3-mobile-1 md:grid-cols-3">
 
           {/* Card 1 — hero */}
           <article style={{

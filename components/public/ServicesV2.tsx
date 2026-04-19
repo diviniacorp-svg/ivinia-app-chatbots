@@ -44,8 +44,8 @@ export default function ServicesV2() {
     <section id="servicios" style={{ padding: '140px 0', background: 'var(--paper)' }}>
       <div className="wrap-v2">
         {/* Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 80, marginBottom: 80 }}
-          className="grid-cols-1 md:grid-cols-[1fr_2fr]">
+        <div style={{ display: 'grid', gap: 40, marginBottom: 80 }}
+          className="grid-cols-2-mobile-1 md:grid-cols-[1fr_2fr]">
           <div>
             <div className="eyebrow" style={{ marginBottom: 20 }}>Servicios — 02/04</div>
             <h2 className="h-title">
@@ -66,24 +66,41 @@ export default function ServicesV2() {
             <div
               key={s.num}
               style={{
-                display: 'grid',
-                gridTemplateColumns: '60px 1fr 1fr 220px 140px',
-                gap: 32,
-                alignItems: 'center',
                 padding: '32px 0',
                 borderBottom: `1px solid ${i === SERVICES.length - 1 ? 'var(--ink)' : 'var(--line)'}`,
                 transition: 'background 0.2s',
               }}
-              className="hover:bg-paper-2/40"
+              className="hover:bg-paper-2/40 service-row-mobile"
             >
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', color: 'var(--muted)' }}>{s.num}</div>
-              <div className="h-section">{s.nombre}</div>
-              <div style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--muted-2)', fontFamily: 'var(--f-display)' }}>{s.desc}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <Orb size={34} color={s.orbColor} colorDeep={s.orbDeep} shade={s.orbShade} />
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted-2)' }}>{s.tiempo}</span>
+              {/* Desktop layout: single grid row */}
+              <div className="service-row-inner hidden-mobile" style={{
+                display: 'grid',
+                gridTemplateColumns: '60px 1fr 1fr 220px 140px',
+                gap: 32,
+                alignItems: 'center',
+              }}>
+                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', color: 'var(--muted)' }}>{s.num}</div>
+                <div className="h-section">{s.nombre}</div>
+                <div style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--muted-2)', fontFamily: 'var(--f-display)' }}>{s.desc}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <Orb size={34} color={s.orbColor} colorDeep={s.orbDeep} shade={s.orbShade} />
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted-2)' }}>{s.tiempo}</span>
+                </div>
+                <div className="h-section" style={{ textAlign: 'right' }}>{s.precio}</div>
               </div>
-              <div className="h-section" style={{ textAlign: 'right' }}>{s.precio}</div>
+              {/* Mobile layout: stacked */}
+              <div className="show-only-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', color: 'var(--muted)' }}>{s.num}</span>
+                  <span className="h-section" style={{ fontSize: 20 }}>{s.precio}</span>
+                </div>
+                <div className="h-section" style={{ fontSize: 18 }}>{s.nombre}</div>
+                <div style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--muted-2)', fontFamily: 'var(--f-display)' }}>{s.desc}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                  <Orb size={28} color={s.orbColor} colorDeep={s.orbDeep} shade={s.orbShade} />
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted-2)' }}>{s.tiempo}</span>
+                </div>
+              </div>
             </div>
           ))}
         </div>

@@ -14,11 +14,11 @@ export default function ProblemV2() {
     <section id="problema" style={{ padding: '120px 0', borderTop: '1px solid var(--line)', background: 'var(--paper-2)' }}>
       <div className="wrap-v2">
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'start' }}
-          className="grid-cols-1 md:grid-cols-2">
+        <div style={{ display: 'grid', gap: 48, alignItems: 'start' }}
+          className="grid-cols-2-mobile-1 md:grid-cols-2">
 
-          {/* Left — sticky header */}
-          <div style={{ position: 'sticky', top: 120 }}>
+          {/* Left — sticky header (desktop only) */}
+          <div className="problem-sticky">
             <div className="eyebrow" style={{ marginBottom: 24 }}>El problema real</div>
             <h2 className="h-display" style={{ fontSize: 'clamp(48px, 6vw, 96px)', marginBottom: 28, color: 'var(--ink)' }}>
               Sin IA,<br />
@@ -42,8 +42,8 @@ export default function ProblemV2() {
             </div>
             {rows.map((row, i) => (
               <div key={i} style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, marginBottom: 2,
-              }}>
+                display: 'grid', gap: 2, marginBottom: 2,
+              }} className="grid-cols-2-mobile-1 md:grid-cols-2">
                 <div style={{
                   padding: '20px 20px', background: 'rgba(14,14,14,0.04)',
                   borderRadius: i === 0 ? '12px 0 0 0' : i === rows.length - 1 ? '0 0 0 12px' : 0,

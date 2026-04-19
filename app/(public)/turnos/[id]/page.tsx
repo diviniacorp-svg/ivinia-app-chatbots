@@ -55,11 +55,11 @@ export default async function TurnosPage({ params }: { params: { id: string } })
   if (!config || !config.services?.length || !clientId) {
     if (!companyName) return notFound()
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-2xl mb-2">📅</p>
-          <h1 className="text-xl font-bold text-gray-800">{companyName}</h1>
-          <p className="text-gray-500 mt-2">El sistema de turnos no está disponible en este momento.</p>
+      <div style={{ minHeight: '100vh', background: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--paper-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 16px' }}>📅</div>
+          <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20, color: 'var(--ink)', margin: '0 0 8px' }}>{companyName}</h1>
+          <p style={{ color: 'var(--muted)', fontSize: 14 }}>El sistema de turnos no está disponible en este momento.</p>
         </div>
       </div>
     )
@@ -73,15 +73,48 @@ export default async function TurnosPage({ params }: { params: { id: string } })
   const instagram = customCfg.instagram || ''
   const ownerPhone = customCfg.whatsapp || config.owner_phone || ''
 
+  const firstServiceName = config.services?.[0]?.name || ''
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header (oculto mientras el splash está activo, se ve después) */}
-      <div className="text-white py-8 px-4 text-center" style={{ backgroundColor: color }}>
-        <h1 className="text-2xl font-bold">{companyName}</h1>
-        <p className="text-white/80 text-sm mt-1">Reservá tu turno online</p>
+    <div style={{ minHeight: '100vh', background: 'var(--paper)' }}>
+      {/* Header del negocio — standalone, sin navbar DIVINIA */}
+      <div style={{
+        borderBottom: '1px solid var(--line)',
+        padding: '20px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        maxWidth: 480,
+        margin: '0 auto',
+      }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          background: color,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontFamily: 'var(--f-display)', fontWeight: 900,
+          fontSize: 20, flexShrink: 0,
+        }}>
+          {companyName.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <h1 style={{
+            fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20,
+            color: 'var(--ink)', margin: 0, lineHeight: 1.2,
+          }}>
+            {companyName}
+          </h1>
+          {firstServiceName && (
+            <p style={{
+              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: 'var(--muted)', marginTop: 3,
+            }}>
+              {firstServiceName}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="max-w-5xl mx-auto p-4 pt-8 pb-16">
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 80px' }}>
         <BookingWizard
           clientId={clientId}
           config={config}

@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Copy, ExternalLink, Check, Plus, Calendar, MessageSquare, Settings, ChevronRight, User, ArrowRight } from 'lucide-react'
 import { RUBROS_INFO } from '@/lib/templates-data'
+import { TURNERO_PLANS } from '@/lib/turnero-plans'
 
 interface BookingConfigMin {
   id: string
@@ -32,7 +33,14 @@ const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }>
   cancelled: { label: 'Cancelado', color: 'var(--ink)', bg: 'var(--paper-2)' },
 }
 const PLAN_LABEL: Record<string, string> = {
-  trial: 'Trial', basic: 'Básico', pro: 'Pro', enterprise: 'Enterprise',
+  trial: 'Trial', basic: 'Básico', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise',
+}
+
+function getPlanColor(planId: string): string {
+  const plan = TURNERO_PLANS.find(p => p.id === planId)
+  if (plan) return plan.color
+  if (planId === 'trial') return '#F59E0B'
+  return '#6B7280'
 }
 
 function timeAgo(dateStr: string) {
@@ -94,7 +102,12 @@ function ClientCard({ client }: { client: Client }) {
             }}>
               {status.label}
             </span>
-            <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--f-mono)' }}>{PLAN_LABEL[client.plan] || client.plan}</span>
+            <span style={{
+              fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: getPlanColor(client.plan) === '#C6FF3D' ? 'var(--ink)' : '#fff',
+              background: getPlanColor(client.plan),
+              borderRadius: 100, padding: '3px 8px', fontWeight: 700,
+            }}>{PLAN_LABEL[client.plan] || client.plan}</span>
           </div>
         </div>
 
@@ -415,10 +428,10 @@ function NuevoClienteForm({ templates, onCreated }: { templates: { id: string; n
             <label style={labelStyle}>Plan</label>
             <select value={form.plan} onChange={e => setForm(p => ({ ...p, plan: e.target.value }))}
               style={{ ...inputStyle }}>
-              <option value="trial">Trial (14 días gratis)</option>
-              <option value="basic">Básico — $50.000/mes</option>
-              <option value="pro">Pro — $100.000/mes</option>
-              <option value="enterprise">Enterprise — $200.000/mes</option>
+              <option value="trial">Trial</option>
+              {TURNERO_PLANS.map(p => (
+                <option key={p.id} value={p.id}>{p.nombre} — ${p.precio.toLocaleString('es-AR')}/mes</option>
+              ))}
             </select>
           </div>
           <button

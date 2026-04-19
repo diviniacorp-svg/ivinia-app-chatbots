@@ -175,6 +175,7 @@ export default async function MarketPage() {
             </span>
           </a>
           <span
+            className="hidden-mobile"
             style={{
               fontFamily: 'var(--f-mono)',
               fontSize: 11,
@@ -351,7 +352,7 @@ export default async function MarketPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
             gap: 20,
           }}
         >

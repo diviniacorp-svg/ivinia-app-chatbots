@@ -4,8 +4,8 @@ export default function Hero() {
   return (
     <section style={{ padding: '160px 0 80px', position: 'relative', overflow: 'hidden', background: 'var(--paper)' }}>
       <div className="wrap-v2">
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 60, alignItems: 'end' }}
-          className="grid-cols-1 md:grid-cols-[1.6fr_1fr]">
+        <div style={{ display: 'grid', gap: 60, alignItems: 'end' }}
+          className="grid-cols-2-mobile-1 md:grid-cols-[1.6fr_1fr]">
 
           {/* Left: copy */}
           <div>
@@ -62,7 +62,7 @@ export default function Hero() {
           marginTop: 96, paddingTop: 28,
           borderTop: '1px solid var(--line)',
           display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', gap: 40, flexWrap: 'wrap',
+          alignItems: 'center', gap: 24, flexWrap: 'wrap',
         }}>
           <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted-2)' }}>
             Confían en nosotros

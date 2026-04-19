@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 
 interface Appointment {
@@ -281,20 +281,19 @@ export default function OwnerPanel() {
 
   // ── LOGIN ──
   if(!authed) return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
-        <div className="text-5xl mb-4">📅</div>
-        <h1 className="text-xl font-black text-gray-900 mb-1">Panel de turnos</h1>
-        <p className="text-gray-500 text-sm mb-6">Ingresá tu PIN de 4 dígitos</p>
-        <form onSubmit={handlePin} className="space-y-4">
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'var(--paper)' }}>
+      <div style={{ background: 'var(--paper)', borderRadius: 20, border: '1px solid var(--line)', padding: 32, width: '100%', maxWidth: 360, textAlign: 'center' }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--paper-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 16px' }}>📅</div>
+        <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20, color: 'var(--ink)', margin: '0 0 4px' }}>Panel de turnos</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, fontFamily: 'var(--f-mono)' }}>Ingresá tu PIN de 4 dígitos</p>
+        <form onSubmit={handlePin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input type="text" inputMode="numeric" maxLength={4} value={pin}
             onChange={e=>setPin(e.target.value.replace(/\D/g,'').slice(0,4))}
             placeholder="· · · ·" autoFocus
-            className="w-full text-center text-3xl font-mono tracking-[.5em] border-2 border-gray-200 rounded-xl py-4 outline-none focus:border-indigo-400"/>
-          {pinError&&<p className="text-red-500 text-sm">{pinError}</p>}
+            style={{ width: '100%', textAlign: 'center', fontSize: 28, fontFamily: 'var(--f-mono)', letterSpacing: '0.5em', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 0', outline: 'none', background: 'var(--paper)', color: 'var(--ink)', boxSizing: 'border-box' }}/>
+          {pinError&&<p style={{ color: '#dc2626', fontSize: 13, margin: 0 }}>{pinError}</p>}
           <button type="submit" disabled={pin.length!==4||loading}
-            className="w-full text-white font-bold py-3.5 rounded-xl disabled:opacity-50 transition-colors"
-            style={{backgroundColor:color}}>
+            style={{ width: '100%', background: 'var(--ink)', color: 'var(--paper)', border: 'none', borderRadius: 10, padding: '14px 0', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', opacity: (pin.length!==4||loading) ? 0.4 : 1 }}>
             {loading?'Verificando...':'Entrar al panel'}
           </button>
         </form>
@@ -307,121 +306,122 @@ export default function OwnerPanel() {
 
   // ── PANEL ──
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="text-white px-4 py-3 flex items-center gap-3 shadow-sm" style={{backgroundColor:color}}>
-        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg shrink-0">📅</div>
-        <div className="min-w-0 flex-1">
-          <h1 className="font-black text-sm leading-tight truncate">{data?.company_name}</h1>
-          <p className="text-white/60 text-xs">Panel de Gestión</p>
+    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
+      {/* Header v2 */}
+      <header style={{ background: 'var(--paper)', borderBottom: '1px solid var(--line)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--f-display)', fontWeight: 900, fontSize: 18, flexShrink: 0 }}>
+          {(data?.company_name||'').charAt(0).toUpperCase()||'📅'}
         </div>
-        <button onClick={()=>loadData(pin)} className="text-white/70 hover:text-white text-xs bg-white/10 px-3 py-1.5 rounded-lg shrink-0">↻</button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20, color: 'var(--ink)', margin: 0, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data?.company_name}</h1>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '2px 0 0' }}>Panel de Gestión</p>
+        </div>
+        <button onClick={()=>loadData(pin)} style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--muted)', background: 'var(--paper-2)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', flexShrink: 0 }}>↻</button>
       </header>
 
       {/* Stats rápidas */}
-      <div className="grid grid-cols-4 bg-white border-b border-gray-100 divide-x divide-gray-100">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', background: 'var(--paper)', borderBottom: '1px solid var(--line)' }}>
         {[
           {label:'Hoy',val:String(todayConf.length)+' turnos',sub:todayCob>0?fARS(todayCob):undefined},
-          {label:'Pendientes',val:String(pending.length),sub:pending.length>0?'de aprobar':undefined},
+          {label:'Pendientes',val:String(pending.length),sub:pending.length>0?'aprobar':undefined},
           {label:'Este mes',val:String(monthAppts.length)+' turnos',sub:undefined},
-          {label:'Facturado mes',val:fARS(monthRevenue),sub:undefined},
-        ].map(s=>(
-          <div key={s.label} className="py-3 px-2 text-center">
-            <p className="text-xs text-gray-400 mb-0.5">{s.label}</p>
-            <p className="text-xs font-bold text-gray-800 leading-tight">{s.val}</p>
-            {s.sub&&<p className="text-xs text-gray-400">{s.sub}</p>}
+          {label:'Facturado',val:fARS(monthRevenue),sub:undefined},
+        ].map((s,i)=>(
+          <div key={s.label} style={{ padding: '12px 8px', textAlign: 'center', borderRight: i<3?'1px solid var(--line)':undefined }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 3 }}>{s.label}</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>{s.val}</p>
+            {s.sub&&<p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', margin: '2px 0 0' }}>{s.sub}</p>}
           </div>
         ))}
       </div>
 
-      {/* Nav */}
-      <nav className="flex border-b border-gray-200 bg-white overflow-x-auto">
+      {/* Nav tabs v2 */}
+      <nav style={{ display: 'flex', background: 'var(--paper)', borderBottom: '1px solid var(--line)', overflowX: 'auto' }}>
         {[
           {key:'agenda',label:'Agenda'},
           {key:'solicitudes',label:`Solicitudes${pending.length>0?` (${pending.length})`:''}`},
           {key:'historial',label:'Historial'},
-          {key:'config',label:'⚙ Configurar'},
+          {key:'config',label:'Configurar'},
         ].map(t=>(
           <button key={t.key} onClick={()=>setTab(t.key as typeof tab)}
-            className={`px-4 py-3.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${tab===t.key?'':'border-transparent text-gray-500 hover:text-gray-700'}`}
-            style={tab===t.key?{borderBottomColor:color,color}:{}}>
+            style={{
+              padding: '14px 18px', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: tab===t.key?700:500,
+              letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', background: 'none', border: 'none',
+              borderBottom: tab===t.key?`2px solid var(--ink)`:'2px solid transparent',
+              color: tab===t.key?'var(--ink)':'var(--muted)', cursor: 'pointer', transition: 'all 0.15s',
+            }}>
             {t.label}
           </button>
         ))}
       </nav>
 
-      <div className="max-w-5xl mx-auto p-4 pb-20">
-        {loading&&<p className="text-center text-gray-400 py-10 text-sm">Cargando...</p>}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px 100px' }}>
+        {loading&&<p style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0', fontFamily: 'var(--f-mono)', fontSize: 12 }}>Cargando...</p>}
 
         {/* ── AGENDA ── */}
         {tab==='agenda'&&!loading&&(
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="lg:col-span-3">
-              <AgendaCal appointments={appts} color={color} selectedDay={selectedDay} onSelectDay={setSelectedDay}/>
-            </div>
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-gray-700">Turnos del día</p>
-                    <p className="text-xs text-gray-500 mt-0.5 capitalize">
-                      {DIAS_FULL[new Date(selectedDay+'T12:00:00').getDay()]}, {fDate(selectedDay)}
-                    </p>
-                  </div>
-                  {selectedDay===today&&<span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-lg font-semibold">Hoy</span>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
+            <AgendaCal appointments={appts} color={color} selectedDay={selectedDay} onSelectDay={setSelectedDay}/>
+            <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>Turnos del día</p>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', margin: '2px 0 0', textTransform: 'capitalize' }}>
+                    {DIAS_FULL[new Date(selectedDay+'T12:00:00').getDay()]}, {fDate(selectedDay)}
+                  </p>
                 </div>
-
-                {dayAppts.length===0
-                  ?<div className="py-10 text-center text-gray-400 text-sm">Sin turnos este día</div>
-                  :<div className="divide-y divide-gray-50">
-                    {dayAppts.map(appt=>(
-                      <div key={appt.id} className="p-4">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-400 font-semibold">⏰ {appt.appointment_time} · {appt.service_duration_minutes}min</p>
-                            <p className="font-bold text-gray-900 text-sm">{appt.customer_name}</p>
-                            <p className="text-xs text-gray-600 truncate">{appt.service_name}</p>
-                            {appt.customer_phone&&<a href={`https://wa.me/${appt.customer_phone.replace(/\D/g,'')}`}
-                              target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 mt-0.5 inline-block">
-                              💬 {appt.customer_phone}</a>}
-                          </div>
-                          <div className="flex flex-col gap-1.5 shrink-0">
-                            {appt.status==='confirmed'&&<>
-                              <button onClick={()=>updateStatus(appt.id,'completed')} className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1.5 rounded-lg font-medium hover:bg-blue-100">✓ Listo</button>
-                              <button onClick={()=>updateStatus(appt.id,'no_show')} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-lg font-medium hover:bg-gray-200">👻 No vino</button>
-                            </>}
-                            {appt.status==='pending'&&<>
-                              <button onClick={()=>handleAction(appt.id,'approve')} disabled={apptState[appt.id]?.processing} className="text-xs text-white px-2.5 py-1.5 rounded-lg font-medium disabled:opacity-50" style={{backgroundColor:color}}>✓ OK</button>
-                              <button onClick={()=>handleAction(appt.id,'reject')} disabled={apptState[appt.id]?.processing} className="text-xs bg-red-500 text-white px-2.5 py-1.5 rounded-lg font-medium hover:bg-red-600 disabled:opacity-50">✕</button>
-                            </>}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${appt.status==='confirmed'?'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}`}>
-                            {appt.status==='confirmed'?'CONFIRMADO':'PENDIENTE'}
-                          </span>
-                          {appt.service_price_ars>0&&<span className="text-xs text-gray-400">{fARS(appt.service_price_ars)}</span>}
-                        </div>
-                        {appt.customer_notes&&<p className="text-xs text-gray-500 mt-1.5 italic bg-gray-50 px-2 py-1 rounded-lg">&ldquo;{appt.customer_notes}&rdquo;</p>}
-                      </div>
-                    ))}
-                  </div>
-                }
+                {selectedDay===today&&<span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(198,255,61,0.25)', color: 'var(--ink)', borderRadius: 100, padding: '3px 10px' }}>Hoy</span>}
               </div>
+
+              {dayAppts.length===0
+                ?<div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--f-mono)', fontSize: 12 }}>Sin turnos este día</div>
+                :<div>
+                  {dayAppts.map((appt,i)=>(
+                    <div key={appt.id} style={{ padding: 16, borderBottom: i<dayAppts.length-1?'1px solid var(--line)':undefined }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', margin: '0 0 3px' }}>{appt.appointment_time} · {appt.service_duration_minutes}min</p>
+                          <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: '0 0 2px' }}>{appt.customer_name}</p>
+                          <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.service_name}</p>
+                          {appt.customer_phone&&<a href={`https://wa.me/${appt.customer_phone.replace(/\D/g,'')}`}
+                            target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#16a34a', marginTop: 2, display: 'inline-block' }}>
+                            💬 {appt.customer_phone}</a>}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                          {appt.status==='confirmed'&&<>
+                            <button onClick={()=>updateStatus(appt.id,'completed')} style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>✓ Listo</button>
+                            <button onClick={()=>updateStatus(appt.id,'no_show')} style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', background: 'var(--paper-2)', color: 'var(--muted)', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>No vino</button>
+                          </>}
+                          {appt.status==='pending'&&<>
+                            <button onClick={()=>handleAction(appt.id,'approve')} disabled={apptState[appt.id]?.processing} style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', background: 'var(--ink)', color: 'var(--paper)', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', opacity: apptState[appt.id]?.processing?0.5:1 }}>✓ OK</button>
+                            <button onClick={()=>handleAction(appt.id,'reject')} disabled={apptState[appt.id]?.processing} style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', opacity: apptState[appt.id]?.processing?0.5:1 }}>✕</button>
+                          </>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: 100, padding: '3px 8px', ...(appt.status==='confirmed'?{background:'rgba(22,163,74,0.12)',color:'#16a34a'}:{background:'rgba(245,158,11,0.12)',color:'#d97706'}) }}>
+                          {appt.status==='confirmed'?'Confirmado':'Pendiente'}
+                        </span>
+                        {appt.service_price_ars>0&&<span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>{fARS(appt.service_price_ars)}</span>}
+                      </div>
+                      {appt.customer_notes&&<p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8, fontStyle: 'italic', background: 'var(--paper-2)', padding: '6px 10px', borderRadius: 8 }}>&ldquo;{appt.customer_notes}&rdquo;</p>}
+                    </div>
+                  ))}
+                </div>
+              }
             </div>
           </div>
         )}
 
         {/* ── SOLICITUDES ── */}
         {tab==='solicitudes'&&!loading&&(
-          <div className="max-w-2xl mx-auto">
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <span className="font-semibold text-gray-700 text-sm">Solicitudes de turno</span>
-              <div className="flex gap-1.5 ml-auto flex-wrap">
+          <div style={{ maxWidth: 640, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Solicitudes de turno</span>
+              <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', flexWrap: 'wrap' }}>
                 {(['todas','pendiente','confirmado','cancelado'] as const).map(f=>(
                   <button key={f} onClick={()=>setSolFilter(f)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${solFilter===f?'text-white':'bg-gray-100 text-gray-600'}`}
-                    style={solFilter===f?{backgroundColor:color}:{}}>
+                    style={{ padding: '5px 12px', borderRadius: 100, fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', fontWeight: solFilter===f?700:500, background: solFilter===f?'var(--ink)':'var(--paper-2)', color: solFilter===f?'var(--paper)':'var(--muted)' }}>
                     {f==='todas'?'Todas':f.charAt(0).toUpperCase()+f.slice(1)+'s'}
                   </button>
                 ))}
@@ -429,50 +429,55 @@ export default function OwnerPanel() {
             </div>
 
             {solicitudes.length===0
-              ?<div className="text-center py-14 text-gray-400"><p className="text-4xl mb-3">✅</p><p className="text-sm">Sin solicitudes.</p></div>
-              :<div className="space-y-3">
+              ?<div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--muted)', fontFamily: 'var(--f-mono)', fontSize: 12 }}>Sin solicitudes.</div>
+              :<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {solicitudes.map(appt=>{
                   const st=apptState[appt.id]||{sena:'',processing:false,done:null}
                   const isPend=appt.status==='pending'
-                  const waOK=st.done==='approved'&&appt.customer_phone?buildWA(appt.customer_phone,`Hola ${appt.customer_name}! 🎉 Tu turno de *${appt.service_name}* el *${fDate(appt.appointment_date)}* a las *${appt.appointment_time}* fue *confirmado*. ¡Te esperamos!`):null
-                  const waNO=st.done==='rejected'&&appt.customer_phone?buildWA(appt.customer_phone,`Hola ${appt.customer_name}, lamentablemente no podemos confirmar tu turno de *${appt.service_name}* el *${fDate(appt.appointment_date)}*. Podés elegir otro horario. 🙏`):null
+                  const waOK=st.done==='approved'&&appt.customer_phone?buildWA(appt.customer_phone,`Hola ${appt.customer_name}! Tu turno de *${appt.service_name}* el *${fDate(appt.appointment_date)}* a las *${appt.appointment_time}* fue *confirmado*. ¡Te esperamos!`):null
+                  const waNO=st.done==='rejected'&&appt.customer_phone?buildWA(appt.customer_phone,`Hola ${appt.customer_name}, lamentablemente no podemos confirmar tu turno de *${appt.service_name}* el *${fDate(appt.appointment_date)}*. Podés elegir otro horario.`):null
+                  const statusStyle: Record<string,React.CSSProperties>={
+                    confirmed:{background:'rgba(22,163,74,0.12)',color:'#16a34a'},
+                    pending:{background:'rgba(245,158,11,0.12)',color:'#d97706'},
+                    cancelled:{background:'rgba(220,38,38,0.08)',color:'#dc2626'},
+                  }
                   return (
-                    <div key={appt.id} className={`bg-white rounded-2xl border-2 shadow-sm overflow-hidden ${isPend?'border-amber-200':'border-gray-100'}`}>
-                      {isPend&&<div className="bg-amber-50 px-4 py-2 flex items-center gap-2 border-b border-amber-100">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"/>
-                        <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">Pendiente de aprobación</span>
+                    <div key={appt.id} style={{ background: 'var(--paper)', borderRadius: 14, border: isPend?'1px solid rgba(245,158,11,0.4)':'1px solid var(--line)', overflow: 'hidden' }}>
+                      {isPend&&<div style={{ background: 'rgba(245,158,11,0.08)', padding: '8px 16px', borderBottom: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }}/>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#d97706', fontWeight: 700 }}>Pendiente de aprobación</span>
                       </div>}
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
+                      <div style={{ padding: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
                           <div>
-                            <p className="font-black text-gray-900">{appt.customer_name}</p>
-                            <p className="text-sm text-gray-700">{appt.service_name}</p>
-                            <p className="text-sm font-bold mt-0.5" style={{color}}>📅 {fDate(appt.appointment_date)} · ⏰ {appt.appointment_time}</p>
-                            {appt.service_price_ars>0&&<p className="text-xs text-gray-500 mt-0.5">💰 {fARS(appt.service_price_ars)}</p>}
+                            <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', margin: '0 0 2px' }}>{appt.customer_name}</p>
+                            <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 4px' }}>{appt.service_name}</p>
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>{fDate(appt.appointment_date)} · {appt.appointment_time}</p>
+                            {appt.service_price_ars>0&&<p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '2px 0 0' }}>{fARS(appt.service_price_ars)}</p>}
                           </div>
-                          <span className={`text-xs px-2 py-1 rounded-full font-semibold shrink-0 ${appt.status==='confirmed'?'bg-green-100 text-green-700':appt.status==='pending'?'bg-amber-100 text-amber-700':appt.status==='cancelled'?'bg-red-100 text-red-600':'bg-gray-100 text-gray-600'}`}>
-                            {appt.status==='confirmed'?'✅ Confirmado':appt.status==='pending'?'⏳ Pendiente':appt.status==='cancelled'?'❌ Cancelado':appt.status}
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 100, padding: '4px 10px', flexShrink: 0, ...(statusStyle[appt.status]||{background:'var(--paper-2)',color:'var(--muted)'}) }}>
+                            {appt.status==='confirmed'?'Confirmado':appt.status==='pending'?'Pendiente':appt.status==='cancelled'?'Cancelado':appt.status}
                           </span>
                         </div>
-                        {appt.customer_notes&&<p className="text-xs text-gray-500 italic bg-gray-50 px-3 py-2 rounded-lg mb-3">&ldquo;{appt.customer_notes}&rdquo;</p>}
+                        {appt.customer_notes&&<p style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic', background: 'var(--paper-2)', padding: '8px 12px', borderRadius: 8, marginBottom: 12 }}>&ldquo;{appt.customer_notes}&rdquo;</p>}
                         {isPend&&!st.done&&<>
                           {appt.service_price_ars>0&&(
-                            <div className="flex items-center gap-2 mb-3 bg-gray-50 rounded-xl px-3 py-2">
-                              <span className="text-xs text-gray-500 whitespace-nowrap">Seña $</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, background: 'var(--paper-2)', borderRadius: 10, padding: '10px 12px' }}>
+                              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }}>Seña $</span>
                               <input type="number" min={0} max={appt.service_price_ars} placeholder="0"
                                 value={st.sena} onChange={e=>setApptState(p=>({...p,[appt.id]:{...p[appt.id],sena:e.target.value}}))}
-                                className="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none w-24"/>
-                              {Number(st.sena)>0&&<span className="text-xs text-gray-500">Saldo: <strong>{fARS(appt.service_price_ars-Number(st.sena))}</strong></span>}
+                                style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 8px', fontSize: 13, outline: 'none', color: 'var(--ink)', width: 80 }}/>
+                              {Number(st.sena)>0&&<span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>Saldo: <strong style={{ color: 'var(--ink)' }}>{fARS(appt.service_price_ars-Number(st.sena))}</strong></span>}
                             </div>
                           )}
-                          <div className="grid grid-cols-2 gap-2">
-                            <button onClick={()=>handleAction(appt.id,'approve')} disabled={st.processing} className="py-3 rounded-xl font-bold text-sm text-white disabled:opacity-50" style={{backgroundColor:color}}>{st.processing?'...':'✓ Aprobar'}</button>
-                            <button onClick={()=>handleAction(appt.id,'reject')} disabled={st.processing} className="py-3 rounded-xl font-bold text-sm bg-red-500 text-white disabled:opacity-50 hover:bg-red-600">{st.processing?'...':'✕ Rechazar'}</button>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            <button onClick={()=>handleAction(appt.id,'approve')} disabled={st.processing} style={{ padding: '12px 0', borderRadius: 10, background: 'var(--ink)', color: 'var(--paper)', border: 'none', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', cursor: 'pointer', opacity: st.processing?0.5:1 }}>{st.processing?'...':'Aprobar'}</button>
+                            <button onClick={()=>handleAction(appt.id,'reject')} disabled={st.processing} style={{ padding: '12px 0', borderRadius: 10, background: '#dc2626', color: '#fff', border: 'none', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', cursor: 'pointer', opacity: st.processing?0.5:1 }}>{st.processing?'...':'Rechazar'}</button>
                           </div>
                         </>}
-                        {(waOK||waNO)&&<div className="mt-2 space-y-2">
-                          {waOK&&<a href={waOK} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm bg-green-500 text-white hover:bg-green-600">💬 Avisar — confirmado</a>}
-                          {waNO&&<a href={waNO} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm bg-gray-600 text-white hover:bg-gray-700">💬 Avisar — rechazado</a>}
+                        {(waOK||waNO)&&<div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {waOK&&<a href={waOK} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '12px 0', borderRadius: 10, fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', textDecoration: 'none', background: '#16a34a', color: '#fff' }}>Avisar — confirmado</a>}
+                          {waNO&&<a href={waNO} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '12px 0', borderRadius: 10, fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', textDecoration: 'none', background: 'var(--muted)', color: '#fff' }}>Avisar — rechazado</a>}
                         </div>}
                       </div>
                     </div>
@@ -485,36 +490,36 @@ export default function OwnerPanel() {
 
         {/* ── HISTORIAL ── */}
         {tab==='historial'&&!loading&&(
-          <div className="max-w-2xl mx-auto space-y-5">
+          <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Totales */}
-            <div className="grid grid-cols-3 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
               {[
-                {label:'Total completados',val:String(historial.filter(a=>a.status==='completed').length)+' turnos'},
-                {label:'Total facturado',val:fARS(totalHistorial)},
+                {label:'Completados',val:String(historial.filter(a=>a.status==='completed').length)+' turnos'},
+                {label:'Facturado total',val:fARS(totalHistorial)},
                 {label:'Clientes únicos',val:String(Object.keys(clientMap).length)},
               ].map(s=>(
-                <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                  <p className="text-xs text-gray-400 mb-1">{s.label}</p>
-                  <p className="font-bold text-gray-800 text-sm">{s.val}</p>
+                <div key={s.label} style={{ background: 'var(--paper)', borderRadius: 14, border: '1px solid var(--line)', padding: 16, textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>{s.label}</p>
+                  <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>{s.val}</p>
                 </div>
               ))}
             </div>
 
             {/* Top clientes */}
             {topClients.length>0&&(
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-4 py-3.5 border-b border-gray-100">
-                  <p className="font-bold text-gray-700 text-sm">👥 Clientes recurrentes</p>
+              <div style={{ background: 'var(--paper)', borderRadius: 14, border: '1px solid var(--line)', overflow: 'hidden' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+                  <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>Clientes recurrentes</p>
                 </div>
-                <div className="divide-y divide-gray-50">
+                <div>
                   {topClients.map((c,i)=>(
-                    <div key={c.name} className="flex items-center gap-3 px-4 py-3">
-                      <span className="text-xs font-bold text-gray-400 w-5">{i+1}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{c.name}</p>
-                        <p className="text-xs text-gray-400">{c.visits} {c.visits===1?'visita':'visitas'}</p>
+                    <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i<topClients.length-1?'1px solid var(--line)':undefined }}>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', width: 20 }}>{i+1}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>
+                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: 0 }}>{c.visits} {c.visits===1?'visita':'visitas'}</p>
                       </div>
-                      {c.total>0&&<span className="text-xs font-bold" style={{color}}>{fARS(c.total)}</span>}
+                      {c.total>0&&<span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink)' }}>{fARS(c.total)}</span>}
                     </div>
                   ))}
                 </div>
@@ -522,32 +527,33 @@ export default function OwnerPanel() {
             )}
 
             {/* Lista historial */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3.5 border-b border-gray-100">
-                <p className="font-bold text-gray-700 text-sm">📋 Historial completo</p>
+            <div style={{ background: 'var(--paper)', borderRadius: 14, border: '1px solid var(--line)', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>Historial completo</p>
               </div>
               {historial.length===0
-                ?<div className="text-center py-10 text-gray-400 text-sm">Sin historial todavía.</div>
-                :<div className="divide-y divide-gray-50">
-                  {historial.map(appt=>{
-                    const labels:Record<string,string>={cancelled:'❌ Cancelado',completed:'✅ Completado',no_show:'👻 No vino'}
+                ?<div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontFamily: 'var(--f-mono)', fontSize: 12 }}>Sin historial todavía.</div>
+                :<div>
+                  {historial.map((appt,i)=>{
+                    const labels:Record<string,string>={cancelled:'Cancelado',completed:'Completado',no_show:'No vino'}
+                    const statusColors:Record<string,string>={cancelled:'#dc2626',completed:'#16a34a',no_show:'var(--muted)'}
                     return (
-                      <div key={appt.id} className="px-4 py-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">{appt.customer_name}</p>
-                          <p className="text-xs text-gray-500 truncate">{appt.service_name}</p>
-                          <p className="text-xs text-gray-400">{fDate(appt.appointment_date)} · {appt.appointment_time}</p>
+                      <div key={appt.id} style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottom: i<historial.length-1?'1px solid var(--line)':undefined }}>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.customer_name}</p>
+                          <p style={{ fontSize: 11, color: 'var(--muted)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.service_name}</p>
+                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '1px 0 0' }}>{fDate(appt.appointment_date)} · {appt.appointment_time}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-0.5 shrink-0">
-                          <span className="text-xs text-gray-500">{labels[appt.status]||appt.status}</span>
-                          {appt.service_price_ars>0&&<span className="text-xs font-semibold text-gray-600">{fARS(appt.service_price_ars)}</span>}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: statusColors[appt.status]||'var(--muted)' }}>{labels[appt.status]||appt.status}</span>
+                          {appt.service_price_ars>0&&<span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink)' }}>{fARS(appt.service_price_ars)}</span>}
                         </div>
                       </div>
                     )
                   })}
-                  <div className="px-4 py-3 flex items-center justify-between bg-gray-50">
-                    <span className="text-xs font-bold text-gray-600">Total facturado</span>
-                    <span className="text-sm font-black" style={{color}}>{fARS(totalHistorial)}</span>
+                  <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 700 }}>Total facturado</span>
+                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{fARS(totalHistorial)}</span>
                   </div>
                 </div>
               }
@@ -557,102 +563,98 @@ export default function OwnerPanel() {
 
         {/* ── CONFIGURACIÓN ── */}
         {tab==='config'&&!loading&&(
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Servicios */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
-                <p className="font-bold text-gray-700 text-sm">🛠 Servicios</p>
+            <div style={{ background: 'var(--paper)', borderRadius: 14, border: '1px solid var(--line)', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>Servicios</p>
                 <button onClick={()=>setNewSvcForm({})}
-                  className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
-                  style={{backgroundColor:color}}>+ Agregar</button>
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', background: 'var(--ink)', color: 'var(--paper)', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>+ Agregar</button>
               </div>
 
-              {/* Formulario nuevo servicio */}
               {newSvcForm!==null&&(
-                <div className="p-4 border-b border-dashed border-gray-200 bg-gray-50 space-y-3">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nuevo servicio</p>
-                  <div className="grid grid-cols-2 gap-2">
+                <div style={{ padding: 16, borderBottom: '1px dashed var(--line)', background: 'var(--paper-2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: 0 }}>Nuevo servicio</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <input placeholder="Nombre del servicio *" value={newSvcForm.name||''}
                       onChange={e=>setNewSvcForm(p=>({...p,name:e.target.value}))}
-                      className="col-span-2 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
+                      style={{ gridColumn: '1/-1', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)' }}/>
                     <input placeholder="Categoría" value={newSvcForm.category||''}
                       onChange={e=>setNewSvcForm(p=>({...p,category:e.target.value}))}
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
+                      style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)' }}/>
                     <input placeholder="Descripción" value={newSvcForm.description||''}
                       onChange={e=>setNewSvcForm(p=>({...p,description:e.target.value}))}
-                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
-                    <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
-                      <span className="text-xs text-gray-400 shrink-0">⏱ min</span>
+                      style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)' }}/>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', background: 'var(--paper)' }}>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>min</span>
                       <input type="number" min={15} step={15} placeholder="60" value={newSvcForm.duration_minutes||''}
                         onChange={e=>setNewSvcForm(p=>({...p,duration_minutes:Number(e.target.value)}))}
-                        className="w-full text-sm outline-none"/>
+                        style={{ width: '100%', fontSize: 13, outline: 'none', border: 'none', background: 'transparent', color: 'var(--ink)' }}/>
                     </div>
-                    <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2">
-                      <span className="text-xs text-gray-400 shrink-0">$ precio</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', background: 'var(--paper)' }}>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>$</span>
                       <input type="number" min={0} placeholder="0" value={newSvcForm.price_ars||''}
                         onChange={e=>setNewSvcForm(p=>({...p,price_ars:Number(e.target.value)}))}
-                        className="w-full text-sm outline-none"/>
+                        style={{ width: '100%', fontSize: 13, outline: 'none', border: 'none', background: 'transparent', color: 'var(--ink)' }}/>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={addService} disabled={!newSvcForm.name?.trim()}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40"
-                      style={{backgroundColor:color}}>Agregar</button>
-                    <button onClick={()=>setNewSvcForm(null)} className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-500 bg-gray-100">Cancelar</button>
+                      style={{ flex: 1, padding: '10px 0', borderRadius: 10, background: 'var(--ink)', color: 'var(--paper)', border: 'none', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', cursor: 'pointer', opacity: !newSvcForm.name?.trim()?0.4:1 }}>Agregar</button>
+                    <button onClick={()=>setNewSvcForm(null)} style={{ padding: '10px 16px', borderRadius: 10, background: 'var(--paper)', border: '1px solid var(--line)', fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', cursor: 'pointer' }}>Cancelar</button>
                   </div>
                 </div>
               )}
 
               {editServices.length===0&&newSvcForm===null&&(
-                <p className="text-center text-gray-400 text-sm py-8">Sin servicios. Agregá uno.</p>
+                <p style={{ textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--f-mono)', fontSize: 12, padding: '32px 0' }}>Sin servicios. Agregá uno.</p>
               )}
 
               {Object.entries(catMap).map(([cat,svcs])=>(
                 <div key={cat}>
-                  <div className="px-4 py-2 bg-gray-50 border-y border-gray-100">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{cat}</p>
+                  <div style={{ padding: '8px 16px', background: 'var(--paper-2)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: 0, fontWeight: 700 }}>{cat}</p>
                   </div>
-                  {svcs.map(svc=>(
-                    <div key={svc.id} className="border-b border-gray-50 last:border-0">
+                  {svcs.map((svc,i)=>(
+                    <div key={svc.id} style={{ borderBottom: i<svcs.length-1?'1px solid var(--line)':undefined }}>
                       {editSvcId===svc.id?(
-                        <div className="p-4 space-y-2 bg-indigo-50/40">
-                          <div className="grid grid-cols-2 gap-2">
+                        <div style={{ padding: 16, background: 'var(--paper-2)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             <input value={svc.name} onChange={e=>updateService(svc.id,'name',e.target.value)}
-                              placeholder="Nombre" className="col-span-2 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
+                              placeholder="Nombre" style={{ gridColumn: '1/-1', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)' }}/>
                             <input value={svc.category} onChange={e=>updateService(svc.id,'category',e.target.value)}
-                              placeholder="Categoría" className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
+                              placeholder="Categoría" style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)' }}/>
                             <input value={svc.description} onChange={e=>updateService(svc.id,'description',e.target.value)}
-                              placeholder="Descripción" className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
-                            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white">
-                              <span className="text-xs text-gray-400">⏱ min</span>
+                              placeholder="Descripción" style={{ border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)' }}/>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', background: 'var(--paper)' }}>
+                              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>min</span>
                               <input type="number" min={15} step={15} value={svc.duration_minutes}
                                 onChange={e=>updateService(svc.id,'duration_minutes',e.target.value)}
-                                className="w-full text-sm outline-none"/>
+                                style={{ width: '100%', fontSize: 13, outline: 'none', border: 'none', background: 'transparent', color: 'var(--ink)' }}/>
                             </div>
-                            <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white">
-                              <span className="text-xs text-gray-400">$</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', background: 'var(--paper)' }}>
+                              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>$</span>
                               <input type="number" min={0} value={svc.price_ars}
                                 onChange={e=>updateService(svc.id,'price_ars',e.target.value)}
-                                className="w-full text-sm outline-none"/>
+                                style={{ width: '100%', fontSize: 13, outline: 'none', border: 'none', background: 'transparent', color: 'var(--ink)' }}/>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button onClick={()=>setEditSvcId(null)} className="flex-1 py-2 rounded-xl text-sm font-bold text-white" style={{backgroundColor:color}}>Listo</button>
-                            <button onClick={()=>deleteService(svc.id)} className="px-4 py-2 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100">🗑</button>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={()=>setEditSvcId(null)} style={{ flex: 1, padding: '10px 0', borderRadius: 10, background: 'var(--ink)', color: 'var(--paper)', border: 'none', fontFamily: 'var(--f-mono)', fontSize: 11, cursor: 'pointer' }}>Listo</button>
+                            <button onClick={()=>deleteService(svc.id)} style={{ padding: '10px 14px', borderRadius: 10, background: '#fee2e2', color: '#dc2626', border: 'none', fontFamily: 'var(--f-mono)', fontSize: 11, cursor: 'pointer' }}>Eliminar</button>
                           </div>
                         </div>
                       ):(
-                        <div className="flex items-center gap-3 px-4 py-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 truncate">{svc.name}</p>
-                            {svc.description&&<p className="text-xs text-gray-400 truncate">{svc.description}</p>}
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              ⏱ {svc.duration_minutes}min
-                              {svc.price_ars>0?` · ${fARS(svc.price_ars)}`:' · Consultar precio'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{svc.name}</p>
+                            {svc.description&&<p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{svc.description}</p>}
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
+                              {svc.duration_minutes}min{svc.price_ars>0?` · ${fARS(svc.price_ars)}`:''}
                             </p>
                           </div>
-                          <button onClick={()=>setEditSvcId(svc.id)} className="text-xs text-gray-400 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100">✏ Editar</button>
+                          <button onClick={()=>setEditSvcId(svc.id)} style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted)', background: 'var(--paper-2)', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>Editar</button>
                         </div>
                       )}
                     </div>
@@ -662,32 +664,31 @@ export default function OwnerPanel() {
             </div>
 
             {/* Horarios */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3.5 border-b border-gray-100">
-                <p className="font-bold text-gray-700 text-sm">🕐 Horarios de atención</p>
+            <div style={{ background: 'var(--paper)', borderRadius: 14, border: '1px solid var(--line)', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>Horarios de atención</p>
               </div>
-              <div className="divide-y divide-gray-50">
-                {DIAS_SCHED.map(day=>{
+              <div>
+                {DIAS_SCHED.map((day,i)=>{
                   const slot = editSchedule[day]
                   const isOpen = !!slot
                   return (
-                    <div key={day} className="flex items-center gap-3 px-4 py-3">
+                    <div key={day} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i<DIAS_SCHED.length-1?'1px solid var(--line)':undefined }}>
                       <button onClick={()=>toggleDay(day)}
-                        className={`w-10 h-6 rounded-full transition-colors shrink-0 relative ${isOpen?'':'bg-gray-200'}`}
-                        style={isOpen?{backgroundColor:color}:{}}>
-                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${isOpen?'left-5':'left-1'}`}/>
+                        style={{ width: 40, height: 24, borderRadius: 100, border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, background: isOpen?'var(--ink)':'var(--paper-2)', transition: 'background 0.2s' }}>
+                        <span style={{ position: 'absolute', top: 4, width: 16, height: 16, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', left: isOpen?20:4 }}/>
                       </button>
-                      <span className={`text-sm font-semibold w-24 ${isOpen?'text-gray-800':'text-gray-400'}`}>{DIAS_LABEL[day]}</span>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.04em', color: isOpen?'var(--ink)':'var(--muted)', width: 88, fontWeight: isOpen?700:400 }}>{DIAS_LABEL[day]}</span>
                       {isOpen&&slot?(
-                        <div className="flex items-center gap-2 ml-auto">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                           <input type="time" value={slot.open} onChange={e=>setDayTime(day,'open',e.target.value)}
-                            className="border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-200"/>
-                          <span className="text-xs text-gray-400">a</span>
+                            style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '6px 8px', fontSize: 12, outline: 'none', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--f-mono)' }}/>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>a</span>
                           <input type="time" value={slot.close} onChange={e=>setDayTime(day,'close',e.target.value)}
-                            className="border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-200"/>
+                            style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '6px 8px', fontSize: 12, outline: 'none', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--f-mono)' }}/>
                         </div>
                       ):(
-                        <span className="ml-auto text-xs text-gray-400">Cerrado</span>
+                        <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>Cerrado</span>
                       )}
                     </div>
                   )
@@ -695,40 +696,58 @@ export default function OwnerPanel() {
               </div>
             </div>
 
-            {/* Configuración extra */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3.5 border-b border-gray-100">
-                <p className="font-bold text-gray-700 text-sm">⚙ Datos del negocio</p>
+            {/* Datos del negocio */}
+            <div style={{ background: 'var(--paper)', borderRadius: 14, border: '1px solid var(--line)', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', margin: 0 }}>Datos del negocio</p>
               </div>
-              <div className="p-4 space-y-3">
+              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">WhatsApp del dueño</label>
+                  <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>WhatsApp del dueño</label>
                   <input type="tel" value={editPhone} onChange={e=>setEditPhone(e.target.value)}
-                    placeholder="5492664000000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200"/>
-                  <p className="text-xs text-gray-400 mt-1">Sin espacios ni +. Ej: 5492664864731</p>
+                    placeholder="5492664000000" style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 13, outline: 'none', background: 'var(--paper)', color: 'var(--ink)', boxSizing: 'border-box' }}/>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>Sin espacios ni +. Ej: 5492664864731</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Cambiar PIN de acceso</label>
+                  <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>Cambiar PIN de acceso</label>
                   <input type="text" inputMode="numeric" maxLength={4} value={editPin} onChange={e=>setEditPin(e.target.value.replace(/\D/g,'').slice(0,4))}
-                    placeholder="Nuevo PIN (4 dígitos)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 tracking-widest font-mono text-center text-lg"/>
-                  <p className="text-xs text-gray-400 mt-1">Dejalo vacío para no cambiar el PIN actual.</p>
+                    placeholder="· · · ·" style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 20, outline: 'none', background: 'var(--paper)', color: 'var(--ink)', boxSizing: 'border-box', fontFamily: 'var(--f-mono)', letterSpacing: '0.4em', textAlign: 'center' }}/>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>Dejalo vacío para no cambiar el PIN actual.</p>
                 </div>
               </div>
             </div>
 
             {/* Guardar */}
             {cfgMsg&&(
-              <div className={`px-4 py-3 rounded-xl text-sm font-semibold text-center ${cfgMsg.startsWith('✅')?'bg-green-50 text-green-700':'bg-red-50 text-red-700'}`}>
+              <div style={{ padding: '12px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, textAlign: 'center', ...(cfgMsg.startsWith('✅')?{background:'rgba(198,255,61,0.15)',color:'var(--ink)',border:'1px solid rgba(198,255,61,0.3)'}:{background:'#fee2e2',color:'#dc2626',border:'1px solid #fca5a5'}) }}>
                 {cfgMsg}
               </div>
             )}
             <button onClick={saveConfig} disabled={savingCfg}
-              className="w-full py-4 rounded-2xl text-white font-black text-base shadow-lg disabled:opacity-50 transition-opacity"
-              style={{backgroundColor:color}}>
-              {savingCfg?'Guardando...':'💾 Guardar cambios'}
+              style={{ width: '100%', padding: '16px 0', borderRadius: 12, background: 'var(--ink)', color: 'var(--paper)', border: 'none', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, cursor: 'pointer', opacity: savingCfg?0.5:1 }}>
+              {savingCfg?'Guardando...':'Guardar cambios'}
             </button>
           </div>
         )}
+      </div>
+
+      {/* Botón flotante "Nuevo turno" */}
+      <div style={{ position: 'fixed', bottom: 28, right: 24, zIndex: 50 }}>
+        <a
+          href={`/reservas/${configId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'var(--ink)', color: 'var(--paper)',
+            borderRadius: 100, padding: '14px 24px',
+            fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700,
+            textDecoration: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          + Nuevo turno
+        </a>
       </div>
     </div>
   )

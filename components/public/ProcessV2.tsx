@@ -46,8 +46,8 @@ export default function ProcessV2() {
           eternos ni PowerPoints de 80 slides.
         </h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 40 }}
-          className="grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        <div style={{ display: 'grid', gap: 40 }}
+          className="grid-cols-4-mobile-2 md:grid-cols-4">
           {STEPS.map(step => (
             <div key={step.num} style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 24 }}>
               <div style={{

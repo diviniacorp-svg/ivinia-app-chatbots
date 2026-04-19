@@ -13,8 +13,8 @@ export default function DemosV2() {
     <section id="demos" style={{ padding: '120px 0', borderTop: '1px solid var(--line)', background: 'var(--paper)' }}>
       <div className="wrap-v2">
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 80, alignItems: 'center' }}
-          className="grid-cols-1 md:grid-cols-2">
+        <div style={{ display: 'grid', gap: 48, alignItems: 'center' }}
+          className="grid-cols-2-mobile-1 md:grid-cols-2">
 
           <div>
             <div className="eyebrow" style={{ marginBottom: 24 }}>Demo en vivo</div>

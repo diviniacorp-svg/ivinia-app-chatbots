@@ -56,14 +56,14 @@ export default function PricingV2() {
         </div>
 
         {/* Plans grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, marginBottom: 80 }}
-          className="grid-cols-1 md:grid-cols-3">
+        <div style={{ display: 'grid', gap: 12, marginBottom: 80 }}
+          className="grid-cols-3-mobile-1 md:grid-cols-3">
           {plans.map((p, i) => (
             <div key={p.name} style={{
               padding: '40px 32px',
               background: p.highlight ? 'var(--ink)' : 'var(--paper)',
               border: '1px solid var(--line)',
-              borderRadius: i === 0 ? '20px 0 0 20px' : i === 2 ? '0 20px 20px 0' : 0,
+              borderRadius: 16,
               display: 'flex', flexDirection: 'column',
             }}>
               {p.highlight && (
@@ -109,7 +109,7 @@ export default function PricingV2() {
           <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 24 }}>
             Planes de mantenimiento mensual
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }} className="grid-cols-1 md:grid-cols-3">
+          <div style={{ display: 'grid', gap: 12 }} className="grid-cols-3-mobile-1 md:grid-cols-3">
             {maintenance.map((m) => (
               <div key={m.name} style={{
                 padding: '28px 28px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16,
