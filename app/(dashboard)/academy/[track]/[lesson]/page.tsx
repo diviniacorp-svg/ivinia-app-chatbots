@@ -62,8 +62,8 @@ function renderMarkdown(body: string): React.ReactNode[] {
   }).filter(Boolean) as React.ReactNode[]
 }
 
-export default function LessonEditorPage({ params }: { params: { slug: string; lesson: string } }) {
-  const { slug, lesson } = params
+export default function LessonEditorPage({ params }: { params: { track: string; lesson: string } }) {
+  const { track, lesson } = params
   const [content, setContent] = useState('')
   const [originalContent, setOriginalContent] = useState('')
   const [saveState, setSaveState] = useState<SaveState>('idle')
@@ -73,7 +73,7 @@ export default function LessonEditorPage({ params }: { params: { slug: string; l
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/academy/lesson?track=${encodeURIComponent(slug)}&lesson=${encodeURIComponent(lesson)}`)
+        const res = await fetch(`/api/academy/lesson?track=${encodeURIComponent(track)}&lesson=${encodeURIComponent(lesson)}`)
         if (!res.ok) throw new Error(`Error ${res.status}`)
         const data = await res.json()
         setContent(data.content)
@@ -85,7 +85,7 @@ export default function LessonEditorPage({ params }: { params: { slug: string; l
       }
     }
     load()
-  }, [slug, lesson])
+  }, [track, lesson])
 
   const handleChange = useCallback((val: string) => {
     setContent(val)
@@ -98,7 +98,7 @@ export default function LessonEditorPage({ params }: { params: { slug: string; l
       const res = await fetch('/api/academy/lesson', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ track: slug, lesson, content }),
+        body: JSON.stringify({ track, lesson, content }),
       })
       if (!res.ok) throw new Error(`Error ${res.status}`)
       setOriginalContent(content)
@@ -107,133 +107,59 @@ export default function LessonEditorPage({ params }: { params: { slug: string; l
     } catch {
       setSaveState('dirty')
     }
-  }, [slug, lesson, content])
+  }, [track, lesson, content])
 
-  const saveLabel = {
-    idle: 'Sin cambios',
-    dirty: 'Cambios sin guardar',
-    saving: 'Guardando...',
-    saved: 'Guardado ✓',
-  }[saveState]
-
-  const saveBg = {
-    idle: 'var(--paper-2)',
-    dirty: '#FEF3C7',
-    saving: 'var(--paper-2)',
-    saved: '#D1FAE5',
-  }[saveState]
-
-  const saveColor = {
-    idle: 'var(--muted)',
-    dirty: '#92400E',
-    saving: 'var(--muted)',
-    saved: '#065F46',
-  }[saveState]
+  const saveLabel = { idle: 'Sin cambios', dirty: 'Cambios sin guardar', saving: 'Guardando...', saved: 'Guardado ✓' }[saveState]
+  const saveBg = { idle: 'var(--paper-2)', dirty: '#FEF3C7', saving: 'var(--paper-2)', saved: '#D1FAE5' }[saveState]
+  const saveColor = { idle: 'var(--muted)', dirty: '#92400E', saving: 'var(--muted)', saved: '#065F46' }[saveState]
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--paper-2)', display: 'flex', flexDirection: 'column' }}>
-
-      {/* Header */}
       <div style={{
         padding: '16px 32px', borderBottom: '1px solid var(--line)', background: 'var(--paper)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Link
-            href={`/dashboard/academy/${slug}`}
-            style={{
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', color: 'var(--muted)', textDecoration: 'none',
-            }}
-          >
-            ← {slug}
+          <Link href={`/dashboard/academy/${track}`} style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', textDecoration: 'none' }}>
+            ← {track}
           </Link>
           <span style={{ color: 'var(--muted)' }}>·</span>
-          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink)' }}>
-            {lesson}
-          </span>
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink)' }}>{lesson}</span>
         </div>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            padding: '6px 14px', borderRadius: 6,
-            background: saveBg, color: saveColor,
-            fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
-            textTransform: 'uppercase', border: '1px solid var(--line)',
-          }}>
+          <div style={{ padding: '6px 14px', borderRadius: 6, background: saveBg, color: saveColor, fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid var(--line)' }}>
             {saveLabel}
           </div>
-
-          <button
-            onClick={handleSave}
-            disabled={saveState !== 'dirty'}
-            style={{
-              padding: '8px 20px', borderRadius: 8,
-              background: saveState === 'dirty' ? 'var(--ink)' : 'var(--paper-2)',
-              color: saveState === 'dirty' ? 'var(--lime)' : 'var(--muted)',
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', border: '1px solid var(--line)',
-              cursor: saveState === 'dirty' ? 'pointer' : 'default',
-            }}
-          >
+          <button onClick={handleSave} disabled={saveState !== 'dirty'} style={{ padding: '8px 20px', borderRadius: 8, background: saveState === 'dirty' ? 'var(--ink)' : 'var(--paper-2)', color: saveState === 'dirty' ? 'var(--lime)' : 'var(--muted)', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', border: '1px solid var(--line)', cursor: saveState === 'dirty' ? 'pointer' : 'default' }}>
             Guardar
           </button>
         </div>
       </div>
 
-      {/* Editor area */}
       {loading ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', letterSpacing: '0.06em' }}>
-            Cargando lección...
-          </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', letterSpacing: '0.06em' }}>Cargando lección...</div>
         </div>
       ) : error ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
-          <div style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: '#DC2626' }}>
-            {error}
-          </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: '#DC2626' }}>{error}</div>
         </div>
       ) : (
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 0 }}>
-
-          {/* Editor */}
           <div style={{ borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{
-              padding: '10px 20px', borderBottom: '1px solid var(--line)',
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', color: 'var(--muted)', background: 'var(--paper)',
-            }}>
+            <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', background: 'var(--paper)' }}>
               Editor · Markdown
             </div>
-            <textarea
-              value={content}
-              onChange={e => handleChange(e.target.value)}
-              spellCheck={false}
-              style={{
-                flex: 1, width: '100%', minHeight: 500,
-                padding: '24px 24px', border: 'none', outline: 'none',
-                background: 'var(--paper)', color: 'var(--ink)',
-                fontFamily: 'var(--f-mono)', fontSize: 13, lineHeight: 1.7,
-                resize: 'none', boxSizing: 'border-box',
-              }}
-            />
+            <textarea value={content} onChange={e => handleChange(e.target.value)} spellCheck={false} style={{ flex: 1, width: '100%', minHeight: 500, padding: '24px', border: 'none', outline: 'none', background: 'var(--paper)', color: 'var(--ink)', fontFamily: 'var(--f-mono)', fontSize: 13, lineHeight: 1.7, resize: 'none', boxSizing: 'border-box' }} />
           </div>
-
-          {/* Preview */}
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{
-              padding: '10px 20px', borderBottom: '1px solid var(--line)',
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', color: 'var(--muted)', background: 'var(--paper)',
-            }}>
+            <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', background: 'var(--paper)' }}>
               Preview
             </div>
             <div style={{ flex: 1, padding: '24px 32px', overflowY: 'auto', background: 'var(--paper)' }}>
               {renderMarkdown(content)}
             </div>
           </div>
-
         </div>
       )}
     </div>

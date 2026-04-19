@@ -14,9 +14,9 @@ function parseFrontmatter(raw: string): Record<string, any> {
   return obj
 }
 
-export default function AcademyTrackEditorPage({ params }: { params: { slug: string } }) {
-  const { slug } = params
-  const trackDir = path.join(process.cwd(), 'content', 'academy', slug)
+export default function AcademyTrackEditorPage({ params }: { params: { track: string } }) {
+  const { track } = params
+  const trackDir = path.join(process.cwd(), 'content', 'academy', track)
 
   if (!fs.existsSync(trackDir)) notFound()
 
@@ -52,7 +52,7 @@ export default function AcademyTrackEditorPage({ params }: { params: { slug: str
           </Link>
           <span style={{ color: 'var(--muted)' }}>·</span>
           <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-            {slug}
+            {track}
           </span>
         </div>
 
@@ -64,7 +64,7 @@ export default function AcademyTrackEditorPage({ params }: { params: { slug: str
             }} />
             <div>
               <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 'clamp(20px, 2.5vw, 30px)', color: 'var(--ink)', letterSpacing: '-0.03em', margin: 0 }}>
-                {trackMeta.title ?? slug}
+                {trackMeta.title ?? track}
               </h1>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', marginTop: 5, letterSpacing: '0.04em' }}>
                 {trackMeta.nivel} · {lessons.length} lecciones · {trackMeta.duracion ?? '—'}
@@ -109,12 +109,10 @@ export default function AcademyTrackEditorPage({ params }: { params: { slug: str
                   display: 'flex', alignItems: 'center', gap: 16,
                 }}
               >
-                {/* Número */}
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', minWidth: 28 }}>
                   {String(i + 1).padStart(2, '0')}
                 </div>
 
-                {/* Lesson info */}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 15, color: 'var(--ink)', marginBottom: 3 }}>
                     {lesson.titulo ?? lesson.slug}
@@ -124,10 +122,9 @@ export default function AcademyTrackEditorPage({ params }: { params: { slug: str
                   </div>
                 </div>
 
-                {/* Links */}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Link
-                    href={`/academy/${slug}/${lesson.slug}`}
+                    href={`/academy/${track}/${lesson.slug}`}
                     target="_blank"
                     style={{
                       padding: '7px 14px', borderRadius: 6, border: '1px solid var(--line)',
@@ -139,7 +136,7 @@ export default function AcademyTrackEditorPage({ params }: { params: { slug: str
                     Ver →
                   </Link>
                   <Link
-                    href={`/dashboard/academy/${slug}/${lesson.slug}`}
+                    href={`/dashboard/academy/${track}/${lesson.slug}`}
                     style={{
                       padding: '7px 14px', borderRadius: 6, border: '1px solid var(--line)',
                       fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
