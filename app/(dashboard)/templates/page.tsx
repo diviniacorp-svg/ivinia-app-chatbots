@@ -31,57 +31,145 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div style={{ padding: '32px 40px', background: 'var(--paper-2)', minHeight: '100vh' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Templates</h1>
-          <p className="text-gray-500 mt-1">Plantillas de chatbot pre-configuradas por rubro</p>
+          <h1 style={{
+            fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
+            fontSize: 36, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0,
+          }}>
+            Templates
+          </h1>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4, fontFamily: 'var(--f-mono)' }}>
+            Plantillas de chatbot pre-configuradas por rubro
+          </p>
         </div>
-        <button onClick={handleSeed}
-          className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+        <button
+          onClick={handleSeed}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', borderRadius: 8,
+            fontFamily: 'var(--f-mono)', fontSize: 11,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            border: 'none', background: 'var(--ink)', color: 'var(--paper)',
+            cursor: 'pointer',
+          }}
+        >
           Cargar templates base
         </button>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+          <div style={{
+            width: 32, height: 32,
+            border: '3px solid var(--line)', borderTopColor: 'var(--ink)',
+            borderRadius: '50%', animation: 'spin 1s linear infinite',
+          }} />
         </div>
       ) : templates.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 border border-gray-100 text-center">
-          <p className="text-4xl mb-4">📭</p>
-          <p className="text-gray-500 mb-4">No hay templates cargados aún.</p>
-          <button onClick={handleSeed}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold">
+        <div style={{
+          background: 'var(--paper)', borderRadius: 16, border: '1px dashed var(--line)',
+          padding: '64px 40px', textAlign: 'center',
+        }}>
+          <p style={{ fontSize: 40, marginBottom: 12 }}>📭</p>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>
+            No hay templates cargados aún.
+          </p>
+          <button
+            onClick={handleSeed}
+            style={{
+              background: 'var(--ink)', color: 'var(--paper)',
+              fontFamily: 'var(--f-mono)', fontSize: 11,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              border: 'none', borderRadius: 8, padding: '10px 24px', cursor: 'pointer',
+            }}
+          >
             Cargar ahora
           </button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          gap: 16,
+        }}>
           {templates.map((t) => (
-            <div key={t.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: (t.color_primary || '#6366f1') + '20' }}>
+            <div
+              key={t.id}
+              style={{
+                background: 'var(--paper)',
+                borderRadius: 16,
+                border: '1px solid var(--line)',
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ padding: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 12,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 24,
+                    background: (t.color_primary || '#6366f1') + '20',
+                  }}>
                     {RUBRO_EMOJIS[t.rubro] || '🤖'}
                   </div>
-                  <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Activo</span>
+                  <span style={{
+                    fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', color: 'var(--ink)',
+                    background: 'var(--lime)', borderRadius: 100, padding: '3px 10px',
+                  }}>
+                    Activo
+                  </span>
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm mb-1">{t.name}</h3>
-                <p className="text-xs text-gray-500 line-clamp-2 mb-3">{t.description}</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-400">${(t.price_monthly || 50000).toLocaleString('es-AR')}/mes</p>
-                  <span className="text-xs text-indigo-600 font-medium">{t.trial_days || 14} días trial</span>
+                <h3 style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 14, marginBottom: 4 }}>{t.name}</h3>
+                <p style={{
+                  fontSize: 12, color: 'var(--muted)', lineHeight: 1.5,
+                  marginBottom: 16,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                } as React.CSSProperties}>
+                  {t.description}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)' }}>
+                    ${(t.price_monthly || 50000).toLocaleString('es-AR')}/mes
+                  </p>
+                  <span style={{
+                    fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)',
+                  }}>
+                    {t.trial_days || 14}d trial
+                  </span>
                 </div>
               </div>
-              <div className="border-t border-gray-50 px-5 py-3 flex gap-2">
-                <Link href={`/templates/${t.id}`}
-                  className="flex-1 block text-center text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg transition-colors">
+              <div style={{
+                borderTop: '1px solid var(--line)',
+                padding: '12px 20px',
+                display: 'flex', gap: 8,
+              }}>
+                <Link
+                  href={`/templates/${t.id}`}
+                  style={{
+                    flex: 1, textAlign: 'center',
+                    fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', color: 'var(--ink)',
+                    background: 'var(--paper-2)', borderRadius: 8, padding: '8px 0',
+                    textDecoration: 'none', border: '1px solid var(--line)',
+                  }}
+                >
                   Ver flujo
                 </Link>
-                <Link href={`/clientes?template=${t.id}`}
-                  className="flex-1 block text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
+                <Link
+                  href={`/clientes?template=${t.id}`}
+                  style={{
+                    flex: 1, textAlign: 'center',
+                    fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', color: 'var(--paper)',
+                    background: 'var(--ink)', borderRadius: 8, padding: '8px 0',
+                    textDecoration: 'none',
+                  }}
+                >
                   Usar
                 </Link>
               </div>

@@ -1,7 +1,29 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Mail, MessageCircle, Loader2, Send, Copy, ExternalLink } from 'lucide-react'
+import { Mail, MessageCircle, Loader2, Send, Copy, ExternalLink, Check } from 'lucide-react'
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  border: '1px solid var(--line)',
+  borderRadius: 10,
+  padding: '10px 12px',
+  fontSize: 13,
+  outline: 'none',
+  background: 'var(--paper)',
+  color: 'var(--ink)',
+  boxSizing: 'border-box',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontFamily: 'var(--f-mono)',
+  fontSize: 10,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: 'var(--muted)',
+  marginBottom: 4,
+}
 
 function OutreachForm() {
   const searchParams = useSearchParams()
@@ -20,6 +42,7 @@ function OutreachForm() {
   const [loadingWA, setLoadingWA] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
 
   async function generateEmail() {
@@ -87,159 +110,243 @@ function OutreachForm() {
     : ''
 
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
       {/* Form */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-        <h2 className="font-bold text-gray-900 mb-4">Datos del prospecto</h2>
-        <div className="space-y-4">
+      <div style={{
+        background: 'var(--paper)',
+        borderRadius: 16,
+        border: '1px solid var(--line)',
+        padding: 24,
+      }}>
+        <h2 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, color: 'var(--ink)', marginBottom: 20, fontSize: 16 }}>
+          Datos del prospecto
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Empresa</label>
+            <label style={labelStyle}>Empresa</label>
             <input
               type="text"
               value={form.companyName}
               onChange={e => setForm(p => ({ ...p, companyName: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+              style={inputStyle}
               placeholder="Nombre del negocio"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Email</label>
+              <label style={labelStyle}>Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                style={inputStyle}
                 placeholder="email@empresa.com"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Teléfono/WA</label>
+              <label style={labelStyle}>Teléfono / WA</label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                style={inputStyle}
                 placeholder="+5492664..."
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Rubro</label>
+              <label style={labelStyle}>Rubro</label>
               <input
                 type="text"
                 value={form.rubro}
                 onChange={e => setForm(p => ({ ...p, rubro: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Ciudad</label>
+              <label style={labelStyle}>Ciudad</label>
               <input
                 type="text"
                 value={form.city}
                 onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+                style={inputStyle}
               />
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="mt-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>
+          <div style={{
+            marginTop: 16,
+            fontSize: 13,
+            color: '#dc2626',
+            background: '#fee2e2',
+            padding: '10px 12px',
+            borderRadius: 10,
+          }}>
+            {error}
+          </div>
         )}
 
-        <div className="flex gap-2 mt-5">
+        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button
             onClick={generateEmail}
             disabled={loadingEmail || !form.companyName}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            style={{
+              flex: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: 'var(--ink)', color: 'var(--paper)',
+              borderRadius: 10, border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
+              textTransform: 'uppercase', padding: '12px 0',
+              opacity: (loadingEmail || !form.companyName) ? 0.4 : 1,
+            }}
           >
-            {loadingEmail ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
-            Generar Email
+            {loadingEmail ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
+            Email
           </button>
           <button
             onClick={generateWhatsApp}
             disabled={loadingWA || !form.companyName}
-            className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            style={{
+              flex: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: '#25D366', color: '#fff',
+              borderRadius: 10, border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
+              textTransform: 'uppercase', padding: '12px 0',
+              opacity: (loadingWA || !form.companyName) ? 0.4 : 1,
+            }}
           >
-            {loadingWA ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />}
-            Generar WA
+            {loadingWA ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <MessageCircle size={14} />}
+            WhatsApp
           </button>
         </div>
       </div>
 
       {/* Output */}
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Email output */}
         {emailContent && (
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                <Mail size={15} className="text-blue-600" /> Email generado
+          <div style={{
+            background: 'var(--paper)',
+            borderRadius: 16,
+            border: '1px solid var(--line)',
+            padding: 20,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{
+                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: 'var(--muted)',
+                display: 'flex', alignItems: 'center', gap: 8, margin: 0,
+              }}>
+                <Mail size={12} /> Email generado
               </h3>
               {emailSent ? (
-                <span className="text-xs text-green-600 font-semibold">✓ Enviado</span>
+                <span style={{
+                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                  textTransform: 'uppercase', color: 'var(--ink)',
+                  background: 'var(--lime)', borderRadius: 100, padding: '3px 10px',
+                }}>
+                  Enviado
+                </span>
               ) : (
                 <button
                   onClick={sendEmail}
                   disabled={sendingEmail || !form.email}
-                  className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', color: 'var(--paper)',
+                    background: 'var(--ink)', borderRadius: 8, padding: '6px 12px',
+                    border: 'none', cursor: 'pointer',
+                    opacity: (sendingEmail || !form.email) ? 0.4 : 1,
+                  }}
                 >
-                  {sendingEmail ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                  Enviar ahora
+                  {sendingEmail ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={11} />}
+                  Enviar
                 </button>
               )}
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 mb-2">
-              <p className="text-xs text-gray-500 mb-1 font-semibold uppercase tracking-wider">Asunto</p>
-              <p className="text-sm text-gray-900 font-medium">{emailContent.subject}</p>
+            <div style={{
+              background: 'var(--paper-2)', borderRadius: 10, padding: 12, marginBottom: 10,
+              border: '1px solid var(--line)',
+            }}>
+              <p style={{ ...labelStyle, marginBottom: 4 }}>Asunto</p>
+              <p style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600, margin: 0 }}>{emailContent.subject}</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wider">Cuerpo</p>
-              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{emailContent.body}</p>
+            <div style={{ background: 'var(--paper-2)', borderRadius: 10, padding: 12, border: '1px solid var(--line)' }}>
+              <p style={{ ...labelStyle, marginBottom: 8 }}>Cuerpo</p>
+              <p style={{ fontSize: 13, color: 'var(--ink)', whiteSpace: 'pre-line', lineHeight: 1.6, margin: 0 }}>{emailContent.body}</p>
             </div>
           </div>
         )}
 
         {/* WhatsApp output */}
         {whatsappMsg && (
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                <MessageCircle size={15} className="text-green-600" /> Mensaje WhatsApp
+          <div style={{
+            background: 'var(--paper)',
+            borderRadius: 16,
+            border: '1px solid var(--line)',
+            padding: 20,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{
+                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: 'var(--muted)',
+                display: 'flex', alignItems: 'center', gap: 8, margin: 0,
+              }}>
+                <MessageCircle size={12} /> Mensaje WhatsApp
               </h3>
-              <div className="flex gap-1">
+              <div style={{ display: 'flex', gap: 6 }}>
                 <button
-                  onClick={() => navigator.clipboard.writeText(whatsappMsg)}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                  title="Copiar"
+                  onClick={() => { navigator.clipboard.writeText(whatsappMsg); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: '6px 10px', borderRadius: 8,
+                    border: '1px solid var(--line)', background: 'var(--paper)',
+                    color: 'var(--muted)', cursor: 'pointer', fontSize: 11,
+                    fontFamily: 'var(--f-mono)',
+                  }}
                 >
-                  <Copy size={13} />
+                  {copied ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
                 </button>
                 {waLink && (
                   <a
                     href={waLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      padding: '6px 12px', borderRadius: 8,
+                      background: '#25D366', color: '#fff',
+                      fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em',
+                      textDecoration: 'none', textTransform: 'uppercase',
+                    }}
                   >
-                    <ExternalLink size={12} />
-                    Abrir WA
+                    <ExternalLink size={11} /> Abrir WA
                   </a>
                 )}
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-3">
-              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{whatsappMsg}</p>
+            <div style={{ background: 'rgba(37,211,102,0.08)', borderRadius: 10, padding: 12, border: '1px solid rgba(37,211,102,0.2)' }}>
+              <p style={{ fontSize: 13, color: 'var(--ink)', whiteSpace: 'pre-line', lineHeight: 1.6, margin: 0 }}>{whatsappMsg}</p>
             </div>
           </div>
         )}
 
         {!emailContent && !whatsappMsg && (
-          <div className="bg-gray-50 rounded-xl p-8 border border-dashed border-gray-200 text-center">
-            <p className="text-gray-400 text-sm">Completá los datos y generá el mensaje con IA</p>
+          <div style={{
+            background: 'var(--paper)',
+            borderRadius: 16,
+            border: '1px dashed var(--line)',
+            padding: '64px 32px',
+            textAlign: 'center',
+          }}>
+            <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>
+              Completá los datos y generá el mensaje con IA
+            </p>
           </div>
         )}
       </div>
@@ -249,12 +356,21 @@ function OutreachForm() {
 
 export default function OutreachPage() {
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-black text-gray-900">Outreach</h1>
-        <p className="text-gray-500 mt-1">Generá emails y mensajes de WhatsApp personalizados con IA</p>
+    <div style={{ padding: '32px 40px', background: 'var(--paper-2)', minHeight: '100vh' }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{
+          fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
+          fontSize: 36, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0,
+        }}>
+          Outreach
+        </h1>
+        <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4, fontFamily: 'var(--f-mono)' }}>
+          Generá emails y mensajes de WhatsApp personalizados con IA
+        </p>
       </div>
-      <Suspense fallback={<div className="text-gray-500 text-sm">Cargando...</div>}>
+      <Suspense fallback={
+        <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>Cargando...</p>
+      }>
         <OutreachForm />
       </Suspense>
     </div>

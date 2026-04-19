@@ -54,6 +54,13 @@ const areas = [
     color: '#FCD34D', colorDeep: '#B45309', shade: 'rgba(60,30,0,0.4)',
     matches: ['/pagos', '/turnos'],
   },
+  {
+    href: '/market',
+    label: 'MARKET',
+    sub: 'San Luis · Comercios',
+    color: '#FF6B35', colorDeep: '#CC4A1A', shade: 'rgba(80,20,0,0.4)',
+    matches: ['/market'],
+  },
 ]
 
 const configLinks = [
