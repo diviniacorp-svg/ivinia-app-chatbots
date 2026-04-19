@@ -1,11 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import NeuralGraph from '@/components/dashboard/NeuralGraph'
 import Link from 'next/link'
 
 export default function NeuralGraphClient() {
   const [data, setData] = useState<any>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetch('/api/agents/graph').then(r => r.json()).then(setData)
@@ -19,7 +21,16 @@ export default function NeuralGraphClient() {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 24, alignItems: 'start' }} className="grid-cols-1 md:grid-cols-neural">
-      <NeuralGraph data={data} selectedNode={selected} onNodeClick={id => setSelected(id === selected ? null : id)} />
+      <NeuralGraph
+        data={data}
+        selectedNode={selected}
+        onNodeClick={id => {
+          if (id !== 'ceo') {
+            router.push(`/dashboard/agents/${id}`)
+          }
+          setSelected(id === selected ? null : id)
+        }}
+      />
 
       {/* Node detail panel */}
       <div style={{ paddingBottom: 32 }}>
@@ -42,6 +53,19 @@ export default function NeuralGraphClient() {
             <Link href="/agents" style={{ display: 'block', marginTop: 16, fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
               Ver departamento →
             </Link>
+            {selectedNode.id !== 'ceo' && (
+              <button
+                onClick={() => router.push(`/dashboard/agents/${selectedNode.id}`)}
+                style={{
+                  marginTop: 16, width: '100%', padding: '10px 16px',
+                  background: 'var(--lime)', color: 'var(--ink)', border: 'none',
+                  borderRadius: 8, fontFamily: 'var(--f-mono)', fontSize: 11,
+                  letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700,
+                }}
+              >
+                Ver oficina del departamento →
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ padding: '24px 0' }}>

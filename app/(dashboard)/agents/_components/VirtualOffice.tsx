@@ -2,8 +2,25 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import { NUCLEUS_AGENTS, DEPARTMENTS, type DepartmentId } from '@/lib/nucleus'
 import type { AgentRun } from '@/lib/agents/types'
+
+// Mapeo de DepartmentId del nucleus → dept route del panel
+const DEPT_ROUTE: Partial<Record<DepartmentId, string>> = {
+  ventas_crm: 'clientes',
+  developers: 'web-apps',
+  content_factory: 'content',
+  publicidad: 'content',
+  finanzas: 'finanzas',
+  legal_seguridad: 'legal',
+  customer_success: 'clientes',
+  inteligencia: 'innovacion',
+  canales_monetizacion: 'youtube',
+  gestiones: 'ia-auto',
+  rrhh_digital: 'rrhh',
+  cerebro: 'ia-auto',
+}
 
 interface VirtualOfficeProps {
   runs: AgentRun[]
@@ -102,11 +119,30 @@ export default function VirtualOffice({ runs: initialRuns }: VirtualOfficeProps)
 
       {/* Dept label */}
       {activeDept !== 'all' && (
-        <div className="px-3 pb-1 shrink-0">
-          <p className="text-xs text-gray-400">
+        <div className="px-3 pb-1 shrink-0 flex items-center justify-between gap-2">
+          <p className="text-xs text-gray-400 min-w-0 truncate">
             {DEPARTMENTS[activeDept].emoji} {DEPARTMENTS[activeDept].nombre}
             <span className="text-gray-600 ml-1">— {DEPARTMENTS[activeDept].mision.slice(0, 50)}...</span>
           </p>
+          {DEPT_ROUTE[activeDept] && (
+            <Link
+              href={`/dashboard/agents/${DEPT_ROUTE[activeDept]}`}
+              style={{
+                display: 'inline-block',
+                fontFamily: 'var(--f-mono)',
+                fontSize: 11,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: DEPARTMENTS[activeDept].color,
+                textDecoration: 'none',
+                borderBottom: `1px solid ${DEPARTMENTS[activeDept].color}`,
+                paddingBottom: 1,
+                flexShrink: 0,
+              }}
+            >
+              Entrar →
+            </Link>
+          )}
         </div>
       )}
 

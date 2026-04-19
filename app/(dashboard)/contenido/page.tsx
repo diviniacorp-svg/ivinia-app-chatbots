@@ -1,332 +1,344 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase'
-import Link from 'next/link'
+import CreadorRapido from './_components/CreadorRapido'
 
-async function getContentData() {
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface ContentItem {
+  id: string
+  titulo: string | null
+  tipo: string | null
+  plataforma: string | null
+  estado: string | null
+  fecha_publicacion: string | null
+}
+
+interface StatsData {
+  totalPlanificadas: number
+  publicadas: number
+  enBorrador: number
+  estaSemana: number
+  topPlataformas: [string, number][]
+}
+
+// ── Demo fallback ─────────────────────────────────────────────────────────────
+
+const DEMO_ITEMS: ContentItem[] = [
+  { id: '1', titulo: 'Cómo el Turnero IA te ahorra 2hs por día', plataforma: 'instagram', tipo: 'Reel', estado: 'planificado', fecha_publicacion: new Date().toISOString() },
+  { id: '2', titulo: 'Antes: 10 llamadas para dar un turno. Ahora: 0', plataforma: 'tiktok', tipo: 'Post', estado: 'publicado', fecha_publicacion: new Date().toISOString() },
+  { id: '3', titulo: 'Newsletter: IA para PYMEs — Edición Abril', plataforma: 'email', tipo: 'Email', estado: 'borrador', fecha_publicacion: new Date().toISOString() },
+  { id: '4', titulo: 'Case study: Rufina Nails + Chatbot 24hs', plataforma: 'linkedin', tipo: 'Post', estado: 'planificado', fecha_publicacion: new Date().toISOString() },
+  { id: '5', titulo: 'Hook: "¿Cuánto te cuesta cada turno perdido?"', plataforma: 'instagram', tipo: 'Story', estado: 'borrador', fecha_publicacion: new Date().toISOString() },
+]
+
+// ── Data fetching ─────────────────────────────────────────────────────────────
+
+async function getContentData(): Promise<{ items: ContentItem[]; stats: StatsData }> {
   try {
     const db = createAdminClient()
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).toISOString()
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const { data } = await db
+    const { data, error } = await db
       .from('content_calendar')
-      .select('id, titulo, tipo, plataforma, estado, fecha_publicacion, contenido')
+      .select('id, titulo, tipo, plataforma, estado, fecha_publicacion')
       .order('fecha_publicacion', { ascending: false })
       .limit(20)
 
-    const items = (data ?? []) as any[]
+    if (error) throw error
 
-    const thisMonth = items.filter((i: any) => {
-      const d = i.fecha_publicacion
-      return d >= startOfMonth && d <= endOfMonth
-    })
+    const items = (data ?? []) as ContentItem[]
 
-    const totalPlanificado = thisMonth.filter((i: any) => i.estado === 'planificado').length
-    const publicados = thisMonth.filter((i: any) => i.estado === 'publicado').length
-    const borradores = thisMonth.filter((i: any) => i.estado === 'borrador').length
-    const estaSemana = items.filter((i: any) => i.fecha_publicacion >= startOfWeek).length
+    const thisMonth = items.filter(i => i.fecha_publicacion && i.fecha_publicacion >= startOfMonth)
+    const totalPlanificadas = thisMonth.filter(i => i.estado === 'planificado').length
+    const publicadas = thisMonth.filter(i => i.estado === 'publicado').length
+    const enBorrador = thisMonth.filter(i => i.estado === 'borrador').length
+    const estaSemana = items.filter(i => i.fecha_publicacion && i.fecha_publicacion >= now.toISOString() && i.fecha_publicacion <= nextWeek).length
 
     const platCount: Record<string, number> = {}
-    items.forEach((i: any) => {
+    items.forEach(i => {
       if (i.plataforma) platCount[i.plataforma] = (platCount[i.plataforma] ?? 0) + 1
     })
-    const topPlats = Object.entries(platCount).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    const topPlataformas = Object.entries(platCount).sort((a, b) => b[1] - a[1]).slice(0, 3) as [string, number][]
 
-    return { items, totalPlanificado, publicados, borradores, estaSemana, topPlats }
+    return { items: items.length > 0 ? items : DEMO_ITEMS, stats: { totalPlanificadas, publicadas, enBorrador, estaSemana, topPlataformas } }
   } catch {
-    return { items: [], totalPlanificado: 0, publicados: 0, borradores: 0, estaSemana: 0, topPlats: [] }
+    const items = DEMO_ITEMS
+    const platCount: Record<string, number> = {}
+    items.forEach(i => { if (i.plataforma) platCount[i.plataforma] = (platCount[i.plataforma] ?? 0) + 1 })
+    const topPlataformas = Object.entries(platCount).sort((a, b) => b[1] - a[1]).slice(0, 3) as [string, number][]
+    return {
+      items,
+      stats: {
+        totalPlanificadas: items.filter(i => i.estado === 'planificado').length,
+        publicadas: items.filter(i => i.estado === 'publicado').length,
+        enBorrador: items.filter(i => i.estado === 'borrador').length,
+        estaSemana: 2,
+        topPlataformas,
+      },
+    }
   }
 }
 
-const PLATFORM_COLORS: Record<string, string> = {
-  instagram: '#E1306C',
-  tiktok: '#000000',
-  linkedin: '#0077B5',
-  email: '#F59E0B',
-  blog: '#8B5CF6',
-  youtube: '#FF0000',
+// ── Sub-components (server) ───────────────────────────────────────────────────
+
+function EmptyPipeline() {
+  return (
+    <div style={{ padding: '48px 20px', textAlign: 'center', background: 'var(--paper-2)', borderRadius: 8 }}>
+      <div style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted)', marginBottom: 8 }}>
+        No hay contenido en el pipeline todavía.
+      </div>
+      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        Creá tu primer post con el panel de la izquierda →
+      </div>
+    </div>
+  )
 }
 
-const ESTADO_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  planificado: { bg: 'var(--paper-2)', color: 'var(--ink)', label: 'Planificado' },
-  publicado: { bg: 'var(--lime)', color: 'var(--ink)', label: 'Publicado' },
-  borrador: { bg: '#FED7AA', color: '#92400E', label: 'Borrador' },
+const PLATFORM_BADGE: Record<string, React.CSSProperties> = {
+  instagram: { background: '#E1306C', color: 'white' },
+  tiktok: { background: '#000', color: 'white' },
+  linkedin: { background: '#0077B5', color: 'white' },
 }
 
-const QUICK_TEMPLATES = [
-  { label: 'Hook de problema', brief: 'Empezá con una pregunta o dolor del cliente objetivo' },
-  { label: 'Before/After', brief: 'Mostrá el antes y después de usar el producto/servicio' },
-  { label: 'CTA directo', brief: 'Post corto con llamada a la acción clara al final' },
-]
+const ESTADO_BADGE: Record<string, React.CSSProperties> = {
+  planificado: { background: 'rgba(198,255,61,0.15)', color: '#5A7A00' },
+  publicado: { background: 'rgba(52,211,153,0.2)', color: '#065F46' },
+  borrador: { background: 'rgba(251,146,60,0.15)', color: '#9A3412' },
+}
 
-export default async function ContenidoPage() {
-  const { items, totalPlanificado, publicados, borradores, estaSemana, topPlats } = await getContentData()
+const ESTADO_LABEL: Record<string, string> = {
+  planificado: 'Planificado',
+  publicado: 'Publicado',
+  borrador: 'Borrador',
+}
+
+function ContentCard({ item }: { item: ContentItem }) {
+  const plat = (item.plataforma ?? '').toLowerCase()
+  const est = (item.estado ?? 'borrador').toLowerCase()
+  const platStyle = PLATFORM_BADGE[plat] ?? { background: 'var(--paper)', color: 'var(--muted)' }
+  const estadoStyle = ESTADO_BADGE[est] ?? ESTADO_BADGE.borrador
+  const fecha = item.fecha_publicacion
+    ? new Date(item.fecha_publicacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+    : '—'
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
+    <div style={{
+      background: 'var(--paper-2)',
+      border: '1px solid var(--line)',
+      borderRadius: 8,
+      padding: '16px 20px',
+      marginBottom: 4,
+      display: 'flex',
+      gap: 16,
+      alignItems: 'center',
+    }}>
+      <div style={{
+        borderRadius: 8,
+        padding: '4px 10px',
+        fontFamily: 'var(--f-mono)',
+        fontSize: 11,
+        fontWeight: 600,
+        flexShrink: 0,
+        textTransform: 'capitalize',
+        ...platStyle,
+      }}>
+        {item.plataforma ?? '—'}
+      </div>
 
-      {/* Header */}
-      <div style={{ padding: '36px 40px 28px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
-        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-          Dashboard · Contenido
+      <div style={{ flex: 1, fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 500, color: 'var(--ink)', lineHeight: 1.3 }}>
+        {item.titulo ?? 'Sin título'}
+      </div>
+
+      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>
+        {fecha}
+      </div>
+
+      <div style={{
+        borderRadius: 20,
+        padding: '4px 10px',
+        fontFamily: 'var(--f-mono)',
+        fontSize: 10,
+        textTransform: 'uppercase',
+        flexShrink: 0,
+        letterSpacing: '0.06em',
+        ...estadoStyle,
+      }}>
+        {ESTADO_LABEL[est] ?? est}
+      </div>
+    </div>
+  )
+}
+
+function StatsPanel({ data }: { data: StatsData }) {
+  const maxCount = data.topPlataformas[0]?.[1] ?? 1
+
+  return (
+    <div style={{
+      background: 'var(--paper-2)',
+      border: '1px solid var(--line)',
+      borderRadius: 12,
+      padding: 20,
+      position: 'sticky',
+      top: 24,
+    }}>
+      <div style={{
+        fontFamily: 'var(--f-mono)',
+        fontSize: 10,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: 'var(--muted)',
+        marginBottom: 20,
+      }}>
+        Este mes
+      </div>
+
+      {[
+        { label: 'Total planificadas', value: data.totalPlanificadas },
+        { label: 'Publicadas', value: data.publicadas },
+        { label: 'En borrador', value: data.enBorrador },
+        { label: 'Esta semana', value: data.estaSemana },
+      ].map(m => (
+        <div key={m.label} style={{ marginBottom: 20 }}>
+          <div style={{
+            fontFamily: 'var(--f-display)',
+            fontSize: 32,
+            fontWeight: 700,
+            color: 'var(--ink)',
+            lineHeight: 1,
+            marginBottom: 4,
+          }}>
+            {m.value}
+          </div>
+          <div style={{
+            fontFamily: 'var(--f-mono)',
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--muted)',
+          }}>
+            {m.label}
+          </div>
         </div>
-        <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 'clamp(24px, 3vw, 36px)', color: 'var(--ink)', letterSpacing: '-0.03em', margin: 0 }}>
+      ))}
+
+      {data.topPlataformas.length > 0 && (
+        <>
+          <div style={{ borderTop: '1px solid var(--line)', margin: '4px 0 20px' }} />
+          <div style={{
+            fontFamily: 'var(--f-mono)',
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--muted)',
+            marginBottom: 14,
+          }}>
+            Top plataformas
+          </div>
+          {data.topPlataformas.map(([plat, count]) => (
+            <div key={plat} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)', textTransform: 'capitalize' }}>
+                  {plat}
+                </span>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)' }}>
+                  {count}
+                </span>
+              </div>
+              <div style={{ background: 'var(--line)', borderRadius: 4, height: 4 }}>
+                <div style={{
+                  background: 'var(--lime)',
+                  borderRadius: 4,
+                  height: 4,
+                  width: `${(count / maxCount) * 100}%`,
+                }} />
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default async function ContenidoPage() {
+  const { items, stats } = await getContentData()
+
+  return (
+    <div style={{ padding: '32px 40px', minHeight: '100vh', background: 'var(--paper)' }}>
+
+      {/* HEADER */}
+      <div style={{ marginBottom: 40 }}>
+        <h1 style={{
+          fontFamily: 'var(--f-display)',
+          fontWeight: 700,
+          fontSize: 32,
+          letterSpacing: '-0.03em',
+          color: 'var(--ink)',
+          marginBottom: 6,
+          margin: 0,
+        }}>
           Fábrica de Contenido
         </h1>
-        <p style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontSize: 15, color: 'var(--muted-2)', marginTop: 6 }}>
+        <p style={{
+          fontFamily: 'var(--f-display)',
+          fontStyle: 'italic',
+          fontSize: 16,
+          color: 'var(--muted)',
+          marginTop: 6,
+          marginBottom: 0,
+        }}>
           Tu pipeline de contenido en tiempo real
         </p>
       </div>
 
-      {/* 3-col layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 240px', gap: '24px', padding: '28px 40px', alignItems: 'start' }}>
+      {/* 3 COLUMNAS */}
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 220px', gap: 24, alignItems: 'start' }}>
 
-        {/* ── Col izquierda: Creación rápida ── */}
-        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-            Creación rápida
-          </div>
+        {/* COL IZQ — CreadorRapido (client component) */}
+        <CreadorRapido />
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <label style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-              Tipo
-            </label>
-            <select style={{
-              width: '100%', padding: '8px 12px', border: '1px solid var(--line)',
-              borderRadius: 8, background: 'var(--paper-2)', color: 'var(--ink)',
-              fontFamily: 'var(--f-display)', fontSize: 14, outline: 'none',
+        {/* COL CENTRO — Pipeline */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h2 style={{
+              fontFamily: 'var(--f-display)',
+              fontWeight: 600,
+              fontSize: 18,
+              color: 'var(--ink)',
+              margin: 0,
             }}>
-              <option value="post">Post</option>
-              <option value="reel">Reel</option>
-              <option value="story">Story</option>
-              <option value="email">Email</option>
-              <option value="blog">Blog</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <label style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-              Plataforma
-            </label>
-            <select style={{
-              width: '100%', padding: '8px 12px', border: '1px solid var(--line)',
-              borderRadius: 8, background: 'var(--paper-2)', color: 'var(--ink)',
-              fontFamily: 'var(--f-display)', fontSize: 14, outline: 'none',
-            }}>
-              <option value="instagram">Instagram</option>
-              <option value="tiktok">TikTok</option>
-              <option value="linkedin">LinkedIn</option>
-              <option value="email">Email</option>
-              <option value="blog">Blog</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <label style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-              Tema / Brief
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Describí de qué trata el contenido..."
-              style={{
-                width: '100%', padding: '10px 12px', border: '1px solid var(--line)',
-                borderRadius: 8, background: 'var(--paper-2)', color: 'var(--ink)',
-                fontFamily: 'var(--f-display)', fontSize: 14, resize: 'vertical',
-                outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <button
-            onClick={() => console.log('Generar con IA')}
-            style={{
-              width: '100%', padding: '11px 0', borderRadius: 8,
-              background: 'var(--ink)', color: 'var(--lime)',
-              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
-              textTransform: 'uppercase', border: 'none', cursor: 'pointer',
-            }}
-          >
-            Generar con IA →
-          </button>
-
-          {/* Plantillas rápidas */}
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>
-              Plantillas rápidas
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {QUICK_TEMPLATES.map(t => (
-                <div
-                  key={t.label}
-                  style={{
-                    padding: '10px 12px', border: '1px solid var(--line)',
-                    borderRadius: 8, background: 'var(--paper-2)', cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', marginBottom: 3 }}>
-                    {t.label}
-                  </div>
-                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)', lineHeight: 1.4 }}>
-                    {t.brief}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Col central: Calendario ── */}
-        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{
-            padding: '16px 20px', borderBottom: '1px solid var(--line)',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-              Calendario · últimos 20 items
-            </div>
+              Pipeline de contenido
+            </h2>
             <button style={{
-              width: 28, height: 28, borderRadius: 6, border: '1px solid var(--line)',
-              background: 'var(--paper-2)', color: 'var(--ink)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--f-mono)', fontSize: 16, lineHeight: 1,
+              background: 'var(--lime)',
+              color: 'var(--ink)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 16px',
+              fontFamily: 'var(--f-mono)',
+              fontSize: 11,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              fontWeight: 700,
             }}>
-              +
+              + Nuevo
             </button>
           </div>
 
-          {items.length === 0 ? (
-            <div style={{ padding: '48px 20px', textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted-2)', marginBottom: 16 }}>
-                No hay contenido en el calendario todavía.
-              </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em' }}>
-                Creá tu primer post con el panel de la izquierda →
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {items.map((item: any, i: number) => {
-                const platColor = PLATFORM_COLORS[item.plataforma?.toLowerCase()] ?? 'var(--muted)'
-                const estado = ESTADO_STYLES[item.estado?.toLowerCase()] ?? ESTADO_STYLES.borrador
-                const fecha = item.fecha_publicacion
-                  ? new Date(item.fecha_publicacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
-                  : '—'
-
-                return (
-                  <div
-                    key={item.id}
-                    style={{
-                      padding: '14px 20px',
-                      borderBottom: i < items.length - 1 ? '1px solid var(--line)' : 'none',
-                      display: 'flex', alignItems: 'center', gap: 12,
-                    }}
-                  >
-                    {/* Platform badge */}
-                    <div style={{
-                      minWidth: 8, height: 8, borderRadius: '50%',
-                      background: platColor, flexShrink: 0,
-                    }} />
-
-                    {/* Platform name */}
-                    <div style={{
-                      fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
-                      textTransform: 'uppercase', color: platColor, minWidth: 72, flexShrink: 0,
-                    }}>
-                      {item.plataforma ?? '—'}
-                    </div>
-
-                    {/* Title */}
-                    <div style={{ flex: 1, fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)', lineHeight: 1.3 }}>
-                      {item.titulo ?? 'Sin título'}
-                    </div>
-
-                    {/* Fecha */}
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', minWidth: 48, textAlign: 'right' }}>
-                      {fecha}
-                    </div>
-
-                    {/* Estado badge */}
-                    <div style={{
-                      padding: '3px 8px', borderRadius: 4,
-                      background: estado.bg, color: estado.color,
-                      fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
-                      textTransform: 'uppercase', flexShrink: 0,
-                    }}>
-                      {estado.label}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          {items.length === 0
+            ? <EmptyPipeline />
+            : items.map(item => <ContentCard key={item.id} item={item} />)
+          }
         </div>
 
-        {/* ── Col derecha: Stats ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
-              Stats del mes
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                { label: 'Total planificado', value: totalPlanificado },
-                { label: 'Publicados', value: publicados },
-                { label: 'En borrador', value: borradores },
-                { label: 'Esta semana', value: estaSemana },
-              ].map(s => (
-                <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)' }}>
-                    {s.label}
-                  </div>
-                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 22, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
-                    {s.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {topPlats.length > 0 && (
-            <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 20 }}>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
-                Plataformas activas
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {topPlats.map(([plat, count]) => (
-                  <div key={plat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: PLATFORM_COLORS[plat.toLowerCase()] ?? 'var(--muted)',
-                      }} />
-                      <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)', textTransform: 'capitalize' }}>
-                        {plat}
-                      </div>
-                    </div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>
-                      {count} posts
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Link
-            href="/dashboard/contenido/pipeline"
-            style={{
-              display: 'block', padding: '12px 16px', borderRadius: 10,
-              background: 'var(--ink)', color: 'var(--lime)',
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', textDecoration: 'none', textAlign: 'center',
-            }}
-          >
-            Pipeline IA →
-          </Link>
-        </div>
+        {/* COL DER — Stats */}
+        <StatsPanel data={stats} />
 
       </div>
     </div>
