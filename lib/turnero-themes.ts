@@ -84,6 +84,27 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     particleEmojis: ['📊', '💼', '📈', '✅'],
     label: 'Contabilidad',
   },
+  nails: {
+    emoji: '💅',
+    bg: 'radial-gradient(ellipse at top, #1a0014 0%, #10000c 60%, #080808 100%)',
+    accentGlow: '255, 80, 160',
+    particleEmojis: ['💅', '✨', '🌸', '💄'],
+    label: 'Nail Bar',
+  },
+  hotel: {
+    emoji: '🏨',
+    bg: 'radial-gradient(ellipse at top, #1a1500 0%, #100e00 60%, #080808 100%)',
+    accentGlow: '220, 180, 60',
+    particleEmojis: ['🏨', '🌟', '🛎️', '☕'],
+    label: 'Hotel',
+  },
+  hosteria: {
+    emoji: '🏡',
+    bg: 'radial-gradient(ellipse at top, #0a1a0a 0%, #060f06 60%, #080808 100%)',
+    accentGlow: '80, 200, 80',
+    particleEmojis: ['🏡', '🌿', '☕', '🌄'],
+    label: 'Hostería',
+  },
   default: {
     emoji: '📅',
     bg: 'radial-gradient(ellipse at top, #111827 0%, #0a0f1a 60%, #080808 100%)',
