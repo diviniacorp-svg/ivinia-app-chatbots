@@ -39,8 +39,10 @@ export default function Footer() {
             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>Productos</div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
               {[
+                { href: '/precios', label: 'Precios' },
+                { href: '/academy', label: 'Academy' },
+                { href: '/auditoria', label: 'Auditoría gratis' },
                 { href: '/rubros', label: 'Turnero' },
-                { href: '/dashboard', label: 'Panel DIVINIA' },
               ].map(l => (
                 <li key={l.label}><a href={l.href} style={{ color: 'var(--ink)', textDecoration: 'none' }}>{l.label}</a></li>
               ))}
@@ -66,7 +68,11 @@ export default function Footer() {
           letterSpacing: '0.08em', color: 'var(--muted)',
         }}>
           <span>© 2026 DIVINIA — todos los derechos reservados</span>
-          <span>Operando para PYMEs de LATAM · hecho en San Luis, AR</span>
+          <div style={{ display: 'flex', gap: 20 }}>
+            <a href="/terminos" style={{ color: 'var(--muted)', textDecoration: 'none' }}>Términos</a>
+            <a href="/privacidad" style={{ color: 'var(--muted)', textDecoration: 'none' }}>Privacidad</a>
+            <span>Hecho en San Luis, AR</span>
+          </div>
         </div>
       </div>
     </footer>
