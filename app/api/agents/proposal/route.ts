@@ -19,12 +19,12 @@ export async function POST(req: NextRequest) {
     })
 
     const db = createAdminClient()
-    db.from('agent_runs').insert({
+    Promise.resolve(db.from('agent_runs').insert({
       agent: 'generador-propuestas', department: 'clientes',
       action: `Propuesta para ${company_name} — ${servicio}`,
       status: 'success', duration_ms: Date.now() - t0,
       metadata: { rubro, servicio },
-    }).then(() => {}).catch(() => {})
+    })).catch(() => {})
 
     return NextResponse.json({ ok: true, ...result })
   } catch (err) {

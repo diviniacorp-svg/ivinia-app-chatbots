@@ -32,12 +32,12 @@ export async function POST(req: NextRequest) {
       })
 
       // Log de agent_run para NeuralGraph
-      db.from('agent_runs').insert({
+      Promise.resolve(db.from('agent_runs').insert({
         agent: 'auditoria-digital', department: 'clientes',
         action: `Auditoría de ${company_name} (${rubro})`,
         status: 'success', duration_ms: Date.now() - t0,
         metadata: { score: result.score_general, rubro, city },
-      }).then(() => {}).catch(() => {})
+      })).catch(() => {})
 
       // Notificación inmediata a Joaco por email
       sendAuditLeadNotification({

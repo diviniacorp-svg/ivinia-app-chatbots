@@ -48,17 +48,31 @@ const areas = [
     matches: ['/dashboard/academy'],
   },
   {
-    href: '/pagos',
+    href: '/avatares',
+    label: 'AVATARES IA',
+    sub: 'HeyGen · ElevenLabs · Portavoces',
+    color: '#818CF8', colorDeep: '#4338CA', shade: 'rgba(20,10,80,0.4)',
+    matches: ['/avatares'],
+  },
+  {
+    href: '/youtube',
+    label: 'YOUTUBE',
+    sub: 'Guiones · Repurposing · Canal',
+    color: '#FF6B35', colorDeep: '#CC4A1A', shade: 'rgba(80,20,0,0.4)',
+    matches: ['/youtube'],
+  },
+  {
+    href: '/finanzas',
     label: 'FINANZAS',
-    sub: 'Pagos · MRR · Revenue',
+    sub: 'MRR · Costos · Monotributo',
     color: '#FCD34D', colorDeep: '#B45309', shade: 'rgba(60,30,0,0.4)',
-    matches: ['/pagos', '/turnos'],
+    matches: ['/finanzas'],
   },
   {
     href: '/market',
     label: 'MARKET',
     sub: 'San Luis · Comercios',
-    color: '#FF6B35', colorDeep: '#CC4A1A', shade: 'rgba(80,20,0,0.4)',
+    color: '#10B981', colorDeep: '#059669', shade: 'rgba(0,50,30,0.4)',
     matches: ['/market'],
   },
 ]
@@ -67,6 +81,7 @@ const configLinks = [
   { href: '/herramientas', label: 'Herramientas IA' },
   { href: '/chatbots', label: 'Chatbots' },
   { href: '/turnos', label: 'Turnero' },
+  { href: '/pagos', label: 'Generar pago MP' },
   { href: '/templates', label: 'Templates' },
 ]
 

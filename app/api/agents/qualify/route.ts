@@ -24,12 +24,12 @@ export async function POST(req: NextRequest) {
       }).eq('id', lead_id)
     }
 
-    db.from('agent_runs').insert({
+    Promise.resolve(db.from('agent_runs').insert({
       agent: 'calificador-leads', department: 'clientes',
       action: `Calificó ${company_name} (${rubro}) → score ${result.score}`,
       status: 'success', duration_ms: Date.now() - t0,
       metadata: { score: result.score, lead_id },
-    }).then(() => {}).catch(() => {})
+    })).catch(() => {})
 
     return NextResponse.json({ ok: true, ...result })
   } catch (err) {

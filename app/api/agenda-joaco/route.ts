@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const db = createAdminClient()
     const { data, error } = await db
       .from('nucleus_memory')
-      .insert({ tipo: 'tarea', agente: 'joaco', contenido, importancia, tags: [...new Set([...tags, 'agenda'])], activo: true })
+      .insert({ tipo: 'tarea', agente: 'joaco', contenido, importancia, tags: Array.from(new Set([...tags, 'agenda'])), activo: true })
       .select()
       .single()
     if (error) throw error

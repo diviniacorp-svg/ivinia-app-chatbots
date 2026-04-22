@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     titulo = parsed.titulo || titulo
   } catch { /* usa default */ }
 
-  const company = (data.leads as { company_name: string } | null)?.company_name || ''
+  const company = (data.leads as unknown as { company_name: string } | null)?.company_name || ''
 
   return {
     title: `${titulo}${company ? ` — ${company}` : ''} | DIVINIA`,
