@@ -8,7 +8,7 @@ export default async function AgentsPage() {
   const db = createAdminClient()
 
   const [{ data: runs }, { data: chats }, { data: lastPlan }] = await Promise.all([
-    db.from('agent_runs').select('*').order('started_at', { ascending: false }).limit(30),
+    db.from('agent_runs').select('*').order('created_at', { ascending: false }).limit(30),
     db.from('agent_chats').select('*').order('created_at', { ascending: true }).limit(60),
     db.from('agent_logs')
       .select('payload, created_at')
