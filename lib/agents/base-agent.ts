@@ -13,7 +13,7 @@ export abstract class BaseAgent {
     const db = createAdminClient()
     const { data } = await db
       .from('agent_runs')
-      .insert({ agent_name: this.name, status: 'running', started_at: new Date().toISOString() })
+      .insert({ agent: this.name, status: 'running', created_at: new Date().toISOString() })
       .select('id')
       .single()
     this.runId = data?.id ?? null
@@ -34,7 +34,7 @@ export abstract class BaseAgent {
     if (!this.runId) return
     await createAdminClient()
       .from('agent_runs')
-      .update({ status: 'completed', completed_at: new Date().toISOString(), result })
+      .update({ status: 'success', duration_ms: 0 })
       .eq('id', this.runId)
   }
 
@@ -42,7 +42,7 @@ export abstract class BaseAgent {
     if (!this.runId) return
     await createAdminClient()
       .from('agent_runs')
-      .update({ status: 'error', completed_at: new Date().toISOString(), error })
+      .update({ status: 'error', error_msg: error })
       .eq('id', this.runId)
   }
 

@@ -2,6 +2,11 @@ export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase'
 import CreadorRapido from './_components/CreadorRapido'
+import AgentChat from '@/components/dashboard/AgentChat'
+
+const COPY_AGENT = { id: 'copy', nombre: 'Copy',  emoji: '✍️', rol: 'Copywriter IA',  model: 'sonnet', color: '#E879F9' }
+const DISE_AGENT = { id: 'dise', nombre: 'Dise',  emoji: '🖌️', rol: 'Diseñador IA',   model: 'haiku',  color: '#E879F9' }
+const REEL_AGENT = { id: 'reel', nombre: 'Reel',  emoji: '🎬', rol: 'Video Creator',  model: 'haiku',  color: '#E879F9' }
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -341,6 +346,31 @@ export default async function ContenidoPage() {
         <StatsPanel data={stats} />
 
       </div>
+
+      {/* Content Factory Team */}
+      <div style={{ padding: '0 40px 40px' }}>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+          Content Factory — equipo IA en tiempo real
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12 }}>
+          <AgentChat
+            agent={COPY_AGENT}
+            suggestions={['Escribí un caption para Instagram de una estética', 'Hook para reel: "antes y después del turnero"', 'CTA para cierre de mes DIVINIA']}
+            collapsed={false}
+          />
+          <AgentChat
+            agent={DISE_AGENT}
+            suggestions={['Prompt Freepik para post de peluquería', 'Paleta de colores para clínica dental', 'Prompt Canva: carrusel educativo IA']}
+            collapsed={true}
+          />
+          <AgentChat
+            agent={REEL_AGENT}
+            suggestions={['Prompt Freepik Kling para reel de gym', 'Storyboard de 6 clips para reel', 'Prompt de video 9:16 mostrando el chatbot']}
+            collapsed={true}
+          />
+        </div>
+      </div>
+
     </div>
   )
 }

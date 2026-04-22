@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import AgentChat from '@/components/dashboard/AgentChat'
+
+const GUIONISTA = { id: 'copy',     nombre: 'Copy',     emoji: '✍️', rol: 'Guionista IA',    model: 'sonnet', color: '#FF6B35' }
+const REEL_AGENT = { id: 'reel',    nombre: 'Reel',     emoji: '🎬', rol: 'Video Creator',   model: 'haiku',  color: '#FF6B35' }
+const NOVA_AGENT = { id: 'nova',    nombre: 'Nova',     emoji: '🔬', rol: 'Tech Researcher', model: 'sonnet', color: '#FF6B35' }
 
 const PILARES = [
   { titulo: 'Tutoriales IA para PYMEs', desc: 'Cómo automatizar X en tu negocio con IA. Hook: "Ahorrá 3 horas por día haciendo esto"', color: '#E879F9', tag: 'Tutorial' },
@@ -238,6 +243,30 @@ export default function YouTubePage() {
           }}>
             {ESTRUCTURA_VIDEO}
           </pre>
+        </div>
+
+      {/* Equipo de YouTube */}
+        <div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+            Equipo multimedia — consultores en tiempo real
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12 }}>
+            <AgentChat
+              agent={GUIONISTA}
+              suggestions={['Escribí el hook para un video sobre IA en peluquerías', 'Dame 5 ideas de títulos SEO para YouTube', 'Optimizá esta descripción para algoritmo']}
+              collapsed={false}
+            />
+            <AgentChat
+              agent={REEL_AGENT}
+              suggestions={['Prompt para Freepik: reel mostrando resultados del turnero', 'Cómo corto este video para TikTok', 'Estructura de Reel de 30 segundos']}
+              collapsed={true}
+            />
+            <AgentChat
+              agent={NOVA_AGENT}
+              suggestions={['Qué herramientas de video IA están saliendo ahora', 'Comparame Higgsfield vs Seedance', 'Tendencias de formato en YouTube 2025']}
+              collapsed={true}
+            />
+          </div>
         </div>
 
       </div>

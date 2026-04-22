@@ -1,6 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import AgentChat from '@/components/dashboard/AgentChat'
+
+const LUNA   = { id: 'luna',   nombre: 'Luna',   emoji: '🌙', rol: 'CRM Manager',     model: 'sonnet', color: '#10B981' }
+const NICO   = { id: 'nico',   nombre: 'Nico',   emoji: '🤝', rol: 'Vendedor IA',     model: 'sonnet', color: '#10B981' }
+const CLOSER = { id: 'closer', nombre: 'Closer', emoji: '🎯', rol: 'Closer de Ventas', model: 'sonnet', color: '#10B981' }
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface Lead {
@@ -757,6 +762,30 @@ export default function ComercialPage() {
           onClose={() => setShowNew(false)}
         />
       )}
+
+      {/* Equipo Comercial IA */}
+      <div style={{ padding: '0 40px 40px' }}>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+          Equipo comercial — estrategas en tiempo real
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12 }}>
+          <AgentChat
+            agent={LUNA}
+            suggestions={['Analizá el pipeline de esta semana', 'Prioridad de seguimiento hoy', 'Cómo califico este lead nuevo']}
+            collapsed={false}
+          />
+          <AgentChat
+            agent={NICO}
+            suggestions={['Escribí un mensaje de WhatsApp para una peluquería', 'Script para llamada de seguimiento', 'Objeción: "es muy caro"']}
+            collapsed={true}
+          />
+          <AgentChat
+            agent={CLOSER}
+            suggestions={['Técnica de cierre para un gimnasio', 'Negociación de precio con PYME', 'Cómo presento la propuesta final']}
+            collapsed={true}
+          />
+        </div>
+      </div>
     </div>
   )
 }

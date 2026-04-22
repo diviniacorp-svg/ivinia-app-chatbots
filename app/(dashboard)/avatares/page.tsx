@@ -1,6 +1,11 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
+import AgentChat from '@/components/dashboard/AgentChat'
+
+const AVATAR_AGENT  = { id: 'avatar',   nombre: 'Avatar',   emoji: '🎭', rol: 'Diseñador Avatares', model: 'sonnet', color: '#818CF8' }
+const DIRECTOR_AGENT= { id: 'director', nombre: 'Director', emoji: '🎥', rol: 'Director Video IA',   model: 'sonnet', color: '#818CF8' }
+const CLON_AGENT    = { id: 'clon',     nombre: 'Clon',     emoji: '🗣️', rol: 'Voice Cloner',        model: 'haiku',  color: '#818CF8' }
 
 const HERRAMIENTAS = [
   {
@@ -209,6 +214,30 @@ export default function AvatarIAPage() {
             }}>
               Ir al CRM →
             </Link>
+          </div>
+        </div>
+
+      {/* Agentes del departamento */}
+        <div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+            Equipo de Avatares IA — consultores en tiempo real
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12 }}>
+            <AgentChat
+              agent={AVATAR_AGENT}
+              suggestions={['Diseñá un avatar para una clínica dental', 'Qué herramienta conviene para este cliente', 'Presupuestame un portavoz corporativo']}
+              collapsed={false}
+            />
+            <AgentChat
+              agent={DIRECTOR_AGENT}
+              suggestions={['¿Cómo estructuro un pack de 10 videos?', 'Script para video de presentación de empresa', 'Workflow de producción para esta semana']}
+              collapsed={true}
+            />
+            <AgentChat
+              agent={CLON_AGENT}
+              suggestions={['¿Cómo clono la voz de un cliente?', 'Qué audio necesito de muestra para ElevenLabs', 'Opciones de voz para una farmacia']}
+              collapsed={true}
+            />
           </div>
         </div>
 

@@ -2,6 +2,10 @@ export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase'
 import Link from 'next/link'
+import AgentChat from '@/components/dashboard/AgentChat'
+
+const FRANCO = { id: 'franco', nombre: 'Franco', emoji: '💹', rol: 'Contador IA', model: 'sonnet', color: '#FCD34D' }
+const MILA   = { id: 'mila',   nombre: 'Mila',   emoji: '🏛️', rol: 'Fiscal AFIP',      model: 'sonnet', color: '#FCD34D' }
 
 async function getFinanzasData() {
   const db = createAdminClient()
@@ -251,6 +255,25 @@ export default async function FinanzasPage() {
               )}
             </div>
           )}
+        </div>
+
+      {/* Agentes financieros */}
+        <div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+            Consultores IA del departamento
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12 }}>
+            <AgentChat
+              agent={FRANCO}
+              suggestions={['¿Cuál es nuestro margen bruto este mes?', 'Analizá los costos de IA', 'Proyectá el MRR para el próximo mes']}
+              collapsed={false}
+            />
+            <AgentChat
+              agent={MILA}
+              suggestions={['¿Cuándo vence el monotributo?', 'Qué categoría de monotributo corresponde', 'Checklist AFIP del mes']}
+              collapsed={true}
+            />
+          </div>
         </div>
 
       </div>
