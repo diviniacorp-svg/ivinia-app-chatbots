@@ -120,14 +120,14 @@ export default async function DeptPage({ params }: { params: { dept: string } })
       .order('date', { ascending: false })
       .limit(15),
     db.from('agent_runs')
-      .select('id, agent_name, status, started_at, completed_at')
-      .ilike('agent_name', `%${keyword}%`)
-      .order('started_at', { ascending: false })
+      .select('id, agent, status, created_at, duration_ms')
+      .ilike('agent', `%${keyword}%`)
+      .order('created_at', { ascending: false })
       .limit(8),
     db.from('agent_runs')
-      .select('id, agent_name, status')
-      .ilike('agent_name', `%${keyword}%`)
-      .gte('started_at', oneHourAgo),
+      .select('id, agent, status')
+      .ilike('agent', `%${keyword}%`)
+      .gte('created_at', oneHourAgo),
   ])
 
   const hasActivity = (logs && logs.length > 0) || (runs && runs.length > 0)
@@ -307,7 +307,7 @@ export default async function DeptPage({ params }: { params: { dept: string } })
                           color: 'var(--ink)',
                           flex: 1,
                         }}>
-                          {run.agent_name}
+                          {(run as any).agent ?? (run as any).agent_name}
                         </span>
                         <span style={{
                           fontFamily: 'var(--f-mono)',
@@ -325,7 +325,7 @@ export default async function DeptPage({ params }: { params: { dept: string } })
                           fontSize: 10,
                           color: 'var(--muted)',
                         }}>
-                          {formatDate(run.started_at)}
+                          {formatDate((run as any).created_at ?? (run as any).started_at)}
                         </span>
                       </div>
                     )
