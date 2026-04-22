@@ -14,13 +14,31 @@ const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto'
 
 type PastAppt = { service_name: string; appointment_date: string; appointment_time: string; status: string }
 
+// ── Background animado por rubro ─────────────────────────────────
+function RubroBackground({ accentRgb }: { accentRgb: string }) {
+  return (
+    <>
+      <style>{`
+        @keyframes orb1 { 0%,100% { transform:translate(0,0) scale(1); } 33% { transform:translate(80px,-60px) scale(1.15); } 66% { transform:translate(-40px,70px) scale(0.9); } }
+        @keyframes orb2 { 0%,100% { transform:translate(0,0) scale(1); } 33% { transform:translate(-90px,50px) scale(1.1); } 66% { transform:translate(60px,-80px) scale(1.05); } }
+        @keyframes orb3 { 0%,100% { transform:translate(0,0) scale(1); } 50% { transform:translate(40px,55px) scale(0.85); } }
+      `}</style>
+      <div style={{ position:'fixed', inset:0, background:'#060609', zIndex:0 }} />
+      <div style={{ position:'fixed', top:'-25vh', left:'-15vw', width:'75vw', height:'75vw', borderRadius:'50%', background:`radial-gradient(circle, rgba(${accentRgb},0.38) 0%, transparent 68%)`, filter:'blur(72px)', animation:'orb1 28s ease-in-out infinite', zIndex:0, pointerEvents:'none' }} />
+      <div style={{ position:'fixed', bottom:'-25vh', right:'-15vw', width:'80vw', height:'80vw', borderRadius:'50%', background:`radial-gradient(circle, rgba(${accentRgb},0.22) 0%, transparent 68%)`, filter:'blur(96px)', animation:'orb2 36s ease-in-out infinite', zIndex:0, pointerEvents:'none' }} />
+      <div style={{ position:'fixed', top:'35vh', right:'5vw', width:'45vw', height:'45vw', borderRadius:'50%', background:`radial-gradient(circle, rgba(${accentRgb},0.1) 0%, transparent 68%)`, filter:'blur(40px)', animation:'orb3 22s ease-in-out infinite reverse', zIndex:0, pointerEvents:'none' }} />
+    </>
+  )
+}
+
 // ── Partículas flotantes ──────────────────────────────────────────
-const PARTICLE_DATA = Array.from({ length: 12 }, (_, i) => ({
-  left: 3 + ((i * 73) % 88),
+const PARTICLE_DATA = Array.from({ length: 14 }, (_, i) => ({
+  left: 3 + ((i * 73) % 90),
   top: 5 + ((i * 53) % 85),
-  size: 14 + ((i * 37) % 18),
-  delay: (i * 0.45) % 4,
-  duration: 4 + ((i * 23) % 3),
+  size: 12 + ((i * 31) % 20),
+  delay: (i * 0.55) % 5,
+  duration: 5 + ((i * 19) % 5),
+  blur: i % 3 === 0 ? 2 : 0,
 }))
 
 function FloatingParticles({ emojis }: { emojis: string[] }) {
@@ -37,8 +55,9 @@ function FloatingParticles({ emojis }: { emojis: string[] }) {
             pointerEvents: 'none',
             zIndex: 0,
             animation: `dp-float ${p.duration}s ${p.delay}s ease-in-out infinite`,
-            opacity: 0.3,
+            opacity: p.blur ? 0.15 : 0.28,
             userSelect: 'none',
+            filter: p.blur ? `blur(${p.blur}px)` : undefined,
           }}
         >
           {emojis[i % emojis.length]}
@@ -459,7 +478,7 @@ export default function BookingWizard({
   // ── Shared layout wrapper ──
   const pageStyle: React.CSSProperties = {
     minHeight: '100vh',
-    background: theme.bg,
+    background: 'transparent',
     position: 'relative',
     overflowX: 'hidden',
   }
@@ -488,11 +507,13 @@ export default function BookingWizard({
     )
     return (
       <div style={pageStyle}>
+        <RubroBackground accentRgb={theme.accentGlow} />
         <FloatingParticles emojis={theme.particleEmojis} />
         <style>{`
           @keyframes dp-float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-22px) rotate(-8deg); }
+            66% { transform: translateY(-10px) rotate(12deg); }
           }
           @keyframes dp-circle-draw {
             to { stroke-dashoffset: 0; }
@@ -603,11 +624,13 @@ export default function BookingWizard({
   if (step === 'form') {
     return (
       <div style={pageStyle}>
+        <RubroBackground accentRgb={theme.accentGlow} />
         <FloatingParticles emojis={theme.particleEmojis} />
         <style>{`
           @keyframes dp-float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-22px) rotate(-8deg); }
+            66% { transform: translateY(-10px) rotate(12deg); }
           }
           @keyframes dp-slide-in {
             from { opacity: 0; transform: translateY(20px); }
@@ -765,11 +788,13 @@ export default function BookingWizard({
   // ── PASO SELECT ─────────────────────────────────────────────────
   return (
     <div style={pageStyle}>
+      <RubroBackground accentRgb={theme.accentGlow} />
       <FloatingParticles emojis={theme.particleEmojis} />
       <style>{`
         @keyframes dp-float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
-          50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-22px) rotate(-8deg); }
+          66% { transform: translateY(-10px) rotate(12deg); }
         }
         @keyframes dp-slide-in {
           from { opacity: 0; transform: translateY(20px); }
