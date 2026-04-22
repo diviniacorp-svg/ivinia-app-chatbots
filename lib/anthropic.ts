@@ -179,6 +179,147 @@ JSON con: { "caption": "...", "hashtags": ["...", ...], "cta": "...", "tipo": ".
   return json as InstagramPost
 }
 
+// ─── AGENTE: Auditoría Digital ────────────────────────────────────────────────
+export interface DigitalAudit {
+  score_general: number              // 0-100
+  resumen_ejecutivo: string          // 2-3 oraciones, impacto real
+  web: {
+    score: number
+    estado: string
+    problemas: string[]
+    oportunidades: string[]
+  }
+  seo: {
+    score: number
+    estado: string
+    problemas: string[]
+    keywords_perdidas: string[]
+  }
+  redes_sociales: {
+    score: number
+    estado: string
+    frecuencia: string
+    problemas: string[]
+  }
+  mensajeria: {
+    score: number
+    tiene_whatsapp_business: boolean
+    tiene_chatbot: boolean
+    tiempo_respuesta_estimado: string
+    problemas: string[]
+  }
+  publicidad: {
+    score: number
+    invierte_en_ads: boolean
+    canales_detectados: string[]
+    problemas: string[]
+  }
+  recomendaciones: Array<{
+    prioridad: 'alta' | 'media' | 'baja'
+    area: string
+    accion: string
+    impacto_estimado: string
+    servicio_divinia: string
+    precio_estimado: string
+  }>
+  mensaje_wa_audit: string           // WA para compartir el informe
+  cta: string                        // llamada a la acción
+}
+
+export async function auditarNegocio(params: {
+  company_name: string
+  rubro: string
+  city: string
+  website?: string
+  instagram?: string
+  facebook?: string
+  google_maps?: string
+  notas_adicionales?: string
+}): Promise<DigitalAudit> {
+  const system = `${DIVINIA_SYSTEM}
+
+Sos el agente Auditor Digital de DIVINIA. Tu especialidad es analizar la presencia digital de una PYME argentina y encontrar exactamente dónde está perdiendo dinero por no tener IA ni automatización.
+Sos honesto, directo y específico. No das puntajes inflados. Si algo está mal, lo decís sin rodeos.
+Respondé SIEMPRE con JSON válido, sin markdown, sin texto extra.`
+
+  const productosAudit = [
+    'Chatbot WhatsApp básico: $150.000 (48hs)',
+    'Chatbot WhatsApp pro: $250.000 (1 semana)',
+    'Landing page: $100.000 (24-48hs)',
+    'Sitio web completo: $300.000-$500.000',
+    'Pack 30 posts/mes redes: $80.000/mes',
+    'Automatización ventas completa: $350.000',
+    'Avatar IA corporativo: $200.000-$400.000',
+  ].join('\n')
+
+  const user = `Auditá la presencia digital de este negocio:
+
+Empresa: ${params.company_name}
+Rubro: ${params.rubro}
+Ciudad: ${params.city}
+${params.website ? `Web: ${params.website}` : 'Web: NO TIENE'}
+${params.instagram ? `Instagram: ${params.instagram}` : 'Instagram: desconocido'}
+${params.facebook ? `Facebook: ${params.facebook}` : ''}
+${params.google_maps ? `Google Maps: ${params.google_maps}` : ''}
+${params.notas_adicionales ? `Notas: ${params.notas_adicionales}` : ''}
+
+SERVICIOS DIVINIA (para las recomendaciones):
+${productosAudit}
+
+Devolvé JSON con exactamente esta estructura:
+{
+  "score_general": número 0-100,
+  "resumen_ejecutivo": "2-3 oraciones del estado actual y el dinero que está perdiendo",
+  "web": {
+    "score": número 0-100,
+    "estado": "sin web | básica | aceptable | buena | excelente",
+    "problemas": ["problema específico 1", ...],
+    "oportunidades": ["oportunidad concreta 1", ...]
+  },
+  "seo": {
+    "score": número 0-100,
+    "estado": "invisible | débil | medio | fuerte",
+    "problemas": ["problema 1", ...],
+    "keywords_perdidas": ["keyword que debería rankear", ...]
+  },
+  "redes_sociales": {
+    "score": número 0-100,
+    "estado": "sin redes | inactivas | irregulares | activas | profesionales",
+    "frecuencia": "estimación de frecuencia de publicación",
+    "problemas": ["problema 1", ...]
+  },
+  "mensajeria": {
+    "score": número 0-100,
+    "tiene_whatsapp_business": boolean,
+    "tiene_chatbot": boolean,
+    "tiempo_respuesta_estimado": "ej: más de 2hs",
+    "problemas": ["problema 1", ...]
+  },
+  "publicidad": {
+    "score": número 0-100,
+    "invierte_en_ads": boolean,
+    "canales_detectados": ["Google Ads", "Meta Ads", etc o []],
+    "problemas": ["problema 1", ...]
+  },
+  "recomendaciones": [
+    {
+      "prioridad": "alta | media | baja",
+      "area": "Web | SEO | Redes | Mensajería | Publicidad | IA",
+      "accion": "qué hacer exactamente",
+      "impacto_estimado": "ej: +30% leads mensuales",
+      "servicio_divinia": "nombre del servicio DIVINIA que lo resuelve",
+      "precio_estimado": "ej: $150.000"
+    }
+  ],
+  "mensaje_wa_audit": "mensaje WhatsApp para enviar el informe al cliente (argentino, genera urgencia, menciona el score)",
+  "cta": "texto del CTA principal (ej: Empezar a crecer con IA →)"
+}`
+
+  const raw = await ask(SONNET, system, user, 2500)
+  const json = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? raw)
+  return json as DigitalAudit
+}
+
 // ─── AGENTE: Análisis diario del CEO ─────────────────────────────────────────
 export async function reporteCEO(contexto: {
   leads_nuevos: number

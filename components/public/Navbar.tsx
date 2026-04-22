@@ -57,6 +57,7 @@ export default function Navbar() {
           <a href="#proceso" style={{ color: 'inherit', textDecoration: 'none' }}>Cómo trabajamos</a>
           <a href="#casos" style={{ color: 'inherit', textDecoration: 'none' }}>Casos</a>
           <a href="/academy" style={{ color: 'inherit', textDecoration: 'none' }}>Academy</a>
+          <a href="/auditoria" style={{ color: '#C6FF3D', textDecoration: 'none', fontWeight: 600 }}>Auditoría gratis</a>
         </div>
 
         {/* Right side */}
@@ -100,6 +101,7 @@ export default function Navbar() {
             { href: '#proceso', label: 'Cómo trabajamos' },
             { href: '#casos', label: 'Casos' },
             { href: '/academy', label: 'Academy' },
+            { href: '/auditoria', label: '⚡ Auditoría gratis' },
           ].map(link => (
             <a
               key={link.href}
