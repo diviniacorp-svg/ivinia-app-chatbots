@@ -5,7 +5,7 @@ import { createHmac } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-function verifyMPSignature(request: NextRequest, rawBody: string): boolean {
+function verifyMPSignature(request: NextRequest, _rawBody: string): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET
   if (!secret) return true // sin secret configurado → dev mode
 
@@ -23,6 +23,105 @@ function verifyMPSignature(request: NextRequest, rawBody: string): boolean {
   return expectedHash === receivedHash
 }
 
+async function provisionTurnero(clientId: string) {
+  const { data: client } = await supabaseAdmin
+    .from('clients')
+    .select('*')
+    .eq('id', clientId)
+    .single()
+
+  if (!client) return
+
+  const cfg = client.custom_config as Record<string, unknown> | null
+  if (!cfg || cfg.source !== 'onboarding_self_service') return
+
+  // Verificar que no exista ya un booking_config
+  const { data: existing } = await supabaseAdmin
+    .from('booking_configs')
+    .select('id')
+    .eq('client_id', clientId)
+    .maybeSingle()
+
+  if (existing) return
+
+  const apertura = (cfg.horario_apertura as string) || '09:00'
+  const cierre = (cfg.horario_cierre as string) || '18:00'
+
+  const schedule = {
+    lun: { open: apertura, close: cierre },
+    mar: { open: apertura, close: cierre },
+    mie: { open: apertura, close: cierre },
+    jue: { open: apertura, close: cierre },
+    vie: { open: apertura, close: cierre },
+    sab: { open: apertura, close: cierre },
+    dom: null,
+  }
+
+  const pendingServices = (cfg.pending_services as Array<{
+    nombre: string
+    duracion: number
+    precio: number
+  }>) || []
+
+  const services = pendingServices.map(s => ({
+    id: crypto.randomUUID(),
+    category: 'General',
+    name: s.nombre,
+    description: '',
+    duration_minutes: s.duracion || 60,
+    price_ars: s.precio || 0,
+    deposit_percentage: 0,
+  }))
+
+  const pin = Math.floor(1000 + Math.random() * 9000).toString()
+  const whatsapp = (cfg.whatsapp as string) || client.phone || ''
+
+  const { data: bookingConfig } = await supabaseAdmin
+    .from('booking_configs')
+    .insert({
+      client_id: clientId,
+      is_active: true,
+      slot_duration_minutes: 30,
+      advance_booking_days: 60,
+      blocked_dates: [],
+      owner_phone: whatsapp,
+      owner_pin: pin,
+      schedule,
+      services,
+    })
+    .select('id')
+    .single()
+
+  if (!bookingConfig) return
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
+  const turneroUrl = `${appUrl}/reservas/${bookingConfig.id}`
+  const panelUrl = `${appUrl}/panel/${bookingConfig.id}`
+
+  // Guardar el link en custom_config para mostrarlo en success page
+  await supabaseAdmin
+    .from('clients')
+    .update({
+      custom_config: {
+        ...cfg,
+        turnero_url: turneroUrl,
+        panel_url: panelUrl,
+        panel_pin: pin,
+        provisioned_at: new Date().toISOString(),
+      },
+    })
+    .eq('id', clientId)
+
+  // Notificar a Joaco por WhatsApp
+  const joacoPhone = process.env.JOACO_WHATSAPP || '5492665286110'
+  const msg = encodeURIComponent(
+    `✅ NUEVO CLIENTE DIVINIA\n\n🏢 ${client.company_name}\n📱 ${whatsapp}\n📧 ${client.email}\n\n🔗 Turnero: ${turneroUrl}\n🔑 Panel PIN: ${pin}\n\nServicio: Turnero Plan ${client.plan}`
+  )
+  // Solo log — la notificación real se puede hacer via n8n o WhatsApp API
+  console.log(`[PROVISION] Nuevo cliente: ${client.company_name} | Turnero: ${turneroUrl}`)
+  console.log(`[PROVISION] Notificar Joaco: https://wa.me/${joacoPhone}?text=${msg}`)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text()
@@ -34,7 +133,6 @@ export async function POST(request: NextRequest) {
 
     const body = JSON.parse(rawBody)
 
-    // MercadoPago envía notificaciones de tipo payment
     if (body.type === 'payment' && body.data?.id) {
       const paymentId = String(body.data.id)
       const payment = await getPaymentById(paymentId)
@@ -42,7 +140,7 @@ export async function POST(request: NextRequest) {
       if (!payment) return NextResponse.json({ ok: true })
 
       const externalRef = payment.external_reference
-      const status = payment.status // approved, rejected, pending
+      const status = payment.status
 
       // Guardar en DB
       await supabaseAdmin.from('payments').upsert({
@@ -53,12 +151,15 @@ export async function POST(request: NextRequest) {
         type: 'one-time',
       })
 
-      // Si aprobado y hay referencia de cliente, activar cliente
       if (status === 'approved' && externalRef) {
+        // Activar cliente
         await supabaseAdmin
           .from('clients')
           .update({ status: 'active' })
           .eq('id', externalRef)
+
+        // Auto-provisionar Turnero si viene del onboarding self-service
+        await provisionTurnero(externalRef)
       }
     }
 
@@ -69,7 +170,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
-  // MercadoPago a veces hace GET para verificar el endpoint
+export async function GET() {
   return NextResponse.json({ ok: true })
 }

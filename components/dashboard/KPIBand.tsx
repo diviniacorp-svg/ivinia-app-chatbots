@@ -1,18 +1,19 @@
 interface KPIBandProps {
   metrics: {
     leads_nuevos: number; leads_calientes: number; clientes_activos: number
-    mrr_actual: number; reservas_hoy: number; contenido_hoy: number; en_trial: number
+    mrr_actual: number; reservas_hoy: number; contenido_hoy: number
+    clientes_en_trial: number; agent_runs_hoy: number
   } | null
 }
 
 const kpis = (m: KPIBandProps['metrics']) => [
-  { label: 'Leads nuevos', value: m?.leads_nuevos ?? '—', accent: false },
+  { label: 'Leads nuevos hoy', value: m?.leads_nuevos ?? '—', accent: (m?.leads_nuevos ?? 0) > 0 },
   { label: 'Leads calientes', value: m?.leads_calientes ?? '—', accent: (m?.leads_calientes ?? 0) > 0 },
   { label: 'Clientes activos', value: m?.clientes_activos ?? '—', accent: false },
-  { label: 'En trial', value: m?.en_trial ?? '—', accent: false },
+  { label: 'En trial', value: m?.clientes_en_trial ?? '—', accent: false },
   { label: 'MRR actual', value: m ? `$${Number(m.mrr_actual).toLocaleString('es-AR')}` : '—', accent: (m?.mrr_actual ?? 0) > 0 },
   { label: 'Reservas hoy', value: m?.reservas_hoy ?? '—', accent: false },
-  { label: 'Contenido hoy', value: m?.contenido_hoy ?? '—', accent: false },
+  { label: 'Runs IA hoy', value: m?.agent_runs_hoy ?? '—', accent: (m?.agent_runs_hoy ?? 0) > 0 },
 ]
 
 export default function KPIBand({ metrics }: KPIBandProps) {

@@ -105,6 +105,7 @@ function LeadPanel({
   const [generating, setGenerating] = useState(false)
   const [qualification, setQualification] = useState<Qualification | null>(null)
   const [proposal, setProposal] = useState<Proposal | null>(null)
+  const [proposalUrl, setProposalUrl] = useState<string | null>(null)
   const [tab, setTab] = useState<'info' | 'ia' | 'propuesta'>('info')
   const [status, setStatus] = useState(lead.status)
   const [saving, setSaving] = useState(false)
@@ -130,20 +131,30 @@ function LeadPanel({
     if (!qualification) return
     setGenerating(true)
     try {
-      const res = await fetch('/api/agents/proposal', {
+      const res = await fetch('/api/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_name: lead.company_name, rubro: lead.rubro, city: lead.city,
+          lead_id: lead.id,
+          company_name: lead.company_name,
+          rubro: lead.rubro,
+          city: lead.city,
           servicio: qualification.servicio_recomendado,
           dolor: qualification.dolor_principal,
-          precio: qualification.precio_estimado,
-          qualification,
+          precio_override: qualification.precio_estimado,
         }),
       })
       const data = await res.json()
-      setProposal(data)
-      setTab('propuesta')
+      if (data.ok) {
+        setProposalUrl(data.url)
+        // Parsear la propuesta del contenido guardado para mostrarla en el panel
+        const propRes = await fetch(`/api/proposals/${data.proposal_id}`)
+        const propData = await propRes.json()
+        if (propData.proposal?.contenido) {
+          try { setProposal(JSON.parse(propData.proposal.contenido)) } catch { /* silent */ }
+        }
+        setTab('propuesta')
+      }
     } catch { /* silent */ }
     setGenerating(false)
   }
@@ -419,11 +430,33 @@ function LeadPanel({
                     </div>
                   )}
 
-                  {/* Generar link de pago */}
-                  <a href={`/pagos?empresa=${encodeURIComponent(lead.company_name)}&monto=${proposal.precio}`}
-                    style={{ ...btnStyle('#10B981'), textDecoration:'none', display:'flex', justifyContent:'center', padding:'14px 0', fontSize:13 }}>
-                    💰 Generar link de pago MercadoPago →
-                  </a>
+                  {/* Link sharable de la propuesta */}
+                  {proposalUrl && (
+                    <div style={{ ...cardStyle, borderColor:'#10B98155' }}>
+                      <p style={{ margin:'0 0 8px', ...s, color:'#10B981' }}>Link de propuesta listo</p>
+                      <p style={{ margin:'0 0 10px', fontFamily:'var(--f-mono)', fontSize:11, color:'rgba(255,255,255,0.6)', wordBreak:'break-all' }}>
+                        {proposalUrl}
+                      </p>
+                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                        <button onClick={() => copy(proposalUrl, 'propurl')}
+                          style={{ ...btnStyle(copied==='propurl'?'#10B981':'#8B5CF6'), padding:'8px 16px' }}>
+                          {copied==='propurl' ? '✓ Copiado' : '🔗 Copiar link'}
+                        </button>
+                        {lead.phone && proposal?.mensaje_wa_propuesta && (
+                          <a
+                            href={`https://wa.me/${lead.phone.replace(/\D/g,'')}?text=${encodeURIComponent(proposal.mensaje_wa_propuesta + '\n\n' + proposalUrl)}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{ ...btnStyle('#10B981'), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6 }}>
+                            💬 Enviar por WhatsApp
+                          </a>
+                        )}
+                        <a href={proposalUrl} target="_blank" rel="noopener noreferrer"
+                          style={{ ...btnStyle('#3B82F6'), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6 }}>
+                          👁 Ver propuesta
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>

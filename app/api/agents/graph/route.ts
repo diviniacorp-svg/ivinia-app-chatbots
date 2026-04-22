@@ -24,8 +24,8 @@ export async function GET() {
 
     const { data: runs } = await db
       .from('agent_runs')
-      .select('agent_name, status, started_at')
-      .gte('started_at', oneHourAgo)
+      .select('agent, department, status, created_at')
+      .gte('created_at', oneHourAgo)
 
     const { data: logs } = await db
       .from('agent_logs')
@@ -33,14 +33,14 @@ export async function GET() {
       .eq('date', new Date().toISOString().split('T')[0])
       .limit(50)
 
-    const activeAgents = runs?.map(r => r.agent_name) ?? []
+    const activeAgents = runs?.map(r => r.agent) ?? []
     const todayAgents = logs?.map(l => l.agent) ?? []
 
     const nodes = DEPARTMENTS.map(d => ({
       ...d,
       active: activeAgents.some(a => a.toLowerCase().includes(d.id.split('-')[0])),
       hasActivity: todayAgents.some(a => a.toLowerCase().includes(d.id.split('-')[0])),
-      runCount: runs?.filter(r => r.agent_name.toLowerCase().includes(d.id.split('-')[0])).length ?? 0,
+      runCount: runs?.filter(r => r.agent?.toLowerCase().includes(d.id.split('-')[0])).length ?? 0,
     }))
 
     const edges: { from: string; to: string; strength: number }[] = []

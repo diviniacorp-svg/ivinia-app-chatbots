@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase'
 import { sendAuditLeadNotification } from '@/lib/resend'
 
 export async function POST(req: NextRequest) {
+  const t0 = Date.now()
   try {
     const body = await req.json()
     const { company_name, rubro, city, website, instagram, facebook, google_maps, notas_adicionales, save_as_lead } = body
@@ -29,6 +30,14 @@ export async function POST(req: NextRequest) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
+
+      // Log de agent_run para NeuralGraph
+      db.from('agent_runs').insert({
+        agent: 'auditoria-digital', department: 'clientes',
+        action: `Auditoría de ${company_name} (${rubro})`,
+        status: 'success', duration_ms: Date.now() - t0,
+        metadata: { score: result.score_general, rubro, city },
+      }).then(() => {}).catch(() => {})
 
       // Notificación inmediata a Joaco por email
       sendAuditLeadNotification({

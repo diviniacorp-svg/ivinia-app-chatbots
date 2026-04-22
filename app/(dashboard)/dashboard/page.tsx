@@ -36,7 +36,7 @@ export default async function DashboardPage() {
 
   const date = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
   const leadsHoy = data.metrics?.leads_nuevos ?? 0
-  const mensajes = data.metrics?.mensajes_pendientes ?? 0
+  const runsHoy = data.metrics?.agent_runs_hoy ?? 0
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
@@ -51,11 +51,11 @@ export default async function DashboardPage() {
             <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 48px)', color: 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1.1, margin: 0 }}>
               {getGreeting()}, Joaco.
             </h1>
-            {(leadsHoy > 0 || mensajes > 0) && (
+            {(leadsHoy > 0 || runsHoy > 0) && (
               <p style={{ marginTop: 10, fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted-2)' }}>
                 {leadsHoy > 0 && `${leadsHoy} lead${leadsHoy > 1 ? 's' : ''} nuevo${leadsHoy > 1 ? 's' : ''} hoy`}
-                {leadsHoy > 0 && mensajes > 0 && ' · '}
-                {mensajes > 0 && `${mensajes} mensaje${mensajes > 1 ? 's' : ''} pendiente${mensajes > 1 ? 's' : ''}`}
+                {leadsHoy > 0 && runsHoy > 0 && ' · '}
+                {runsHoy > 0 && `${runsHoy} agente${runsHoy > 1 ? 's' : ''} activo${runsHoy > 1 ? 's' : ''}`}
               </p>
             )}
           </div>
