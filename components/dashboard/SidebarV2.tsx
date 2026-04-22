@@ -41,11 +41,11 @@ const areas = [
     matches: ['/agents', '/orquestacion', '/dispatch'],
   },
   {
-    href: '/academy',
+    href: '/dashboard/academy',
     label: 'ACADEMY',
     sub: '6 tracks · Panel editor',
     color: '#34D399', colorDeep: '#059669', shade: 'rgba(0,40,20,0.4)',
-    matches: ['/academy'],
+    matches: ['/dashboard/academy'],
   },
   {
     href: '/pagos',
