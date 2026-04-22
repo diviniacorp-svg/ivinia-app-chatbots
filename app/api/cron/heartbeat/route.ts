@@ -33,7 +33,7 @@ async function getDIVINIAState() {
         .order('score', { ascending: false })
         .limit(5),
       supabaseAdmin.from('clients')
-        .select('id, name, rubro, status, mrr, last_activity, trial_end')
+        .select('id, company_name, rubro, status, mrr, trial_end, created_at')
         .in('status', ['active', 'trial'])
         .limit(10),
       supabaseAdmin.from('nucleus_memory')
@@ -143,7 +143,7 @@ TOP LEADS:
 ${state.top_leads.map(l => `- ${l.negocio || 'Sin nombre'} (${l.rubro}) — Score: ${l.score} — ${l.ciudad}`).join('\n') || 'Ninguno todavía'}
 
 TRIALS VENCIENDO:
-${state.trials_venciendo.map(c => `- ${c.name} (${c.rubro}) — vence: ${c.trial_end}`).join('\n') || 'Ninguno'}
+${state.trials_venciendo.map((c: any) => `- ${c.company_name} (${c.rubro}) — vence: ${c.trial_end}`).join('\n') || 'Ninguno'}
 
 MEMORIA RECIENTE:
 ${state.memoria_reciente.map(m => `- [${m.tipo}] ${m.contenido}`).join('\n') || 'Sin memoria previa'}
