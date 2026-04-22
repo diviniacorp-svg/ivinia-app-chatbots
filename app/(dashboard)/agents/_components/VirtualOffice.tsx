@@ -50,10 +50,10 @@ export default function VirtualOffice({ runs: initialRuns }: VirtualOfficeProps)
   }, [runs.some(r => r.status === 'running')])
 
   const isActive = (agentId: string) =>
-    runs.some(r => r.agent_name === agentId && r.status === 'running')
+    runs.some(r => (r.agent ?? r.agent_name) === agentId && r.status === 'running')
 
   const lastRun = (agentId: string) =>
-    runs.find(r => r.agent_name === agentId)?.started_at
+    runs.find(r => (r.agent ?? r.agent_name) === agentId)?.created_at ?? runs.find(r => (r.agent ?? r.agent_name) === agentId)?.started_at
 
   const visibleAgents = activeDept === 'all'
     ? NUCLEUS_AGENTS

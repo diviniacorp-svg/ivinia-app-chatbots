@@ -7,7 +7,7 @@ export async function GET() {
   const db = createAdminClient()
 
   const [{ data: runs }, { data: chats }] = await Promise.all([
-    db.from('agent_runs').select('*').order('started_at', { ascending: false }).limit(15),
+    db.from('agent_runs').select('*').order('created_at', { ascending: false }).limit(15),
     db.from('agent_chats').select('*').order('created_at', { ascending: true }).limit(60),
   ])
 

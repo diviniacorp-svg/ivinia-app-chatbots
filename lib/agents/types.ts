@@ -9,12 +9,16 @@ export interface AgentResult {
 
 export interface AgentRun {
   id: string
-  agent_name: AgentName
-  status: AgentStatus
-  started_at: string
-  completed_at?: string
-  result?: unknown
-  error?: string
+  agent: string
+  agent_name?: string  // legacy alias
+  department?: string
+  action?: string
+  status: AgentStatus | string
+  created_at: string
+  started_at?: string  // legacy alias
+  duration_ms?: number
+  metadata?: unknown
+  error_msg?: string
 }
 
 export interface AgentTask {
