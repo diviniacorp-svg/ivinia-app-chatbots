@@ -14,7 +14,7 @@ async function getFinanzasData() {
       .gte('created_at', startOfMonth)
       .order('created_at', { ascending: false })
       .limit(100),
-    db.from('clients').select('id, nombre, plan, mrr, status, created_at').eq('status', 'activo'),
+    db.from('clients').select('id, company_name, plan, mrr, status, created_at').in('status', ['active', 'activo']),
   ])
 
   return {
@@ -166,7 +166,7 @@ export default async function FinanzasPage() {
                   padding: '10px 0', borderBottom: '1px solid var(--line)',
                 }}>
                   <div>
-                    <div style={{ fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)' }}>{c.nombre}</div>
+                    <div style={{ fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)' }}>{c.company_name}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{c.plan}</div>
                   </div>
                   <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--lime)' }}>

@@ -48,6 +48,17 @@
   --f-mono: 'JetBrains Mono', monospace;
 }
 
+[data-theme="dark"] {
+  --ink: #F0EDE8;
+  --ink-2: #D9D6CC;
+  --paper: #141410;
+  --paper-2: #1C1C18;
+  --paper-3: #242420;
+  --line: #2E2E2A;
+  --muted: #6E6B62;
+  --muted-2: #9E9B92;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 

@@ -183,6 +183,7 @@ export default function OwnerPanel() {
   const params = useParams()
   const configId = params.configId as string
 
+  const [darkMode, setDarkMode] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
   const [pin, setPin] = useState('')
   const [authed, setAuthed] = useState(false)
@@ -329,7 +330,7 @@ export default function OwnerPanel() {
 
   // ── LOGIN ──
   if(!authed) return (
-    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24, background:'var(--paper-2)' }}>
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24, background:'var(--paper-2)', position:'relative' }}>
       <style>{`
         .panel-pin-input::placeholder { color: var(--muted); }
         .panel-pin-input:focus { border-color: ${color} !important; box-shadow: 0 0 0 3px ${color}22; }
@@ -360,7 +361,7 @@ export default function OwnerPanel() {
 
   // ── PANEL ──
   return (
-    <div style={{ minHeight:'100vh', background:'var(--paper-2)' }}>
+    <div data-theme={darkMode ? 'dark' : undefined} style={{ minHeight:'100vh', background:'var(--paper-2)' }}>
       <style>{`
         .panel-light-input { background: var(--paper-2) !important; color: var(--ink) !important; border: 1px solid var(--line) !important; }
         .panel-light-input::placeholder { color: var(--muted) !important; }
@@ -379,6 +380,9 @@ export default function OwnerPanel() {
           <p style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--muted)', margin:'2px 0 0' }}>Panel de Gestión · {theme.emoji} {theme.label}</p>
         </div>
         <button onClick={()=>loadData(pin)} style={{ fontFamily:'var(--f-mono)', fontSize:11, letterSpacing:'0.06em', color:'var(--muted)', background:'var(--paper-2)', border:'1px solid var(--line)', borderRadius:8, padding:'6px 12px', cursor:'pointer', flexShrink:0 }}>↻</button>
+        <button onClick={()=>setDarkMode(d=>!d)} title={darkMode?'Modo claro':'Modo oscuro'} style={{ width:36, height:36, borderRadius:10, background:'var(--paper-2)', border:'1px solid var(--line)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
+          {darkMode ? '☀️' : '🌙'}
+        </button>
       </header>
 
       {/* Stats rápidas */}

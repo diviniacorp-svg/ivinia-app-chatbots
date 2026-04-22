@@ -11,7 +11,7 @@ async function getDashboardData() {
   const today = new Date().toISOString().split('T')[0]
   const [metricsRes, leadsRes, contentRes, agendaRes] = await Promise.all([
     db.from('ceo_metrics').select('*').single(),
-    db.from('leads').select('id, nombre, negocio, score, status').gte('score', 60).order('score', { ascending: false }).limit(3),
+    db.from('leads').select('id, company_name, negocio, score, status').gte('score', 60).order('score', { ascending: false }).limit(3),
     db.from('content_calendar').select('id, titulo, tipo, plataforma, status').eq('fecha', today).eq('status', 'planificado').limit(4),
     db.from('nucleus_memory').select('id, contenido, importancia').contains('tags', ['agenda']).eq('activo', true).order('importancia', { ascending: false }).limit(4),
   ])

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-interface Lead { id: string; nombre?: string; negocio?: string; score?: number; status?: string }
+interface Lead { id: string; company_name?: string; negocio?: string; score?: number; status?: string }
 interface Content { id: string; titulo?: string; tipo?: string; plataforma?: string; status?: string }
 interface Agenda { id: string; contenido: string; importancia?: number }
 
@@ -24,7 +24,7 @@ export default function TodaySnapshot({ leads = [], content = [], agenda = [] }:
         ) : leads.map(l => (
           <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid var(--line)' }}>
             <div>
-              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>{l.negocio || l.nombre || 'Lead'}</div>
+              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>{l.company_name || l.negocio || 'Lead'}</div>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.status}</div>
             </div>
             <div style={{
