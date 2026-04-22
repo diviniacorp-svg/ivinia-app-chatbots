@@ -101,6 +101,19 @@ export default function CasesV2() {
             </div>
           </article>
         </div>
+
+        {/* Demo banner */}
+        <div style={{ marginTop: 32, background: 'var(--paper-2)', borderRadius: 20, padding: '28px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, border: '1px solid var(--line)' }}>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>DEMO — Web Scrolling Premium</div>
+            <p style={{ fontSize: 16, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', margin: 0 }}>
+              Así se ve una landing con scroll animado tipo Apple. Listo en 48hs por $100.000 ARS.
+            </p>
+          </div>
+          <a href="/demo/scroll-premium" target="_blank" rel="noopener noreferrer" className="btn-v2 btn-ink" style={{ fontSize: 14, padding: '12px 24px', flexShrink: 0 }}>
+            Ver demo en vivo →
+          </a>
+        </div>
       </div>
     </section>
   )
