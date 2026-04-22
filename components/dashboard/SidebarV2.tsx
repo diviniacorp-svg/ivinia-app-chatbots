@@ -43,7 +43,7 @@ const areas = [
   {
     href: '/academy',
     label: 'ACADEMY',
-    sub: '6 tracks · Gratis',
+    sub: '6 tracks · Panel editor',
     color: '#34D399', colorDeep: '#059669', shade: 'rgba(0,40,20,0.4)',
     matches: ['/academy'],
   },
