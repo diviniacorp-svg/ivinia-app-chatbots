@@ -471,6 +471,7 @@ export default function BookingWizard({
       color={color}
       emoji={introEmoji || theme.emoji}
       style={introStyle || 'bubbles'}
+      introAnimation={theme.introAnimation}
       onDone={() => setSplashDone(true)}
     />
   }

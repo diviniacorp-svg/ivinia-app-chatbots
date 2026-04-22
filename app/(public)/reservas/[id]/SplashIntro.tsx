@@ -20,6 +20,94 @@ const SPARKLE_POS = Array.from({ length: 10 }, (_, i) => ({
 
 type IntroStyle = 'bubbles' | 'sparkles' | 'petals' | 'waves'
 
+// Mapping from introAnimation name → CSS keyframes definition
+const INTRO_KEYFRAMES: Record<string, string> = {
+  'intro-scissors': `
+    @keyframes intro-scissors {
+      0%, 100% { transform: rotate(-25deg) scale(1); }
+      50% { transform: rotate(25deg) scale(1.1); }
+    }
+  `,
+  'intro-bounce': `
+    @keyframes intro-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-40px); }
+    }
+  `,
+  'intro-spin-scale': `
+    @keyframes intro-spin-scale {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.15); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+  `,
+  'intro-pulse': `
+    @keyframes intro-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+    }
+  `,
+  'intro-sway': `
+    @keyframes intro-sway {
+      0%, 100% { transform: translateX(0) rotate(-8deg); }
+      50% { transform: translateX(20px) rotate(8deg); }
+    }
+  `,
+  'intro-lift': `
+    @keyframes intro-lift {
+      0%, 100% { transform: translateY(0) scaleX(1); }
+      50% { transform: translateY(-30px) scaleX(1.08); }
+    }
+  `,
+  'intro-shine': `
+    @keyframes intro-shine {
+      0%, 100% { opacity: 1; filter: brightness(1); transform: scale(1); }
+      50% { opacity: 1; filter: brightness(1.6) drop-shadow(0 0 16px #fff); transform: scale(1.2); }
+    }
+  `,
+  'intro-sparkle': `
+    @keyframes intro-sparkle {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      25% { transform: scale(1.3) rotate(-10deg); opacity: 0.8; }
+      75% { transform: scale(1.2) rotate(10deg); opacity: 0.9; }
+    }
+  `,
+  'intro-balance': `
+    @keyframes intro-balance {
+      0%, 100% { transform: rotate(-12deg); }
+      50% { transform: rotate(12deg); }
+    }
+  `,
+  'intro-grow': `
+    @keyframes intro-grow {
+      0% { transform: scaleY(0.6) translateY(8px); }
+      50% { transform: scaleY(1.1) translateY(-4px); }
+      100% { transform: scaleY(0.6) translateY(8px); }
+    }
+  `,
+  'intro-orbit': `
+    @keyframes intro-orbit {
+      0% { transform: rotate(0deg) translateX(8px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(8px) rotate(-360deg); }
+    }
+  `,
+}
+
+// Duration per animation (seconds)
+const INTRO_DURATIONS: Record<string, string> = {
+  'intro-scissors': '1.2s',
+  'intro-bounce': '1s',
+  'intro-spin-scale': '2.4s',
+  'intro-pulse': '1.4s',
+  'intro-sway': '1.6s',
+  'intro-lift': '1.2s',
+  'intro-shine': '1.8s',
+  'intro-sparkle': '1.5s',
+  'intro-balance': '2s',
+  'intro-grow': '1.4s',
+  'intro-orbit': '3s',
+}
+
 export default function SplashIntro({
   companyName,
   tagline,
@@ -27,6 +115,7 @@ export default function SplashIntro({
   emoji,
   style: introStyle = 'bubbles',
   onDone,
+  introAnimation,
 }: {
   companyName: string
   tagline: string
@@ -34,6 +123,7 @@ export default function SplashIntro({
   emoji: string
   style?: IntroStyle | string
   onDone: () => void
+  introAnimation?: string
 }) {
   const [fading, setFading] = useState(false)
 
@@ -51,6 +141,11 @@ export default function SplashIntro({
     const t = setTimeout(close, 4000)
     return () => clearTimeout(t)
   }, [])
+
+  // Determine animation to use for central icon
+  const animName = introAnimation || 'intro-pulse'
+  const animKeyframes = INTRO_KEYFRAMES[animName] || INTRO_KEYFRAMES['intro-pulse']
+  const animDuration = INTRO_DURATIONS[animName] || '1.4s'
 
   return (
     <>
@@ -72,14 +167,6 @@ export default function SplashIntro({
           0%   { opacity: 0; }
           100% { opacity: 0.82; }
         }
-        @keyframes splash-emoji {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50%       { transform: translateY(-14px) scale(1.1); }
-        }
-        @keyframes splash-emoji2 {
-          0%, 100% { transform: translateY(0) scale(1) rotate(-5deg); }
-          50%       { transform: translateY(-10px) scale(1.08) rotate(5deg); }
-        }
         @keyframes splash-hint {
           0%, 100% { opacity: 0.35; }
           50%       { opacity: 0.85; }
@@ -90,6 +177,7 @@ export default function SplashIntro({
         .splash-fade-out {
           animation: fade-out-splash 0.75s ease forwards;
         }
+        ${animKeyframes}
       `}</style>
 
       <div
@@ -128,7 +216,6 @@ export default function SplashIntro({
               animation: `sparkle-float ${2.5 + s.delay}s ${s.delay}s ease-in-out infinite`,
             }}
           >
-            {/* Alterna entre los emojis del negocio y sparkles decorativos */}
             {i % 2 === 0 ? (emojis[Math.floor(i / 2) % emojis.length] || SPARKLES[i % SPARKLES.length]) : SPARKLES[i % SPARKLES.length]}
           </div>
         ))}
@@ -149,21 +236,14 @@ export default function SplashIntro({
           </div>
         ))}
 
-        {/* Emoji(s) central(es) */}
-        <div className="flex items-center gap-3 mb-6 filter drop-shadow-lg">
-          {emojis.slice(0, 3).map((e, i) => (
-            <div
-              key={i}
-              className="text-6xl"
-              style={{
-                animation: i % 2 === 0
-                  ? 'splash-emoji 2.2s ease-in-out infinite'
-                  : `splash-emoji2 ${2.5 + i * 0.3}s ${i * 0.4}s ease-in-out infinite`,
-              }}
-            >
-              {e}
-            </div>
-          ))}
+        {/* Emoji central con animación específica del rubro */}
+        <div
+          className="text-8xl filter drop-shadow-2xl mb-6"
+          style={{
+            animation: `${animName} ${animDuration} ease-in-out infinite`,
+          }}
+        >
+          {mainEmoji}
         </div>
 
         {/* Nombre del negocio */}

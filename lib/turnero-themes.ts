@@ -4,6 +4,7 @@ export interface RubroTheme {
   accentGlow: string
   particleEmojis: string[]
   label: string
+  introAnimation?: string
 }
 
 export const RUBRO_THEMES: Record<string, RubroTheme> = {
@@ -13,6 +14,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '180, 100, 255',
     particleEmojis: ['✂️', '💇', '💈', '🪞'],
     label: 'Peluquería',
+    introAnimation: 'intro-scissors',
   },
   clinica: {
     emoji: '🩺',
@@ -20,27 +22,31 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '0, 160, 255',
     particleEmojis: ['🩺', '💊', '🏥', '❤️'],
     label: 'Clínica',
+    introAnimation: 'intro-pulse',
   },
   spa: {
-    emoji: '🌿',
+    emoji: '🌸',
     bg: 'radial-gradient(ellipse at top, #071a0a 0%, #050f06 60%, #080808 100%)',
     accentGlow: '50, 200, 100',
     particleEmojis: ['🌿', '🌸', '🕯️', '💆'],
     label: 'Spa & Wellness',
+    introAnimation: 'intro-spin-scale',
   },
   restaurante: {
-    emoji: '🍽️',
+    emoji: '🍴',
     bg: 'radial-gradient(ellipse at top, #1a0e00 0%, #100800 60%, #080808 100%)',
     accentGlow: '255, 140, 0',
     particleEmojis: ['🍽️', '🥂', '🍷', '🌟'],
     label: 'Restaurante',
+    introAnimation: 'intro-sway',
   },
   gimnasio: {
-    emoji: '💪',
+    emoji: '🏋️',
     bg: 'radial-gradient(ellipse at top, #1a1600 0%, #100e00 60%, #080808 100%)',
     accentGlow: '220, 200, 0',
     particleEmojis: ['💪', '🏋️', '🔥', '⚡'],
     label: 'Gimnasio',
+    introAnimation: 'intro-lift',
   },
   veterinaria: {
     emoji: '🐾',
@@ -48,6 +54,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '100, 100, 255',
     particleEmojis: ['🐾', '🐶', '🐱', '❤️'],
     label: 'Veterinaria',
+    introAnimation: 'intro-bounce',
   },
   odontologia: {
     emoji: '🦷',
@@ -55,6 +62,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '80, 180, 255',
     particleEmojis: ['🦷', '😁', '✨', '🌟'],
     label: 'Odontología',
+    introAnimation: 'intro-shine',
   },
   estetica: {
     emoji: '💅',
@@ -62,6 +70,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '255, 80, 160',
     particleEmojis: ['💅', '✨', '🌸', '💄'],
     label: 'Estética',
+    introAnimation: 'intro-sparkle',
   },
   psicologia: {
     emoji: '🧠',
@@ -69,6 +78,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '150, 80, 255',
     particleEmojis: ['🧠', '💭', '🌱', '✨'],
     label: 'Psicología',
+    introAnimation: 'intro-pulse',
   },
   abogado: {
     emoji: '⚖️',
@@ -76,6 +86,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '180, 160, 120',
     particleEmojis: ['⚖️', '📜', '🏛️', '✍️'],
     label: 'Estudio Jurídico',
+    introAnimation: 'intro-balance',
   },
   contabilidad: {
     emoji: '📊',
@@ -83,6 +94,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '0, 200, 120',
     particleEmojis: ['📊', '💼', '📈', '✅'],
     label: 'Contabilidad',
+    introAnimation: 'intro-grow',
   },
   nails: {
     emoji: '💅',
@@ -90,20 +102,23 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '255, 80, 160',
     particleEmojis: ['💅', '✨', '🌸', '💄'],
     label: 'Nail Bar',
+    introAnimation: 'intro-sparkle',
   },
   hotel: {
-    emoji: '🏨',
+    emoji: '🌙',
     bg: 'radial-gradient(ellipse at top, #1a1500 0%, #100e00 60%, #080808 100%)',
     accentGlow: '220, 180, 60',
     particleEmojis: ['🏨', '🌟', '🛎️', '☕'],
     label: 'Hotel',
+    introAnimation: 'intro-orbit',
   },
   hosteria: {
-    emoji: '🏡',
+    emoji: '🌿',
     bg: 'radial-gradient(ellipse at top, #0a1a0a 0%, #060f06 60%, #080808 100%)',
     accentGlow: '80, 200, 80',
     particleEmojis: ['🏡', '🌿', '☕', '🌄'],
     label: 'Hostería',
+    introAnimation: 'intro-spin-scale',
   },
   default: {
     emoji: '📅',
@@ -111,6 +126,7 @@ export const RUBRO_THEMES: Record<string, RubroTheme> = {
     accentGlow: '100, 120, 255',
     particleEmojis: ['📅', '⭐', '✨', '🌟'],
     label: 'Turnos Online',
+    introAnimation: 'intro-pulse',
   },
 }
 
