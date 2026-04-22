@@ -195,6 +195,7 @@ export default function HerramientasPage() {
         ))}
         {/* Links directos a otros agentes */}
         {[
+          { label: 'Generador de Landings', href: '/herramientas/landing', icon: '🏗️' },
           { label: 'Auditoría digital', href: '/auditoria', icon: '🔍' },
           { label: 'Calificar lead', href: '/comercial', icon: '🎯' },
           { label: 'Generar propuesta', href: '/comercial', icon: '📄' },

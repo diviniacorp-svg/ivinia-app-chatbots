@@ -6,6 +6,61 @@ function getResend(): Resend {
   return _resend
 }
 
+export async function sendAuditLeadNotification(params: {
+  company_name: string
+  rubro: string
+  city: string
+  score: number
+  resumen: string
+  website?: string
+  instagram?: string
+  recomendaciones_top: string[]
+}): Promise<void> {
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@divinia.ar'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
+  const scoreColor = params.score >= 70 ? '#ef4444' : params.score >= 40 ? '#f59e0b' : '#6b7280'
+  const urgencia = params.score >= 70 ? '🔴 CALIENTE' : params.score >= 40 ? '🟡 TIBIO' : '⚪ FRÍO'
+  const waText = encodeURIComponent(`Hola! Vi que ${params.company_name} acaba de hacer su auditoría digital en DIVINIA y obtuvo un score de ${params.score}/100. ¿Tenés 10 minutos para que te cuente cómo mejorar eso?`)
+
+  await getResend().emails.send({
+    from: `DIVINIA Leads <${fromEmail}>`,
+    to: ['diviniacorp@gmail.com'],
+    subject: `${urgencia} Lead auditoría: ${params.company_name} (${params.score}/100)`,
+    html: `
+      <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+      <body style="font-family:-apple-system,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9f9f9">
+        <div style="background:#06060A;border-radius:16px 16px 0 0;padding:24px 28px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="color:#C6FF3D;font-weight:900;font-size:20px;letter-spacing:-0.04em">DIVINIA.</div>
+            <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:4px;font-family:monospace;letter-spacing:0.05em">NUEVO LEAD — AUDITORÍA DIGITAL</div>
+          </div>
+          <div style="background:${scoreColor};color:#fff;border-radius:50%;width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900">${params.score}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:28px;border-radius:0 0 16px 16px">
+          <h2 style="margin:0 0 4px;font-size:22px;font-weight:800;color:#111">${params.company_name}</h2>
+          <p style="margin:0 0 20px;color:#6b7280;font-size:14px">${params.rubro} · ${params.city}${params.website ? ` · <a href="${params.website}" style="color:#6366f1">${params.website}</a>` : ''}${params.instagram ? ` · ${params.instagram}` : ''}</p>
+
+          <div style="background:#f8fafc;border-left:4px solid ${scoreColor};padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:20px">
+            <p style="margin:0;font-size:14px;color:#374151;line-height:1.6">${params.resumen}</p>
+          </div>
+
+          ${params.recomendaciones_top.length > 0 ? `
+          <div style="margin-bottom:24px">
+            <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 10px">PRIORIDADES DETECTADAS</p>
+            ${params.recomendaciones_top.map(r => `<div style="display:flex;gap:10px;margin-bottom:8px;font-size:14px;color:#374151"><span style="color:#ef4444;flex-shrink:0">→</span>${r}</div>`).join('')}
+          </div>` : ''}
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a href="https://wa.me/5492665286110?text=${waText}" style="background:#25D366;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block">💬 Contactar ahora</a>
+            <a href="${appUrl}/comercial" style="background:#06060A;color:#C6FF3D;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block">Ver en CRM →</a>
+          </div>
+          <p style="margin:16px 0 0;color:#9ca3af;font-size:12px">💡 Leads con score ≥ 70 convierten 3x más si los contactás en las primeras 2hs.</p>
+        </div>
+      </body></html>
+    `,
+  }).catch(e => console.error('[audit-notif]', e))
+}
+
 export async function sendOutreachEmail(params: {
   to: string
   subject: string

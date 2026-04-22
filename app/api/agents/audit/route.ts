@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auditarNegocio } from '@/lib/anthropic'
 import { createAdminClient } from '@/lib/supabase'
+import { sendAuditLeadNotification } from '@/lib/resend'
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     const result = await auditarNegocio({ company_name, rubro, city, website, instagram, facebook, google_maps, notas_adicionales })
 
-    // Si save_as_lead=true, guardar como lead en Supabase
+    // Si save_as_lead=true, guardar como lead en Supabase + notificar a Joaco
     if (save_as_lead) {
       const db = createAdminClient()
       await db.from('leads').insert({
@@ -28,6 +29,21 @@ export async function POST(req: NextRequest) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
+
+      // Notificación inmediata a Joaco por email
+      sendAuditLeadNotification({
+        company_name,
+        rubro,
+        city,
+        score: result.score_general,
+        resumen: result.resumen_ejecutivo,
+        website: website || undefined,
+        instagram: instagram || undefined,
+        recomendaciones_top: result.recomendaciones
+          .filter(r => r.prioridad === 'alta')
+          .slice(0, 3)
+          .map(r => r.accion),
+      }).catch(() => {}) // fire-and-forget
     }
 
     return NextResponse.json({ ok: true, ...result })

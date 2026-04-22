@@ -369,6 +369,140 @@ Devolvé JSON con estas claves exactas:
   return json as N8nWorkflow
 }
 
+// ─── AGENTE: Outreach Comercial ───────────────────────────────────────────────
+export interface OutreachResult {
+  subject: string
+  body: string
+  mensaje_wa: string
+  apertura_estimada: string  // probabilidad de apertura: alta/media/baja
+}
+
+export async function generarOutreach(params: {
+  company_name: string
+  rubro: string
+  city: string
+  website?: string
+  contact_name?: string
+  score?: number
+  dolor?: string
+  servicio_recomendado?: string
+}): Promise<OutreachResult> {
+  const system = `${DIVINIA_SYSTEM}
+
+Sos el agente de Ventas de DIVINIA. Escribís emails y mensajes de WhatsApp de outreach que abren conversaciones reales con dueños de PYMEs argentinas.
+Tu estilo: directo, sin corporativismo, como si lo escribiera un emprendedor joven de San Luis que sabe de IA. Nunca decís "Estimado", nunca usás palabras como "solución integral".
+Respondé SIEMPRE con JSON válido.`
+
+  const user = `Generá el outreach para este prospecto:
+Empresa: ${params.company_name}
+Rubro: ${params.rubro}
+Ciudad: ${params.city}
+${params.website ? `Web: ${params.website}` : 'Sin web detectada'}
+${params.contact_name ? `Contacto: ${params.contact_name}` : ''}
+${params.score ? `Score de calificación: ${params.score}/100` : ''}
+${params.dolor ? `Dolor detectado: ${params.dolor}` : ''}
+${params.servicio_recomendado ? `Servicio ideal: ${params.servicio_recomendado}` : ''}
+
+DIVINIA ofrece: chatbot WA 24hs, turnero IA, automatizaciones, landings premium, auditoría digital gratuita.
+Precios: chatbot básico $150.000, landing $100.000, auditoría GRATIS como gancho de entrada.
+WhatsApp Joaco: +54 9 2665 28-6110 | Web: divinia.vercel.app
+
+Devolvé JSON con estas claves:
+{
+  "subject": "asunto del email (máx 55 chars, genera curiosidad, no spam)",
+  "body": "cuerpo del email (3-4 párrafos, vos/sos/tenés, menciona el dolor específico del rubro, CTA claro al final: auditoría gratis o prueba 14 días)",
+  "mensaje_wa": "mensaje de WhatsApp (máx 120 palabras, informal, 1-2 emojis máximo, termina con pregunta)",
+  "apertura_estimada": "alta | media | baja (basado en el score y los datos del prospecto)"
+}`
+
+  const raw = await ask(HAIKU, system, user, 900)
+  const json = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? raw)
+  return json as OutreachResult
+}
+
+// ─── AGENTE: Generador de Landing por Rubro ──────────────────────────────────
+export interface LandingConfig {
+  titulo_hero: string
+  subtitulo: string
+  badge: string
+  servicios: Array<{ nombre: string; desc: string; precio?: string }>
+  beneficios: Array<{ icon: string; titulo: string; desc: string }>
+  testimonial: string
+  testimonial_autor: string
+  cta_principal: string
+  cta_secundario: string
+  color_primario: string    // hex
+  color_secundario: string  // hex
+  meta_title: string
+  meta_description: string
+}
+
+export async function generarConfigLanding(params: {
+  company_name: string
+  rubro: string
+  city: string
+  servicios_raw?: string
+  tono?: 'profesional' | 'cercano' | 'premium' | 'jovial'
+  color_preferido?: string
+}): Promise<LandingConfig> {
+  const system = `${DIVINIA_SYSTEM}
+
+Sos el agente de Diseño de DIVINIA. Generás la configuración de contenido para landing pages premium de PYMEs argentinas.
+El contenido tiene que ser específico al rubro, usar el lenguaje que usa ese tipo de negocio, y estar optimizado para conversión.
+Respondé SIEMPRE con JSON válido.`
+
+  const COLORES_POR_RUBRO: Record<string, [string, string]> = {
+    peluquería: ['#1a1a2e', '#C6FF3D'],
+    barbería: ['#0f0f0f', '#D4AF37'],
+    estética: ['#1a0a1e', '#E879F9'],
+    spa: ['#0a1a14', '#2FC998'],
+    odontología: ['#0a1428', '#38BDF8'],
+    medicina: ['#061428', '#4ade80'],
+    gimnasio: ['#0a0a0a', '#FF6B35'],
+    restaurante: ['#1a0a00', '#F59E0B'],
+    veterinaria: ['#0a1a0a', '#34D399'],
+    inmobiliaria: ['#0a0a1a', '#818CF8'],
+    default: ['#06060A', '#C6FF3D'],
+  }
+  const rubroKey = Object.keys(COLORES_POR_RUBRO).find(k => params.rubro.toLowerCase().includes(k)) ?? 'default'
+  const [colorBg, colorAccent] = params.color_preferido
+    ? [COLORES_POR_RUBRO[rubroKey][0], params.color_preferido]
+    : COLORES_POR_RUBRO[rubroKey]
+
+  const user = `Generá la configuración de contenido para la landing page de:
+Negocio: ${params.company_name}
+Rubro: ${params.rubro}
+Ciudad: ${params.city}
+${params.servicios_raw ? `Servicios que ofrecen: ${params.servicios_raw}` : ''}
+Tono: ${params.tono ?? 'cercano'}
+Color sugerido: ${colorAccent}
+
+Devolvé JSON con exactamente esta estructura:
+{
+  "titulo_hero": "headline principal (máx 8 palabras, impactante, habla del beneficio principal)",
+  "subtitulo": "subtítulo explicativo (1 oración, específico al rubro y ciudad)",
+  "badge": "texto del badge superior (ej: Turnero Online · San Luis · Reservas 24hs)",
+  "servicios": [
+    { "nombre": "nombre del servicio", "desc": "descripción corta", "precio": "$X.XXX (opcional)" }
+  ],
+  "beneficios": [
+    { "icon": "emoji", "titulo": "beneficio corto", "desc": "explicación en 1 oración" }
+  ],
+  "testimonial": "testimonio inventado pero realista de un cliente del rubro",
+  "testimonial_autor": "Nombre A. — Ciudad",
+  "cta_principal": "texto del botón principal (ej: Reservar turno →)",
+  "cta_secundario": "texto del botón secundario (ej: Ver disponibilidad)",
+  "color_primario": "${colorBg}",
+  "color_secundario": "${colorAccent}",
+  "meta_title": "${params.company_name} | ${params.rubro} en ${params.city}",
+  "meta_description": "descripción para Google (máx 155 chars)"
+}`
+
+  const raw = await ask(HAIKU, system, user, 1200)
+  const json = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? raw)
+  return json as LandingConfig
+}
+
 // ─── AGENTE: Análisis diario del CEO ─────────────────────────────────────────
 export async function reporteCEO(contexto: {
   leads_nuevos: number
