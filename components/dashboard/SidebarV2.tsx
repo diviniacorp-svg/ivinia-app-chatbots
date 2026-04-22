@@ -64,6 +64,7 @@ const areas = [
 ]
 
 const configLinks = [
+  { href: '/herramientas', label: 'Herramientas IA' },
   { href: '/chatbots', label: 'Chatbots' },
   { href: '/turnos', label: 'Turnero' },
   { href: '/templates', label: 'Templates' },

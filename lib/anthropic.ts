@@ -320,6 +320,55 @@ Devolvé JSON con exactamente esta estructura:
   return json as DigitalAudit
 }
 
+// ─── AGENTE: Generador de Workflows n8n ─────────────────────────────────────
+export interface N8nWorkflow {
+  nombre: string
+  descripcion: string
+  trigger: string
+  pasos: Array<{ nodo: string; tipo: string; descripcion: string }>
+  integraciones: string[]
+  tiempo_setup: string
+  caso_uso: string
+  json_esquema: string   // JSON simplificado del workflow para copiar en n8n
+  instrucciones: string  // Paso a paso para armarlo en n8n
+}
+
+export async function generarWorkflowN8n(params: {
+  objetivo: string
+  rubro?: string
+  integraciones_disponibles?: string[]
+}): Promise<N8nWorkflow> {
+  const system = `${DIVINIA_SYSTEM}
+
+Sos el agente de Automatizaciones de DIVINIA. Diseñás workflows para n8n que automatizan procesos reales de PYMEs argentinas.
+Usás n8n, Google Sheets, WhatsApp (Twilio/WABA), Gmail, Supabase, MercadoPago, Instagram, y Claude AI como herramientas disponibles.
+Respondé SIEMPRE con JSON válido.`
+
+  const user = `Diseñá un workflow de n8n para este objetivo:
+"${params.objetivo}"
+${params.rubro ? `Rubro: ${params.rubro}` : ''}
+${params.integraciones_disponibles ? `Integraciones disponibles: ${params.integraciones_disponibles.join(', ')}` : ''}
+
+Devolvé JSON con estas claves exactas:
+{
+  "nombre": "nombre descriptivo del workflow",
+  "descripcion": "qué hace en 1 oración",
+  "trigger": "qué dispara el workflow (ej: formulario enviado, nueva fila en Sheets, cron)",
+  "pasos": [
+    { "nodo": "nombre del nodo en n8n", "tipo": "tipo de nodo (Trigger/Action/Filter/AI)", "descripcion": "qué hace este paso" }
+  ],
+  "integraciones": ["servicio 1", "servicio 2"],
+  "tiempo_setup": "ej: 45 minutos",
+  "caso_uso": "ejemplo concreto de cómo lo usaría un negocio del rubro",
+  "json_esquema": "objeto JSON simplificado con estructura del workflow (nodes y connections como los exporta n8n, resumido)",
+  "instrucciones": "paso a paso para configurarlo en n8n (máx 8 pasos, concretos y técnicos)"
+}`
+
+  const raw = await ask(SONNET, system, user, 2000)
+  const json = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? raw)
+  return json as N8nWorkflow
+}
+
 // ─── AGENTE: Análisis diario del CEO ─────────────────────────────────────────
 export async function reporteCEO(contexto: {
   leads_nuevos: number
