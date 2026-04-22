@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { BookingConfig, Service, Professional, formatDateAR, formatPriceARS, getNextAvailableDates, getFirstAvailableMonth } from '@/lib/bookings'
 import SplashIntro from './SplashIntro'
+import RubroScene from './RubroScene'
 import { getThemeForRubro } from '@/lib/turnero-themes'
 
 type Step = 'select' | 'form' | 'done'
@@ -508,6 +509,7 @@ export default function BookingWizard({
     return (
       <div style={pageStyle}>
         <RubroBackground accentRgb={theme.accentGlow} />
+        <RubroScene rubro={tipoNegocio} color={color} accentRgb={theme.accentGlow} />
         <FloatingParticles emojis={theme.particleEmojis} />
         <style>{`
           @keyframes dp-float {
@@ -625,6 +627,7 @@ export default function BookingWizard({
     return (
       <div style={pageStyle}>
         <RubroBackground accentRgb={theme.accentGlow} />
+        <RubroScene rubro={tipoNegocio} color={color} accentRgb={theme.accentGlow} />
         <FloatingParticles emojis={theme.particleEmojis} />
         <style>{`
           @keyframes dp-float {
@@ -789,6 +792,7 @@ export default function BookingWizard({
   return (
     <div style={pageStyle}>
       <RubroBackground accentRgb={theme.accentGlow} />
+      <RubroScene rubro={tipoNegocio} color={color} accentRgb={theme.accentGlow} />
       <FloatingParticles emojis={theme.particleEmojis} />
       <style>{`
         @keyframes dp-float {
