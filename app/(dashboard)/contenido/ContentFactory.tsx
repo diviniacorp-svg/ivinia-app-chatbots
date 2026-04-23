@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Copy, Check, RefreshCw, Instagram, Calendar, Layers, Film, BookOpen, Target, Zap, Eye, Download } from 'lucide-react'
+import { Sparkles, Copy, Check, RefreshCw, Instagram, Calendar, Layers, Film, BookOpen, Target, Eye, Globe, Image, Video, Box } from 'lucide-react'
 
 // ── Strategy data ────────────────────────────────────────────────────────────
 
@@ -38,6 +38,82 @@ const SEMANA_ESTRATEGIA = [
   { dia: 'Vie', tipo: 'Post',     pilar: 'cta',       producto: 'turnero' },
 ]
 
+const HERRAMIENTAS = [
+  {
+    id: 'canva',
+    label: 'Canva AI',
+    emoji: '🎨',
+    tag: 'Imágenes',
+    color: '#7C3AED',
+    desc: 'Posts y carruseles dark premium',
+    ideal: 'Post estático · Carrusel · Story',
+  },
+  {
+    id: 'mystic',
+    label: 'Freepik Mystic',
+    emoji: '✨',
+    tag: 'Imágenes IA',
+    color: '#DB2777',
+    desc: 'Fotorrealismo e ilustración IA',
+    ideal: 'Post con escena · Fondo atmosférico',
+  },
+  {
+    id: 'seedance',
+    label: 'Freepik Seedance',
+    emoji: '🎞️',
+    tag: 'Video suave',
+    color: '#0891B2',
+    desc: 'Movimiento orgánico y elegante',
+    ideal: 'Producto flotando · Loop · Branding',
+  },
+  {
+    id: 'kling',
+    label: 'Freepik Kling Omni',
+    emoji: '⚡',
+    tag: 'Video dinámico',
+    color: '#DC2626',
+    desc: 'Física realista, reveals dramáticos',
+    ideal: 'Reel impactante · Transición · Efecto',
+  },
+  {
+    id: 'spaces',
+    label: 'Freepik Spaces',
+    emoji: '🌐',
+    tag: 'Mundo 3D',
+    color: '#059669',
+    desc: 'Escenas tridimensionales interactivas',
+    ideal: 'Background marca · Sala control IA · Universo tech',
+  },
+]
+
+// 3D Spaces showcase examples
+const SPACES_EJEMPLOS = [
+  {
+    titulo: 'Sala de control DIVINIA',
+    desc: 'Sala futurista oscura con múltiples pantallas mostrando dashboards del Turnero. Luz violeta ambiental. Para usar como fondo de Reels y entrevistas con avatar.',
+    prompt: 'Futuristic dark control room, multiple holographic screens showing purple UI dashboards and booking calendars, volumetric indigo light beams, floating data particles, metallic surfaces with subtle reflections, wide angle lens, cinematic depth of field, dark atmosphere #09090b, premium tech aesthetic',
+    uso: 'Fondo para Reels con avatar · Thumbnail YouTube · Story de lanzamiento',
+  },
+  {
+    titulo: 'Portal de datos IA',
+    desc: 'Un portal circular de luz violeta en el centro, datos fluyendo, neón sobre negro. Represent a DIVINIA como puerta a la automatización.',
+    prompt: 'Abstract 3D data portal, circular glowing ring in deep purple (#8B5CF6) with data streams flowing through it, dark void background with floating binary particles, volumetric god rays, glass and metal materials, center composition, 85mm lens equivalent, atmospheric depth, tech-futuristic',
+    uso: 'Cover de cuenta · Thumbnail conceptual · Post de branding',
+  },
+  {
+    titulo: 'Escritorio PYME del futuro',
+    desc: 'Un escritorio limpio y moderno, con un celular mostrando el Turnero activo, luz cálida, ambiente de peluquería o clínica profesionalizada.',
+    prompt: 'Modern minimalist desk scene, smartphone displaying a clean purple booking app UI, soft warm ambient lighting, blurred professional salon background, shallow depth of field, product photography style, dark wood textures, elegant lifestyle shot, 50mm portrait lens',
+    uso: 'Post demo · Carrusel de features · Historia de cliente',
+  },
+  {
+    titulo: 'Universo de agentes IA',
+    desc: 'Espacio abstracto con nodos conectados representando los agentes de DIVINIA. Neural network visual. Para NUCLEUS y contenido de educación.',
+    prompt: 'Abstract neural network universe, glowing nodes connected by light threads in indigo and violet (#8B5CF6), dark space background with nebula hints, some nodes pulsing with green (#10B981) energy, isometric perspective, particle system, depth layers creating cosmic depth, tech-organic aesthetic',
+    uso: 'NUCLEUS showcase · Educación sobre IA · Behind the scenes',
+  },
+]
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface Generated {
@@ -45,8 +121,9 @@ interface Generated {
   caption: string
   hashtags: string[]
   brief: string
-  canvaPrompt: string
-  freepikPrompt: string
+  visualPrompt: string
+  secondaryPrompt: string
+  herramienta: string
 }
 
 // ── Copy button ──────────────────────────────────────────────────────────────
@@ -127,11 +204,12 @@ export default function ContentFactory() {
   const [producto, setProducto] = useState('turnero')
   const [pilar, setPilar] = useState('problema')
   const [tipo, setTipo] = useState('post')
+  const [herramienta, setHerramienta] = useState('canva')
   const [hint, setHint] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<Generated | null>(null)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<'generator' | 'strategy' | 'hashtags'>('generator')
+  const [tab, setTab] = useState<'generator' | 'strategy' | 'hashtags' | 'spaces'>('generator')
 
   const prodData = PRODUCTOS.find(p => p.id === producto)!
 
@@ -143,7 +221,7 @@ export default function ContentFactory() {
       const res = await fetch('/api/content/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ producto, pilar, tipo, customHint: hint }),
+        body: JSON.stringify({ producto, pilar, tipo, herramienta, customHint: hint }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error generando')
@@ -176,8 +254,9 @@ export default function ContentFactory() {
       <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
         {([
           { id: 'generator', label: 'Generador', icon: Sparkles },
-          { id: 'strategy', label: 'Estrategia', icon: Target },
-          { id: 'hashtags', label: 'Hashtags', icon: Instagram },
+          { id: 'strategy',  label: 'Estrategia', icon: Target },
+          { id: 'spaces',    label: 'Spaces 3D', icon: Globe },
+          { id: 'hashtags',  label: 'Hashtags', icon: Instagram },
         ] as const).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -273,9 +352,40 @@ export default function ContentFactory() {
               </div>
             </div>
 
+            {/* Herramienta visual */}
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">4 · Herramienta visual</label>
+              <div className="space-y-2">
+                {HERRAMIENTAS.map(h => (
+                  <button
+                    key={h.id}
+                    onClick={() => setHerramienta(h.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-left ${
+                      herramienta === h.id
+                        ? 'border-current shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    style={herramienta === h.id ? { borderColor: h.color, backgroundColor: h.color + '10' } : {}}
+                  >
+                    <span className="text-lg">{h.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-900">{h.label}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: h.color + '20', color: h.color }}>{h.tag}</span>
+                      </div>
+                      <div className="text-xs text-gray-400 truncate">{h.ideal}</div>
+                    </div>
+                    {herramienta === h.id && (
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: h.color }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Hint opcional */}
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">4 · Contexto extra (opcional)</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">5 · Contexto extra (opcional)</label>
               <textarea
                 value={hint}
                 onChange={e => setHint(e.target.value)}
@@ -362,32 +472,54 @@ export default function ContentFactory() {
                   <p className="text-sm text-gray-700 leading-relaxed">{result.brief}</p>
                 </div>
 
-                {/* Canva prompt */}
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Eye size={14} className="text-purple-500" />
-                      <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Prompt Canva / Freepik (estáticos)</span>
+                {/* Visual prompt — tool-specific */}
+                {result.visualPrompt && (() => {
+                  const hData = HERRAMIENTAS.find(h => h.id === result.herramienta) ?? HERRAMIENTAS[0]
+                  const icons: Record<string, typeof Image> = { canva: Image, mystic: Eye, seedance: Video, kling: Film, spaces: Globe }
+                  const Icon = icons[result.herramienta] ?? Eye
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Icon size={14} style={{ color: hData.color }} />
+                          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Prompt para {hData.label}
+                          </span>
+                          <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: hData.color + '20', color: hData.color }}>
+                            {hData.tag}
+                          </span>
+                        </div>
+                        <CopyBtn text={result.visualPrompt} />
+                      </div>
+                      <div className="bg-gray-900 rounded-lg p-4">
+                        <p className="text-sm text-gray-300 font-mono leading-relaxed">{result.visualPrompt}</p>
+                      </div>
+                      {result.herramienta === 'spaces' && (
+                        <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                          <Globe size={11} /> Usá este prompt en freepik.com/pikaso/spaces — elegí "3D World"
+                        </p>
+                      )}
+                      {(result.herramienta === 'seedance' || result.herramienta === 'kling') && (
+                        <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                          <Video size={11} /> freepik.com → AI Video → {result.herramienta === 'seedance' ? 'Seedance 2.0' : 'Kling Omni'}
+                        </p>
+                      )}
                     </div>
-                    <CopyBtn text={result.canvaPrompt} />
-                  </div>
-                  <div className="bg-gray-900 rounded-lg p-4">
-                    <p className="text-sm text-gray-300 font-mono leading-relaxed">{result.canvaPrompt}</p>
-                  </div>
-                </div>
+                  )
+                })()}
 
-                {/* Freepik video prompt */}
-                {result.freepikPrompt && (
+                {/* Secondary prompt (Spaces/Kling) */}
+                {result.secondaryPrompt && (
                   <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Film size={14} className="text-red-500" />
-                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Prompt Freepik Seedance / Kling (video)</span>
+                        <Box size={14} className="text-emerald-500" />
+                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Prompt alternativo / plano de fondo</span>
                       </div>
-                      <CopyBtn text={result.freepikPrompt} />
+                      <CopyBtn text={result.secondaryPrompt} />
                     </div>
                     <div className="bg-gray-900 rounded-lg p-4">
-                      <p className="text-sm text-gray-300 font-mono leading-relaxed">{result.freepikPrompt}</p>
+                      <p className="text-sm text-gray-300 font-mono leading-relaxed">{result.secondaryPrompt}</p>
                     </div>
                   </div>
                 )}
@@ -561,6 +693,92 @@ export default function ContentFactory() {
                   <li>• Fondo: SIEMPRE #09090b</li>
                 </ul>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: SPACES 3D ───────────────────────────────────────────────── */}
+      {tab === 'spaces' && (
+        <div className="space-y-5">
+
+          {/* Hero */}
+          <div className="rounded-xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #059669, #065f46)' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <Globe size={24} />
+              <div>
+                <h2 className="font-black text-xl">Freepik Spaces — Mundos 3D</h2>
+                <p className="text-green-200 text-sm">Escenas tridimensionales para content premium y avatares IA</p>
+              </div>
+            </div>
+            <p className="text-green-100 text-sm leading-relaxed">
+              Freepik Spaces genera entornos 3D interactivos completos: salas de control futuristas, portales de datos, escritorios premium, universos de IA. Usá estos mundos como fondo para tus Reels, videos con avatar, thumbnails de YouTube y posts de branding. También los vendemos como servicio a clientes.
+            </p>
+            <div className="flex gap-3 mt-4">
+              <div className="bg-white/20 rounded-lg px-3 py-2 text-sm font-semibold">🌐 freepik.com/pikaso/spaces</div>
+              <div className="bg-white/20 rounded-lg px-3 py-2 text-sm font-semibold">🎭 Ideal para AVATARES IA</div>
+              <div className="bg-white/20 rounded-lg px-3 py-2 text-sm font-semibold">🧠 Ideal para NUCLEUS</div>
+            </div>
+          </div>
+
+          {/* Herramientas Freepik overview */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-4">Herramientas Freepik — cuándo usar cada una</h3>
+            <div className="grid grid-cols-1 gap-3">
+              {HERRAMIENTAS.map(h => (
+                <div key={h.id} className="flex items-start gap-4 p-3 rounded-lg" style={{ backgroundColor: h.color + '08' }}>
+                  <span className="text-2xl">{h.emoji}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-gray-900 text-sm">{h.label}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: h.color + '20', color: h.color }}>{h.tag}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-1">{h.desc}</p>
+                    <p className="text-xs font-semibold" style={{ color: h.color }}>✓ Ideal para: {h.ideal}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Spaces ejemplos con prompts */}
+          <h3 className="font-bold text-gray-900">Escenas 3D listas para usar en DIVINIA</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {SPACES_EJEMPLOS.map(ej => (
+              <div key={ej.titulo} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm">{ej.titulo}</h4>
+                    <p className="text-xs text-gray-500 mt-0.5">{ej.desc}</p>
+                  </div>
+                </div>
+                <div className="bg-gray-900 rounded-lg p-4 mb-3">
+                  <p className="text-sm text-gray-300 font-mono leading-relaxed">{ej.prompt}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-green-600 font-medium">📍 Uso: {ej.uso}</p>
+                  <CopyBtn text={ej.prompt} label="Copiar prompt" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Como servicio */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Globe size={14} className="text-green-500" /> Spaces 3D como servicio vendible</h3>
+            <p className="text-sm text-gray-600 mb-4">Los mundos 3D se pueden ofrecer a clientes como parte del pack de AVATARES IA o como servicio independiente de branding visual.</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { titulo: 'Pack Visual Premium', precio: '$80.000', incluye: '4 escenas 3D custom · 8 imágenes estáticas · Paleta de marca' },
+                { titulo: 'Avatar + Mundo 3D', precio: '+$150.000', incluye: 'Avatar IA + fondo 3D personalizado · 10 videos mensuales' },
+                { titulo: 'Branding Total', precio: '$200.000', incluye: '8 escenas 3D · 20 posts · Guía visual de marca · Story templates' },
+              ].map(s => (
+                <div key={s.titulo} className="rounded-xl p-4" style={{ background: '#05966910' }}>
+                  <div className="font-bold text-gray-900 text-sm mb-1">{s.titulo}</div>
+                  <div className="text-green-700 font-black text-lg mb-2">{s.precio}</div>
+                  <div className="text-xs text-gray-500">{s.incluye}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
