@@ -38,6 +38,10 @@ interface Product {
   category?: string
   price_ars: number
   description?: string
+  photo_url?: string
+  stock?: number
+  discount_active?: boolean
+  discount_percent?: number
 }
 
 interface PanelData {
@@ -220,6 +224,7 @@ export default function OwnerPanel() {
   const [editProdId, setEditProdId] = useState<string|null>(null)
   const [savingProds, setSavingProds] = useState(false)
   const [prodMsg, setProdMsg] = useState('')
+  const [uploadingPhoto, setUploadingPhoto] = useState<string|null>(null)
   const [savingCfg, setSavingCfg] = useState(false)
   const [cfgMsg, setCfgMsg] = useState('')
 
@@ -245,6 +250,18 @@ export default function OwnerPanel() {
   },[configId])
 
   function handlePin(e:React.FormEvent){e.preventDefault();setPinError('');loadData(pin)}
+
+  async function uploadPhoto(file: File, prodId: string | 'new') {
+    setUploadingPhoto(prodId)
+    const form = new FormData()
+    form.append('file', file)
+    form.append('folder', 'productos')
+    const res = await fetch('/api/upload', { method: 'POST', body: form })
+    const json = await res.json()
+    setUploadingPhoto(null)
+    if (!res.ok) { alert(json.error || 'Error al subir foto'); return null }
+    return json.url as string
+  }
 
   async function handleAction(apptId:string,action:'approve'|'reject'){
     const sena=apptState[apptId]?.sena||'0'
@@ -435,7 +452,7 @@ export default function OwnerPanel() {
           {key:'agenda',label:'Agenda'},
           {key:'solicitudes',label:`Solicitudes${pending.length>0?` (${pending.length})`:''}`},
           {key:'historial',label:'Historial'},
-          ...(data?.productos_enabled ? [{key:'productos',label:'🛍️ Productos'}] : []),
+          {key:'productos',label:'🛍️ Productos'},
           {key:'config',label:'Configurar'},
         ].map(t=>(
           <button key={t.key} onClick={()=>setTab(t.key as typeof tab)}
@@ -696,18 +713,39 @@ export default function OwnerPanel() {
         {tab==='productos'&&!loading&&(
           <div style={{ maxWidth:640, margin:'0 auto', display:'flex', flexDirection:'column', gap:16 }}>
             <Card>
+              {/* Header */}
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderBottom:'1px solid var(--line)' }}>
                 <div>
                   <p style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:14, color:'var(--ink)', margin:0 }}>Productos</p>
-                  <p style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--muted)', margin:'2px 0 0' }}>Los productos se muestran en el turno público</p>
+                  <a href={`/catalogo/${configId}`} target="_blank" rel="noopener noreferrer"
+                    style={{ fontFamily:'var(--f-mono)', fontSize:10, color, textDecoration:'none', margin:'2px 0 0', display:'block' }}>
+                    Ver catálogo público ↗
+                  </a>
                 </div>
                 <button onClick={()=>setNewProdForm({})}
                   style={{ fontFamily:'var(--f-mono)', fontSize:10, letterSpacing:'0.06em', background:color, color:'#fff', border:'none', borderRadius:8, padding:'6px 12px', cursor:'pointer', fontWeight:700 }}>+ Agregar</button>
               </div>
 
+              {/* Nuevo producto form */}
               {newProdForm!==null&&(
                 <div style={{ padding:16, borderBottom:'1px dashed var(--line)', background:'var(--paper-2)', display:'flex', flexDirection:'column', gap:10 }}>
                   <p style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:'0.1em', textTransform:'uppercase', color, margin:0 }}>Nuevo producto</p>
+
+                  {/* Foto */}
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ width:56, height:56, borderRadius:10, background:'var(--paper)', border:'1px solid var(--line)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>
+                      {newProdForm.photo_url ? <img src={newProdForm.photo_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : '📷'}
+                    </div>
+                    <label style={{ cursor:'pointer', fontFamily:'var(--f-mono)', fontSize:10, color, border:`1px dashed ${color}`, borderRadius:8, padding:'6px 12px', letterSpacing:'0.06em' }}>
+                      {uploadingPhoto==='new'?'Subiendo...':'Subir foto'}
+                      <input type="file" accept="image/*" style={{ display:'none' }} onChange={async e=>{
+                        const file = e.target.files?.[0]; if(!file) return
+                        const url = await uploadPhoto(file,'new')
+                        if(url) setNewProdForm(p=>({...p,photo_url:url}))
+                      }}/>
+                    </label>
+                  </div>
+
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                     <input placeholder="Nombre *" value={newProdForm.name||''} onChange={e=>setNewProdForm(p=>({...p,name:e.target.value}))}
                       className="panel-light-input" style={{...lightInput,fontSize:12}} />
@@ -715,13 +753,41 @@ export default function OwnerPanel() {
                       className="panel-light-input" style={{...lightInput,fontSize:12}} />
                     <input placeholder="Precio ARS (0 = Consultar)" type="number" value={newProdForm.price_ars||''} onChange={e=>setNewProdForm(p=>({...p,price_ars:Number(e.target.value)}))}
                       className="panel-light-input" style={{...lightInput,fontSize:12}} />
-                    <input placeholder="Descripción (opcional)" value={newProdForm.description||''} onChange={e=>setNewProdForm(p=>({...p,description:e.target.value}))}
+                    <input placeholder="Stock (opcional)" type="number" value={newProdForm.stock??''} onChange={e=>setNewProdForm(p=>({...p,stock:e.target.value===''?undefined:Number(e.target.value)}))}
                       className="panel-light-input" style={{...lightInput,fontSize:12}} />
                   </div>
+                  <input placeholder="Descripción (opcional)" value={newProdForm.description||''} onChange={e=>setNewProdForm(p=>({...p,description:e.target.value}))}
+                    className="panel-light-input" style={{...lightInput,fontSize:12}} />
+
+                  {/* Oferta */}
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <label style={{ display:'flex', alignItems:'center', gap:6, cursor:'pointer', fontFamily:'var(--f-mono)', fontSize:10, color:'var(--ink)' }}>
+                      <input type="checkbox" checked={!!newProdForm.discount_active} onChange={e=>setNewProdForm(p=>({...p,discount_active:e.target.checked}))} />
+                      Activar oferta
+                    </label>
+                    {newProdForm.discount_active&&(
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <input type="number" min={1} max={99} value={newProdForm.discount_percent||''} onChange={e=>setNewProdForm(p=>({...p,discount_percent:Number(e.target.value)}))}
+                          className="panel-light-input" style={{...lightInput,fontSize:12,width:60}} placeholder="%" />
+                        <span style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--muted)' }}>% desc.</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div style={{ display:'flex', gap:8 }}>
                     <button onClick={()=>{
                       if(!newProdForm.name?.trim()) return
-                      const prod: Product = { id: crypto.randomUUID(), name: newProdForm.name, category: newProdForm.category||'General', price_ars: Number(newProdForm.price_ars)||0, description: newProdForm.description||'' }
+                      const prod: Product = {
+                        id: crypto.randomUUID(),
+                        name: newProdForm.name,
+                        category: newProdForm.category||'General',
+                        price_ars: Number(newProdForm.price_ars)||0,
+                        description: newProdForm.description||'',
+                        photo_url: newProdForm.photo_url,
+                        stock: newProdForm.stock,
+                        discount_active: newProdForm.discount_active||false,
+                        discount_percent: newProdForm.discount_percent||0,
+                      }
                       setEditProductos(p=>[...p,prod]); setNewProdForm(null)
                     }} style={{ background:color, color:'#fff', border:'none', borderRadius:8, padding:'8px 16px', fontFamily:'var(--f-mono)', fontSize:10, fontWeight:700, cursor:'pointer' }}>Agregar</button>
                     <button onClick={()=>setNewProdForm(null)} style={{ background:'var(--paper)', border:'1px solid var(--line)', color:'var(--muted)', borderRadius:8, padding:'8px 14px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer' }}>Cancelar</button>
@@ -735,10 +801,27 @@ export default function OwnerPanel() {
                 </div>
               )}
 
+              {/* Lista de productos */}
               {editProductos.map(prod=>(
-                <div key={prod.id} style={{ padding:'12px 16px', borderBottom:'1px solid var(--line)', display:'flex', alignItems:'center', gap:12 }}>
+                <div key={prod.id} style={{ padding:'12px 16px', borderBottom:'1px solid var(--line)' }}>
                   {editProdId===prod.id ? (
-                    <div style={{ flex:1, display:'flex', flexDirection:'column', gap:8 }}>
+                    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                      {/* Foto edición */}
+                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        <div style={{ width:56, height:56, borderRadius:10, background:'var(--paper-2)', border:'1px solid var(--line)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>
+                          {prod.photo_url ? <img src={prod.photo_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : '📷'}
+                        </div>
+                        <label style={{ cursor:'pointer', fontFamily:'var(--f-mono)', fontSize:10, color, border:`1px dashed ${color}`, borderRadius:8, padding:'6px 12px', letterSpacing:'0.06em' }}>
+                          {uploadingPhoto===prod.id?'Subiendo...':'Cambiar foto'}
+                          <input type="file" accept="image/*" style={{ display:'none' }} onChange={async e=>{
+                            const file = e.target.files?.[0]; if(!file) return
+                            const url = await uploadPhoto(file, prod.id)
+                            if(url) setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,photo_url:url}:x))
+                          }}/>
+                        </label>
+                        {prod.photo_url&&<button onClick={()=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,photo_url:undefined}:x))}
+                          style={{ background:'none', border:'none', color:'#dc2626', cursor:'pointer', fontFamily:'var(--f-mono)', fontSize:10 }}>✕ quitar</button>}
+                      </div>
                       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                         <input value={prod.name} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,name:e.target.value}:x))}
                           className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Nombre"/>
@@ -746,21 +829,56 @@ export default function OwnerPanel() {
                           className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Categoría"/>
                         <input type="number" value={prod.price_ars||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,price_ars:Number(e.target.value)}:x))}
                           className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Precio ARS"/>
-                        <input value={prod.description||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,description:e.target.value}:x))}
-                          className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Descripción"/>
+                        <input type="number" value={prod.stock??''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,stock:e.target.value===''?undefined:Number(e.target.value)}:x))}
+                          className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Stock"/>
+                      </div>
+                      <input value={prod.description||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,description:e.target.value}:x))}
+                        className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Descripción"/>
+                      {/* Oferta */}
+                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        <label style={{ display:'flex', alignItems:'center', gap:6, cursor:'pointer', fontFamily:'var(--f-mono)', fontSize:10, color:'var(--ink)' }}>
+                          <input type="checkbox" checked={!!prod.discount_active} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,discount_active:e.target.checked}:x))} />
+                          Oferta activa
+                        </label>
+                        {prod.discount_active&&(
+                          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                            <input type="number" min={1} max={99} value={prod.discount_percent||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,discount_percent:Number(e.target.value)}:x))}
+                              className="panel-light-input" style={{...lightInput,fontSize:12,width:60}} placeholder="%"/>
+                            <span style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--muted)' }}>% desc.</span>
+                            {prod.price_ars>0&&prod.discount_percent&&<span style={{ fontFamily:'var(--f-display)', fontSize:12, fontWeight:700, color }}>→ {fARS(Math.round(prod.price_ars*(1-prod.discount_percent/100)))}</span>}
+                          </div>
+                        )}
                       </div>
                       <button onClick={()=>setEditProdId(null)} style={{ alignSelf:'flex-start', background:color, color:'#fff', border:'none', borderRadius:8, padding:'6px 14px', fontFamily:'var(--f-mono)', fontSize:10, fontWeight:700, cursor:'pointer' }}>Listo</button>
                     </div>
                   ) : (
-                    <>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <p style={{ fontFamily:'var(--f-display)', fontWeight:600, fontSize:13, color:'var(--ink)', margin:0 }}>{prod.name}</p>
-                        <p style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--muted)', margin:'2px 0 0' }}>{prod.category||'General'}{prod.description?` · ${prod.description}`:''}</p>
+                    <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                      {/* Thumbnail */}
+                      <div style={{ width:44, height:44, borderRadius:8, background:'var(--paper-2)', border:'1px solid var(--line)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>
+                        {prod.photo_url ? <img src={prod.photo_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : '📦'}
                       </div>
-                      <span style={{ fontFamily:'var(--f-mono)', fontSize:13, fontWeight:700, color, flexShrink:0 }}>{prod.price_ars>0?fARS(prod.price_ars):'Consultar'}</span>
-                      <button onClick={()=>setEditProdId(prod.id)} style={{ background:'var(--paper-2)', border:'1px solid var(--line)', color:'var(--muted)', borderRadius:8, padding:'6px 12px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer', flexShrink:0 }}>✏️</button>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          <p style={{ fontFamily:'var(--f-display)', fontWeight:600, fontSize:13, color:'var(--ink)', margin:0 }}>{prod.name}</p>
+                          {prod.discount_active&&prod.discount_percent&&(
+                            <span style={{ background:color, color:'#fff', borderRadius:100, padding:'1px 7px', fontFamily:'var(--f-mono)', fontSize:8, fontWeight:700 }}>-{prod.discount_percent}%</span>
+                          )}
+                        </div>
+                        <p style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--muted)', margin:'2px 0 0' }}>
+                          {prod.category||'General'}{prod.stock!==undefined?` · stock: ${prod.stock}`:''}
+                        </p>
+                      </div>
+                      <div style={{ textAlign:'right', flexShrink:0 }}>
+                        {prod.price_ars>0?(
+                          <div>
+                            {prod.discount_active&&prod.discount_percent&&<span style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--muted)', textDecoration:'line-through', display:'block' }}>{fARS(prod.price_ars)}</span>}
+                            <span style={{ fontFamily:'var(--f-mono)', fontSize:13, fontWeight:700, color }}>{fARS(prod.discount_active&&prod.discount_percent?Math.round(prod.price_ars*(1-prod.discount_percent/100)):prod.price_ars)}</span>
+                          </div>
+                        ):<span style={{ fontFamily:'var(--f-mono)', fontSize:11, color:'var(--muted)' }}>Consultar</span>}
+                      </div>
+                      <button onClick={()=>setEditProdId(prod.id)} style={{ background:'var(--paper-2)', border:'1px solid var(--line)', color:'var(--muted)', borderRadius:8, padding:'6px 10px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer', flexShrink:0 }}>✏️</button>
                       <button onClick={()=>setEditProductos(p=>p.filter(x=>x.id!==prod.id))} style={{ background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.2)', color:'#dc2626', borderRadius:8, padding:'6px 10px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer', flexShrink:0 }}>✕</button>
-                    </>
+                    </div>
                   )}
                 </div>
               ))}
