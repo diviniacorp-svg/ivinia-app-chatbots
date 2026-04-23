@@ -13,13 +13,14 @@ async function sessionToken(secret: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   const { password } = await request.json()
-  const validSecret = process.env.ADMIN_SECRET || 'divinia2024'
+  const adminPassword = process.env.ADMIN_PASSWORD || 'divinia2024'
+  const signingSecret = process.env.ADMIN_SECRET || 'divinia2024'
 
-  if (password !== validSecret) {
+  if (password !== adminPassword) {
     return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
   }
 
-  const token = await sessionToken(validSecret)
+  const token = await sessionToken(signingSecret)
   const response = NextResponse.json({ ok: true })
   response.cookies.set('divinia_session', token, {
     httpOnly: true,
