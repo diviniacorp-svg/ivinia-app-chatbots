@@ -38,15 +38,17 @@ const NAV: NavGroup[] = [
       { href: '/turnos', label: 'Turnero', icon: '📅', matches: ['/turnos', '/dashboard/turnero', '/dashboard/turnos'] },
       { href: '/chatbots', label: 'Chatbot IA', icon: '💬', matches: ['/chatbots', '/templates'] },
       { href: '/nucleo', label: 'Núcleo IA', icon: '🧠', matches: ['/nucleo'], badge: 'nuevo' },
-      { href: '/contenido', label: 'Content Factory', icon: '✨', matches: ['/contenido', '/redes', '/calendario', '/youtube'] },
+      { href: '/contenido', label: 'Content Factory', icon: '✨', matches: ['/contenido', '/redes', '/calendario'] },
       { href: '/avatares', label: 'Avatares IA', icon: '🎭', matches: ['/avatares'] },
     ],
   },
   {
-    group: 'Fábrica',
+    group: 'Laboratorio',
     items: [
+      { href: '/youtube', label: 'YouTube Empire', icon: '🎬', matches: ['/youtube'] },
+      { href: '/proyectos', label: 'Proyectos', icon: '🚀', matches: ['/proyectos'] },
+      { href: '/ideas', label: 'Banco de Ideas', icon: '💡', matches: ['/ideas'] },
       { href: '/herramientas', label: 'Generadores IA', icon: '🔧', matches: ['/herramientas'] },
-      { href: '/market', label: 'Market SL', icon: '🗺️', matches: ['/market'] },
     ],
   },
   {
