@@ -442,6 +442,34 @@ export default function BookingWizard({
     overflowX: 'hidden',
   }
 
+  const SiteHeader = () => (
+    <header style={{ background: color, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 26 }}>{introEmoji || theme.emoji}</span>
+        <div>
+          <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 18, color: '#fff', margin: 0 }}>{companyName}</h1>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.75)', margin: 0 }}>San Luis · Reservas online</p>
+        </div>
+      </div>
+      {instagram && (
+        <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.18)', color: '#fff', textDecoration: 'none', fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700 }}>
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          Instagram
+        </a>
+      )}
+    </header>
+  )
+
+  const SiteFooter = () => (
+    <footer style={{ background: `linear-gradient(135deg, ${color}dd, ${color})`, padding: '32px 24px', textAlign: 'center', marginTop: 40 }}>
+      <div style={{ fontSize: 28, marginBottom: 10 }}>{introEmoji || theme.emoji}</div>
+      <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 4px' }}>{companyName}</p>
+      {instagram && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.7)', margin: '0 0 8px' }}>📸 @{instagram}</p>}
+      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: 0 }}>© {new Date().getFullYear()} · Reservas online · San Luis Capital</p>
+    </footer>
+  )
+
   if (!splashDone) {
     return <SplashIntro
       companyName={companyName}
@@ -474,8 +502,9 @@ export default function BookingWizard({
             to { opacity: 1; transform: translateY(0) scale(1); }
           }
         `}</style>
+        <SiteHeader />
         <div style={{
-          maxWidth: 480, margin: '0 auto', padding: '40px 24px 100px',
+          maxWidth: 480, margin: '0 auto', padding: '40px 24px 60px',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           textAlign: 'center', position: 'relative', zIndex: 1,
           animation: 'dp-success-in 0.6s ease both',
@@ -564,6 +593,7 @@ export default function BookingWizard({
             Hacer otra reserva
           </button>
         </div>
+        <SiteFooter />
       </div>
     )
   }
@@ -580,7 +610,8 @@ export default function BookingWizard({
           .dp-input:focus { border-color: ${color} !important; box-shadow: 0 0 0 3px ${color}22; }
           .dp-input::placeholder { color: var(--muted); }
         `}</style>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 100px', position: 'relative', zIndex: 1, animation: 'dp-slide-in 0.4s ease both' }}>
+        <SiteHeader />
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px 60px', position: 'relative', zIndex: 1, animation: 'dp-slide-in 0.4s ease both' }}>
           <button onClick={() => setStep('select')} style={{
             fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
             color: color, background: 'none', border: 'none', cursor: 'pointer',
@@ -718,6 +749,7 @@ export default function BookingWizard({
             </div>
           </div>
         </div>
+        <SiteFooter />
       </div>
     )
   }
@@ -726,102 +758,75 @@ export default function BookingWizard({
   return (
     <div style={pageStyle}>
       <style>{`
-        @keyframes dp-slide-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes dp-stagger-in {
-          from { opacity: 0; transform: translateY(12px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .dp-slot-btn:hover { transform: scale(1.04); }
-        .dp-service-row:hover { background: var(--paper-3) !important; }
+        @keyframes dp-slide-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes dp-stagger-in { from{opacity:0;transform:translateY(10px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .dp-slot-btn:hover { transform:scale(1.04); }
+        .dp-svc-row:hover { background: ${color}0f !important; }
+        @media(max-width:700px){.dp-two-col{grid-template-columns:1fr !important}}
+        @media(max-width:700px){.dp-tab-row{flex-direction:column !important}}
       `}</style>
 
-      {/* ── Header ── */}
-      <div style={{
-        background: color,
-        padding: '20px 20px 16px',
-        color: '#fff',
-      }}>
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 24 }}>{introEmoji || theme.emoji}</span>
-              <div>
-                <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 18, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>{companyName}</h1>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.75)', margin: 0, letterSpacing: '0.04em' }}>San Luis · Reservas online</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {ownerPhone && (
-                <a href={`https://wa.me/${ownerPhone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.2)', color: '#fff', textDecoration: 'none', fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em' }}>
-                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.545 5.875L0 24l6.29-1.518A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.017-1.38l-.36-.214-3.733.9.944-3.637-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
-                  WA
-                </a>
-              )}
-              {instagram && (
-                <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.2)', color: '#fff', textDecoration: 'none', fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em' }}>
-                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                  IG
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
+      <SiteHeader />
+
+      {/* ── Hero ── */}
+      <div style={{ background: `${color}12`, padding: '28px 24px 24px', textAlign: 'center', borderBottom: `1px solid ${color}25` }}>
+        <h2 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 'clamp(20px,4vw,30px)', color: 'var(--ink)', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+          Reservá tu turno online ✨
+        </h2>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', margin: 0 }}>
+          {ownerPhone
+            ? `Elegí el servicio y la fecha — te confirmamos por WhatsApp`
+            : `Elegí el servicio y la fecha`}
+        </p>
       </div>
 
-      {/* ── Tabs ── */}
-      {productosEnabled && (
-        <div style={{ background: 'var(--paper)', borderBottom: '1px solid var(--line)' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', padding: '0 16px' }}>
-            {(['turnos', 'productos'] as const).map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                style={{
-                  flex: 1, padding: '14px 0', border: 'none', background: 'none', cursor: 'pointer',
-                  fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
-                  fontWeight: 700,
-                  color: activeTab === tab ? color : 'var(--muted)',
-                  borderBottom: activeTab === tab ? `2.5px solid ${color}` : '2.5px solid transparent',
-                  transition: 'all 0.2s',
-                }}>
-                {tab === 'turnos' ? `✨ Turnos` : `🛍️ Productos`}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* ── Tabs grandes ── */}
+      <div style={{ maxWidth: 900, margin: '24px auto 0', padding: '0 20px', display: 'flex', gap: 12 }} className="dp-tab-row">
+        <button onClick={() => setActiveTab('turnos')}
+          style={{
+            flex: 1, padding: '14px 20px', borderRadius: 12, border: `2px solid ${activeTab === 'turnos' ? color : 'var(--line)'}`,
+            background: activeTab === 'turnos' ? color : 'var(--paper)',
+            color: activeTab === 'turnos' ? '#fff' : 'var(--muted)',
+            fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            transition: 'all 0.2s', boxShadow: activeTab === 'turnos' ? `0 4px 16px ${color}44` : 'none',
+          }}>
+          ✨ Turnos {companyName.split(' ')[0]}
+        </button>
+        {productosEnabled && (
+          <button onClick={() => setActiveTab('productos')}
+            style={{
+              flex: 1, padding: '14px 20px', borderRadius: 12, border: `2px solid ${activeTab === 'productos' ? color : 'var(--line)'}`,
+              background: activeTab === 'productos' ? 'var(--paper)' : 'var(--paper)',
+              color: activeTab === 'productos' ? 'var(--ink)' : 'var(--muted)',
+              fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: activeTab === 'productos' ? 700 : 500, cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}>
+            🛍️ Productos
+          </button>
+        )}
+      </div>
 
       {/* ── Productos view ── */}
       {activeTab === 'productos' && productosEnabled && (
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 100px' }}>
+        <div style={{ maxWidth: 900, margin: '20px auto 0', padding: '0 20px 60px' }}>
           {productosGrouped.size === 0 ? (
-            <Card style={{ padding: 32, textAlign: 'center' }}>
+            <Card style={{ padding: 32, textAlign: 'center', marginTop: 16 }}>
               <p style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted)', margin: 0 }}>Sin productos cargados todavía.</p>
             </Card>
           ) : (
-            <Card style={{ overflow: 'hidden' }}>
+            <Card style={{ overflow: 'hidden', marginTop: 16 }}>
               {Array.from(productosGrouped.entries()).map(([cat, prods]) => (
                 <div key={cat}>
-                  <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
+                  <div style={{ padding: '8px 20px', background: 'var(--paper-2)', borderBottom: '1px solid var(--line)' }}>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
                   </div>
                   {prods.map((prod, i) => (
-                    <div key={prod.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '15px 16px',
-                        borderBottom: i < prods.length - 1 ? '1px solid var(--line)' : 'none',
-                      }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{prod.name}</p>
+                    <div key={prod.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: i < prods.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                      <div>
+                        <p style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{prod.name}</p>
                         {prod.description && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '3px 0 0' }}>{prod.description}</p>}
                       </div>
-                      <span style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color, flexShrink: 0, marginLeft: 12 }}>
-                        {prod.price_ars > 0 ? formatPriceARS(prod.price_ars) : 'Consultar'}
-                      </span>
+                      <span style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 700, color, flexShrink: 0, marginLeft: 16 }}>{prod.price_ars > 0 ? formatPriceARS(prod.price_ars) : 'Consultar'}</span>
                     </div>
                   ))}
                 </div>
@@ -829,226 +834,155 @@ export default function BookingWizard({
             </Card>
           )}
           {ownerPhone && (
-            <a href={`https://wa.me/${ownerPhone.replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${companyName}! Quiero consultar por un producto 🛍️`)}`}
+            <a href={`https://wa.me/${ownerPhone.replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${companyName}! Quiero consultar sobre un producto 🛍️`)}`}
               target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                marginTop: 16, width: '100%', padding: '16px 0', borderRadius: 14,
-                fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.06em',
-                textDecoration: 'none', background: '#25d366', color: '#fff', fontWeight: 700,
-                boxShadow: '0 4px 20px rgba(37,211,102,0.3)',
-              }}>
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 16, padding: '16px', borderRadius: 14, textDecoration: 'none', background: '#25d366', color: '#fff', fontFamily: 'var(--f-mono)', fontSize: 12, fontWeight: 700, boxShadow: '0 4px 20px rgba(37,211,102,0.3)' }}>
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.545 5.875L0 24l6.29-1.518A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.017-1.38l-.36-.214-3.733.9.944-3.637-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
               Consultar por WhatsApp
             </a>
           )}
+          <SiteFooter />
         </div>
       )}
 
-      {/* ── Turnos view ── */}
+      {/* ── Turnos: two-column layout ── */}
       {activeTab === 'turnos' && (
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 100px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 900, margin: '20px auto 0', padding: '0 20px 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="dp-two-col">
 
-        <ProgressBar step="select" color={color} />
-
-        {/* ── Servicios ── */}
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-          1 — Elegí el servicio
-        </p>
-
-        <Card style={{ overflow: 'hidden', marginBottom: 20 }}>
-          {Array.from(grouped.entries()).map(([cat, services]) => (
-            <div key={cat}>
-              <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
+          {/* ── Columna izquierda: servicios + profesionales ── */}
+          <div>
+            <Card style={{ overflow: 'hidden' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>1</div>
+                  <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Elegí el servicio</span>
+                </div>
               </div>
-              {services.map((service, i) => {
-                const isSel = selectedServices.some(s => s.id === service.id)
-                return (
-                  <button key={service.id} onClick={() => toggleService(service)}
-                    className="dp-service-row"
-                    style={{
-                      width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '15px 16px',
-                      border: 'none',
-                      borderBottom: i < services.length - 1 ? '1px solid var(--line)' : 'none',
-                      background: isSel ? `${color}12` : 'transparent',
-                      cursor: 'pointer', transition: 'background 0.15s',
-                    }}>
-                    <div style={{
-                      width: 22, height: 22, borderRadius: 7, flexShrink: 0,
-                      border: `2px solid ${isSel ? color : 'var(--line)'}`,
-                      background: isSel ? color : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.15s',
-                      boxShadow: isSel ? `0 0 12px ${color}55` : 'none',
-                    }}>
-                      {isSel && (
-                        <svg width="12" height="12" fill="none" viewBox="0 0 12 12">
-                          <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
+              <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+                {Array.from(grouped.entries()).map(([cat, services]) => (
+                  <div key={cat}>
+                    <div style={{ padding: '7px 20px', background: 'var(--paper-2)', borderBottom: '1px solid var(--line)', borderTop: '1px solid var(--line)' }}>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{service.name}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>{service.duration_minutes} min</span>
-                        {depositsEnabled && (service.deposit_percentage ?? 0) > 0 && (
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'rgba(251,191,36,0.15)', color: '#b45309', borderRadius: 100, padding: '2px 8px', border: '1px solid rgba(251,191,36,0.3)' }}>Seña {service.deposit_percentage}%</span>
-                        )}
-                      </div>
-                    </div>
-                    <span style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color, flexShrink: 0 }}>{formatPriceARS(service.price_ars)}</span>
-                  </button>
-                )
-              })}
-            </div>
-          ))}
-        </Card>
-
-        {selectedServices.length > 0 && (
-          <div style={{
-            marginBottom: 24, padding: '12px 16px', borderRadius: 12,
-            background: `${color}12`, border: `1px solid ${color}30`,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            animation: 'dp-slide-in 0.3s ease both',
-          }}>
-            <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)' }}>
-              {selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''} · {totalDuration} min
-            </span>
-            <span style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 800, color }}>{formatPriceARS(totalPrice)}</span>
-          </div>
-        )}
-
-        {/* ── Profesionales ── */}
-        {config.professionals && config.professionals.length > 0 && (
-          <div style={{ marginBottom: 24 }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-              {config.professionals.length === 1 ? 'Profesional' : '¿Con quién?'}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {config.professionals.map(prof => {
-                const isSel = typeof selectedProfessional === 'object' && selectedProfessional?.id === prof.id
-                return (
-                  <button key={prof.id} onClick={() => selectProfessional(prof)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '10px 18px', borderRadius: 12,
-                      border: `1.5px solid ${isSel ? color : 'var(--line)'}`,
-                      background: isSel ? color : 'var(--paper)',
-                      color: isSel ? '#fff' : 'var(--ink)',
-                      fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s',
-                      boxShadow: isSel ? `0 0 16px ${color}55` : 'none',
-                    }}>
-                    <span>{prof.emoji || '👤'}</span>
-                    {prof.name}
-                  </button>
-                )
-              })}
-              {config.professionals.length > 1 && (
-                <button onClick={() => selectProfessional('any')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 18px', borderRadius: 12,
-                    border: `1.5px solid ${selectedProfessional === 'any' ? color : 'var(--line)'}`,
-                    background: selectedProfessional === 'any' ? `${color}18` : 'var(--paper)',
-                    color: selectedProfessional === 'any' ? color : 'var(--muted)',
-                    fontFamily: 'var(--f-display)', fontSize: 13,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}>
-                  Sin preferencia
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Fecha ── */}
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-          2 — Elegí la fecha
-        </p>
-        <div style={{ marginBottom: 24 }}>
-          <MiniCalendar
-            availableDates={availableDates} selectedDate={selectedDate}
-            onSelect={onSelectDate} color={color}
-            viewYear={viewYear} viewMonth={viewMonth}
-            onPrev={prevMonth} onNext={nextMonth}
-          />
-        </div>
-
-        {/* ── Horarios ── */}
-        {selectedDate && (
-          <div style={{ marginBottom: 24, animation: 'dp-slide-in 0.35s ease both' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-              3 — Elegí la hora · <span style={{ textTransform: 'capitalize' }}>{DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]}</span> {formatDateAR(selectedDate)}
-            </p>
-
-            {selectedServices.length === 0 ? (
-              <Card style={{ padding: '20px 16px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', margin: 0 }}>Primero elegí al menos un servicio</p>
-              </Card>
-            ) : loadingSlots ? (
-              <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Cargando horarios...</p>
+                    {services.map((service, i) => {
+                      const isSel = selectedServices.some(s => s.id === service.id)
+                      const depositPct = depositsEnabled ? (service.deposit_percentage ?? 0) : 0
+                      const senaAmount = depositPct > 0 && service.price_ars > 0 ? Math.round(service.price_ars * depositPct / 100) : 0
+                      return (
+                        <button key={service.id} onClick={() => toggleService(service)}
+                          className="dp-svc-row"
+                          style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', border: 'none', borderBottom: i < services.length - 1 ? '1px solid var(--line)' : 'none', background: isSel ? `${color}12` : 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: isSel ? 700 : 500, color: 'var(--ink)', margin: 0 }}>{service.name}</p>
+                            {senaAmount > 0 && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '2px 0 0' }}>Seña: {formatPriceARS(senaAmount)}</p>}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                            <span style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color: isSel ? color : 'var(--ink)' }}>{formatPriceARS(service.price_ars)}</span>
+                            {isSel && <div style={{ width: 18, height: 18, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><svg width="10" height="10" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
-            ) : slots.length === 0 ? (
-              <Card style={{ padding: '20px 16px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', margin: 0 }}>No hay horarios disponibles para {totalDuration} min este día.</p>
-              </Card>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                {slots.map((slot, idx) => {
-                  const booked = slotCounts[slot] || 0
-                  const remaining = slotMaxCapacity > 1 ? slotMaxCapacity - booked : null
-                  const isSel = selectedTime === slot
-                  return (
-                    <button
-                      key={slot}
-                      onClick={() => setSelectedTime(slot)}
-                      className="dp-slot-btn"
-                      style={{
-                        padding: '12px 0', borderRadius: 12,
-                        border: `1.5px solid ${isSel ? 'transparent' : 'var(--line)'}`,
-                        background: isSel ? color : 'var(--paper)',
-                        color: isSel ? '#fff' : 'var(--ink)',
-                        fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: isSel ? 700 : 400,
-                        textAlign: 'center', cursor: 'pointer',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                        transition: 'all 0.15s ease',
-                        boxShadow: isSel ? `0 0 20px ${color}66` : 'none',
-                        animation: `dp-stagger-in 0.3s ${idx * 0.03}s ease both`,
-                      }}
-                    >
-                      <span>{slot}</span>
-                      {remaining !== null && (
-                        <span style={{ fontSize: 9, opacity: 0.65 }}>{remaining} cupo{remaining !== 1 ? 's' : ''}</span>
-                      )}
+            </Card>
+
+            {/* Profesionales */}
+            {config.professionals && config.professionals.length > 0 && (
+              <Card style={{ marginTop: 12, padding: 16 }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 10px' }}>¿Con quién?</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {config.professionals.map(prof => {
+                    const isSel = typeof selectedProfessional === 'object' && selectedProfessional?.id === prof.id
+                    return (
+                      <button key={prof.id} onClick={() => selectProfessional(prof)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${isSel ? color : 'var(--line)'}`, background: isSel ? color : 'var(--paper)', color: isSel ? '#fff' : 'var(--ink)', fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                        <span>{prof.emoji || '👤'}</span>{prof.name}
+                      </button>
+                    )
+                  })}
+                  {config.professionals.length > 1 && (
+                    <button onClick={() => selectProfessional('any')}
+                      style={{ padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${selectedProfessional === 'any' ? color : 'var(--line)'}`, background: 'var(--paper)', color: 'var(--muted)', fontFamily: 'var(--f-display)', fontSize: 13, cursor: 'pointer' }}>
+                      Sin preferencia
                     </button>
-                  )
-                })}
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {/* Resumen selección */}
+            {selectedServices.length > 0 && (
+              <div style={{ marginTop: 12, padding: '12px 16px', borderRadius: 12, background: `${color}12`, border: `1px solid ${color}30`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: 'dp-slide-in 0.3s ease both' }}>
+                <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)' }}>{selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''} · {totalDuration} min</span>
+                <span style={{ fontFamily: 'var(--f-display)', fontSize: 16, fontWeight: 800, color }}>{formatPriceARS(totalPrice)}</span>
               </div>
             )}
           </div>
-        )}
 
-        {/* ── Botón continuar ── */}
-        {canContinue && (
-          <button onClick={() => setStep('form')}
-            style={{
-              width: '100%', background: color, color: '#fff', border: 'none',
-              borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)',
-              fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
-              cursor: 'pointer', fontWeight: 700,
-              boxShadow: `0 4px 24px ${color}55`,
-              transition: 'all 0.2s',
-              animation: 'dp-slide-in 0.3s ease both',
-            }}>
-            Continuar con mis datos →
-          </button>
-        )}
-      </div>
+          {/* ── Columna derecha: calendario + horarios ── */}
+          <div>
+            <Card style={{ overflow: 'hidden' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedDate ? color : 'var(--line)', color: selectedDate ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>2</div>
+                  <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Elegí la fecha</span>
+                </div>
+              </div>
+              <MiniCalendar availableDates={availableDates} selectedDate={selectedDate} onSelect={onSelectDate} color={color} viewYear={viewYear} viewMonth={viewMonth} onPrev={prevMonth} onNext={nextMonth} />
+            </Card>
+
+            {/* Horarios */}
+            {selectedDate && (
+              <Card style={{ marginTop: 12, overflow: 'hidden', animation: 'dp-slide-in 0.35s ease both' }}>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedTime ? color : 'var(--line)', color: selectedTime ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>3</div>
+                    <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>
+                      Elegí la hora · <span style={{ textTransform: 'capitalize', fontWeight: 400, fontSize: 12, color: 'var(--muted)' }}>{DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]} {formatDateAR(selectedDate)}</span>
+                    </span>
+                  </div>
+                </div>
+                <div style={{ padding: 16 }}>
+                  {selectedServices.length === 0 ? (
+                    <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Primero elegí al menos un servicio</p>
+                  ) : loadingSlots ? (
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Cargando horarios...</p>
+                  ) : slots.length === 0 ? (
+                    <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Sin horarios disponibles este día.</p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                      {slots.map((slot, idx) => {
+                        const booked = slotCounts[slot] || 0
+                        const remaining = slotMaxCapacity > 1 ? slotMaxCapacity - booked : null
+                        const isSel = selectedTime === slot
+                        return (
+                          <button key={slot} onClick={() => setSelectedTime(slot)} className="dp-slot-btn"
+                            style={{ padding: '11px 0', borderRadius: 10, border: `1.5px solid ${isSel ? 'transparent' : 'var(--line)'}`, background: isSel ? color : 'var(--paper)', color: isSel ? '#fff' : 'var(--ink)', fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: isSel ? 700 : 400, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, transition: 'all 0.15s ease', boxShadow: isSel ? `0 0 16px ${color}55` : 'none', animation: `dp-stagger-in 0.3s ${idx * 0.025}s ease both` }}>
+                            <span>{slot}</span>
+                            {remaining !== null && <span style={{ fontSize: 9, opacity: 0.65 }}>{remaining} cupo{remaining !== 1 ? 's' : ''}</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {/* Continuar */}
+            {canContinue && (
+              <button onClick={() => setStep('form')}
+                style={{ marginTop: 16, width: '100%', background: color, color: '#fff', border: 'none', borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)', fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700, boxShadow: `0 4px 24px ${color}55`, transition: 'all 0.2s', animation: 'dp-slide-in 0.3s ease both' }}>
+                Continuar con mis datos →
+              </button>
+            )}
+          </div>
+        </div>
       )}
+
+      {activeTab === 'turnos' && <SiteFooter />}
     </div>
   )
 }
