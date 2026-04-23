@@ -564,6 +564,7 @@ export default function ClientesPage() {
   const [tab, setTab] = useState<'lista' | 'nuevo'>('lista')
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState<string>('todos')
+  const [servicioFilter, setServicioFilter] = useState<'todos' | 'nucleus' | 'turnero' | 'web' | 'pendientes'>('todos')
   const [seeding, setSeeding] = useState(false)
   const [seedMsg, setSeedMsg] = useState('')
 
@@ -629,13 +630,27 @@ export default function ClientesPage() {
     fetch('/api/templates').then(r => r.json()).then(d => setTemplates(d.templates || []))
   }, [])
 
+  const CLIENTES_PENDIENTES = [
+    { nombre: 'Shopping del Usado', contacto: '', servicio: 'NUCLEUS', status: '⭐ Primer cierre — propuesta enviada', color: '#A78BFA', icon: '🛍️', accion: 'Cerrar venta' },
+    { nombre: 'Dorotea (Santiago Peral)', contacto: 'Santiago Peral', servicio: 'NUCLEUS', status: 'En desarrollo', color: '#A78BFA', icon: '🧠', accion: 'Definir alcance' },
+    { nombre: 'Estética tuEspacio', contacto: 'Romina', servicio: 'Turnero', status: 'Cliente activo con turnos', color: '#10B981', icon: '💆', accion: 'Conectar a DIVINIA' },
+    { nombre: 'Buggi Viajes y Turismo', contacto: '', servicio: 'Web', status: 'Webapp administrada', color: '#38BDF8', icon: '✈️', accion: 'Agregar a Supabase' },
+    { nombre: 'TUBI', contacto: '', servicio: 'Web', status: 'App PHP deployada', color: '#38BDF8', icon: '🚲', accion: 'Conectar monitoring' },
+  ]
+
   const filtered = clients.filter(c => {
     const matchSearch = !search ||
       c.company_name.toLowerCase().includes(search.toLowerCase()) ||
       c.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
       c.email?.toLowerCase().includes(search.toLowerCase())
     const matchPlan = planFilter === 'todos' || c.plan === planFilter || c.status === planFilter
-    return matchSearch && matchPlan
+    const hasChatbot = !!c.chatbot_id
+    const hasTurnos = c.booking_configs && c.booking_configs.length > 0
+    const matchServicio = servicioFilter === 'todos' ||
+      (servicioFilter === 'nucleus' && hasChatbot) ||
+      (servicioFilter === 'turnero' && hasTurnos) ||
+      (servicioFilter === 'web' && !hasChatbot && !hasTurnos)
+    return matchSearch && matchPlan && matchServicio
   })
 
   const countActive  = clients.filter(c => c.status === 'active').length
@@ -725,6 +740,60 @@ export default function ClientesPage() {
         </Suspense>
       ) : (
         <>
+          {/* Tabs de servicio */}
+          <div style={{ marginBottom: 16, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {([
+              { id: 'todos', label: 'Todos', icon: '👥' },
+              { id: 'nucleus', label: 'NUCLEUS', icon: '🧠', color: '#A78BFA' },
+              { id: 'turnero', label: 'Turnero', icon: '📅', color: '#10B981' },
+              { id: 'web', label: 'Web', icon: '🌐', color: '#38BDF8' },
+              { id: 'pendientes', label: 'Por activar', icon: '⚡', color: '#F59E0B' },
+            ] as const).map(t => (
+              <button key={t.id} onClick={() => setServicioFilter(t.id as typeof servicioFilter)}
+                style={{
+                  padding: '7px 14px', borderRadius: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  border: `1px solid ${'color' in t && servicioFilter === t.id ? t.color : servicioFilter === t.id ? 'var(--ink)' : 'var(--line)'}`,
+                  background: servicioFilter === t.id ? ('color' in t ? t.color + '18' : 'var(--ink)') : 'transparent',
+                  color: servicioFilter === t.id ? ('color' in t ? t.color : 'var(--paper)') : 'var(--muted)',
+                  fontWeight: servicioFilter === t.id ? 700 : 400,
+                }}>
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sección: clientes reales pendientes de activar */}
+          {servicioFilter === 'pendientes' && (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                Clientes reales · pendientes de activar en DIVINIA
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                {CLIENTES_PENDIENTES.map(cp => (
+                  <div key={cp.nombre} style={{ background: 'var(--paper)', border: `1px solid ${cp.color}40`, borderRadius: 12, padding: '18px 20px', borderLeft: `3px solid ${cp.color}` }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: cp.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                        {cp.icon}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', marginBottom: 2 }}>{cp.nombre}</div>
+                        {cp.contacto && <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', marginBottom: 4 }}>{cp.contacto}</div>}
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: cp.color, border: `1px solid ${cp.color}50`, borderRadius: 4, padding: '2px 6px' }}>{cp.servicio}</span>
+                          <span style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)' }}>{cp.status}</span>
+                        </div>
+                        <button style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${cp.color}40`, background: cp.color + '10', cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: cp.color }} onClick={() => setTab('nuevo')}>
+                          {cp.accion} →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{ marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar..."

@@ -1,109 +1,85 @@
 import Navbar from '@/components/public/Navbar'
 import Footer from '@/components/public/Footer'
 import Link from 'next/link'
+import { TURNERO_PLANS, formatPrecio } from '@/lib/turnero-plans'
 
 const WA = 'https://wa.me/5492665286110'
 
-// ── TURNERO ───────────────────────────────────────────────────────────────────
+// ── TURNERO — generado desde lib/turnero-plans.ts (fuente de verdad) ──────────
 
-const TURNERO_PLANES = [
-  {
-    nombre: 'Básico',
-    precio: '$80.000',
-    pago: 'pago único',
-    para: '1-2 profesionales · servicio único',
-    features: [
-      'Página de reservas personalizada',
-      'Hasta 3 servicios configurados',
-      'Confirmación y recordatorio por WhatsApp',
-      'Panel de gestión desde el celular',
-      '3 meses de soporte incluido',
-      'Configuración lista en 24hs',
-    ],
-    href: `${WA}?text=Quiero%20el%20Turnero%20Básico%20($80.000)`,
-    highlight: false,
-    color: '#38BDF8',
-  },
-  {
-    nombre: 'Pro',
-    precio: '$150.000',
-    pago: 'pago único',
-    para: 'equipo + múltiples servicios',
-    features: [
-      'Todo lo del Básico',
-      'Múltiples profesionales (sin límite)',
-      'Servicios y horarios ilimitados',
-      'Cobro de seña al reservar (MercadoPago)',
-      'Bloqueo de horarios y vacaciones',
-      'Estadísticas de turnos',
-      '6 meses de soporte incluido',
-    ],
-    href: `${WA}?text=Quiero%20el%20Turnero%20Pro%20($150.000)`,
-    highlight: true,
-    color: '#C6FF3D',
-  },
-  {
-    nombre: 'Enterprise',
-    precio: '$200.000',
-    pago: 'pago único',
-    para: 'multi-sucursal · clínicas grandes',
-    features: [
-      'Todo lo del Pro',
-      'Múltiples sucursales',
-      'Chatbot integrado para derivar turnos',
-      'CRM básico con historial de clientes',
-      'Capacitación del equipo',
-      '12 meses de soporte incluido',
-    ],
-    href: `${WA}?text=Quiero%20el%20Turnero%20Enterprise%20($200.000)`,
-    highlight: false,
-    color: '#818CF8',
-  },
-]
+const TURNERO_PLANES = TURNERO_PLANS.filter(p => p.id !== 'enterprise').map(plan => ({
+  nombre: plan.nombre,
+  precio: plan.id === 'anual'
+    ? `${formatPrecio(plan.precio)}/mes`
+    : plan.id === 'mensual'
+    ? `${formatPrecio(plan.precio)}/mes`
+    : formatPrecio(plan.precio),
+  pago: plan.billing,
+  para: plan.descripcion,
+  features: plan.features,
+  href: `${WA}?text=Quiero%20el%20Turnero%20${encodeURIComponent(plan.nombre)}%20(${encodeURIComponent(plan.id === 'anual' ? '$35.000/mes' : plan.id === 'mensual' ? '$45.000/mes' : '$120.000')})`,
+  highlight: plan.popular,
+  color: plan.color,
+}))
 
 // ── CHATBOT ───────────────────────────────────────────────────────────────────
 
 const CHATBOT_PLANES = [
   {
     nombre: 'Básico',
-    precio: '$150.000',
-    pago: 'pago único · setup + 1 año hosting',
-    para: 'negocio pequeño con preguntas estándar',
+    precio: '$90.000/mes',
+    pago: 'mensual · sin permanencia',
+    para: 'negocio con consultas frecuentes por WA',
     features: [
-      'Responde las 15 preguntas más frecuentes',
+      'Responde las 20 preguntas más frecuentes',
       'Da info de horarios, precios y servicios',
       'Agenda turnos si ya tenés Turnero',
       'Derivación a humano cuando no sabe',
       'Entrenado con el tono de tu negocio',
       'Activo 24hs / 7 días',
     ],
-    href: `${WA}?text=Quiero%20el%20Chatbot%20Básico%20($150.000)`,
+    href: `${WA}?text=Quiero%20la%20Central%20IA%20Básico%20($90.000/mes)`,
     highlight: false,
     color: '#34D399',
   },
   {
     nombre: 'Pro',
-    precio: '$250.000',
-    pago: 'pago único · setup + 1 año hosting',
-    para: 'negocio con flujos complejos o ventas',
+    precio: '$150.000/mes',
+    pago: 'mensual · sin permanencia',
+    para: 'negocio que quiere ventas automáticas por WA',
     features: [
       'Todo lo del Básico',
       'IA con Claude (conversación natural, sin guiones)',
       'Calificación automática de leads',
       'Envío de presupuestos y propuestas por WA',
-      'Integración con tu CRM o planilla',
+      'Integración con Turnero incluida',
       'Flujos personalizados por intención del cliente',
-      'Reportes mensuales de conversaciones',
+      'Reporte mensual de conversaciones',
     ],
-    href: `${WA}?text=Quiero%20el%20Chatbot%20Pro%20($250.000)`,
+    href: `${WA}?text=Quiero%20la%20Central%20IA%20Pro%20($150.000/mes)`,
     highlight: true,
     color: '#C6FF3D',
+  },
+  {
+    nombre: 'Setup único',
+    precio: '$180.000',
+    pago: 'pago único · sin cuota mensual',
+    para: 'querés pagarlo una vez y listo',
+    features: [
+      'Chatbot configurado y entrenado',
+      'Sin cuota mensual',
+      '6 meses de soporte incluido',
+      'Actualizaciones de respuestas incluidas',
+    ],
+    href: `${WA}?text=Quiero%20la%20Central%20IA%20Setup%20Único%20($180.000)`,
+    highlight: false,
+    color: '#34D399',
   },
 ]
 
 const CHATBOT_MANTENIMIENTO = [
-  { nombre: 'Soporte básico', precio: '$30.000/mes', items: ['1 ajuste de respuestas/mes', 'Monitoreo', 'Respuesta en 48hs'] },
-  { nombre: 'Soporte pro', precio: '$60.000/mes', items: ['Ajustes ilimitados', 'Nuevas respuestas', 'Respuesta en 24hs'] },
+  { nombre: 'Mantenimiento básico', precio: '$40.000/mes', items: ['1 ajuste de respuestas/mes', 'Monitoreo mensual', 'Respuesta en 48hs'] },
+  { nombre: 'Mantenimiento pro', precio: '$70.000/mes', items: ['Ajustes ilimitados', 'Monitoreo semanal', 'Respuesta en 24hs'] },
 ]
 
 // ── CONTENT FACTORY ──────────────────────────────────────────────────────────
@@ -347,7 +323,7 @@ export default function PreciosPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: 12, marginBottom: 32 }} className="grid-cols-2-mobile-1 md:grid-cols-2">
+          <div style={{ display: 'grid', gap: 12, marginBottom: 32 }} className="grid-cols-3-mobile-1 md:grid-cols-3">
             {CHATBOT_PLANES.map(p => (
               <div key={p.nombre} style={{
                 background: p.highlight ? 'var(--ink)' : 'var(--paper)',

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 
 type Proyecto = {
   id: string
@@ -14,6 +15,7 @@ type Proyecto = {
   href?: string
   proximos: string[]
   kpis?: { label: string; valor: string }[]
+  categoria: 'producto-divinia' | 'app-propia'
 }
 
 const PROYECTOS: Proyecto[] = [
@@ -21,17 +23,36 @@ const PROYECTOS: Proyecto[] = [
     id: 'turnero',
     nombre: 'Turnero IA',
     tagline: 'Sistema de reservas inteligente para PYMEs',
-    descripcion: 'Producto hero de DIVINIA. Sistema de turnos con IA, confirmaciones automáticas y panel de gestión. Activo y en venta desde San Luis.',
+    descripcion: 'Producto hero de DIVINIA. Sistema de turnos con IA, confirmaciones automáticas y panel de gestión. Activo y en venta desde San Luis. Cliente real: Estética tuEspacio (Romina).',
     status: 'activo',
     icon: '📅',
     color: '#C6FF3D',
     progreso: 85,
     href: '/turnos',
+    categoria: 'producto-divinia',
     proximos: ['Integración MercadoPago', 'Notificaciones WhatsApp', 'App móvil (PWA)', 'Analytics por rubro'],
     kpis: [
-      { label: 'Clientes demo', valor: '5' },
+      { label: 'Clientes', valor: 'Romina + demos' },
       { label: 'Precio desde', valor: '$45k/mes' },
       { label: 'Setup', valor: '48hs' },
+    ],
+  },
+  {
+    id: 'nucleus',
+    nombre: 'NUCLEUS IA',
+    tagline: 'Cerebro IA para negocios — memoria, agentes, automatización total',
+    descripcion: 'El producto más diferenciador. Cerebro IA que automatiza el negocio completo del cliente. Primer cierre: Shopping del Usado. En desarrollo para Dorotea (Santiago Peral).',
+    status: 'en-desarrollo',
+    icon: '🧠',
+    color: '#A78BFA',
+    progreso: 40,
+    href: '/nucleo',
+    categoria: 'producto-divinia',
+    proximos: ['Cerrar Shopping del Usado', 'Entregar Dorotea (Santiago Peral)', 'Memory store en Supabase', 'Agente comercial autónomo'],
+    kpis: [
+      { label: 'Primer cliente', valor: 'Shopping del Usado' },
+      { label: 'En desarrollo', valor: 'Dorotea' },
+      { label: 'Modelo', valor: 'Claude Sonnet' },
     ],
   },
   {
@@ -44,11 +65,30 @@ const PROYECTOS: Proyecto[] = [
     color: '#38BDF8',
     progreso: 20,
     href: '/market',
-    proximos: ['Definir MVP funcional', 'Reclutar 10 comercios piloto', 'Landing pública marketsl.com.ar', 'Sistema de delivery básico', 'Loyalty por QR'],
+    categoria: 'producto-divinia',
+    proximos: ['Landing pública propia', 'Reclutar 10 comercios piloto', 'Sistema de delivery básico', 'Loyalty por QR', 'Integrar ECOSL reciclaje'],
     kpis: [
       { label: 'Comercios objetivo', valor: '50 en 6 meses' },
       { label: 'Modelo', valor: 'Comisión + suscripción' },
       { label: 'Ciudad piloto', valor: 'San Luis Capital' },
+    ],
+  },
+  {
+    id: 'content-factory',
+    nombre: 'Content Factory',
+    tagline: 'Producción masiva de contenido IA para clientes DIVINIA',
+    descripcion: 'Sistema para producir y programar contenido de redes sociales. Base: SocialFlow (Next.js + Prisma + BullMQ). Reels, posts, copys, calendarios en minutos.',
+    status: 'activo',
+    icon: '✨',
+    color: '#F59E0B',
+    progreso: 60,
+    categoria: 'producto-divinia',
+    href: '/contenido',
+    proximos: ['Publicación directa a Instagram', 'Templates por rubro', 'Aprobación del cliente vía link', 'Generación de avatares por cliente'],
+    kpis: [
+      { label: 'Formatos', valor: 'Reels, posts, copys' },
+      { label: 'Pipeline', valor: 'IA → Remotion → Canva' },
+      { label: 'Base', valor: 'SocialFlow' },
     ],
   },
   {
@@ -61,7 +101,8 @@ const PROYECTOS: Proyecto[] = [
     color: '#EF4444',
     progreso: 10,
     href: '/youtube',
-    proximos: ['Lanzar canal #1 (La Mente Oscura)', 'Crear template de guión por nicho', 'Setup ElevenLabs voice clone', 'Pipeline Remotion automático', 'Primeros 10 videos x canal'],
+    categoria: 'app-propia',
+    proximos: ['Lanzar canal #1 (La Mente Oscura)', 'Setup ElevenLabs voice clone', 'Pipeline Remotion automático', 'Primeros 10 videos x canal'],
     kpis: [
       { label: 'Canales planificados', valor: '15' },
       { label: 'Proyección mes 12', valor: '$10-20k USD' },
@@ -69,39 +110,54 @@ const PROYECTOS: Proyecto[] = [
     ],
   },
   {
-    id: 'nucleus',
-    nombre: 'NUCLEUS IA',
-    tagline: 'Cerebro operativo de DIVINIA — memoria, agentes, orquestación',
-    descripcion: 'Sistema interno de agentes IA con memoria persistente. Orquesta operaciones de DIVINIA: leads, contenido, ventas, respuestas. En construcción como diferenciador técnico.',
+    id: 'ecosl',
+    nombre: 'ECOSL — Reciclaje SL',
+    tagline: 'App de reciclaje gamificada para San Luis',
+    descripcion: 'MVP funcional. Mapas de puntos de reciclaje, scanner QR, puntos/rewards, MercadoPago. Contactos de recicladores y supermercados identificados.',
     status: 'en-desarrollo',
-    icon: '🧠',
-    color: '#A78BFA',
-    progreso: 40,
-    href: '/nucleo',
-    proximos: ['Memory store en Supabase', 'Agente comercial autónomo', 'Pipeline de outreach automático', 'Dashboard de orquestación'],
+    icon: '♻️',
+    color: '#84CC16',
+    progreso: 35,
+    categoria: 'app-propia',
+    proximos: ['Migrar a Supabase/Vercel', 'Configurar Google Maps API', 'Contactar recicladores (NOVA SRL, Reciclados Rurales)', 'Integrar en Market SL'],
     kpis: [
-      { label: 'Agentes activos', valor: '3' },
-      { label: 'Tipo', valor: 'Multi-agent' },
-      { label: 'Modelo', valor: 'Claude Sonnet' },
+      { label: 'Stack', valor: 'React PWA + Node.js' },
+      { label: 'Modelo', valor: 'Publicidad + Premium' },
+      { label: 'Mercado', valor: 'San Luis → ciudades' },
     ],
   },
   {
-    id: 'content-factory',
-    nombre: 'Content Factory',
-    tagline: 'Producción masiva de contenido IA para clientes DIVINIA',
-    descripcion: 'Sistema para producir y programar contenido de redes sociales para los clientes de DIVINIA. Reels, posts, copys y calendarios editoriales en minutos.',
-    status: 'activo',
-    icon: '✨',
-    color: '#F59E0B',
-    progreso: 60,
-    href: '/contenido',
-    proximos: ['Publicación directa a Instagram', 'Templates por rubro', 'Aprobación del cliente vía link', 'Generación de avatares por cliente'],
+    id: 'sl-parking',
+    nombre: 'SL-Parking',
+    tagline: 'App de estacionamiento para San Luis',
+    descripcion: 'App de gestión de estacionamiento San Luis. Potencial como módulo de Market SL o producto independiente para municipios.',
+    status: 'idea',
+    icon: '🅿️',
+    color: '#06B6D4',
+    progreso: 15,
+    categoria: 'app-propia',
+    proximos: ['Explorar código existente', 'Definir si va en Market SL o es producto separado', 'Evaluar modelo de negocio'],
+    kpis: [],
+  },
+  {
+    id: 'oneiric',
+    nombre: 'Oneiric — App de Sueños',
+    tagline: 'Registro e interpretación de sueños con IA',
+    descripcion: 'App Next.js para registrar y analizar sueños. Nicho de bienestar/psicología. Candidata a monetización con Claude para interpretación.',
+    status: 'idea',
+    icon: '🌙',
+    color: '#6366F1',
+    progreso: 20,
+    categoria: 'app-propia',
+    proximos: ['Explorar funcionalidades', 'Evaluar mercado', 'Agregar interpretación con Claude'],
     kpis: [
-      { label: 'Formatos', valor: 'Reels, posts, copys' },
-      { label: 'Pipeline', valor: 'IA → Remotion → Canva' },
+      { label: 'Stack', valor: 'Next.js + Supabase' },
     ],
   },
 ]
+
+const APPS_PROPIAS = PROYECTOS.filter(p => p.categoria === 'app-propia')
+const PRODUCTOS_DIVINIA = PROYECTOS.filter(p => p.categoria === 'producto-divinia')
 
 const STATUS_CONFIG = {
   activo: { label: 'Activo', color: '#10B981', bg: '#10B98115' },
@@ -111,8 +167,10 @@ const STATUS_CONFIG = {
 }
 
 export default function ProyectosPage() {
-  const activos = PROYECTOS.filter(p => p.status === 'activo').length
-  const enDesarrollo = PROYECTOS.filter(p => p.status === 'en-desarrollo').length
+  const [seccion, setSeccion] = useState<'divinia' | 'apps'>('divinia')
+  const activos = PRODUCTOS_DIVINIA.filter(p => p.status === 'activo').length
+  const enDesarrollo = PRODUCTOS_DIVINIA.filter(p => p.status === 'en-desarrollo').length
+  const lista = seccion === 'divinia' ? PRODUCTOS_DIVINIA : APPS_PROPIAS
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
@@ -130,10 +188,6 @@ export default function ProyectosPage() {
         </p>
         <div style={{ display: 'flex', gap: 24, marginTop: 20, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: 'var(--ink)', letterSpacing: '-0.04em' }}>{PROYECTOS.length}</div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>Total proyectos</div>
-          </div>
-          <div>
             <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: '#10B981', letterSpacing: '-0.04em' }}>{activos}</div>
             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>Activos</div>
           </div>
@@ -141,12 +195,35 @@ export default function ProyectosPage() {
             <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: '#38BDF8', letterSpacing: '-0.04em' }}>{enDesarrollo}</div>
             <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>En desarrollo</div>
           </div>
+          <div>
+            <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: '#A78BFA', letterSpacing: '-0.04em' }}>{APPS_PROPIAS.length}</div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>Apps propias</div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+          {([
+            { id: 'divinia', label: '🚀 Productos DIVINIA', desc: 'Lo que vendés' },
+            { id: 'apps', label: '🔬 Apps propias', desc: 'Para integrar o lanzar' },
+          ] as const).map(t => (
+            <button key={t.id} onClick={() => setSeccion(t.id)}
+              style={{
+                padding: '8px 18px', borderRadius: 8, cursor: 'pointer', border: 'none',
+                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+                background: seccion === t.id ? 'rgba(255,255,255,0.12)' : 'transparent',
+                color: seccion === t.id ? 'var(--paper)' : 'rgba(255,255,255,0.35)',
+                fontWeight: seccion === t.id ? 700 : 400,
+              }}>
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Proyectos */}
       <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {PROYECTOS.map(p => {
+        {lista.map(p => {
           const st = STATUS_CONFIG[p.status]
           return (
             <div key={p.id} style={{
