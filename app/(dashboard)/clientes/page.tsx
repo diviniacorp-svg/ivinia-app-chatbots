@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Copy, ExternalLink, Check, Plus, Calendar, MessageSquare, Settings, ChevronRight, User, ArrowRight } from 'lucide-react'
+import { Copy, ExternalLink, Check, Plus, Calendar, MessageSquare, Settings, ChevronRight, User, ArrowRight, Pencil, X, Trash2 } from 'lucide-react'
 import { RUBROS_INFO } from '@/lib/templates-data'
 import { TURNERO_PLANS } from '@/lib/turnero-plans'
 
@@ -53,8 +53,255 @@ function timeAgo(dateStr: string) {
   return `hace ${Math.floor(days / 30)}m`
 }
 
+// ── Drawer de edición de cliente ─────────────────────────────────
+function EditClientDrawer({
+  client,
+  onClose,
+  onSaved,
+}: {
+  client: Client
+  onClose: () => void
+  onSaved: (updated: Client) => void
+}) {
+  const cfg = client.custom_config || {}
+  const [form, setForm] = useState({
+    company_name: client.company_name,
+    contact_name: client.contact_name,
+    email: client.email,
+    phone: client.phone,
+    plan: client.plan,
+    status: client.status,
+    mrr: client.mrr || 0,
+    color: cfg.color || '#6366f1',
+    products: cfg.products || '',
+    city: cfg.city || cfg.company_name || '',
+    instagram: cfg.instagram || '',
+    whatsapp: cfg.whatsapp || '',
+    intro_tagline: cfg.intro_tagline || '',
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  async function save() {
+    setLoading(true); setError('')
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      onSaved(data.client)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error inesperado')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function deleteClient() {
+    if (!confirm(`¿Eliminar ${client.company_name}? Esta acción no se puede deshacer.`)) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Error al eliminar')
+      onClose()
+      onSaved({ ...client, id: '__deleted__' })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al eliminar')
+      setDeleting(false)
+    }
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', border: '1px solid var(--line)', borderRadius: 8,
+    padding: '8px 10px', fontSize: 13, outline: 'none',
+    background: 'var(--paper)', color: 'var(--ink)', boxSizing: 'border-box',
+  }
+  const lbl: React.CSSProperties = {
+    display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10,
+    letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4,
+  }
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          zIndex: 998, backdropFilter: 'blur(2px)',
+        }}
+      />
+      {/* Drawer */}
+      <div style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 420,
+        background: 'var(--paper)', zIndex: 999, overflowY: 'auto',
+        borderLeft: '1px solid var(--line)', display: 'flex', flexDirection: 'column',
+        boxShadow: '-8px 0 40px rgba(0,0,0,0.25)',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px', borderBottom: '1px solid var(--line)',
+          display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8, background: form.color,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontWeight: 900, fontSize: 15, flexShrink: 0,
+          }}>
+            {form.company_name.charAt(0).toUpperCase()}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>Editando</p>
+            <h3 style={{ fontWeight: 700, color: 'var(--ink)', margin: 0, fontSize: 16 }}>{client.company_name}</h3>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={lbl}>Empresa</label>
+              <input style={inp} value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} />
+            </div>
+            <div>
+              <label style={lbl}>Contacto</label>
+              <input style={inp} value={form.contact_name} onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} />
+            </div>
+          </div>
+
+          <div>
+            <label style={lbl}>Email</label>
+            <input style={inp} type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={lbl}>WhatsApp / Teléfono</label>
+              <input style={inp} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="5492664000000" />
+            </div>
+            <div>
+              <label style={lbl}>Ciudad</label>
+              <input style={inp} value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} placeholder="San Luis" />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={lbl}>Plan</label>
+              <select style={inp} value={form.plan} onChange={e => setForm(p => ({ ...p, plan: e.target.value }))}>
+                <option value="trial">Trial</option>
+                {TURNERO_PLANS.map(p => (
+                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>Estado</label>
+              <select style={inp} value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+                <option value="trial">Trial</option>
+                <option value="active">Activo</option>
+                <option value="cancelled">Cancelado</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style={lbl}>MRR mensual (ARS)</label>
+            <input style={inp} type="number" value={form.mrr} onChange={e => setForm(p => ({ ...p, mrr: Number(e.target.value) }))} placeholder="0" />
+          </div>
+
+          <div>
+            <label style={lbl}>Productos activos (separados por coma)</label>
+            <input style={inp} value={form.products} onChange={e => setForm(p => ({ ...p, products: e.target.value }))} placeholder="web,chatbot,turnero,nucleus,content" />
+            <p style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>Opciones: web · chatbot · turnero · nucleus · content</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={lbl}>Instagram</label>
+              <input style={inp} value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@cuenta" />
+            </div>
+            <div>
+              <label style={lbl}>WhatsApp negocio</label>
+              <input style={inp} value={form.whatsapp} onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value }))} placeholder="5492664000000" />
+            </div>
+          </div>
+
+          <div>
+            <label style={lbl}>Tagline / descripción corta</label>
+            <input style={inp} value={form.intro_tagline} onChange={e => setForm(p => ({ ...p, intro_tagline: e.target.value }))} placeholder="Descripción del negocio" />
+          </div>
+
+          <div>
+            <label style={lbl}>Color de marca</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input type="color" value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
+                style={{ width: 40, height: 36, border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer', padding: 2 }} />
+              <input style={{ ...inp, flex: 1 }} value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} placeholder="#6366f1" />
+            </div>
+          </div>
+
+          {error && (
+            <div style={{ fontSize: 12, color: '#dc2626', background: '#fee2e2', padding: '8px 12px', borderRadius: 8 }}>{error}</div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--line)', display: 'flex', gap: 10, flexShrink: 0 }}>
+          <button
+            onClick={deleteClient}
+            disabled={deleting}
+            style={{
+              padding: '10px 14px', borderRadius: 8, border: '1px solid #fca5a5',
+              background: '#fee2e2', color: '#dc2626', cursor: 'pointer', flexShrink: 0,
+              opacity: deleting ? 0.5 : 1,
+            }}>
+            <Trash2 size={14} />
+          </button>
+          <button onClick={onClose}
+            style={{
+              flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid var(--line)',
+              background: 'transparent', color: 'var(--muted)', cursor: 'pointer', fontSize: 13,
+            }}>
+            Cancelar
+          </button>
+          <button
+            onClick={save}
+            disabled={loading}
+            style={{
+              flex: 2, padding: '10px 0', borderRadius: 8, border: 'none',
+              background: 'var(--ink)', color: 'var(--paper)', cursor: 'pointer',
+              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em',
+              textTransform: 'uppercase', fontWeight: 700, opacity: loading ? 0.5 : 1,
+            }}>
+            {loading ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ── Card individual de cliente ────────────────────────────────────
-function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => void }) {
+function ClientCard({ client: initialClient, onRefresh }: { client: Client; onRefresh: () => void }) {
+  const [client, setClient] = useState(initialClient)
+  const [editing, setEditing] = useState(false)
+
+  function handleSaved(updated: Client) {
+    if (updated.id === '__deleted__') { onRefresh(); return }
+    setClient(updated)
+    setEditing(false)
+    onRefresh()
+  }
+
   const cfg = client.custom_config || {}
   const color = cfg.color || '#6366f1'
   const hasTurnos = !!(client.booking_configs && client.booking_configs.length > 0)
@@ -65,6 +312,8 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
   const activeProducts = getClientProducts(client)
 
   return (
+    <>
+    {editing && <EditClientDrawer client={client} onClose={() => setEditing(false)} onSaved={handleSaved} />}
     <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', overflow: 'hidden' }}>
       <div style={{ height: 4, width: '100%', backgroundColor: color }} />
       <div style={{ padding: '20px' }}>
@@ -88,6 +337,11 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
             <p style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.email}</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+            <button onClick={() => setEditing(true)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '2px 4px', borderRadius: 6 }}
+              title="Editar cliente">
+              <Pencil size={13} />
+            </button>
             <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: status.color, background: status.bg, borderRadius: 100, padding: '3px 10px' }}>
               {status.label}
             </span>
@@ -176,6 +430,7 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
         </p>
       </div>
     </div>
+    </>
   )
 }
 
@@ -517,6 +772,23 @@ export default function ClientesPage() {
   const [servicioFilter, setServicioFilter] = useState<'todos' | 'nucleus' | 'turnero' | 'web' | 'pendientes'>('todos')
   const [seeding, setSeeding] = useState(false)
   const [seedMsg, setSeedMsg] = useState('')
+  const [loadingProyectos, setLoadingProyectos] = useState(false)
+
+  async function cargarMisProyectos() {
+    setLoadingProyectos(true); setSeedMsg('')
+    try {
+      const res = await fetch('/api/seed/mis-proyectos')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error')
+      setSeedMsg(`✅ ${data.message}`)
+      await loadClients()
+      setTimeout(() => setSeedMsg(''), 4000)
+    } catch (e) {
+      setSeedMsg(`❌ ${e instanceof Error ? e.message : 'Error al cargar proyectos'}`)
+    } finally {
+      setLoadingProyectos(false)
+    }
+  }
 
   async function loadClients() {
     try {
@@ -603,6 +875,20 @@ export default function ClientesPage() {
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={cargarMisProyectos}
+              disabled={loadingProyectos}
+              title="Carga Buggi, El Shopping del Usado, Oniria, Eco SL, ParkingSL y Tubi"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
+                borderRadius: 8, fontFamily: 'var(--f-mono)', fontSize: 10,
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                border: '1px solid rgba(139,92,246,0.4)',
+                background: 'rgba(139,92,246,0.08)', color: '#8b5cf6', cursor: 'pointer',
+                opacity: loadingProyectos ? 0.5 : 1,
+              }}>
+              {loadingProyectos ? '⏳' : '🚀'} Mis proyectos
+            </button>
             <button
               onClick={cargarDemos}
               disabled={seeding}
