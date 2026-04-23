@@ -347,13 +347,11 @@ export default function HeroV3() {
                 transition: 'opacity 0.25s ease, transform 0.25s ease',
                 lineHeight: 1.02,
                 letterSpacing: '-0.03em',
-                textTransform: 'uppercase',
-                fontStyle: 'normal',
               }}
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
                 i === arr.length - 1
-                  ? <span key={i} style={{ color: 'var(--lime)' }}> {word}</span>
+                  ? <em key={i} style={{ color: 'var(--lime)' }}> {word}</em>
                   : <span key={i}>{i === 0 ? '' : ' '}{word}</span>
               )}
             </h2>
@@ -395,21 +393,20 @@ export default function HeroV3() {
             />
             <div style={{
               position: 'absolute', right: 0, top: 40,
-              background: 'rgba(0,0,0,0.03)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0,0,0,0.1)',
+              background: 'var(--ink)',
+              border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 20, padding: '24px 28px', width: 210, zIndex: 2,
             }}>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(246,245,242,0.35)', marginBottom: 8 }}>
                 Desde
               </div>
-              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 40, color: 'var(--lime)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: 'var(--lime)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}>
                 $45k
               </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(0,0,0,0.4)', letterSpacing: '0.06em', marginBottom: 16 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(246,245,242,0.3)', letterSpacing: '0.06em', marginBottom: 16 }}>
                 / mes · sin permanencia
               </div>
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 14, fontFamily: 'var(--f-display)', fontSize: 12, color: 'rgba(0,0,0,0.5)', lineHeight: 1.6 }}>
+              <div style={{ borderTop: '1px solid rgba(246,245,242,0.08)', paddingTop: 14, fontFamily: 'var(--f-display)', fontSize: 12, color: 'rgba(246,245,242,0.45)', lineHeight: 1.6 }}>
                 ✓ Activo en 24 horas<br />
                 ✓ QR para el local<br />
                 ✓ Confirma por WhatsApp
