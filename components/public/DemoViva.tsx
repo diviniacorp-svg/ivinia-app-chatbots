@@ -5,46 +5,38 @@ import Reveal from './Reveal'
 
 const DEMOS = [
   {
-    id: 'rufina-nails-demo',
     nombre: 'Rufina Nails',
     rubro: 'Nail bar · San Luis',
     color: '#d63384',
     emoji: '💅',
     descripcion: 'Nail bar real de San Luis. Reservas online con cobro de seña incluido.',
-  },
-  {
-    id: 'cantera-boutique',
-    nombre: 'Cantera Boutique',
-    rubro: 'Hotel boutique',
-    color: '#92400E',
-    emoji: '🏨',
-    descripcion: 'Hotel boutique con sistema de reservas directo, sin Booking.',
-  },
-  {
-    id: 'los-paraisos',
-    nombre: 'Los Paraísos',
-    rubro: 'Hotel · cabañas',
-    color: '#065F46',
-    emoji: '🌿',
-    descripcion: 'Complejo de cabañas con calendario de disponibilidad en tiempo real.',
+    publicId: '061fe680-ace1-4261-8aaa-58ecd87493b5',
+    panelId: '7429a083-7da5-4878-a9e1-2e6258a98be5',
   },
 ]
 
+type DemoView = 'public' | 'panel'
+
 export default function DemoViva() {
-  const [demoActiva, setDemoActiva] = useState(DEMOS[0])
+  const [demoActiva] = useState(DEMOS[0])
+  const [vista, setVista] = useState<DemoView>('public')
   const [iframeLoaded, setIframeLoaded] = useState(false)
   const [iframeError, setIframeError] = useState(false)
 
-  // Detectar si el iframe fue bloqueado (sin onError nativo confiable — usamos timeout)
+  const iframeSrc = vista === 'public'
+    ? `/reservas/${demoActiva.publicId}`
+    : `/panel/${demoActiva.panelId}`
+
+  const iframeKey = `${demoActiva.nombre}-${vista}`
+
   useEffect(() => {
     setIframeLoaded(false)
     setIframeError(false)
     const t = setTimeout(() => {
-      setIframeError(prev => !iframeLoaded ? true : prev)
-    }, 5000)
+      setIframeError(true)
+    }, 6000)
     return () => clearTimeout(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demoActiva.id])
+  }, [iframeKey])
 
   return (
     <section id="demo" style={{
@@ -80,42 +72,36 @@ export default function DemoViva() {
           </div>
         </Reveal>
 
-        {/* Selector de demo */}
+        {/* Vista tabs: cliente vs dueño */}
         <Reveal delay={100}>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
-            {DEMOS.map(d => (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 28, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(246,245,242,0.3)', marginRight: 8 }}>
+              Ver como:
+            </span>
+            {([
+              { key: 'public' as DemoView, label: '👤 Cliente', desc: 'así reserva tu cliente' },
+              { key: 'panel' as DemoView, label: '🔧 Dueño del negocio', desc: 'así gestionás vos' },
+            ]).map(tab => (
               <button
-                key={d.id}
-                onClick={() => { setDemoActiva(d); setIframeLoaded(false) }}
+                key={tab.key}
+                onClick={() => setVista(tab.key)}
                 style={{
                   padding: '9px 18px',
                   borderRadius: 100,
-                  border: demoActiva.id === d.id
-                    ? `1.5px solid ${d.color}`
-                    : '1.5px solid rgba(246,245,242,0.12)',
-                  background: demoActiva.id === d.id ? d.color + '18' : 'transparent',
-                  color: demoActiva.id === d.id ? 'var(--paper)' : 'rgba(246,245,242,0.45)',
+                  border: vista === tab.key ? `1.5px solid ${demoActiva.color}` : '1.5px solid rgba(246,245,242,0.12)',
+                  background: vista === tab.key ? demoActiva.color + '22' : 'transparent',
+                  color: vista === tab.key ? 'var(--paper)' : 'rgba(246,245,242,0.45)',
                   fontFamily: 'var(--f-display)',
                   fontSize: 13,
-                  fontWeight: 500,
+                  fontWeight: vista === tab.key ? 600 : 400,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
+                  display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
-                <span>{d.emoji}</span>
-                <span>{d.nombre}</span>
-                <span style={{
-                  fontFamily: 'var(--f-mono)',
-                  fontSize: 9,
-                  letterSpacing: '0.08em',
-                  opacity: 0.5,
-                  textTransform: 'uppercase',
-                  marginLeft: 2,
-                }}>
-                  {d.rubro}
+                <span>{tab.label}</span>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.06em', opacity: 0.5, textTransform: 'uppercase' }}>
+                  {tab.desc}
                 </span>
               </button>
             ))}
@@ -189,7 +175,7 @@ export default function DemoViva() {
                     color: 'var(--lime)',
                     marginBottom: 4,
                   }}>
-                    Esto es real
+                    {vista === 'public' ? '👤 Vista cliente — esto es real' : '🔧 Vista dueño — PIN: 1234'}
                   </div>
                   <div style={{
                     fontFamily: 'var(--f-display)',
@@ -197,28 +183,25 @@ export default function DemoViva() {
                     color: 'rgba(246,245,242,0.4)',
                     lineHeight: 1.55,
                   }}>
-                    Podés reservar de verdad. Así es como lo van a usar tus clientes.
+                    {vista === 'public'
+                      ? 'Podés reservar de verdad. Así es como lo van a usar tus clientes.'
+                      : 'Ingresá el PIN 1234 para ver cómo gestionás los turnos, servicios y cobros.'}
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
                 <Link
-                  href={`/reservas/${demoActiva.id}`}
+                  href={vista === 'public' ? `/reservas/${demoActiva.publicId}` : `/panel/${demoActiva.panelId}`}
                   target="_blank"
                   style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    padding: '11px 20px',
-                    borderRadius: 10,
+                    display: 'block', textAlign: 'center',
+                    padding: '11px 20px', borderRadius: 10,
                     background: 'rgba(246,245,242,0.08)',
                     border: '1px solid rgba(246,245,242,0.12)',
                     color: 'rgba(246,245,242,0.7)',
-                    textDecoration: 'none',
-                    fontFamily: 'var(--f-mono)',
-                    fontSize: 10,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
+                    textDecoration: 'none', fontFamily: 'var(--f-mono)',
+                    fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
                   }}
                 >
                   Abrir en pantalla completa ↗
@@ -228,18 +211,11 @@ export default function DemoViva() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    padding: '11px 20px',
-                    borderRadius: 10,
-                    background: 'var(--lime)',
-                    color: 'var(--ink)',
-                    textDecoration: 'none',
-                    fontFamily: 'var(--f-mono)',
-                    fontWeight: 700,
-                    fontSize: 10,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
+                    display: 'block', textAlign: 'center',
+                    padding: '11px 20px', borderRadius: 10,
+                    background: 'var(--lime)', color: 'var(--ink)',
+                    textDecoration: 'none', fontFamily: 'var(--f-mono)',
+                    fontWeight: 700, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
                   }}
                 >
                   Quiero uno así →
@@ -278,7 +254,7 @@ export default function DemoViva() {
                       Abrí la demo en pantalla completa para interactuar con ella.
                     </div>
                     <Link
-                      href={`/reservas/${demoActiva.id}`}
+                      href={vista === 'public' ? `/reservas/${demoActiva.publicId}` : `/panel/${demoActiva.panelId}`}
                       target="_blank"
                       style={{
                         display: 'inline-block',
@@ -294,8 +270,8 @@ export default function DemoViva() {
                 </div>
               )}
               <iframe
-                key={demoActiva.id}
-                src={`/reservas/${demoActiva.id}`}
+                key={iframeKey}
+                src={iframeSrc}
                 style={{
                   width: '100%', height: '100%', minHeight: 600,
                   border: 'none', display: iframeError ? 'none' : 'block',
