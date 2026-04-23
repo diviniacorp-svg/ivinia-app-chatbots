@@ -28,11 +28,17 @@ export default async function ReservasPage({ params }: { params: { id: string } 
     customCfg = (client?.custom_config as Record<string, string>) || {}
     color = customCfg.color || '#6366f1'
   } else {
-    // Opción 2: el id es chatbot_id del cliente (compatibilidad hacia atrás)
+    // Opción 2: el id es chatbot_id o UUID del cliente
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)
+    const filter = isUUID
+      ? `chatbot_id.eq.${params.id},id.eq.${params.id}`
+      : `chatbot_id.eq.${params.id}`
+
     const { data: client } = await db
       .from('clients')
       .select('id, company_name, custom_config')
-      .or(`chatbot_id.eq.${params.id},id.eq.${params.id}`)
+      .or(filter)
+      .limit(1)
       .maybeSingle()
 
     if (client) {
@@ -41,14 +47,15 @@ export default async function ReservasPage({ params }: { params: { id: string } 
       customCfg = (client.custom_config as Record<string, string>) || {}
       color = customCfg.color || '#6366f1'
 
-      const { data: cfg } = await db
+      const { data: cfgs } = await db
         .from('booking_configs')
         .select('*')
         .eq('client_id', client.id)
         .eq('is_active', true)
-        .maybeSingle()
+        .order('created_at', { ascending: false })
+        .limit(1)
 
-      if (cfg) config = cfg as BookingConfig
+      if (cfgs && cfgs.length > 0) config = cfgs[0] as BookingConfig
     }
   }
 

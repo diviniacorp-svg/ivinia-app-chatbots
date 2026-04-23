@@ -161,22 +161,51 @@ export default function HeroV3() {
     }}>
       <div className="wrap-v2">
 
-        {/* Eyebrow título */}
-        <div style={{ marginBottom: 36 }}>
+        {/* Eyebrow badge */}
+        <div style={{ marginBottom: 24 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 10,
             background: 'var(--ink)', borderRadius: 100,
-            padding: '8px 20px',
+            padding: '7px 18px',
           }}>
-            <span style={{ fontSize: 13 }}>⚡</span>
+            <span style={{ fontSize: 12 }}>⚡</span>
             <span style={{
-              fontFamily: 'var(--f-mono)', fontSize: 11,
-              letterSpacing: '0.12em', textTransform: 'uppercase',
+              fontFamily: 'var(--f-mono)', fontSize: 10,
+              letterSpacing: '0.14em', textTransform: 'uppercase',
               color: 'var(--lime)', fontWeight: 700,
             }}>
-              Automatizaciones a medida para hacer crecer tu negocio
+              San Luis · Cuyo · Argentina
             </span>
           </div>
+        </div>
+
+        {/* Headline principal — grande, estático */}
+        <div style={{ marginBottom: 40 }}>
+          <h1
+            className="h-display"
+            style={{
+              fontSize: 'clamp(52px, 9vw, 128px)',
+              color: 'var(--ink)',
+              margin: 0,
+              lineHeight: 0.95,
+              letterSpacing: '-0.04em',
+            }}
+          >
+            Tu negocio<br />
+            funciona<br />
+            <em style={{ color: 'var(--ink)' }}>solo.</em>
+          </h1>
+          <p style={{
+            fontFamily: 'var(--f-display)',
+            fontSize: 'clamp(17px, 2vw, 22px)',
+            color: 'var(--muted-2)',
+            marginTop: 20,
+            maxWidth: '52ch',
+            lineHeight: 1.45,
+          }}>
+            Turnero IA + Chatbot 24hs + Automatizaciones a medida.<br />
+            Lo configuramos para tu rubro en 24 horas.
+          </p>
         </div>
 
         {/* Selector de rubro */}
@@ -276,17 +305,31 @@ export default function HeroV3() {
         <div style={{ display: 'grid', gap: 60, alignItems: 'center' }}
           className="grid-cols-2-mobile-1 md:grid-cols-[1.5fr_1fr]">
 
-          {/* Left: copy dinámico */}
+          {/* Left: copy dinámico (rubro-específico) */}
           <div>
-            <h1
+            <p
+              style={{
+                fontFamily: 'var(--f-mono)',
+                fontSize: 9,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 10,
+              }}
+            >
+              Para {rubroActivo.label.toLowerCase()}:
+            </p>
+            <h2
               className="h-display"
               style={{
-                fontSize: 'clamp(44px, 8vw, 120px)',
-                marginBottom: 28,
+                fontSize: 'clamp(28px, 4vw, 54px)',
+                marginBottom: 16,
                 color: 'var(--ink)',
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(10px)',
                 transition: 'opacity 0.25s ease, transform 0.25s ease',
+                lineHeight: 1.05,
+                letterSpacing: '-0.03em',
               }}
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
@@ -294,14 +337,14 @@ export default function HeroV3() {
                   ? <em key={i}> {word}</em>
                   : <span key={i}>{i === 0 ? '' : ' '}{word}</span>
               )}
-            </h1>
+            </h2>
 
             <p
               style={{
-                fontSize: 19,
+                fontSize: 16,
                 lineHeight: 1.5,
                 color: 'var(--muted-2)',
-                marginBottom: 40,
+                marginBottom: 36,
                 maxWidth: '46ch',
                 fontFamily: 'var(--f-display)',
                 opacity: visible ? 1 : 0,
