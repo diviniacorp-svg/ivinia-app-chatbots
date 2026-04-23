@@ -107,9 +107,10 @@ const INTERVAL = 3000
 export default function HeroV3() {
   const [activeIdx, setActiveIdx] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [animKey, setAnimKey] = useState(0)
+  const [visible, setVisible] = useState(true)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const pendingIdx = useRef<number | null>(null)
 
   const rubroActivo = RUBROS[activeIdx]
   const waLink = WA_BASE + rubroActivo.wa
@@ -119,7 +120,6 @@ export default function HeroV3() {
     if (!container) return
     const pill = container.children[idx] as HTMLElement
     if (!pill) return
-    // Only scroll the horizontal pill container — never the page
     const containerRect = container.getBoundingClientRect()
     const pillRect = pill.getBoundingClientRect()
     const offset = pillRect.left - containerRect.left - (containerRect.width / 2) + (pillRect.width / 2)
@@ -127,23 +127,30 @@ export default function HeroV3() {
   }
 
   const selectRubro = (idx: number) => {
-    setActiveIdx(idx)
-    setAnimKey(k => k + 1)
+    pendingIdx.current = idx
+    setVisible(false)
     scrollPillIntoView(idx)
   }
 
   useEffect(() => {
+    if (!visible && pendingIdx.current !== null) {
+      const t = setTimeout(() => {
+        setActiveIdx(pendingIdx.current!)
+        pendingIdx.current = null
+        setVisible(true)
+      }, 180)
+      return () => clearTimeout(t)
+    }
+  }, [visible])
+
+  useEffect(() => {
     if (paused) return
     intervalRef.current = setInterval(() => {
-      setActiveIdx(prev => {
-        const next = (prev + 1) % (RUBROS.length - 1) // skip "ver todos"
-        setAnimKey(k => k + 1)
-        scrollPillIntoView(next)
-        return next
-      })
+      const next = (activeIdx + 1) % (RUBROS.length - 1)
+      selectRubro(next)
     }, INTERVAL)
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [paused])
+  }, [paused, activeIdx])
 
   return (
     <section style={{
@@ -254,13 +261,14 @@ export default function HeroV3() {
           {/* Left: copy dinámico */}
           <div>
             <h1
-              key={animKey}
               className="h-display"
               style={{
                 fontSize: 'clamp(44px, 8vw, 120px)',
                 marginBottom: 28,
                 color: 'var(--ink)',
-                animation: 'heroFadeIn 0.35s ease',
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0)' : 'translateY(10px)',
+                transition: 'opacity 0.25s ease, transform 0.25s ease',
               }}
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
@@ -271,7 +279,6 @@ export default function HeroV3() {
             </h1>
 
             <p
-              key={animKey + '_sub'}
               style={{
                 fontSize: 19,
                 lineHeight: 1.5,
@@ -279,7 +286,9 @@ export default function HeroV3() {
                 marginBottom: 40,
                 maxWidth: '46ch',
                 fontFamily: 'var(--f-display)',
-                animation: 'heroFadeIn 0.45s ease 0.06s both',
+                opacity: visible ? 1 : 0,
+                transform: visible ? 'translateY(0)' : 'translateY(8px)',
+                transition: 'opacity 0.25s ease 0.04s, transform 0.25s ease 0.04s',
               }}
             >
               {rubroActivo.sub}
