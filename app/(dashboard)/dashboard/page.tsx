@@ -7,16 +7,14 @@ import Link from 'next/link'
 async function getDashboardData() {
   const db = createAdminClient()
   const today = new Date().toISOString().split('T')[0]
-  const [metricsRes, leadsRes, contentRes, agendaRes] = await Promise.all([
+  const [metricsRes, leadsRes, agendaRes] = await Promise.all([
     db.from('ceo_metrics').select('*').single(),
-    db.from('leads').select('id, company_name, negocio, score, status').gte('score', 60).order('score', { ascending: false }).limit(5),
-    db.from('content_calendar').select('id, titulo, tipo, plataforma, status').eq('fecha', today).eq('status', 'planificado').limit(4),
-    db.from('nucleus_memory').select('id, contenido, importancia').contains('tags', ['agenda']).eq('activo', true).order('importancia', { ascending: false }).limit(4),
+    db.from('leads').select('id, company_name, rubro, score, status, city').gte('score', 60).order('score', { ascending: false }).limit(6),
+    db.from('nucleus_memory').select('id, contenido, importancia').contains('tags', ['agenda']).eq('activo', true).order('importancia', { ascending: false }).limit(5),
   ])
   return {
     metrics: metricsRes.data as any,
     leads: (leadsRes.data ?? []) as any[],
-    content: (contentRes.data ?? []) as any[],
     agenda: (agendaRes.data ?? []) as any[],
   }
 }
@@ -28,294 +26,308 @@ function getGreeting() {
   return 'Buenas noches'
 }
 
-const QUICK_ACTIONS = [
-  { href: '/comercial', label: 'Nuevo lead', icon: '🎯' },
-  { href: '/pagos', label: 'Generar pago', icon: '💳' },
-  { href: '/turnos', label: 'Turnero', icon: '📅' },
-  { href: '/nucleo', label: 'Núcleo IA', icon: '🧠' },
-  { href: '/comercial', label: 'Propuesta', icon: '📄' },
-  { href: '/herramientas', label: 'Generadores', icon: '🔧' },
+function ars(n: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(n)
+}
+
+const LIME = '#C6FF3D'
+const INK = '#09090B'
+
+// ── Productos con su estado ──────────────────────────────────────────────────
+const PRODUCTOS = [
+  { icon: '📅', nombre: 'Turnero', href: '/turnos', estado: 'listo', desc: '$45k/mes', color: '#4ade80' },
+  { icon: '💬', nombre: 'Chatbot IA', href: '/chatbots', estado: 'bloqueado', desc: 'Meta pendiente', color: '#f87171' },
+  { icon: '🧠', nombre: 'Núcleo IA', href: '/nucleo', estado: 'nuevo', desc: '$400k setup', color: LIME },
+  { icon: '✨', nombre: 'Content', href: '/contenido', estado: 'parcial', desc: '$80-150k/mes', color: '#fb923c' },
+  { icon: '🎭', nombre: 'Avatares', href: '/avatares', estado: 'parcial', desc: '$200-600k', color: '#fb923c' },
 ]
 
-const PRODUCTOS_STATUS = [
-  { nombre: 'Turnero', icon: '📅', href: '/turnos', estado: 'listo', desc: 'Reservas online' },
-  { nombre: 'Chatbot IA', icon: '💬', href: '/chatbots', estado: 'bloqueado', desc: 'Meta WA pendiente' },
-  { nombre: 'Núcleo IA', icon: '🧠', href: '/nucleo', estado: 'nuevo', desc: 'Sistema de gestión' },
-  { nombre: 'Content Factory', icon: '✨', href: '/contenido', estado: 'parcial', desc: 'Herramientas listas' },
-  { nombre: 'Avatares IA', icon: '🎭', href: '/avatares', estado: 'parcial', desc: 'Proceso a definir' },
+// ── Agentes IA ───────────────────────────────────────────────────────────────
+const AGENTES = [
+  { icon: '🔍', nombre: 'Prospector', desc: 'Busca leads', href: '/agents/clientes', activo: true },
+  { icon: '🧠', nombre: 'Qualifier', desc: 'Califica leads', href: '/agents/ia-auto', activo: true },
+  { icon: '📄', nombre: 'Strategist', desc: 'Genera propuestas', href: '/agents/clientes', activo: false },
+  { icon: '📬', nombre: 'Follow-up', desc: 'Seguimiento', href: '/agents/clientes', activo: false },
+  { icon: '⚙️', nombre: 'Onboarder', desc: 'Setup clientes', href: '/agents/ia-auto', activo: false },
+  { icon: '📊', nombre: 'Reporter', desc: 'Digest diario', href: '/agents/ia-auto', activo: true },
 ]
 
-const ESTADO_PRODUCTO: Record<string, { label: string; color: string; bg: string }> = {
-  listo:    { label: 'Listo',     color: '#4ade80', bg: 'rgba(74,222,128,0.08)' },
-  parcial:  { label: 'Parcial',   color: '#fb923c', bg: 'rgba(251,146,60,0.08)' },
-  bloqueado:{ label: 'Bloqueado', color: '#f87171', bg: 'rgba(248,113,113,0.08)' },
-  nuevo:    { label: 'Nuevo',     color: '#C6FF3D', bg: 'rgba(198,255,61,0.08)' },
+// ── Acciones rápidas ─────────────────────────────────────────────────────────
+const ACCIONES = [
+  { icon: '🎯', label: 'Nuevo lead', href: '/comercial', primary: true },
+  { icon: '📄', label: 'Propuesta', href: '/comercial', primary: true },
+  { icon: '💳', label: 'Generar pago', href: '/pagos', primary: false },
+  { icon: '📅', label: 'Ver turnos', href: '/turnos', primary: false },
+  { icon: '🧠', label: 'Núcleo IA', href: '/nucleo', primary: false },
+  { icon: '🔧', label: 'Generadores', href: '/herramientas', primary: false },
+]
+
+const ESTADO_BADGE: Record<string, string> = {
+  listo: 'Listo', bloqueado: 'Bloqueado', nuevo: 'Nuevo', parcial: 'Parcial',
 }
 
 export default async function DashboardPage() {
-  let data = { metrics: null as any, leads: [] as any[], content: [] as any[], agenda: [] as any[] }
+  let data = { metrics: null as any, leads: [] as any[], agenda: [] as any[] }
   try { data = await getDashboardData() } catch {}
 
   const date = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
-  const leadsHoy = data.metrics?.leads_nuevos ?? 0
-  const runsHoy = data.metrics?.agent_runs_hoy ?? 0
   const mrr = data.metrics?.mrr_actual ?? 0
-  const clientesActivos = data.metrics?.clientes_activos ?? 0
+  const clientes = data.metrics?.clientes_activos ?? 0
   const reservasHoy = data.metrics?.reservas_hoy ?? 0
+  const leadsNuevos = data.metrics?.leads_nuevos ?? 0
+  const agentesActivos = data.metrics?.agent_runs_hoy ?? 0
+
+  const KPIS = [
+    { label: 'MRR', value: mrr > 0 ? ars(mrr) : '—', highlight: mrr > 0, icon: '💰' },
+    { label: 'Clientes activos', value: clientes || '—', highlight: false, icon: '👥' },
+    { label: 'Turnos hoy', value: reservasHoy || '—', highlight: Number(reservasHoy) > 0, icon: '📅' },
+    { label: 'Leads nuevos', value: leadsNuevos || '—', highlight: Number(leadsNuevos) > 0, icon: '🎯' },
+    { label: 'Agentes activos', value: agentesActivos || '—', highlight: Number(agentesActivos) > 0, icon: '🤖' },
+  ]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F4F5', color: INK }}>
 
-      {/* Page header */}
-      <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      <div style={{ background: INK, padding: '24px 28px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, maxWidth: 1400, margin: '0 auto' }}>
           <div>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 6 }}>
               DIVINIA OS · {date}
-            </p>
-            <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(26px, 4vw, 44px)', color: 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1.1, margin: 0 }}>
+            </div>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 36px)', color: '#fff', letterSpacing: '-0.04em', lineHeight: 1.1, margin: 0 }}>
               {getGreeting()}, Joaco.
             </h1>
-            {(leadsHoy > 0 || runsHoy > 0) && (
-              <p style={{ marginTop: 8, fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)' }}>
-                {leadsHoy > 0 && `${leadsHoy} lead${leadsHoy > 1 ? 's' : ''} nuevo${leadsHoy > 1 ? 's' : ''} hoy`}
-                {leadsHoy > 0 && runsHoy > 0 && ' · '}
-                {runsHoy > 0 && `${runsHoy} agente${runsHoy > 1 ? 's' : ''} activo${runsHoy > 1 ? 's' : ''}`}
-              </p>
-            )}
           </div>
+          {/* CTAs principales */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Link href="/comercial" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: LIME, color: INK, borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13 }}>
+              🎯 Nuevo lead
+            </Link>
+            <Link href="/comercial" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontSize: 13 }}>
+              📄 Propuesta
+            </Link>
+            <Link href="/pagos" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontSize: 13 }}>
+              💳 Cobrar
+            </Link>
+          </div>
+        </div>
+
+        {/* ── KPI strip ──────────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1, marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, maxWidth: 1400, margin: '20px auto 0' }}>
+          {KPIS.map((k, i) => (
+            <div key={k.label} style={{ padding: '4px 0', borderRight: i < KPIS.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none', paddingRight: 20 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>
+                {k.icon} {k.label}
+              </div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 22, color: k.highlight ? LIME : 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>
+                {k.value}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* KPI row — 4 stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
-        {[
-          { label: 'MRR actual', value: mrr > 0 ? `$${Number(mrr).toLocaleString('es-AR')}` : '—', accent: mrr > 0 },
-          { label: 'Clientes activos', value: clientesActivos || '—', accent: false },
-          { label: 'Turnos hoy', value: reservasHoy || '—', accent: Number(reservasHoy) > 0 },
-          { label: 'Leads nuevos', value: leadsHoy || '—', accent: Number(leadsHoy) > 0 },
-        ].map((k, i, arr) => (
-          <div key={k.label} style={{
-            padding: '20px 24px',
-            borderRight: i < arr.length - 1 ? '1px solid var(--line)' : 'none',
-          }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-              {k.label}
-            </p>
-            <p style={{ fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 28, color: k.accent ? 'var(--lime)' : 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
-              {k.value}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* ── BODY ───────────────────────────────────────────────────────── */}
+      <div style={{ padding: '20px 28px', maxWidth: 1400, margin: '0 auto' }}>
 
-      {/* Content */}
-      <div style={{ padding: '24px 32px', maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        {/* ── Fila principal: Pipeline + Agenda + Acciones ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 300px', gap: 16, marginBottom: 16 }}>
 
-        {/* Pipeline rápido */}
-        <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: '20px 24px' }}>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
-            Pipeline · Leads calientes
-          </p>
-          {data.leads.length === 0 ? (
-            <div style={{ padding: '24px 0', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)' }}>
-                Sin leads calientes todavía.{' '}
-                <Link href="/leads" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>Buscar leads →</Link>
-              </p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {data.leads.map((lead: any) => (
-                <div key={lead.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 0',
-                  borderBottom: '1px solid var(--line)',
-                }}>
-                  <div>
-                    <p style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 14, color: 'var(--ink)', margin: 0 }}>
-                      {lead.company_name}
-                    </p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                      {lead.negocio} · {lead.status}
-                    </p>
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--f-mono)',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    color: lead.score >= 80 ? '#15803d' : 'var(--ink)',
-                    background: lead.score >= 80 ? 'rgba(22,163,74,0.1)' : 'var(--paper-2)',
-                    border: lead.score >= 80 ? '1px solid rgba(22,163,74,0.25)' : '1px solid var(--line)',
-                    borderRadius: 8,
-                    padding: '4px 10px',
+          {/* Pipeline leads */}
+          <Section title="Pipeline" sub="leads con score ≥ 60" action={{ label: 'Ver CRM →', href: '/comercial' }}>
+            {data.leads.length === 0 ? (
+              <EmptyState icon="🎯" text="Sin leads calientes." cta="Buscar leads" href="/comercial" />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {data.leads.map((lead: any) => (
+                  <Link key={lead.id} href="/comercial" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 0', borderBottom: '1px solid #E4E4E7', textDecoration: 'none',
                   }}>
-                    {lead.score}
+                    <div>
+                      <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: INK }}>{lead.company_name}</div>
+                      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: '#71717A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        {lead.rubro} · {lead.status}
+                      </div>
+                    </div>
+                    <ScoreBadge score={lead.score} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          {/* Agenda Joaco */}
+          <Section title="Agenda" sub="pendientes para vos" action={{ label: 'Ver todo →', href: '/comercial' }}>
+            {data.agenda.length === 0 ? (
+              <EmptyState icon="✅" text="Sin pendientes urgentes." />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {data.agenda.map((item: any) => (
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 0', borderBottom: '1px solid #E4E4E7' }}>
+                    <div style={{
+                      width: 7, height: 7, borderRadius: '50%', marginTop: 4, flexShrink: 0,
+                      background: item.importancia >= 3 ? '#ef4444' : item.importancia === 2 ? '#f59e0b' : '#94A3B8',
+                    }} />
+                    <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: INK, lineHeight: 1.45 }}>{item.contenido}</span>
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          {/* Acciones rápidas */}
+          <Section title="Acceso rápido" sub="">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {ACCIONES.map(a => (
+                <Link key={a.href + a.label} href={a.href} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 9,
+                  background: a.primary ? `${LIME}18` : '#F4F4F5',
+                  border: a.primary ? `1px solid ${LIME}44` : '1px solid #E4E4E7',
+                  textDecoration: 'none', transition: 'background 0.1s',
+                }}>
+                  <span style={{ fontSize: 15 }}>{a.icon}</span>
+                  <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: a.primary ? 600 : 400, color: INK }}>{a.label}</span>
+                </Link>
               ))}
-              <Link href="/crm" style={{
-                display: 'block',
-                marginTop: 12,
-                fontFamily: 'var(--f-mono)',
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'var(--muted)',
-                textDecoration: 'none',
-              }}>
-                Ver CRM completo →
-              </Link>
             </div>
-          )}
+          </Section>
         </div>
 
-        {/* Acciones rápidas */}
-        <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: '20px 24px' }}>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
-            Acciones rápidas
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {QUICK_ACTIONS.map(action => (
-              <Link
-                key={action.href}
-                href={action.href}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  border: '1px solid var(--line)',
-                  background: 'var(--paper-2)',
-                  textDecoration: 'none',
-                  transition: 'border-color 0.15s',
+        {/* ── Fila: Productos ─────────────────────────────────────────── */}
+        <div style={{ marginBottom: 16 }}>
+          <SectionHeader title="Productos DIVINIA" sub="estado de cada producto" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+            {PRODUCTOS.map(p => (
+              <Link key={p.nombre} href={p.href} style={{
+                display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 16px', borderRadius: 12,
+                background: '#fff', border: '1px solid #E4E4E7', textDecoration: 'none',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
+              }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = p.color
+                  ;(e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 3px ${p.color}18`
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = '#E4E4E7'
+                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
                 }}
               >
-                <span style={{ fontSize: 18, lineHeight: 1 }}>{action.icon}</span>
-                <span style={{
-                  fontFamily: 'var(--f-display)',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}>
-                  {action.label}
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 20 }}>{p.icon}</span>
+                  <span style={{
+                    fontSize: 8, fontFamily: 'var(--f-mono)', letterSpacing: '0.06em', textTransform: 'uppercase',
+                    padding: '2px 7px', borderRadius: 10, background: `${p.color}18`, color: p.color,
+                    fontWeight: 700,
+                  }}>{ESTADO_BADGE[p.estado]}</span>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13, color: INK }}>{p.nombre}</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: '#71717A', marginTop: 2 }}>{p.desc}</div>
+                </div>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Estado de hoy — contenido programado */}
-        {data.content.length > 0 && (
-          <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: '20px 24px' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
-              Contenido programado hoy
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {data.content.map((item: any) => (
-                <div key={item.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 0', borderBottom: '1px solid var(--line)',
-                }}>
-                  <div>
-                    <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)', margin: 0 }}>{item.titulo}</p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                      {item.tipo} · {item.plataforma}
-                    </p>
-                  </div>
-                  <span style={{
-                    background: 'rgba(245,158,11,0.1)',
-                    color: '#b45309',
-                    border: '1px solid rgba(245,158,11,0.25)',
-                    borderRadius: 100,
-                    padding: '3px 10px',
-                    fontFamily: 'var(--f-mono)',
-                    fontSize: 9,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    display: 'inline-block',
-                  }}>
-                    planificado
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Agenda Joaco */}
-        {data.agenda.length > 0 && (
-          <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: '20px 24px' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
-              Agenda · Pendientes
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {data.agenda.map((item: any) => (
-                <div key={item.id} style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                  padding: '10px 0', borderBottom: '1px solid var(--line)',
-                }}>
+        {/* ── Fila: Agentes ───────────────────────────────────────────── */}
+        <div style={{ marginBottom: 20 }}>
+          <SectionHeader title="Agentes IA" sub="pipeline multi-agente" action={{ label: 'Gestionar →', href: '/agents' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10 }}>
+            {AGENTES.map(ag => (
+              <Link key={ag.nombre} href={ag.href} style={{
+                display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 14px', borderRadius: 10,
+                background: '#fff', border: `1px solid ${ag.activo ? '#4ade8030' : '#E4E4E7'}`,
+                textDecoration: 'none', position: 'relative', overflow: 'hidden',
+              }}>
+                {ag.activo && (
                   <div style={{
-                    width: 6, height: 6, borderRadius: '50%', marginTop: 5, flexShrink: 0,
-                    background: item.importancia >= 3 ? '#ef4444' : item.importancia === 2 ? '#f59e0b' : 'var(--muted)',
+                    position: 'absolute', top: 8, right: 8,
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: '#4ade80',
+                    boxShadow: '0 0 6px #4ade80',
                   }} />
-                  <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                    {item.contenido}
-                  </p>
+                )}
+                <span style={{ fontSize: 20 }}>{ag.icon}</span>
+                <div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 12, color: INK }}>{ag.nombre}</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: '#71717A', marginTop: 2 }}>{ag.desc}</div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* Productos DIVINIA — estado rápido */}
-      <div style={{ padding: '0 32px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12, marginTop: 8 }}>
-          Productos DIVINIA
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-          {PRODUCTOS_STATUS.map(p => {
-            const est = ESTADO_PRODUCTO[p.estado]
-            return (
-              <Link
-                key={p.nombre}
-                href={p.href}
-                style={{
-                  display: 'flex', flexDirection: 'column', gap: 6,
-                  padding: '14px 16px', borderRadius: 12,
-                  background: 'var(--paper)', border: '1px solid var(--line)',
-                  textDecoration: 'none', transition: 'border-color 0.15s',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 18 }}>{p.icon}</span>
-                  <span style={{
-                    fontSize: 9, fontFamily: 'var(--f-mono)', letterSpacing: '0.06em',
-                    textTransform: 'uppercase', padding: '2px 7px', borderRadius: 10,
-                    background: est.bg, color: est.color,
-                  }}>{est.label}</span>
+                <div style={{
+                  fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  color: ag.activo ? '#4ade80' : '#94A3B8', fontWeight: 600,
+                }}>
+                  {ag.activo ? '● activo' : '○ inactivo'}
                 </div>
-                <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{p.nombre}</div>
-                <div style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)' }}>{p.desc}</div>
               </Link>
-            )
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Neural Graph */}
-      <div style={{ background: 'var(--ink)', padding: '32px 32px 0' }}>
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 16 }}>
-          Sistema DIVINIA · tiempo real · actualiza cada 30s
-        </p>
-        <NeuralGraphClient />
+      {/* ── Neural Graph ────────────────────────────────────────────────── */}
+      <div style={{ background: INK, padding: '24px 28px 0' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 14 }}>
+            Sistema DIVINIA · grafo neuronal · tiempo real
+          </div>
+          <NeuralGraphClient />
+        </div>
       </div>
+    </div>
+  )
+}
 
+// ── Componentes internos ─────────────────────────────────────────────────────
+
+function SectionHeader({ title, sub, action }: { title: string; sub: string; action?: { label: string; href: string } }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A' }}>
+          {title}
+        </span>
+        {sub && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: '#A1A1AA', marginLeft: 8 }}>{sub}</span>}
+      </div>
+      {action && (
+        <Link href={action.href} style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#71717A', textDecoration: 'none' }}>
+          {action.label}
+        </Link>
+      )}
+    </div>
+  )
+}
+
+function Section({ title, sub, action, children }: {
+  title: string; sub: string; action?: { label: string; href: string }; children: React.ReactNode
+}) {
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E4E4E7', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <SectionHeader title={title} sub={sub} action={action} />
+      <div style={{ flex: 1 }}>{children}</div>
+    </div>
+  )
+}
+
+function EmptyState({ icon, text, cta, href }: { icon: string; text: string; cta?: string; href?: string }) {
+  return (
+    <div style={{ padding: '20px 0', textAlign: 'center' }}>
+      <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
+      <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: '#71717A' }}>
+        {text}{' '}
+        {cta && href && <Link href={href} style={{ color: '#09090B', textDecoration: 'underline' }}>{cta} →</Link>}
+      </div>
+    </div>
+  )
+}
+
+function ScoreBadge({ score }: { score: number }) {
+  const color = score >= 80 ? '#16a34a' : score >= 65 ? '#d97706' : '#71717A'
+  const bg = score >= 80 ? 'rgba(22,163,74,0.08)' : score >= 65 ? 'rgba(217,119,6,0.08)' : '#F4F4F5'
+  return (
+    <div style={{ fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 13, color, background: bg, border: `1px solid ${color}33`, borderRadius: 7, padding: '3px 10px', flexShrink: 0 }}>
+      {score}
     </div>
   )
 }

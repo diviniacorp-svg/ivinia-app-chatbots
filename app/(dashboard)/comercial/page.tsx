@@ -600,7 +600,7 @@ export default function ComercialPage() {
       {/* ── HEADER ─────────────────────────────────────────────────── */}
       <div style={{
         background:'#09090B', borderBottom:'1px solid rgba(255,255,255,0.07)',
-        padding:'20px 28px', position:'sticky', top:0, zIndex:50,
+        padding:'20px 28px', position:'sticky', top:0, zIndex:10,
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
           <div style={{ flex:1 }}>
