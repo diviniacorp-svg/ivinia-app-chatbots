@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Reveal from './Reveal'
 
@@ -33,6 +33,18 @@ const DEMOS = [
 export default function DemoViva() {
   const [demoActiva, setDemoActiva] = useState(DEMOS[0])
   const [iframeLoaded, setIframeLoaded] = useState(false)
+  const [iframeError, setIframeError] = useState(false)
+
+  // Detectar si el iframe fue bloqueado (sin onError nativo confiable — usamos timeout)
+  useEffect(() => {
+    setIframeLoaded(false)
+    setIframeError(false)
+    const t = setTimeout(() => {
+      setIframeError(prev => !iframeLoaded ? true : prev)
+    }, 5000)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoActiva.id])
 
   return (
     <section id="demo" style={{
@@ -235,26 +247,49 @@ export default function DemoViva() {
               </div>
             </div>
 
-            {/* iframe */}
+            {/* iframe / fallback */}
             <div style={{ position: 'relative', minHeight: 600, background: 'var(--paper)' }}>
-              {!iframeLoaded && (
+              {/* Loading state */}
+              {!iframeLoaded && !iframeError && (
                 <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'var(--paper)',
-                  zIndex: 1,
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--paper)', zIndex: 1, gap: 12,
                 }}>
-                  <div style={{
-                    fontFamily: 'var(--f-mono)',
-                    fontSize: 11,
-                    color: 'var(--muted)',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                  }}>
+                  <div style={{ fontSize: 32 }}>{demoActiva.emoji}</div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                     Cargando demo...
+                  </div>
+                </div>
+              )}
+              {/* Error / blocked fallback */}
+              {iframeError && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--paper)', zIndex: 2, gap: 20, padding: 40, textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 48 }}>{demoActiva.emoji}</div>
+                  <div>
+                    <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 20, color: 'var(--ink)', marginBottom: 8 }}>
+                      {demoActiva.nombre}
+                    </div>
+                    <div style={{ fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)', marginBottom: 24, maxWidth: '28ch', lineHeight: 1.55 }}>
+                      Abrí la demo en pantalla completa para interactuar con ella.
+                    </div>
+                    <Link
+                      href={`/reservas/${demoActiva.id}`}
+                      target="_blank"
+                      style={{
+                        display: 'inline-block',
+                        padding: '12px 24px', borderRadius: 10,
+                        background: 'var(--ink)', color: 'var(--paper)',
+                        textDecoration: 'none', fontFamily: 'var(--f-mono)',
+                        fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700,
+                      }}
+                    >
+                      Abrir demo ↗
+                    </Link>
                   </div>
                 </div>
               )}
@@ -262,13 +297,10 @@ export default function DemoViva() {
                 key={demoActiva.id}
                 src={`/reservas/${demoActiva.id}`}
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  minHeight: 600,
-                  border: 'none',
-                  display: 'block',
+                  width: '100%', height: '100%', minHeight: 600,
+                  border: 'none', display: iframeError ? 'none' : 'block',
                 }}
-                onLoad={() => setIframeLoaded(true)}
+                onLoad={() => { setIframeLoaded(true); setIframeError(false) }}
                 title={`Demo ${demoActiva.nombre}`}
               />
             </div>

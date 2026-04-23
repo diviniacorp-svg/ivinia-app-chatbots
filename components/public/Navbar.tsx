@@ -62,7 +62,12 @@ export default function Navbar() {
           <a href="#demo" style={{ color: 'inherit', textDecoration: 'none' }}>Demo en vivo</a>
           <a href="#casos" style={{ color: 'inherit', textDecoration: 'none' }}>Casos</a>
           <a href="#precios" style={{ color: 'inherit', textDecoration: 'none' }}>Precios</a>
-          <a href="/auditoria" style={{ color: '#C6FF3D', textDecoration: 'none', fontWeight: 600 }}>Auditoría gratis</a>
+          <a href="/auditoria" style={{
+            textDecoration: 'none', fontWeight: 700, fontSize: 13,
+            background: 'var(--ink)', color: 'var(--lime)',
+            padding: '6px 14px', borderRadius: 100,
+            fontFamily: 'var(--f-mono)', letterSpacing: '0.04em',
+          }}>⚡ Auditoría gratis</a>
         </div>
 
         {/* Right side */}

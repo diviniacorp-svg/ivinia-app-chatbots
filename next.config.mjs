@@ -15,9 +15,15 @@ const securityHeaders = [
   },
 ]
 
+// Headers para rutas embeddables (sin X-Frame-Options DENY)
+const embeddableHeaders = securityHeaders
+  .filter(h => h.key !== 'X-Frame-Options')
+  .concat([{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }])
+
 const nextConfig = {
-  // Evita que webpack bundlee paquetes con dependencias nativas (Apify, proxy-agent)
-  serverExternalPackages: ['apify-client', 'proxy-agent', 'got-scraping'],
+  experimental: {
+    serverComponentsExternalPackages: ['apify-client', 'proxy-agent', 'got-scraping'],
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
@@ -27,8 +33,18 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Rutas embeddables en el iframe de demo — SAMEORIGIN en lugar de DENY
       {
-        source: '/(.*)',
+        source: '/reservas/:path*',
+        headers: embeddableHeaders,
+      },
+      {
+        source: '/panel/:path*',
+        headers: embeddableHeaders,
+      },
+      // Todo lo demás: DENY
+      {
+        source: '/((?!reservas|panel).*)',
         headers: securityHeaders,
       },
     ]
