@@ -15,8 +15,8 @@ interface ContentItem {
   titulo: string | null
   tipo: string | null
   plataforma: string | null
-  estado: string | null
-  fecha_publicacion: string | null
+  status: string | null
+  fecha: string | null
 }
 
 interface StatsData {
@@ -30,11 +30,11 @@ interface StatsData {
 // ── Demo fallback ─────────────────────────────────────────────────────────────
 
 const DEMO_ITEMS: ContentItem[] = [
-  { id: '1', titulo: 'Cómo el Turnero IA te ahorra 2hs por día', plataforma: 'instagram', tipo: 'Reel', estado: 'planificado', fecha_publicacion: new Date().toISOString() },
-  { id: '2', titulo: 'Antes: 10 llamadas para dar un turno. Ahora: 0', plataforma: 'tiktok', tipo: 'Post', estado: 'publicado', fecha_publicacion: new Date().toISOString() },
-  { id: '3', titulo: 'Newsletter: IA para PYMEs — Edición Abril', plataforma: 'email', tipo: 'Email', estado: 'borrador', fecha_publicacion: new Date().toISOString() },
-  { id: '4', titulo: 'Case study: Rufina Nails + Chatbot 24hs', plataforma: 'linkedin', tipo: 'Post', estado: 'planificado', fecha_publicacion: new Date().toISOString() },
-  { id: '5', titulo: 'Hook: "¿Cuánto te cuesta cada turno perdido?"', plataforma: 'instagram', tipo: 'Story', estado: 'borrador', fecha_publicacion: new Date().toISOString() },
+  { id: '1', titulo: 'Cómo el Turnero IA te ahorra 2hs por día', plataforma: 'instagram', tipo: 'Reel', status: 'planificado', fecha: new Date().toISOString() },
+  { id: '2', titulo: 'Antes: 10 llamadas para dar un turno. Ahora: 0', plataforma: 'tiktok', tipo: 'Post', status: 'publicado', fecha: new Date().toISOString() },
+  { id: '3', titulo: 'Newsletter: IA para PYMEs — Edición Abril', plataforma: 'email', tipo: 'Email', status: 'borrador', fecha: new Date().toISOString() },
+  { id: '4', titulo: 'Case study: Rufina Nails + Chatbot 24hs', plataforma: 'linkedin', tipo: 'Post', status: 'planificado', fecha: new Date().toISOString() },
+  { id: '5', titulo: 'Hook: "¿Cuánto te cuesta cada turno perdido?"', plataforma: 'instagram', tipo: 'Story', status: 'borrador', fecha: new Date().toISOString() },
 ]
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
@@ -48,19 +48,19 @@ async function getContentData(): Promise<{ items: ContentItem[]; stats: StatsDat
 
     const { data, error } = await db
       .from('content_calendar')
-      .select('id, titulo, tipo, plataforma, estado, fecha_publicacion')
-      .order('fecha_publicacion', { ascending: false })
+      .select('id, titulo, tipo, plataforma, status, fecha')
+      .order('fecha', { ascending: false })
       .limit(20)
 
     if (error) throw error
 
     const items = (data ?? []) as ContentItem[]
 
-    const thisMonth = items.filter(i => i.fecha_publicacion && i.fecha_publicacion >= startOfMonth)
-    const totalPlanificadas = thisMonth.filter(i => i.estado === 'planificado').length
-    const publicadas = thisMonth.filter(i => i.estado === 'publicado').length
-    const enBorrador = thisMonth.filter(i => i.estado === 'borrador').length
-    const estaSemana = items.filter(i => i.fecha_publicacion && i.fecha_publicacion >= now.toISOString() && i.fecha_publicacion <= nextWeek).length
+    const thisMonth = items.filter(i => i.fecha && i.fecha >= startOfMonth)
+    const totalPlanificadas = thisMonth.filter(i => i.status === 'planificado').length
+    const publicadas = thisMonth.filter(i => i.status === 'publicado').length
+    const enBorrador = thisMonth.filter(i => i.status === 'borrador').length
+    const estaSemana = items.filter(i => i.fecha && i.fecha >= now.toISOString() && i.fecha <= nextWeek).length
 
     const platCount: Record<string, number> = {}
     items.forEach(i => {
@@ -77,9 +77,9 @@ async function getContentData(): Promise<{ items: ContentItem[]; stats: StatsDat
     return {
       items,
       stats: {
-        totalPlanificadas: items.filter(i => i.estado === 'planificado').length,
-        publicadas: items.filter(i => i.estado === 'publicado').length,
-        enBorrador: items.filter(i => i.estado === 'borrador').length,
+        totalPlanificadas: items.filter(i => i.status === 'planificado').length,
+        publicadas: items.filter(i => i.status === 'publicado').length,
+        enBorrador: items.filter(i => i.status === 'borrador').length,
         estaSemana: 2,
         topPlataformas,
       },
@@ -122,11 +122,11 @@ const ESTADO_LABEL: Record<string, string> = {
 
 function ContentCard({ item }: { item: ContentItem }) {
   const plat = (item.plataforma ?? '').toLowerCase()
-  const est = (item.estado ?? 'borrador').toLowerCase()
+  const est = (item.status ?? 'borrador').toLowerCase()
   const platStyle = PLATFORM_BADGE[plat] ?? { background: 'var(--paper)', color: 'var(--muted)' }
   const estadoStyle = ESTADO_BADGE[est] ?? ESTADO_BADGE.borrador
-  const fecha = item.fecha_publicacion
-    ? new Date(item.fecha_publicacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+  const fecha = item.fecha
+    ? new Date(item.fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
     : '—'
 
   return (

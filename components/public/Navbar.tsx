@@ -51,21 +51,26 @@ export default function Navbar() {
         </a>
 
         {/* Nav links — desktop */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 36, fontSize: 14, color: 'var(--muted-2)' }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 28, fontSize: 14, color: 'var(--muted-2)' }}
           className="hidden-mobile">
-          <a href="#servicios" style={{ color: 'inherit', textDecoration: 'none' }}>Servicios</a>
-          <a href="#proceso" style={{ color: 'inherit', textDecoration: 'none' }}>Cómo trabajamos</a>
+          <a href="#productos" style={{ color: 'inherit', textDecoration: 'none' }}>Productos</a>
+          <a href="#demo" style={{ color: 'inherit', textDecoration: 'none' }}>Demo en vivo</a>
           <a href="#casos" style={{ color: 'inherit', textDecoration: 'none' }}>Casos</a>
-          <a href="/academy" style={{ color: 'inherit', textDecoration: 'none' }}>Academy</a>
-          <a href="/precios" style={{ color: 'inherit', textDecoration: 'none' }}>Precios</a>
+          <a href="#precios" style={{ color: 'inherit', textDecoration: 'none' }}>Precios</a>
           <a href="/auditoria" style={{ color: '#C6FF3D', textDecoration: 'none', fontWeight: 600 }}>Auditoría gratis</a>
         </div>
 
         {/* Right side */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* CTA — desktop */}
-          <a href="#demo" className="btn-v2 btn-ink hidden-mobile" style={{ fontSize: 14, padding: '10px 16px 10px 18px' }}>
-            Hablemos
+          {/* WA CTA — desktop */}
+          <a
+            href="https://wa.me/5492665286110?text=Hola%20DIVINIA%2C%20quiero%20info"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-v2 btn-ink hidden-mobile"
+            style={{ fontSize: 14, padding: '10px 16px 10px 18px' }}
+          >
+            WhatsApp
             <span className="btn-arrow">↗</span>
           </a>
 
@@ -98,11 +103,10 @@ export default function Navbar() {
           display: 'flex', flexDirection: 'column', gap: 4,
         }}>
           {[
-            { href: '#servicios', label: 'Servicios' },
-            { href: '#proceso', label: 'Cómo trabajamos' },
-            { href: '#casos', label: 'Casos' },
-            { href: '/academy', label: 'Academy' },
-            { href: '/precios', label: 'Precios' },
+            { href: '#productos', label: 'Productos' },
+            { href: '#demo', label: 'Demo en vivo' },
+            { href: '#casos', label: 'Casos reales' },
+            { href: '#precios', label: 'Precios' },
             { href: '/auditoria', label: '⚡ Auditoría gratis' },
           ].map(link => (
             <a
@@ -120,13 +124,14 @@ export default function Navbar() {
             </a>
           ))}
           <a
-            href="#demo"
+            href="https://wa.me/5492665286110?text=Hola%20DIVINIA%2C%20quiero%20el%20Turnero"
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={() => setMenuOpen(false)}
             className="btn-v2 btn-ink"
             style={{ marginTop: 16, textAlign: 'center', justifyContent: 'center' }}
           >
-            Hablemos
-            <span className="btn-arrow">↗</span>
+            WhatsApp →
           </a>
         </div>
       )}

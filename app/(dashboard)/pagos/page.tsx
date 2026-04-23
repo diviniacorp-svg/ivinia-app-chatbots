@@ -107,21 +107,26 @@ export default function PagosPage() {
   }
 
   return (
-    <div style={{ padding: '32px 40px', background: 'var(--paper-2)', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{
-          fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
-          fontSize: 36, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0,
-        }}>
-          Finanzas
-        </h1>
-        <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4, fontFamily: 'var(--f-mono)' }}>
-          Generá links de cobro con MercadoPago
-        </p>
+    <div style={{ background: 'var(--paper-2)', minHeight: '100vh' }}>
+
+      {/* Page header */}
+      <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+              DIVINIA OS · Ventas
+            </p>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 28, color: 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
+              Generar Link de Pago
+            </h1>
+            <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)', marginTop: 6 }}>
+              Generá links de cobro con MercadoPago · cobro en 50% adelanto / 50% entrega
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1000 }}>
         {/* Form */}
         <div style={{
           background: 'var(--paper)',

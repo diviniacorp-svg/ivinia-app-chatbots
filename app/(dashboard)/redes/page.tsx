@@ -8,15 +8,15 @@ async function getRedesData() {
     const db = createAdminClient()
     const [proximosRes, borradoresRes] = await Promise.all([
       db.from('content_calendar')
-        .select('id, titulo, plataforma, fecha_publicacion, estado')
+        .select('id, titulo, plataforma, fecha, status')
         .in('plataforma', ['instagram', 'tiktok'])
-        .eq('estado', 'planificado')
-        .order('fecha_publicacion', { ascending: true })
+        .eq('status', 'planificado')
+        .order('fecha', { ascending: true })
         .limit(5),
       db.from('content_calendar')
-        .select('id, titulo, plataforma, fecha_publicacion, estado')
-        .eq('estado', 'borrador')
-        .order('fecha_publicacion', { ascending: false })
+        .select('id, titulo, plataforma, fecha, status')
+        .eq('status', 'borrador')
+        .order('fecha', { ascending: false })
         .limit(5),
     ])
     return {
@@ -126,8 +126,8 @@ export default async function RedesPage() {
             ) : (
               <div>
                 {proximos.map((item: any, i: number) => {
-                  const fecha = item.fecha_publicacion
-                    ? new Date(item.fecha_publicacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+                  const fecha = item.fecha
+                    ? new Date(item.fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
                     : '—'
                   const color = PLATFORM_COLORS[item.plataforma?.toLowerCase()] ?? 'var(--muted)'
                   return (

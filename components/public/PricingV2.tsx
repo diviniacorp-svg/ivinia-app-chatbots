@@ -1,42 +1,59 @@
 import Link from 'next/link'
-import Orb from './Orb'
 
 const WA = 'https://wa.me/5492665286110'
 
-const plans = [
+const PRODUCTOS = [
   {
-    name: 'Básico',
-    price: '$80.000',
-    billing: 'pago único',
-    desc: 'Para arrancar',
-    features: ['Página de reservas personalizada', 'Hasta 3 servicios', 'Confirmación por WhatsApp', 'Panel de gestión', 'Recordatorios automáticos', '3 meses de soporte'],
-    href: `${WA}?text=Hola%2C%20quiero%20el%20Plan%20Básico%20de%20Turnero`,
+    id: 'turnero',
+    eyebrow: '01 — Agenda digital',
+    nombre: 'Turnero',
+    tagline: 'Tus clientes reservan solos. Vos solo atendés.',
+    desde: 'desde $80.000',
+    periodo: 'pago único',
+    highlights: [
+      'Reservas online 24hs',
+      'Recordatorios automáticos por WA',
+      'Sin cuota mensual obligatoria',
+      'Listo en 24hs',
+    ],
+    color: '#38BDF8',
+    href: `${WA}?text=Quiero%20el%20Turnero`,
     highlight: false,
   },
   {
-    name: 'Pro',
-    price: '$150.000',
-    billing: 'pago único',
-    desc: 'El más elegido',
-    features: ['Todo lo del Básico', 'Servicios ilimitados', 'Múltiples profesionales', 'Bloqueo de horarios', 'Estadísticas avanzadas', 'Google Calendar integrado', '6 meses de soporte'],
-    href: `${WA}?text=Hola%2C%20quiero%20el%20Plan%20Pro%20de%20Turnero`,
+    id: 'todo',
+    eyebrow: '04 — Bundle completo',
+    nombre: 'Todo DIVINIA',
+    tagline: 'Chatbot + Turnero + Contenido. El negocio automatizado.',
+    desde: '$250.000',
+    periodo: 'por mes · sin permanencia',
+    highlights: [
+      'Chatbot 24hs con IA real (Claude)',
+      'Turnero Pro incluido',
+      '20 posts + 4 reels mensuales',
+      'CRM con scoring automático',
+    ],
+    color: '#C6FF3D',
+    href: `${WA}?text=Quiero%20el%20plan%20Todo%20DIVINIA`,
     highlight: true,
   },
   {
-    name: 'Enterprise',
-    price: '$200.000',
-    billing: 'pago único',
-    desc: 'Multi-sucursal',
-    features: ['Todo lo del Pro', 'Múltiples sucursales', 'Cobro de seña al reservar', 'Chatbot integrado 24/7', 'CRM con IA', 'Capacitación del equipo', '12 meses de soporte'],
-    href: `${WA}?text=Hola%2C%20quiero%20el%20Plan%20Enterprise`,
+    id: 'chatbot',
+    eyebrow: '02 — Atención automática',
+    nombre: 'Chatbot 24hs',
+    tagline: 'WhatsApp responde solo. Ningún lead se pierde de noche.',
+    desde: 'desde $150.000',
+    periodo: 'pago único · 1 año hosting',
+    highlights: [
+      'Activo 24hs / 7 días',
+      'Entrenado con tu negocio',
+      'Califica leads automáticamente',
+      'Integra con Turnero',
+    ],
+    color: '#34D399',
+    href: `${WA}?text=Quiero%20el%20Chatbot%2024hs`,
     highlight: false,
   },
-]
-
-const maintenance = [
-  { name: 'Básico', price: '$30.000/mes', features: ['1 ajuste/mes', 'Monitoreo mensual', 'Respuesta en 48hs'] },
-  { name: 'Pro', price: '$60.000/mes', features: ['Ajustes ilimitados', 'Monitoreo semanal', 'Respuesta en 24hs'] },
-  { name: 'Total', price: '$100.000/mes', features: ['Todo lo del Pro', 'Nuevas funciones/mes', 'Respuesta en 4hs'] },
 ]
 
 export default function PricingV2() {
@@ -44,59 +61,80 @@ export default function PricingV2() {
     <section id="precios" style={{ padding: '120px 0', borderTop: '1px solid var(--line)', background: 'var(--paper-2)' }}>
       <div className="wrap-v2">
 
-        <div style={{ marginBottom: 64 }}>
-          <div className="eyebrow" style={{ marginBottom: 24 }}>Precios Turnero</div>
-          <h2 className="h-display" style={{ fontSize: 'clamp(44px, 5.5vw, 88px)', color: 'var(--ink)', marginBottom: 24 }}>
-            Desde $43k/mes.<br />
-            <em>O $80k único.</em>
-          </h2>
-          <p style={{ fontSize: 17, lineHeight: 1.55, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', maxWidth: '48ch' }}>
-            Sin permanencia. Setup incluido. Cancelás cuando querés.
+        <div style={{ display: 'grid', gap: 40, marginBottom: 72 }}
+          className="grid-cols-2-mobile-1 md:grid-cols-[1fr_2fr]">
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 20 }}>Precios — 03/05</div>
+            <h2 className="h-title">
+              Cuatro productos.<br />
+              <em>Un objetivo.</em>
+            </h2>
+          </div>
+          <p style={{ alignSelf: 'end', fontSize: 18, lineHeight: 1.5, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', maxWidth: '52ch' }}>
+            Sin mensualidades ocultas, sin contratos de permanencia, sin sorpresas.
+            50% al confirmar, 50% cuando entregamos y todo funciona.
           </p>
         </div>
 
-        {/* Plans grid */}
-        <div style={{ display: 'grid', gap: 12, marginBottom: 80 }}
+        {/* 3 productos destacados */}
+        <div style={{ display: 'grid', gap: 12, marginBottom: 32 }}
           className="grid-cols-3-mobile-1 md:grid-cols-3">
-          {plans.map((p, i) => (
-            <div key={p.name} style={{
+          {PRODUCTOS.map(p => (
+            <div key={p.id} style={{
               padding: '40px 32px',
               background: p.highlight ? 'var(--ink)' : 'var(--paper)',
-              border: '1px solid var(--line)',
-              borderRadius: 16,
+              border: `1px solid ${p.highlight ? p.color : 'var(--line)'}`,
+              borderRadius: 20,
               display: 'flex', flexDirection: 'column',
+              position: 'relative',
             }}>
               {p.highlight && (
-                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--lime)', marginBottom: 20 }}>
-                  ★ Más elegido
+                <div style={{
+                  position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+                  background: p.color, color: 'var(--ink)', borderRadius: 100,
+                  padding: '4px 16px', fontSize: 10, fontFamily: 'var(--f-mono)',
+                  fontWeight: 700, letterSpacing: '0.1em', whiteSpace: 'nowrap', textTransform: 'uppercase',
+                }}>
+                  El más elegido
                 </div>
               )}
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: p.highlight ? 'rgba(255,255,255,0.4)' : 'var(--muted)', marginBottom: 12 }}>
-                {p.name} · {p.desc}
+
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: p.color, marginBottom: 16 }}>
+                {p.eyebrow}
               </div>
-              <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontSize: 'clamp(36px, 4vw, 52px)', fontWeight: 700, color: p.highlight ? 'var(--paper)' : 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 6 }}>
-                {p.price}
+
+              <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(28px,3vw,36px)', color: p.highlight ? 'var(--paper)' : 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 6 }}>
+                {p.nombre}
               </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: p.highlight ? 'rgba(255,255,255,0.3)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 32 }}>
-                {p.billing}
+
+              <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: p.highlight ? 'rgba(246,245,242,0.5)' : 'var(--muted-2)', marginBottom: 28, lineHeight: 1.4 }}>
+                {p.tagline}
               </div>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32, flex: 1 }}>
-                {p.features.map(f => (
-                  <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, fontFamily: 'var(--f-display)', color: p.highlight ? 'rgba(255,255,255,0.7)' : 'var(--muted-2)', lineHeight: 1.45 }}>
-                    <span style={{ color: 'var(--lime)', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
-                    {f}
+
+              <div style={{ marginBottom: 24 }}>
+                <span style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(28px,3vw,40px)', color: p.highlight ? 'var(--lime)' : 'var(--ink)', letterSpacing: '-0.04em' }}>
+                  {p.desde}
+                </span>
+                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: p.highlight ? 'rgba(246,245,242,0.3)' : 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
+                  {p.periodo}
+                </div>
+              </div>
+
+              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8, flex: 1, marginBottom: 28 }}>
+                {p.highlights.map(h => (
+                  <li key={h} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, fontFamily: 'var(--f-display)', color: p.highlight ? 'rgba(246,245,242,0.7)' : 'var(--muted-2)', lineHeight: 1.4 }}>
+                    <span style={{ color: p.color, fontWeight: 700, flexShrink: 0 }}>✓</span>{h}
                   </li>
                 ))}
               </ul>
-              <a href={p.href} style={{
-                display: 'block', textAlign: 'center',
-                padding: '14px 24px', borderRadius: 10,
-                fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase',
-                textDecoration: 'none',
-                background: p.highlight ? 'var(--lime)' : 'transparent',
+
+              <a href={p.href} target="_blank" rel="noopener noreferrer" style={{
+                display: 'block', textAlign: 'center', padding: '13px 20px', borderRadius: 10,
+                background: p.highlight ? p.color : 'transparent',
                 color: p.highlight ? 'var(--ink)' : 'var(--ink)',
                 border: p.highlight ? 'none' : '1px solid var(--ink)',
-                fontWeight: 700,
+                textDecoration: 'none', fontFamily: 'var(--f-mono)', fontWeight: 700,
+                fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
               }}>
                 Contratar →
               </a>
@@ -104,34 +142,69 @@ export default function PricingV2() {
           ))}
         </div>
 
-        {/* Maintenance */}
-        <div>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 24 }}>
-            Planes de mantenimiento mensual
-          </div>
-          <div style={{ display: 'grid', gap: 12 }} className="grid-cols-3-mobile-1 md:grid-cols-3">
-            {maintenance.map((m) => (
-              <div key={m.name} style={{
-                padding: '28px 28px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-                  <span style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 18, color: 'var(--ink)' }}>{m.name}</span>
-                  <span style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 20, color: 'var(--ink)' }}>{m.price}</span>
+        {/* Content Factory + link a /precios */}
+        <div style={{ display: 'grid', gap: 12, alignItems: 'stretch' }} className="grid-cols-2-mobile-1 md:grid-cols-[2fr_1fr]">
+
+          <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 20, padding: '32px' }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#E879F9', marginBottom: 12 }}>
+              03 — Contenido mensual
+            </div>
+            <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 28, color: 'var(--ink)', letterSpacing: '-0.03em', marginBottom: 6 }}>
+              Content Factory
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', marginBottom: 20, lineHeight: 1.5 }}>
+              Posts, reels y stories generados con IA para tus redes sociales. Desde $80.000/mes.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Starter', precio: '$80.000/mes' },
+                { label: 'Crecimiento', precio: '$120.000/mes' },
+                { label: 'Gestión total', precio: '$150.000/mes' },
+              ].map(t => (
+                <div key={t.label} style={{ background: 'var(--paper-2)', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 14px' }}>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{t.label}</div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{t.precio}</div>
                 </div>
-                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {m.features.map(f => (
-                    <li key={f} style={{ fontSize: 13, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', display: 'flex', gap: 8 }}>
-                      <span style={{ color: 'var(--lime)' }}>·</span> {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <p style={{ marginTop: 20, fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', letterSpacing: '0.06em' }}>
-            Todos los precios en ARS · Pagos por MercadoPago · Sin permanencia mínima
-          </p>
+
+          <div style={{
+            background: 'var(--ink)', border: '1px solid var(--line)', borderRadius: 20, padding: '32px',
+            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: 'var(--paper)', letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: 12 }}>
+                ¿No sabés cuál producto necesitás?
+              </div>
+              <p style={{ fontSize: 14, color: 'rgba(246,245,242,0.5)', fontFamily: 'var(--f-display)', lineHeight: 1.55 }}>
+                La auditoría gratis analiza tu negocio y te dice exactamente qué hace falta y cuánto te cuesta no tenerlo.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+              <Link href="/auditoria" style={{
+                display: 'block', textAlign: 'center', padding: '12px 20px', borderRadius: 10,
+                background: 'var(--lime)', color: 'var(--ink)',
+                textDecoration: 'none', fontFamily: 'var(--f-mono)', fontWeight: 700,
+                fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                Auditoría gratis →
+              </Link>
+              <Link href="/precios" style={{
+                display: 'block', textAlign: 'center', padding: '12px 20px', borderRadius: 10,
+                border: '1px solid rgba(246,245,242,0.15)', color: 'rgba(246,245,242,0.6)',
+                textDecoration: 'none', fontFamily: 'var(--f-mono)',
+                fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                Ver todos los precios →
+              </Link>
+            </div>
+          </div>
         </div>
+
+        <p style={{ marginTop: 20, fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.06em' }}>
+          Todos los precios en ARS · Pagos por MercadoPago · 50% al confirmar — 50% al entregar
+        </p>
 
       </div>
     </section>

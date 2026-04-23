@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
+
+function sessionToken(secret: string): string {
+  return createHmac('sha256', secret).update('divinia_session_v1').digest('hex')
+}
 
 const ADMIN_ROUTES = [
   '/dashboard',
@@ -24,8 +29,7 @@ const ADMIN_ROUTES = [
   '/youtube',
 ]
 
-// Rutas con exact match (sin proteger sub-rutas públicas)
-// /nucleo exacto = dashboard Joaco. /nucleo/[slug] y /nucleo/[slug]/admin = públicos
+// Exact match — /nucleo/[slug] es público, solo /nucleo exacto requiere auth
 const ADMIN_EXACT_ROUTES = ['/nucleo']
 
 const PROTECTED_API_ROUTES = [
@@ -61,28 +65,26 @@ export function middleware(request: NextRequest) {
     }
   }
   const secret = validSecret || 'divinia2024'
+  const token = sessionToken(secret)
 
-  // Proteger rutas del dashboard
   const isAdminRoute =
     ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/')) ||
     ADMIN_EXACT_ROUTES.some(r => pathname === r)
 
   if (isAdminRoute) {
     const session = request.cookies.get('divinia_session')?.value
-    if (session !== secret) {
+    if (session !== token) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('from', pathname)
       return NextResponse.redirect(loginUrl)
     }
   }
 
-  // Proteger rutas API internas
   const isProtectedApi = PROTECTED_API_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
   if (isProtectedApi) {
     const session = request.cookies.get('divinia_session')?.value
     const apiKey = request.headers.get('x-api-key')
-
-    if (session !== secret && apiKey !== secret) {
+    if (session !== token && apiKey !== secret) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
   }
@@ -126,7 +128,7 @@ export const config = {
     '/dispatch/:path*',
     '/youtube',
     '/youtube/:path*',
-    '/nucleo',              // exact — /nucleo/[slug] es público
+    '/nucleo',
     '/api/seed',
     '/api/seed/:path*',
     '/api/clients',

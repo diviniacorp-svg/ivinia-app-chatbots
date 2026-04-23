@@ -1,65 +1,65 @@
 import Navbar from '@/components/public/Navbar'
-import Hero from '@/components/public/Hero'
-import StatsV2 from '@/components/public/StatsV2'
-import Manifiesto from '@/components/public/Manifiesto'
-import ProblemV2 from '@/components/public/ProblemV2'
-import ServicesV2 from '@/components/public/ServicesV2'
-import DemosV2 from '@/components/public/DemosV2'
-import ProcessV2 from '@/components/public/ProcessV2'
-import CasesV2 from '@/components/public/CasesV2'
-import PricingV2 from '@/components/public/PricingV2'
-import AcademySection from '@/components/public/AcademySection'
-import FAQV2 from '@/components/public/FAQV2'
-import CTASection from '@/components/public/CTASection'
+import HeroV3 from '@/components/public/HeroV3'
+import ProblemaV3 from '@/components/public/ProblemaV3'
+import ProductosV3 from '@/components/public/ProductosV3'
+import DemoViva from '@/components/public/DemoViva'
+import ROICalculator from '@/components/public/ROICalculator'
+import PruebaSocial from '@/components/public/PruebaSocial'
+import ProcesoSimple from '@/components/public/ProcesoSimple'
+import PricingV3 from '@/components/public/PricingV3'
+import FAQSimple from '@/components/public/FAQSimple'
+import CTAFinal from '@/components/public/CTAFinal'
 import Footer from '@/components/public/Footer'
+import WAFloat from '@/components/public/WAFloat'
+import StickyBar from '@/components/public/StickyBar'
 
 export default function HomePage() {
   return (
     <main style={{ minHeight: '100vh', background: 'var(--paper)', color: 'var(--ink)', overflowX: 'hidden' }}>
-      {/* editorial grid overlay */}
+      {/* Grid editorial de fondo */}
       <div className="grid-bg" />
 
-      {/* 1. Nav fija */}
+      {/* Barra sticky de conversión (aparece al scrollear) */}
+      <StickyBar />
+
+      {/* Nav fija */}
       <Navbar />
 
-      {/* 2. Hero — propuesta + orb lime */}
-      <Hero />
+      {/* 1. Hero — selector de rubro + propuesta + stats */}
+      <HeroV3 />
 
-      {/* 3. Stats — números que impactan */}
-      <StatsV2 />
+      {/* 2. Problema — 3 dolores concretos del dueño de PYME */}
+      <ProblemaV3 />
 
-      {/* 4. Manifiesto — editorial serif */}
-      <Manifiesto />
+      {/* 3. Productos — 5 productos con precios reales y CTAs */}
+      <ProductosV3 />
 
-      {/* 5. Problema / Solución */}
-      <ProblemV2 />
+      {/* 4. Demo en vivo — turnero embebido interactivo */}
+      <DemoViva />
 
-      {/* 6. Servicios — lista tabla */}
-      <ServicesV2 />
+      {/* 5. ROI Calculator — ¿te conviene? */}
+      <ROICalculator />
 
-      {/* 7. Demos en vivo */}
-      <DemosV2 />
+      {/* 6. Prueba social — demos reales como casos */}
+      <PruebaSocial />
 
-      {/* 8. Proceso — sección oscura */}
-      <ProcessV2 />
+      {/* 7. Proceso — 3 pasos simples */}
+      <ProcesoSimple />
 
-      {/* 9. Casos — cards */}
-      <CasesV2 />
+      {/* 8. Precios — planes correctos con CTA por plan */}
+      <PricingV3 />
 
-      {/* 10. Precios */}
-      <PricingV2 />
+      {/* 9. FAQ — 5 preguntas clave */}
+      <FAQSimple />
 
-      {/* 11. DIVINIA Academy */}
-      <AcademySection />
+      {/* 10. CTA final — urgencia real + WA */}
+      <CTAFinal />
 
-      {/* 12. FAQ */}
-      <FAQV2 />
-
-      {/* 13. CTA + formulario */}
-      <CTASection />
-
-      {/* 14. Footer */}
+      {/* Footer */}
       <Footer />
+
+      {/* Botón flotante WhatsApp */}
+      <WAFloat />
     </main>
   )
 }

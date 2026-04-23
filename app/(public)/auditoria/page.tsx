@@ -142,7 +142,7 @@ export default function AuditoriaPage() {
           <a href="/" style={{ fontFamily:'monospace', fontWeight:700, fontSize:18, color:'#C6FF3D', textDecoration:'none', letterSpacing:'-0.04em' }}>
             divinia<span style={{ color:'rgba(255,255,255,0.3)' }}>.</span>
           </a>
-          <a href="https://wa.me/5492664000000?text=Quiero%20más%20info%20sobre%20DIVINIA" target="_blank" rel="noopener noreferrer"
+          <a href="https://wa.me/5492665286110?text=Quiero%20más%20info%20sobre%20DIVINIA" target="_blank" rel="noopener noreferrer"
             style={{ background:'#C6FF3D', color:'#060609', borderRadius:8, padding:'8px 18px', fontSize:13, fontWeight:700, textDecoration:'none', fontFamily:'monospace' }}>
             Hablar con Joaco →
           </a>
@@ -329,7 +329,7 @@ export default function AuditoriaPage() {
                       Tenemos todo listo para empezar a resolver estos problemas. La primera semana ya vas a ver resultados.
                     </p>
                   </div>
-                  <a href="https://wa.me/5492664000000?text=Hola%2C%20acabo%20de%20ver%20mi%20audit%C3%B3r%C3%ADa%20digital%20de%20DIVINIA%20y%20quiero%20saber%20c%C3%B3mo%20arrancar"
+                  <a href="https://wa.me/5492665286110?text=Hola%2C%20acabo%20de%20ver%20mi%20audit%C3%B3r%C3%ADa%20digital%20de%20DIVINIA%20y%20quiero%20saber%20c%C3%B3mo%20arrancar"
                     target="_blank" rel="noopener noreferrer"
                     style={{ display:'block', marginTop:16, background:'#C6FF3D', color:'#060609', borderRadius:10, padding:'12px 20px', textAlign:'center', textDecoration:'none', fontWeight:800, fontSize:14, fontFamily:'monospace' }}>
                     {result.cta}

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { TEMPLATES_DATA } from '@/lib/templates-data'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  // Doble check: middleware + header secreto
   const secret = process.env.ADMIN_SECRET || 'divinia2024'
+  const token = createHmac('sha256', secret).update('divinia_session_v1').digest('hex')
   const apiKey = request.headers.get('x-api-key')
   const cookie = request.cookies.get('divinia_session')?.value
-  if (apiKey !== secret && cookie !== secret) {
+  if (apiKey !== secret && cookie !== token) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

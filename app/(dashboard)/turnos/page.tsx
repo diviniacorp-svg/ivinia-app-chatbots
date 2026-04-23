@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { CalendarCheck, Plus, Settings, ExternalLink, Copy, Check, Bot, Link2, Clock, Users } from 'lucide-react'
+import { Settings, ExternalLink, Copy, Check, Bot, Plus } from 'lucide-react'
 
 interface TurnosClient {
   id: string
@@ -36,11 +36,32 @@ interface Appointment {
   clients?: { company_name: string }
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  confirmed: { label: 'Confirmado', color: 'bg-green-100 text-green-700' },
-  cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-700' },
-  completed: { label: 'Completado', color: 'bg-blue-100 text-blue-700' },
-  no_show: { label: 'No vino', color: 'bg-gray-100 text-gray-600' },
+const statusStyle = (status: string): React.CSSProperties => {
+  const map: Record<string, React.CSSProperties> = {
+    confirmed: { background: 'rgba(22,163,74,0.1)',   color: '#15803d', border: '1px solid rgba(22,163,74,0.25)' },
+    completed: { background: 'rgba(59,130,246,0.1)',  color: '#1d4ed8', border: '1px solid rgba(59,130,246,0.25)' },
+    cancelled: { background: 'var(--paper-2)',         color: 'var(--muted)', border: '1px solid var(--line)' },
+    no_show:   { background: 'var(--paper-2)',         color: 'var(--muted)', border: '1px solid var(--line)' },
+    active:    { background: 'rgba(198,255,61,0.15)', color: '#4a7c00', border: '1px solid rgba(198,255,61,0.4)' },
+    inactive:  { background: 'var(--paper-2)',         color: 'var(--muted)', border: '1px solid var(--line)' },
+  }
+  return {
+    ...map[status] || map.cancelled,
+    borderRadius: 100,
+    padding: '3px 10px',
+    fontFamily: 'var(--f-mono)',
+    fontSize: 9,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    display: 'inline-block',
+  }
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  confirmed: 'Confirmado',
+  cancelled: 'Cancelado',
+  completed: 'Completado',
+  no_show: 'No vino',
 }
 
 export default function TurnosDashboard() {
@@ -107,211 +128,325 @@ export default function TurnosDashboard() {
   const todayAppts = appointments.filter(a => a.appointment_date === today)
   const upcomingAppts = appointments.filter(a => a.appointment_date > today)
 
+  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+    padding: '8px 16px',
+    borderRadius: 8,
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'var(--f-mono)',
+    fontSize: 10,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    background: active ? 'var(--ink)' : 'transparent',
+    color: active ? 'var(--paper)' : 'var(--muted)',
+    transition: 'all 0.15s',
+  })
+
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <CalendarCheck size={24} className="text-purple-600" />
+    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
+
+      {/* Page header */}
+      <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div>
-            <h1 className="text-2xl font-black text-gray-900">Sistema de Turnos</h1>
-            <p className="text-gray-500 text-sm">Gestioná turnos online para tus clientes</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+              DIVINIA OS · Operaciones
+            </p>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 28, color: 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
+              Turnero
+            </h1>
           </div>
-        </div>
-        <Link
-          href="/turnos/config/nuevo"
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors"
-        >
-          <Plus size={16} /> Nuevo cliente de turnos
-        </Link>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
-        {[
-          { key: 'clientes', label: 'Clientes', icon: Users },
-          { key: 'agenda', label: 'Agenda', icon: Clock },
-        ].map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key as 'clientes' | 'agenda')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
+          <Link
+            href="/turnos/config/nuevo"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '9px 18px', borderRadius: 8, border: 'none',
+              background: 'var(--ink)', color: 'var(--paper)',
+              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
+              textTransform: 'uppercase', textDecoration: 'none',
+            }}
           >
-            <Icon size={15} /> {label}
+            <Plus size={13} /> Nuevo cliente
+          </Link>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 4, marginTop: 20, background: 'var(--paper-2)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+          <button style={tabBtnStyle(tab === 'clientes')} onClick={() => setTab('clientes')}>
+            Clientes
           </button>
-        ))}
+          <button style={tabBtnStyle(tab === 'agenda')} onClick={() => setTab('agenda')}>
+            Agenda
+          </button>
+        </div>
       </div>
 
-      {/* TAB: CLIENTES */}
-      {tab === 'clientes' && (
-        loading ? (
-          <p className="text-gray-400 text-center py-12">Cargando...</p>
-        ) : turnosClients.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200">
-            <CalendarCheck size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">Todavía no hay clientes con turnos</p>
-            <p className="text-gray-400 text-sm mt-1">Creá el primero o vinculá un cliente de chatbot existente</p>
-            <Link
-              href="/turnos/config/nuevo"
-              className="inline-flex items-center gap-2 mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-700"
-            >
-              <Plus size={14} /> Crear primer cliente
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {turnosClients.map(cfg => (
-              <div key={cfg.id} className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-gray-900 text-lg">
-                        {cfg.clients?.company_name || 'Sin nombre'}
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${cfg.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {cfg.is_active ? 'Activo' : 'Inactivo'}
-                      </span>
-                      {cfg.clients?.chatbot_id && (
-                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Bot size={10} /> Tiene chatbot
+      {/* Content */}
+      <div style={{ padding: '24px 32px' }}>
+
+        {/* TAB: CLIENTES */}
+        {tab === 'clientes' && (
+          loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ background: 'var(--paper)', borderRadius: 12, border: '1px solid var(--line)', height: 100 }} />
+              ))}
+            </div>
+          ) : turnosClients.length === 0 ? (
+            <div style={{
+              background: 'var(--paper)', borderRadius: 16, border: '1px dashed var(--line)',
+              padding: '64px 40px', textAlign: 'center',
+            }}>
+              <p style={{ fontSize: 36, marginBottom: 12 }}>📅</p>
+              <h3 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, color: 'var(--ink)', marginBottom: 6 }}>
+                Sin clientes de turnos todavía
+              </h3>
+              <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)', marginBottom: 20 }}>
+                Creá el primero o vinculá un cliente existente
+              </p>
+              <Link
+                href="/turnos/config/nuevo"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '10px 20px', borderRadius: 8, border: 'none',
+                  background: 'var(--ink)', color: 'var(--paper)',
+                  fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em',
+                  textTransform: 'uppercase', textDecoration: 'none',
+                }}
+              >
+                <Plus size={13} /> Crear primer cliente
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {turnosClients.map(cfg => (
+                <div
+                  key={cfg.id}
+                  style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: '18px 20px' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Name + status */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                        <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 16, color: 'var(--ink)' }}>
+                          {cfg.clients?.company_name || 'Sin nombre'}
                         </span>
+                        <span style={statusStyle(cfg.is_active ? 'active' : 'inactive')}>
+                          {cfg.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                        {cfg.clients?.chatbot_id && (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            background: 'rgba(99,102,241,0.1)', color: '#4338ca',
+                            border: '1px solid rgba(99,102,241,0.25)',
+                            borderRadius: 100, padding: '3px 10px',
+                            fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase',
+                          }}>
+                            <Bot size={9} /> Chatbot
+                          </span>
+                        )}
+                      </div>
+                      {/* Meta */}
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                        {cfg.services?.length || 0} servicio{cfg.services?.length !== 1 ? 's' : ''} · Slots {cfg.slot_duration_minutes} min
+                      </p>
+                      {/* Service tags */}
+                      {cfg.services && cfg.services.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {cfg.services.slice(0, 4).map(s => (
+                            <span key={s.id} style={{
+                              background: 'var(--paper-2)', border: '1px solid var(--line)',
+                              borderRadius: 100, padding: '2px 10px',
+                              fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted-2)',
+                              letterSpacing: '0.06em',
+                            }}>
+                              {s.name}{s.price_ars > 0 ? ` · $${s.price_ars.toLocaleString('es-AR')}` : ''}
+                            </span>
+                          ))}
+                          {cfg.services.length > 4 && (
+                            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', padding: '2px 4px' }}>
+                              +{cfg.services.length - 4} más
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      {cfg.services?.length || 0} servicio{cfg.services?.length !== 1 ? 's' : ''} · Slots de {cfg.slot_duration_minutes} min
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {cfg.services?.slice(0, 4).map(s => (
-                        <span key={s.id} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
-                          {s.name} {s.price_ars > 0 ? `· $${s.price_ars.toLocaleString('es-AR')}` : ''}
-                        </span>
-                      ))}
-                      {(cfg.services?.length || 0) > 4 && (
-                        <span className="text-xs text-gray-400">+{cfg.services.length - 4} más</span>
-                      )}
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                      <Link
+                        href={`/turnos/config/${cfg.client_id}`}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 12px', borderRadius: 7, border: '1px solid var(--line)',
+                          background: 'var(--paper-2)',
+                          fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                          color: 'var(--muted-2)', textDecoration: 'none',
+                        }}
+                      >
+                        <Settings size={11} /> Configurar
+                      </Link>
+                      <button
+                        onClick={() => copyLink(cfg.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 12px', borderRadius: 7, border: '1px solid var(--line)',
+                          background: 'var(--paper-2)', cursor: 'pointer',
+                          fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', color: 'var(--muted-2)',
+                        }}
+                      >
+                        {copiedId === cfg.id ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Link reservas</>}
+                      </button>
+                      <a
+                        href={`/panel/${cfg.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 12px', borderRadius: 7, border: '1px solid var(--line)',
+                          background: 'var(--paper-2)',
+                          fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                          color: 'var(--muted-2)', textDecoration: 'none',
+                        }}
+                      >
+                        <ExternalLink size={11} /> Panel dueño
+                      </a>
+                      <button
+                        onClick={() => copyPanelAll(cfg)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 12px', borderRadius: 7,
+                          border: '1px solid rgba(198,255,61,0.35)',
+                          background: 'rgba(198,255,61,0.08)', cursor: 'pointer',
+                          fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em', color: '#4a7c00',
+                        }}
+                      >
+                        {copiedPanel === cfg.id ? <><Check size={11} /> Copiado!</> : <><Copy size={11} /> Copiar todo</>}
+                      </button>
                     </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5 shrink-0">
-                    <Link
-                      href={`/turnos/config/${cfg.client_id}`}
-                      className="flex items-center gap-1.5 text-xs bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 font-medium"
-                    >
-                      <Settings size={12} /> Configurar
-                    </Link>
-                    <button
-                      onClick={() => copyLink(cfg.id)}
-                      className="flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 border border-purple-100 px-3 py-1.5 rounded-lg hover:bg-purple-100 font-medium"
-                    >
-                      {copiedId === cfg.id ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Link reservas</>}
-                    </button>
-                    <a
-                      href={`/panel/${cfg.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-medium"
-                    >
-                      <ExternalLink size={12} /> Panel dueño
-                    </a>
-                    <button
-                      onClick={() => copyPanelAll(cfg)}
-                      className="flex items-center gap-1.5 text-xs bg-green-50 text-green-700 border border-green-100 px-3 py-1.5 rounded-lg hover:bg-green-100 font-medium"
-                    >
-                      {copiedPanel === cfg.id ? <><Check size={12} /> Copiado!</> : <><Copy size={12} /> Copiar todo</>}
-                    </button>
                   </div>
                 </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* TAB: AGENDA */}
+        {tab === 'agenda' && (
+          <div>
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+              {[
+                { label: 'Turnos hoy', value: todayAppts.length },
+                { label: 'Próximos', value: upcomingAppts.length },
+                { label: 'Total', value: appointments.length },
+              ].map(s => (
+                <div key={s.label} style={{ background: 'var(--paper)', borderRadius: 12, border: '1px solid var(--line)', padding: '16px 20px' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+                    {s.label}
+                  </p>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 28, color: 'var(--ink)', margin: 0 }}>
+                    {s.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Filtros */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+              {[['confirmed', 'Confirmados'], ['completed', 'Completados'], ['cancelled', 'Cancelados'], ['all', 'Todos']].map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setFilter(val)}
+                  style={{
+                    padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                    border: filter === val ? 'none' : '1px solid var(--line)',
+                    background: filter === val ? 'var(--ink)' : 'var(--paper)',
+                    color: filter === val ? 'var(--paper)' : 'var(--muted-2)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{ background: 'var(--paper)', borderRadius: 12, border: '1px solid var(--line)', height: 80 }} />
+                ))}
               </div>
-            ))}
-          </div>
-        )
-      )}
-
-      {/* TAB: AGENDA */}
-      {tab === 'agenda' && (
-        <div>
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-5">
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <p className="text-sm text-gray-500">Hoy</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{todayAppts.length}</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <p className="text-sm text-gray-500">Próximos</p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">{upcomingAppts.length}</p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <p className="text-sm text-gray-500">Total</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{appointments.length}</p>
-            </div>
-          </div>
-
-          {/* Filtros */}
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {[['confirmed', 'Confirmados'], ['completed', 'Completados'], ['cancelled', 'Cancelados'], ['all', 'Todos']].map(([val, label]) => (
-              <button
-                key={val}
-                onClick={() => setFilter(val)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filter === val ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border border-gray-200'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
-            <p className="text-gray-400 text-center py-12">Cargando...</p>
-          ) : appointments.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">No hay turnos</div>
-          ) : (
-            <div className="space-y-3">
-              {appointments.map(appt => {
-                const statusInfo = STATUS_LABELS[appt.status] || { label: appt.status, color: 'bg-gray-100 text-gray-600' }
-                return (
-                  <div key={appt.id} className="bg-white border border-gray-100 rounded-xl p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-gray-900">{appt.customer_name}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.color}`}>
-                            {statusInfo.label}
+            ) : appointments.length === 0 ? (
+              <div style={{
+                background: 'var(--paper)', borderRadius: 12, border: '1px dashed var(--line)',
+                padding: '48px 32px', textAlign: 'center',
+              }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)' }}>No hay turnos con este filtro</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {appointments.map(appt => (
+                  <div key={appt.id} style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: '14px 18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                          <span style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>
+                            {appt.customer_name}
+                          </span>
+                          <span style={statusStyle(appt.status)}>
+                            {STATUS_LABELS[appt.status] || appt.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-0.5">{appt.service_name} · {appt.service_duration_minutes} min</p>
-                        <p className="text-sm font-medium text-purple-600 mt-0.5">
-                          📅 {appt.appointment_date.split('-').reverse().join('/')} · ⏰ {appt.appointment_time}
+                        <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)', margin: '0 0 3px' }}>
+                          {appt.service_name} · {appt.service_duration_minutes} min
                         </p>
-                        {appt.clients?.company_name && (
-                          <p className="text-xs text-gray-400 mt-0.5">Negocio: {appt.clients.company_name}</p>
-                        )}
+                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                          {appt.appointment_date.split('-').reverse().join('/')} · {appt.appointment_time}
+                          {appt.clients?.company_name && ` · ${appt.clients.company_name}`}
+                        </p>
                         {appt.customer_phone && (
                           <a
                             href={`https://wa.me/${appt.customer_phone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-green-600 mt-1 inline-block"
+                            style={{
+                              display: 'inline-block', marginTop: 4,
+                              fontFamily: 'var(--f-mono)', fontSize: 10,
+                              color: '#16a34a', textDecoration: 'none',
+                            }}
                           >
-                            📱 {appt.customer_phone}
+                            WA {appt.customer_phone}
                           </a>
                         )}
                         {appt.customer_notes && (
-                          <p className="text-xs text-gray-400 mt-1 italic">&ldquo;{appt.customer_notes}&rdquo;</p>
+                          <p style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted)', fontStyle: 'italic', marginTop: 4 }}>
+                            &ldquo;{appt.customer_notes}&rdquo;
+                          </p>
                         )}
                       </div>
                       {appt.status === 'confirmed' && (
-                        <div className="flex flex-col gap-1">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                           <button
                             onClick={() => updateStatus(appt.id, 'completed')}
-                            className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100"
+                            style={{
+                              padding: '6px 12px', borderRadius: 7, cursor: 'pointer',
+                              border: '1px solid rgba(59,130,246,0.25)',
+                              background: 'rgba(59,130,246,0.08)',
+                              fontFamily: 'var(--f-mono)', fontSize: 10, color: '#1d4ed8',
+                            }}
                           >
                             Completar
                           </button>
                           <button
                             onClick={() => updateStatus(appt.id, 'cancelled')}
-                            className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100"
+                            style={{
+                              padding: '6px 12px', borderRadius: 7, cursor: 'pointer',
+                              border: '1px solid rgba(239,68,68,0.25)',
+                              background: 'rgba(239,68,68,0.08)',
+                              fontFamily: 'var(--f-mono)', fontSize: 10, color: '#dc2626',
+                            }}
                           >
                             Cancelar
                           </button>
@@ -319,12 +454,12 @@ export default function TurnosDashboard() {
                       )}
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

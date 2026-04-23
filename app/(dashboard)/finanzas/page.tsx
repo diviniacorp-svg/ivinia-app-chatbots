@@ -61,58 +61,50 @@ export default async function FinanzasPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
 
-      {/* Header */}
-      <div style={{ padding: '36px 40px 28px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+      {/* Page header */}
+      <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-              09 — CONTABILIDAD & FINANZAS
-            </div>
-            <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 42px)', color: 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1.1, margin: 0 }}>
-              Finanzas DIVINIA
-            </h1>
-            <p style={{ marginTop: 8, fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)' }}>
-              {mesDDMMYYYY} · MRR real desde Supabase
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+              DIVINIA OS · Empresa · {mesDDMMYYYY}
             </p>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 28, color: 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
+              Finanzas
+            </h1>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link href="/pagos" style={{
-              padding: '9px 18px', borderRadius: 8, border: '1px solid var(--line)',
-              fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-              color: 'var(--ink)', textDecoration: 'none', background: 'var(--paper)',
-            }}>
-              Generar pago MP
-            </Link>
-          </div>
+          <Link href="/pagos" style={{
+            padding: '9px 18px', borderRadius: 8, border: '1px solid var(--line)',
+            fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: 'var(--ink)', textDecoration: 'none', background: 'var(--paper)',
+          }}>
+            Generar pago MP
+          </Link>
         </div>
       </div>
 
-      {/* KPI row */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', overflowX: 'auto' }}>
+      {/* KPI row — 3 main stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
         {[
-          { label: 'MRR actual', value: `$${Number(mrr).toLocaleString('es-AR')}`, accent: mrr > 0, note: 'ARS/mes' },
-          { label: 'Ingresos mes', value: `$${Number(ingresosEstimados).toLocaleString('es-AR')}`, accent: ingresosEstimados > 0, note: 'estimado' },
-          { label: 'Costos fijos', value: `$${Math.round(totalCostosEnARS).toLocaleString('es-AR')}`, accent: false, note: 'ARS equivalente' },
-          { label: 'Costo IA mes', value: costoIAMes > 0 ? `$${Number(costoIAMes).toLocaleString('es-AR')}` : '—', accent: false, note: 'tokens Claude' },
-          { label: 'Margen bruto', value: `$${Math.round(margenBruto).toLocaleString('es-AR')}`, accent: margenBruto > 0, note: margenBruto > 0 ? '✓ positivo' : '⚠ negativo' },
-          { label: 'Clientes activos', value: data.clientes.length || data.metrics?.clientes_activos || '—', accent: false, note: 'con MRR' },
+          { label: 'MRR actual', value: mrr > 0 ? `$${Number(mrr).toLocaleString('es-AR')}` : '—', note: 'ARS/mes', accent: mrr > 0 },
+          { label: 'Costos fijos', value: `$${Math.round(totalCostosEnARS).toLocaleString('es-AR')}`, note: 'ARS equivalente', accent: false },
+          { label: 'Margen bruto', value: `$${Math.round(margenBruto).toLocaleString('es-AR')}`, note: margenBruto > 0 ? 'positivo' : 'negativo', accent: margenBruto > 0 },
         ].map((k, i, arr) => (
           <div key={k.label} style={{
-            flex: '0 0 auto', minWidth: 140, padding: '20px 24px',
+            padding: '20px 24px',
             borderRight: i < arr.length - 1 ? '1px solid var(--line)' : 'none',
           }}>
-            <div style={{
-              fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
-              fontSize: 26, letterSpacing: '-0.04em', lineHeight: 1,
-              color: k.accent ? 'var(--lime)' : 'var(--ink)', marginBottom: 4,
-            }}>{k.value}</div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>{k.label}</div>
-            <div style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)', marginTop: 2 }}>{k.note}</div>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+              {k.label}
+            </p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 28, color: k.accent ? 'var(--lime)' : 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
+              {k.value}
+            </p>
+            <p style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)', marginTop: 4 }}>{k.note}</p>
           </div>
         ))}
       </div>
 
-      <div style={{ padding: '32px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
 
         {/* Costos operativos */}
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>

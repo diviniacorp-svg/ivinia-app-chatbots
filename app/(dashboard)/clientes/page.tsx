@@ -615,47 +615,59 @@ export default function ClientesPage() {
   const countChatbot = clients.filter(c => !!c.chatbot_id).length
 
   return (
-    <div style={{ padding: '32px 40px', background: 'var(--paper-2)', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{
-            fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
-            fontSize: 36, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0,
-          }}>Clientes</h1>
-          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4, fontFamily: 'var(--f-mono)' }}>
-            {clients.length} clientes · {countActive} activos · {countTrial} en trial · {countTurnos} con turnos · {countChatbot} con chatbot
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={cargarDemos}
-            disabled={seeding}
-            title="Recarga los clientes demo (Rufina Nails + Top Quality)"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px',
-              borderRadius: 8, fontFamily: 'var(--f-mono)', fontSize: 11,
-              letterSpacing: '0.06em', border: '1px solid var(--line)',
-              background: 'var(--paper)', color: 'var(--muted-2)', cursor: 'pointer',
-              opacity: seeding ? 0.5 : 1,
-            }}>
-            {seeding ? '⏳' : '🔄'} Demos
-          </button>
-          <button
-            onClick={() => setTab(tab === 'nuevo' ? 'lista' : 'nuevo')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px',
-              borderRadius: 8, fontFamily: 'var(--f-mono)', fontSize: 11,
-              letterSpacing: '0.08em', textTransform: 'uppercase', border: 'none',
-              background: tab === 'nuevo' ? 'var(--paper-2)' : 'var(--ink)',
-              color: tab === 'nuevo' ? 'var(--muted-2)' : 'var(--paper)', cursor: 'pointer',
-            }}>
-            <Plus size={14} />
-            {tab === 'nuevo' ? 'Ver clientes' : 'Nuevo cliente'}
-          </button>
+    <div style={{ background: 'var(--paper-2)', minHeight: '100vh' }}>
+      {/* Page header */}
+      <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>
+              DIVINIA OS · Ventas
+            </p>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 28, color: 'var(--ink)', margin: 0, letterSpacing: '-0.02em' }}>
+              Clientes
+              <span style={{
+                marginLeft: 10, fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: 400,
+                color: 'var(--muted)', verticalAlign: 'middle',
+              }}>
+                {clients.length > 0 && `${clients.length}`}
+              </span>
+            </h1>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 6 }}>
+              {countActive} activos · {countTrial} en trial · {countTurnos} con turnos · {countChatbot} con chatbot
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={cargarDemos}
+              disabled={seeding}
+              title="Recarga los clientes demo (Rufina Nails + Top Quality)"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
+                borderRadius: 8, fontFamily: 'var(--f-mono)', fontSize: 10,
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                border: '1px solid var(--line)',
+                background: 'var(--paper)', color: 'var(--muted-2)', cursor: 'pointer',
+                opacity: seeding ? 0.5 : 1,
+              }}>
+              {seeding ? '⏳' : '🔄'} Demos
+            </button>
+            <button
+              onClick={() => setTab(tab === 'nuevo' ? 'lista' : 'nuevo')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px',
+                borderRadius: 8, fontFamily: 'var(--f-mono)', fontSize: 11,
+                letterSpacing: '0.08em', textTransform: 'uppercase', border: 'none',
+                background: tab === 'nuevo' ? 'var(--paper-2)' : 'var(--ink)',
+                color: tab === 'nuevo' ? 'var(--muted-2)' : 'var(--paper)', cursor: 'pointer',
+              }}>
+              <Plus size={13} />
+              {tab === 'nuevo' ? 'Ver clientes' : 'Nuevo cliente'}
+            </button>
+          </div>
         </div>
       </div>
 
+      <div style={{ padding: '24px 32px' }}>
       {seedMsg && (
         <div style={{
           marginBottom: 16, padding: '12px 16px', borderRadius: 10, fontSize: 13, fontWeight: 500,
@@ -752,6 +764,7 @@ export default function ClientesPage() {
           )}
         </>
       )}
+      </div>{/* /padding wrapper */}
     </div>
   )
 }
