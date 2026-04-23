@@ -15,7 +15,18 @@ const ADMIN_ROUTES = [
   '/redes',
   '/calendario',
   '/orquestacion',
+  '/finanzas',
+  '/comercial',
+  '/market',
+  '/herramientas',
+  '/avatares',
+  '/dispatch',
+  '/youtube',
 ]
+
+// Rutas con exact match (sin proteger sub-rutas públicas)
+// /nucleo exacto = dashboard Joaco. /nucleo/[slug] y /nucleo/[slug]/admin = públicos
+const ADMIN_EXACT_ROUTES = ['/nucleo']
 
 const PROTECTED_API_ROUTES = [
   '/api/seed',
@@ -36,6 +47,8 @@ const PROTECTED_API_ROUTES = [
   '/api/content',
   '/api/sales',
   '/api/instagram',
+  '/api/proposals',
+  '/api/nucleo',
 ]
 
 export function middleware(request: NextRequest) {
@@ -50,7 +63,10 @@ export function middleware(request: NextRequest) {
   const secret = validSecret || 'divinia2024'
 
   // Proteger rutas del dashboard
-  const isAdminRoute = ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
+  const isAdminRoute =
+    ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/')) ||
+    ADMIN_EXACT_ROUTES.some(r => pathname === r)
+
   if (isAdminRoute) {
     const session = request.cookies.get('divinia_session')?.value
     if (session !== secret) {
@@ -96,6 +112,21 @@ export const config = {
     '/calendario/:path*',
     '/orquestacion',
     '/orquestacion/:path*',
+    '/finanzas',
+    '/finanzas/:path*',
+    '/comercial',
+    '/comercial/:path*',
+    '/market',
+    '/market/:path*',
+    '/herramientas',
+    '/herramientas/:path*',
+    '/avatares',
+    '/avatares/:path*',
+    '/dispatch',
+    '/dispatch/:path*',
+    '/youtube',
+    '/youtube/:path*',
+    '/nucleo',              // exact — /nucleo/[slug] es público
     '/api/seed',
     '/api/seed/:path*',
     '/api/clients',
@@ -131,5 +162,9 @@ export const config = {
     '/api/sales/:path*',
     '/api/instagram',
     '/api/instagram/:path*',
+    '/api/proposals',
+    '/api/proposals/:path*',
+    '/api/nucleo',
+    '/api/nucleo/:path*',
   ],
 }

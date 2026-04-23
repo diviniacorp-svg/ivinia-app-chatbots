@@ -27,6 +27,14 @@ const areas = [
     matches: ['/clientes'],
   },
   {
+    href: '/nucleo',
+    label: 'NÚCLEO IA',
+    sub: 'Vitrina · Panel · Gestión',
+    color: '#A78BFA', colorDeep: '#6D28D9', shade: 'rgba(50,10,100,0.5)',
+    matches: ['/nucleo'],
+    badge: 'nuevo',
+  },
+  {
     href: '/contenido',
     label: 'CONTENT FACTORY',
     sub: 'Flujo IA · Pipeline · Preview',
@@ -135,13 +143,25 @@ export default function SidebarV2({ onClose }: { onClose?: () => void }) {
               <div style={{ flexShrink: 0 }}>
                 <Orb size={28} color={area.color} colorDeep={area.colorDeep} shade={area.shade} />
               </div>
-              <div>
-                <div style={{
-                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em',
-                  color: active ? area.color : 'rgba(255,255,255,0.7)',
-                  fontWeight: active ? 700 : 400,
-                }}>
-                  {area.label}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{
+                    fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em',
+                    color: active ? area.color : 'rgba(255,255,255,0.7)',
+                    fontWeight: active ? 700 : 400,
+                  }}>
+                    {area.label}
+                  </div>
+                  {'badge' in area && area.badge && (
+                    <span style={{
+                      fontSize: 7, fontFamily: 'var(--f-mono)', letterSpacing: '0.06em',
+                      textTransform: 'uppercase', color: area.color,
+                      border: `1px solid ${area.color}`, borderRadius: 3,
+                      padding: '1px 3px', lineHeight: 1, flexShrink: 0, opacity: 0.9,
+                    }}>
+                      {area.badge}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.3 }}>
                   {area.sub}
