@@ -598,163 +598,7 @@ export default function BookingWizard({
     )
   }
 
-  // ── PASO FORM ──────────────────────────────────────────────────
-  if (step === 'form') {
-    return (
-      <div style={pageStyle}>
-        <style>{`
-          @keyframes dp-slide-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .dp-input:focus { border-color: ${color} !important; box-shadow: 0 0 0 3px ${color}22; }
-          .dp-input::placeholder { color: var(--muted); }
-        `}</style>
-        <SiteHeader />
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px 60px', position: 'relative', zIndex: 1, animation: 'dp-slide-in 0.4s ease both' }}>
-          <button onClick={() => setStep('select')} style={{
-            fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-            color: color, background: 'none', border: 'none', cursor: 'pointer',
-            marginBottom: 28, display: 'flex', alignItems: 'center', gap: 6,
-            textTransform: 'uppercase',
-          }}>← Volver</button>
-
-          <ProgressBar step="form" color={color} />
-
-          <h2 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: 'var(--ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-            Tus datos
-          </h2>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', letterSpacing: '0.06em', marginBottom: 28 }}>
-            {selectedServices.map(s => s.name).join(' + ')} · {formatDateAR(selectedDate)} {selectedTime}hs
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Nombre completo *</label>
-              <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="dp-input" style={inputStyle} placeholder="Ej: María González" />
-            </div>
-            <div>
-              <label style={labelStyle}>WhatsApp *</label>
-              <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                onBlur={e => fetchHistory(e.target.value)}
-                className="dp-input" style={inputStyle} placeholder="Ej: 2664 XXX XXX" />
-              {loadingHistory && (
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', marginTop: 6 }}>Buscando visitas anteriores...</p>
-              )}
-              {!loadingHistory && history.length > 0 && (
-                <div style={{ marginTop: 10, padding: '14px 16px', borderRadius: 14, border: `1px solid ${color}30`, background: `${color}0a` }}>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color, marginBottom: 10 }}>¡Bienvenida de vuelta!</p>
-                  {history.map((h, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
-                      <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.service_name}</span>
-                      <span style={{ flexShrink: 0, marginLeft: 12 }}>{formatDateAR(h.appointment_date)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div>
-              <label style={labelStyle}>Email (opcional)</label>
-              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className="dp-input" style={inputStyle} placeholder="tu@email.com" />
-            </div>
-            <div>
-              <label style={labelStyle}>Notas (opcional)</label>
-              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                rows={3} className="dp-input" style={{ ...inputStyle, resize: 'none' }}
-                placeholder="Diseño deseado, alergias, consultas..." />
-            </div>
-
-            {/* Resumen */}
-            <Card color={color} style={{ padding: 20 }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 14px' }}>Resumen</p>
-              {selectedServices.map(s => (
-                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)', marginBottom: 8 }}>
-                  <span>{s.name}</span>
-                  <span style={{ color, fontWeight: 700 }}>{formatPriceARS(s.price_ars)}</span>
-                </div>
-              ))}
-              {selectedServices.length > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, borderTop: '1px solid var(--line)', paddingTop: 10, marginTop: 6 }}>
-                  <span style={{ color: 'var(--ink)' }}>Total</span>
-                  <span style={{ color }}>{formatPriceARS(totalPrice)}</span>
-                </div>
-              )}
-              <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>
-                  📅 <span style={{ textTransform: 'capitalize' }}>{selectedDate ? `${DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]} ${formatDateAR(selectedDate)}` : '—'}</span>
-                </p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>⏰ {selectedTime ? `${selectedTime}hs` : '—'}</p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', margin: 0 }}>⏱ {totalDuration} min en total</p>
-                {selectedProfessional && selectedProfessional !== 'any' && typeof selectedProfessional === 'object' && (
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>
-                    {selectedProfessional.emoji || '👩‍💼'} {selectedProfessional.name}
-                  </p>
-                )}
-              </div>
-              {depositAmount > 0 && (
-                <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 10 }}>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', margin: '0 0 4px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Seña requerida ({maxDepositPct}%)</p>
-                  <p style={{ fontFamily: 'var(--f-display)', fontSize: 32, fontWeight: 800, color, margin: 0, letterSpacing: '-0.02em', textShadow: `0 0 20px ${color}66` }}>{formatPriceARS(depositAmount)}</p>
-                </div>
-              )}
-            </Card>
-
-            {error && (
-              <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)' }}>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: '#dc2626', margin: 0 }}>{error}</p>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {depositAmount > 0 ? (
-                <>
-                  <button onClick={handlePayDeposit} disabled={submitting || !form.name.trim()}
-                    style={{
-                      width: '100%', background: color, color: '#fff', border: 'none',
-                      borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)',
-                      fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
-                      cursor: 'pointer', fontWeight: 700,
-                      opacity: (submitting || !form.name.trim()) ? 0.4 : 1,
-                      boxShadow: `0 4px 24px ${color}55`,
-                      transition: 'all 0.2s',
-                    }}>
-                    {submitting ? 'Procesando...' : `Pagar seña ${formatPriceARS(depositAmount)} y confirmar`}
-                  </button>
-                  <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
-                    style={{
-                      width: '100%', background: 'transparent', border: `1.5px solid ${color}60`,
-                      color: color, borderRadius: 14, padding: '16px 0',
-                      fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em',
-                      cursor: 'pointer', opacity: (submitting || !form.name.trim()) ? 0.4 : 1,
-                    }}>
-                    Confirmar sin seña (pendiente de aprobación)
-                  </button>
-                </>
-              ) : (
-                <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
-                  style={{
-                    width: '100%', background: color, color: '#fff', border: 'none',
-                    borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)',
-                    fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
-                    cursor: 'pointer', fontWeight: 700,
-                    opacity: (submitting || !form.name.trim()) ? 0.4 : 1,
-                    boxShadow: `0 4px 24px ${color}55`,
-                    transition: 'all 0.2s',
-                  }}>
-                  {submitting ? 'Confirmando...' : 'Confirmar turno →'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        <SiteFooter />
-      </div>
-    )
-  }
-
-  // ── PASO SELECT ─────────────────────────────────────────────────
+  // ── PASO SELECT (todo en una sola página, desplegable) ──────────
   return (
     <div style={pageStyle}>
       <style>{`
@@ -845,140 +689,253 @@ export default function BookingWizard({
         </div>
       )}
 
-      {/* ── Turnos: two-column layout ── */}
+      {/* ── Turnos: secciones progresivas ── */}
       {activeTab === 'turnos' && (
-        <div style={{ maxWidth: 900, margin: '20px auto 0', padding: '0 20px 60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="dp-two-col">
+        <div style={{ maxWidth: 900, margin: '20px auto 0', padding: '0 20px 60px' }}>
 
-          {/* ── Columna izquierda: servicios + profesionales ── */}
-          <div>
-            <Card style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>1</div>
-                  <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Elegí el servicio</span>
-                </div>
-              </div>
-              <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-                {Array.from(grouped.entries()).map(([cat, services]) => (
-                  <div key={cat}>
-                    <div style={{ padding: '7px 20px', background: 'var(--paper-2)', borderBottom: '1px solid var(--line)', borderTop: '1px solid var(--line)' }}>
-                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
-                    </div>
-                    {services.map((service, i) => {
-                      const isSel = selectedServices.some(s => s.id === service.id)
-                      const depositPct = depositsEnabled ? (service.deposit_percentage ?? 0) : 0
-                      const senaAmount = depositPct > 0 && service.price_ars > 0 ? Math.round(service.price_ars * depositPct / 100) : 0
-                      return (
-                        <button key={service.id} onClick={() => toggleService(service)}
-                          className="dp-svc-row"
-                          style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', border: 'none', borderBottom: i < services.length - 1 ? '1px solid var(--line)' : 'none', background: isSel ? `${color}12` : 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: isSel ? 700 : 500, color: 'var(--ink)', margin: 0 }}>{service.name}</p>
-                            {senaAmount > 0 && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '2px 0 0' }}>Seña: {formatPriceARS(senaAmount)}</p>}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                            <span style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color: isSel ? color : 'var(--ink)' }}>{formatPriceARS(service.price_ars)}</span>
-                            {isSel && <div style={{ width: 18, height: 18, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><svg width="10" height="10" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </Card>
+          {/* ── Sección 1+2: Servicios + Calendario (two-col) ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }} className="dp-two-col">
 
-            {/* Profesionales */}
-            {config.professionals && config.professionals.length > 0 && (
-              <Card style={{ marginTop: 12, padding: 16 }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 10px' }}>¿Con quién?</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {config.professionals.map(prof => {
-                    const isSel = typeof selectedProfessional === 'object' && selectedProfessional?.id === prof.id
-                    return (
-                      <button key={prof.id} onClick={() => selectProfessional(prof)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${isSel ? color : 'var(--line)'}`, background: isSel ? color : 'var(--paper)', color: isSel ? '#fff' : 'var(--ink)', fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
-                        <span>{prof.emoji || '👤'}</span>{prof.name}
-                      </button>
-                    )
-                  })}
-                  {config.professionals.length > 1 && (
-                    <button onClick={() => selectProfessional('any')}
-                      style={{ padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${selectedProfessional === 'any' ? color : 'var(--line)'}`, background: 'var(--paper)', color: 'var(--muted)', fontFamily: 'var(--f-display)', fontSize: 13, cursor: 'pointer' }}>
-                      Sin preferencia
-                    </button>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Resumen selección */}
-            {selectedServices.length > 0 && (
-              <div style={{ marginTop: 12, padding: '12px 16px', borderRadius: 12, background: `${color}12`, border: `1px solid ${color}30`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: 'dp-slide-in 0.3s ease both' }}>
-                <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)' }}>{selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''} · {totalDuration} min</span>
-                <span style={{ fontFamily: 'var(--f-display)', fontSize: 16, fontWeight: 800, color }}>{formatPriceARS(totalPrice)}</span>
-              </div>
-            )}
-          </div>
-
-          {/* ── Columna derecha: calendario + horarios ── */}
-          <div>
-            <Card style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedDate ? color : 'var(--line)', color: selectedDate ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>2</div>
-                  <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Elegí la fecha</span>
-                </div>
-              </div>
-              <MiniCalendar availableDates={availableDates} selectedDate={selectedDate} onSelect={onSelectDate} color={color} viewYear={viewYear} viewMonth={viewMonth} onPrev={prevMonth} onNext={nextMonth} />
-            </Card>
-
-            {/* Horarios */}
-            {selectedDate && (
-              <Card style={{ marginTop: 12, overflow: 'hidden', animation: 'dp-slide-in 0.35s ease both' }}>
+            {/* Columna izquierda: servicios + profesionales */}
+            <div>
+              <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedTime ? color : 'var(--line)', color: selectedTime ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>3</div>
-                    <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>
-                      Elegí la hora · <span style={{ textTransform: 'capitalize', fontWeight: 400, fontSize: 12, color: 'var(--muted)' }}>{DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]} {formatDateAR(selectedDate)}</span>
-                    </span>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedServices.length > 0 ? color : 'var(--line)', color: selectedServices.length > 0 ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>1</div>
+                    <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Elegí el servicio</span>
                   </div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  {selectedServices.length === 0 ? (
-                    <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Primero elegí al menos un servicio</p>
-                  ) : loadingSlots ? (
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Cargando horarios...</p>
-                  ) : slots.length === 0 ? (
-                    <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Sin horarios disponibles este día.</p>
-                  ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                      {slots.map((slot, idx) => {
-                        const booked = slotCounts[slot] || 0
-                        const remaining = slotMaxCapacity > 1 ? slotMaxCapacity - booked : null
-                        const isSel = selectedTime === slot
+                <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                  {Array.from(grouped.entries()).map(([cat, services]) => (
+                    <div key={cat}>
+                      <div style={{ padding: '7px 20px', background: 'var(--paper-2)', borderBottom: '1px solid var(--line)', borderTop: '1px solid var(--line)' }}>
+                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
+                      </div>
+                      {services.map((service, i) => {
+                        const isSel = selectedServices.some(s => s.id === service.id)
+                        const depositPct = depositsEnabled ? (service.deposit_percentage ?? 0) : 0
+                        const senaAmount = depositPct > 0 && service.price_ars > 0 ? Math.round(service.price_ars * depositPct / 100) : 0
                         return (
-                          <button key={slot} onClick={() => setSelectedTime(slot)} className="dp-slot-btn"
-                            style={{ padding: '11px 0', borderRadius: 10, border: `1.5px solid ${isSel ? 'transparent' : 'var(--line)'}`, background: isSel ? color : 'var(--paper)', color: isSel ? '#fff' : 'var(--ink)', fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: isSel ? 700 : 400, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, transition: 'all 0.15s ease', boxShadow: isSel ? `0 0 16px ${color}55` : 'none', animation: `dp-stagger-in 0.3s ${idx * 0.025}s ease both` }}>
-                            <span>{slot}</span>
-                            {remaining !== null && <span style={{ fontSize: 9, opacity: 0.65 }}>{remaining} cupo{remaining !== 1 ? 's' : ''}</span>}
+                          <button key={service.id} onClick={() => toggleService(service)}
+                            className="dp-svc-row"
+                            style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', border: 'none', borderBottom: i < services.length - 1 ? '1px solid var(--line)' : 'none', background: isSel ? `${color}12` : 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: isSel ? 700 : 500, color: 'var(--ink)', margin: 0 }}>{service.name}</p>
+                              {senaAmount > 0 && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '2px 0 0' }}>Seña: {formatPriceARS(senaAmount)}</p>}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                              <span style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color: isSel ? color : 'var(--ink)' }}>{formatPriceARS(service.price_ars)}</span>
+                              {isSel && <div style={{ width: 18, height: 18, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><svg width="10" height="10" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>}
+                            </div>
                           </button>
                         )
                       })}
                     </div>
+                  ))}
+                </div>
+              </Card>
+              {config.professionals && config.professionals.length > 0 && (
+                <Card style={{ marginTop: 12, padding: 16 }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 10px' }}>¿Con quién?</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {config.professionals.map(prof => {
+                      const isSel = typeof selectedProfessional === 'object' && selectedProfessional?.id === prof.id
+                      return (
+                        <button key={prof.id} onClick={() => selectProfessional(prof)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${isSel ? color : 'var(--line)'}`, background: isSel ? color : 'var(--paper)', color: isSel ? '#fff' : 'var(--ink)', fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                          <span>{prof.emoji || '👤'}</span>{prof.name}
+                        </button>
+                      )
+                    })}
+                    {config.professionals.length > 1 && (
+                      <button onClick={() => selectProfessional('any')} style={{ padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${selectedProfessional === 'any' ? color : 'var(--line)'}`, background: 'var(--paper)', color: 'var(--muted)', fontFamily: 'var(--f-display)', fontSize: 13, cursor: 'pointer' }}>Sin preferencia</button>
+                    )}
+                  </div>
+                </Card>
+              )}
+            </div>
+
+            {/* Columna derecha: calendario */}
+            <div>
+              <Card style={{ overflow: 'hidden' }}>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedDate ? color : 'var(--line)', color: selectedDate ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>2</div>
+                    <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Elegí la fecha</span>
+                  </div>
+                </div>
+                <MiniCalendar availableDates={availableDates} selectedDate={selectedDate} onSelect={onSelectDate} color={color} viewYear={viewYear} viewMonth={viewMonth} onPrev={prevMonth} onNext={nextMonth} />
+              </Card>
+            </div>
+          </div>
+
+          {/* ── Sección 3: Horarios (full-width, aparece al seleccionar fecha) ── */}
+          {selectedDate && (
+            <Card style={{ marginTop: 20, overflow: 'hidden', animation: 'dp-slide-in 0.35s ease both' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: selectedTime ? color : 'var(--line)', color: selectedTime ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>3</div>
+                  <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>
+                    Elegí la hora
+                    {selectedDate && <span style={{ fontFamily: 'var(--f-mono)', fontWeight: 400, fontSize: 12, color: 'var(--muted)', marginLeft: 8, textTransform: 'capitalize' }}>— {DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]} {formatDateAR(selectedDate)}</span>}
+                  </span>
+                </div>
+              </div>
+              <div style={{ padding: 16 }}>
+                {selectedServices.length === 0 ? (
+                  <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Primero elegí al menos un servicio</p>
+                ) : loadingSlots ? (
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Cargando horarios...</p>
+                ) : slots.length === 0 ? (
+                  <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', textAlign: 'center', margin: 0 }}>Sin horarios disponibles este día.</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
+                    {slots.map((slot, idx) => {
+                      const booked = slotCounts[slot] || 0
+                      const remaining = slotMaxCapacity > 1 ? slotMaxCapacity - booked : null
+                      const isSel = selectedTime === slot
+                      return (
+                        <button key={slot} onClick={() => setSelectedTime(slot)} className="dp-slot-btn"
+                          style={{ padding: '11px 0', borderRadius: 10, border: `1.5px solid ${isSel ? 'transparent' : 'var(--line)'}`, background: isSel ? color : 'var(--paper)', color: isSel ? '#fff' : 'var(--ink)', fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: isSel ? 700 : 400, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, transition: 'all 0.15s ease', boxShadow: isSel ? `0 0 16px ${color}55` : 'none', animation: `dp-stagger-in 0.3s ${idx * 0.02}s ease both` }}>
+                          <span>{slot}</span>
+                          {remaining !== null && <span style={{ fontSize: 9, opacity: 0.65 }}>{remaining} cupo{remaining !== 1 ? 's' : ''}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* ── Sección 4: Formulario + Resumen (aparece al elegir hora) ── */}
+          {canContinue && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20, animation: 'dp-slide-in 0.4s ease both' }} className="dp-two-col">
+
+              {/* Izquierda: formulario */}
+              <Card style={{ overflow: 'hidden' }}>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: form.name.trim() ? color : 'var(--line)', color: form.name.trim() ? '#fff' : 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, flexShrink: 0, transition: 'all 0.2s' }}>4</div>
+                    <span style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Tus datos</span>
+                  </div>
+                </div>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <style>{`.dp-input:focus{border-color:${color}!important;box-shadow:0 0 0 3px ${color}22}.dp-input::placeholder{color:var(--muted)}`}</style>
+                  <div>
+                    <label style={labelStyle}>Nombre completo *</label>
+                    <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                      className="dp-input" style={inputStyle} placeholder="Ej: María González" />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>WhatsApp *</label>
+                    <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                      onBlur={e => fetchHistory(e.target.value)} className="dp-input" style={inputStyle} placeholder="Ej: 2664 XXX XXX" />
+                    {loadingHistory && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', marginTop: 6 }}>Buscando visitas anteriores...</p>}
+                    {!loadingHistory && history.length > 0 && (
+                      <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 12, border: `1px solid ${color}30`, background: `${color}0a` }}>
+                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color, marginBottom: 8 }}>¡Bienvenida de vuelta!</p>
+                        {history.map((h, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
+                            <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.service_name}</span>
+                            <span style={{ flexShrink: 0, marginLeft: 12 }}>{formatDateAR(h.appointment_date)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Notas (opcional)</label>
+                    <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                      rows={3} className="dp-input" style={{ ...inputStyle, resize: 'none' }}
+                      placeholder="Piel sensible, alergias, consultas..." />
+                  </div>
+                  {ownerPhone && (
+                    <div style={{ padding: '12px 14px', borderRadius: 12, background: `${color}0a`, border: `1px solid ${color}25` }}>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', margin: 0 }}>
+                        <span style={{ marginRight: 6 }}>📱</span>
+                        {companyName.split(' ')[0]} te contacta por WhatsApp para confirmar el turno y coordinar el pago de la seña.
+                      </p>
+                    </div>
                   )}
                 </div>
               </Card>
-            )}
 
-            {/* Continuar */}
-            {canContinue && (
-              <button onClick={() => setStep('form')}
-                style={{ marginTop: 16, width: '100%', background: color, color: '#fff', border: 'none', borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)', fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700, boxShadow: `0 4px 24px ${color}55`, transition: 'all 0.2s', animation: 'dp-slide-in 0.3s ease both' }}>
-                Continuar con mis datos →
-              </button>
-            )}
-          </div>
+              {/* Derecha: resumen + botón */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <Card style={{ overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', margin: 0 }}>Resumen de tu turno</p>
+                  </div>
+                  <div style={{ padding: 20 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
+                      {selectedServices.map(s => (
+                        <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)' }}>
+                          <span>{s.name}</span>
+                          <span style={{ color, fontWeight: 700 }}>{formatPriceARS(s.price_ars)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 16 }}>📅</span>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)', textTransform: 'capitalize' }}>
+                          {DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]} {formatDateAR(selectedDate).replace(/(\d+)\/(\d+)\/(\d+)/, (_, d, m, y) => `${d} de ${['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][parseInt(m)-1]} ${y}`)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 16 }}>⏰</span>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)' }}>{selectedTime} hs</span>
+                      </div>
+                      {selectedProfessional && selectedProfessional !== 'any' && typeof selectedProfessional === 'object' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 16 }}>{selectedProfessional.emoji || '👩‍💼'}</span>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)' }}>{selectedProfessional.name}</span>
+                        </div>
+                      )}
+                      {selectedServices.length > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 16, fontWeight: 800, paddingTop: 8, borderTop: '1px dashed var(--line)' }}>
+                          <span style={{ color: 'var(--muted)' }}>Total</span>
+                          <span style={{ color }}>{formatPriceARS(totalPrice)}</span>
+                        </div>
+                      )}
+                      {depositAmount > 0 && (
+                        <div style={{ background: `${color}0a`, borderRadius: 10, padding: '12px 14px', border: `1px solid ${color}25` }}>
+                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Seña requerida ({maxDepositPct}%)</p>
+                          <p style={{ fontFamily: 'var(--f-display)', fontSize: 28, fontWeight: 800, color, margin: 0, letterSpacing: '-0.02em' }}>{formatPriceARS(depositAmount)}</p>
+                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '4px 0 0' }}>{companyName.split(' ')[0]} te contacta por WhatsApp para coordinar el pago y confirmar el turno.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+
+                {error && (
+                  <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)' }}>
+                    <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: '#dc2626', margin: 0 }}>{error}</p>
+                  </div>
+                )}
+
+                {depositAmount > 0 ? (
+                  <>
+                    <button onClick={handlePayDeposit} disabled={submitting || !form.name.trim()}
+                      style={{ width: '100%', background: color, color: '#fff', border: 'none', borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)', fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700, opacity: (submitting || !form.name.trim()) ? 0.4 : 1, boxShadow: `0 4px 24px ${color}55`, transition: 'all 0.2s' }}>
+                      {submitting ? 'Procesando...' : `✅ Pagar seña ${formatPriceARS(depositAmount)} y confirmar`}
+                    </button>
+                    <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
+                      style={{ width: '100%', background: 'transparent', border: `1.5px solid ${color}60`, color: color, borderRadius: 14, padding: '14px 0', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', cursor: 'pointer', opacity: (submitting || !form.name.trim()) ? 0.4 : 1 }}>
+                      Confirmar sin seña (pendiente de aprobación)
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
+                    style={{ width: '100%', background: color, color: '#fff', border: 'none', borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)', fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 700, opacity: (submitting || !form.name.trim()) ? 0.4 : 1, boxShadow: `0 4px 24px ${color}55`, transition: 'all 0.2s' }}>
+                    {submitting ? 'Confirmando...' : '✅ Confirmar solicitud'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
