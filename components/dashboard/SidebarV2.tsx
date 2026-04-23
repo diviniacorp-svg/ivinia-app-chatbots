@@ -87,14 +87,25 @@ export default function SidebarV2({ onClose }: { onClose?: () => void }) {
         justifyContent: 'space-between',
       }}>
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
-          <div style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 35%, ${LIME}, #8AAA1A)`,
-            boxShadow: `0 0 8px rgba(198,255,61,0.5)`,
-            flexShrink: 0,
-          }} />
+          <span style={{ position: 'relative', width: 20, height: 20, flexShrink: 0, display: 'inline-block' }}>
+            <div style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: `radial-gradient(circle at 35% 35%, ${LIME}, #8AAA1A)`,
+              boxShadow: `0 0 8px rgba(198,255,61,0.5)`,
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: -2,
+              right: -4,
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle at 35% 35%, #FF7A2F, #CC4F10)',
+              boxShadow: '0 0 5px rgba(255,100,20,0.6)',
+            }} />
+          </span>
           <span style={{
             fontFamily: 'var(--f-display)',
             fontWeight: 700,

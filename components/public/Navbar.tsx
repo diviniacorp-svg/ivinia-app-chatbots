@@ -44,7 +44,12 @@ export default function Navbar() {
       <div className="wrap-v2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 0' }}>
         {/* Logo — 5 clicks rápidos = /dashboard */}
         <a href="/" onClick={handleLogoClick} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
-          <Orb size={30} color="#C6FF3D" colorDeep="#9EE028" shade="rgba(0,0,0,0.28)" squash />
+          <span style={{ position: 'relative', width: 30, height: 30, flexShrink: 0, display: 'inline-block' }}>
+            <Orb size={30} color="#C6FF3D" colorDeep="#9EE028" shade="rgba(0,0,0,0.28)" />
+            <span style={{ position: 'absolute', bottom: -2, right: -4 }}>
+              <Orb size={14} color="#FF7A2F" colorDeep="#CC4F10" shade="rgba(60,20,0,0.45)" />
+            </span>
+          </span>
           <span style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 21, letterSpacing: '-0.05em', color: 'var(--ink)' }}>
             divinia<span style={{ color: 'var(--muted)' }}>.</span>
           </span>
