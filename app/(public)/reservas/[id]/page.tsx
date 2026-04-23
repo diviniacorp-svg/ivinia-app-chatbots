@@ -71,8 +71,8 @@ export default async function ReservasPage({ params }: { params: { id: string } 
   const depositsEnabled = customCfg.deposits_enabled === 'true'
   const instagram = customCfg.instagram || ''
   const ownerPhone = customCfg.whatsapp || config.owner_phone || ''
-  const productosEnabled = customCfg.productos_enabled === 'true'
   const productos = customCfg.productos ? JSON.parse(customCfg.productos) : []
+  const productosEnabled = productos.length > 0  // mostrar tab cuando haya productos cargados
 
   // Rubro del negocio
   const tipoNegocio: string = customCfg.rubro || (config as unknown as Record<string, string>).rubro || ''

@@ -36,6 +36,10 @@ export type Product = {
   category?: string
   price_ars: number
   description?: string
+  photo_url?: string
+  stock?: number
+  discount_active?: boolean
+  discount_percent?: number
 }
 
 export type BookingConfig = {

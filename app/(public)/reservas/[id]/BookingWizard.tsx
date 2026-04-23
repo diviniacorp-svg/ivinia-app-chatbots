@@ -670,24 +670,44 @@ export default function BookingWizard({
               <p style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted)', margin: 0 }}>Sin productos cargados todavía.</p>
             </Card>
           ) : (
-            <Card style={{ overflow: 'hidden', marginTop: 16 }}>
-              {Array.from(productosGrouped.entries()).map(([cat, prods]) => (
-                <div key={cat}>
-                  <div style={{ padding: '8px 20px', background: 'var(--paper-2)', borderBottom: '1px solid var(--line)' }}>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
-                  </div>
-                  {prods.map((prod, i) => (
-                    <div key={prod.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: i < prods.length - 1 ? '1px solid var(--line)' : 'none' }}>
-                      <div>
-                        <p style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{prod.name}</p>
-                        {prod.description && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '3px 0 0' }}>{prod.description}</p>}
+            <>
+              {/* Grid de productos con fotos */}
+              <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', marginTop: 16 }}>
+                {Array.from(productosGrouped.entries()).flatMap(([, prods]) => prods).map(prod => {
+                  const hasDesc = prod.discount_active && (prod.discount_percent || 0) > 0
+                  const finalPrice = hasDesc ? Math.round(prod.price_ars * (1 - (prod.discount_percent ?? 0) / 100)) : prod.price_ars
+                  return (
+                    <div key={prod.id} style={{
+                      background: 'var(--paper)', border: hasDesc ? `2px solid ${color}` : '1px solid var(--line)',
+                      borderRadius: 14, overflow: 'hidden', position: 'relative',
+                    }}>
+                      {hasDesc && (
+                        <div style={{ position: 'absolute', top: 8, right: 8, background: color, color: '#fff', borderRadius: 100, padding: '2px 8px', fontFamily: 'var(--f-mono)', fontSize: 9, fontWeight: 700, zIndex: 1 }}>
+                          -{prod.discount_percent}%
+                        </div>
+                      )}
+                      <div style={{ width: '100%', aspectRatio: '1', background: 'var(--paper-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', fontSize: 28 }}>
+                        {prod.photo_url
+                          ? <img src={prod.photo_url} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : '📦'}
                       </div>
-                      <span style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 700, color, flexShrink: 0, marginLeft: 16 }}>{prod.price_ars > 0 ? formatPriceARS(prod.price_ars) : 'Consultar'}</span>
+                      <div style={{ padding: '10px 12px 12px' }}>
+                        <p style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>{prod.name}</p>
+                        {prod.description && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', margin: '3px 0 0', lineHeight: 1.4 }}>{prod.description}</p>}
+                        <div style={{ marginTop: 8 }}>
+                          {prod.price_ars > 0 ? (
+                            <>
+                              {hasDesc && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', textDecoration: 'line-through', display: 'block' }}>{formatPriceARS(prod.price_ars)}</span>}
+                              <span style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 16, color: hasDesc ? color : 'var(--ink)' }}>{formatPriceARS(finalPrice)}</span>
+                            </>
+                          ) : <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>Consultar</span>}
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ))}
-            </Card>
+                  )
+                })}
+              </div>
+            </>
           )}
           {ownerPhone && (
             <a href={`https://wa.me/${ownerPhone.replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${companyName}! Quiero consultar sobre un producto 🛍️`)}`}

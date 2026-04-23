@@ -33,6 +33,22 @@ interface Qualification {
   proxima_accion: string
 }
 
+interface DemoRec {
+  rubro: string
+  demo_url: string
+  pitch_opening: string
+  pain_points: string[]
+  killer_question: string
+  upsell_hint: string
+}
+
+interface ObjResp {
+  objection: string
+  response: string
+  follow_up_question: string
+  close_attempt: string
+}
+
 interface Proposal {
   titulo: string
   resumen_ejecutivo: string
@@ -116,6 +132,17 @@ function LeadPanel({
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
 
+  // Demo Advisor
+  const [demoRec, setDemoRec] = useState<DemoRec | null>(null)
+  const [gettingDemo, setGettingDemo] = useState(false)
+  // Objection Handler
+  const [objInput, setObjInput] = useState('')
+  const [objResp, setObjResp] = useState<ObjResp | null>(null)
+  const [gettingObj, setGettingObj] = useState(false)
+  // Follow-up
+  const [followUpMsg, setFollowUpMsg] = useState<string | null>(null)
+  const [gettingFollowUp, setGettingFollowUp] = useState(false)
+
   async function qualify() {
     setQualifying(true)
     try {
@@ -182,6 +209,49 @@ function LeadPanel({
     navigator.clipboard.writeText(text)
     setCopied(key)
     setTimeout(() => setCopied(null), 2000)
+  }
+
+  async function getDemo() {
+    setGettingDemo(true)
+    try {
+      const res = await fetch('/api/agents/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: lead.id, company_name: lead.company_name, rubro: lead.rubro, city: lead.city }),
+      })
+      const data = await res.json()
+      if (data.ok) setDemoRec(data)
+    } catch { /* silent */ }
+    setGettingDemo(false)
+  }
+
+  async function getObjResponse() {
+    if (!objInput.trim()) return
+    setGettingObj(true)
+    try {
+      const res = await fetch('/api/agents/objection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_name: lead.company_name, rubro: lead.rubro, city: lead.city, objection: objInput }),
+      })
+      const data = await res.json()
+      if (data.ok) setObjResp(data)
+    } catch { /* silent */ }
+    setGettingObj(false)
+  }
+
+  async function getFollowUp() {
+    setGettingFollowUp(true)
+    try {
+      const res = await fetch('/api/agents/follow-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: lead.id, company_name: lead.company_name, rubro: lead.rubro, city: lead.city, phone: lead.phone, stage: status }),
+      })
+      const data = await res.json()
+      if (data.ok) setFollowUpMsg(data.mensaje)
+    } catch { /* silent */ }
+    setGettingFollowUp(false)
   }
 
   const waLink = (msg: string) =>
@@ -307,6 +377,34 @@ function LeadPanel({
                   </a>
                 )}
               </div>
+
+              {/* Follow-up */}
+              <div style={cardStyle}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: followUpMsg ? 10 : 0 }}>
+                  <p style={{ margin:0, ...s, color:'rgba(255,255,255,0.4)' }}>Mensaje de seguimiento</p>
+                  <button onClick={getFollowUp} disabled={gettingFollowUp}
+                    style={{ ...btnStyle('#F59E0B'), padding:'5px 14px', fontSize:10 }}>
+                    {gettingFollowUp ? '⏳ Generando...' : '✍️ Generar follow-up'}
+                  </button>
+                </div>
+                {followUpMsg && (
+                  <>
+                    <p style={{ margin:'0 0 10px', fontFamily:'var(--f-display)', fontSize:13, color:'rgba(255,255,255,0.8)', lineHeight:1.5, whiteSpace:'pre-line' }}>{followUpMsg}</p>
+                    <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                      <button onClick={() => copy(followUpMsg, 'followup')}
+                        style={{ ...btnStyle(copied==='followup'?'#10B981':'#F59E0B'), padding:'5px 14px', fontSize:10 }}>
+                        {copied==='followup' ? '✓ Copiado' : 'Copiar'}
+                      </button>
+                      {lead.phone && (
+                        <a href={waLink(followUpMsg)} target="_blank" rel="noopener noreferrer"
+                          style={{ ...btnStyle('#10B981'), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6, padding:'5px 14px', fontSize:10 }}>
+                          💬 Enviar WA →
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
@@ -367,6 +465,84 @@ function LeadPanel({
                   <div style={cardStyle}>
                     <p style={{ margin:'0 0 6px', ...s, color:'rgba(255,255,255,0.4)' }}>Próxima acción</p>
                     <p style={{ margin:0, fontFamily:'var(--f-display)', fontSize:13, color:'#fff', lineHeight:1.4 }}>{qualification.proxima_accion}</p>
+                  </div>
+
+                  {/* ── Demo Advisor ── */}
+                  <div style={cardStyle}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: demoRec ? 12 : 0 }}>
+                      <p style={{ margin:0, ...s, color:'#C6FF3D' }}>Demo advisor</p>
+                      <button onClick={getDemo} disabled={gettingDemo}
+                        style={{ ...btnStyle('#C6FF3D'), padding:'5px 14px', fontSize:10 }}>
+                        {gettingDemo ? '⏳...' : demoRec ? '🔄 Regenerar' : '🎯 Qué demo mostrar'}
+                      </button>
+                    </div>
+                    {demoRec && (
+                      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                        <div>
+                          <p style={{ margin:'0 0 4px', ...s, color:'rgba(255,255,255,0.3)', fontSize:9 }}>Apertura</p>
+                          <p style={{ margin:0, fontFamily:'var(--f-display)', fontSize:13, color:'#fff', lineHeight:1.4 }}>{demoRec.pitch_opening}</p>
+                        </div>
+                        <div>
+                          <p style={{ margin:'0 0 4px', ...s, color:'rgba(255,255,255,0.3)', fontSize:9 }}>Pregunta ganadora</p>
+                          <p style={{ margin:0, fontFamily:'var(--f-display)', fontSize:13, color:'#C6FF3D', fontStyle:'italic', lineHeight:1.4 }}>"{demoRec.killer_question}"</p>
+                        </div>
+                        <div>
+                          <p style={{ margin:'0 0 4px', ...s, color:'rgba(255,255,255,0.3)', fontSize:9 }}>Dolores a mencionar</p>
+                          {demoRec.pain_points.map((p, i) => (
+                            <p key={i} style={{ margin:'0 0 3px', fontFamily:'var(--f-display)', fontSize:12, color:'rgba(255,255,255,0.7)', display:'flex', gap:6 }}>
+                              <span style={{ color:'#EF4444' }}>•</span> {p}
+                            </p>
+                          ))}
+                        </div>
+                        <a href={demoRec.demo_url} target="_blank" rel="noopener noreferrer"
+                          style={{ ...btnStyle('#C6FF3D'), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', fontSize:10 }}>
+                          👁 Ver demo →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Objection Handler ── */}
+                  <div style={cardStyle}>
+                    <p style={{ margin:'0 0 10px', ...s, color:'#EF4444' }}>Manejador de objeciones</p>
+                    <div style={{ display:'flex', gap:8 }}>
+                      <input
+                        type="text"
+                        placeholder="Ej: es muy caro, no tengo tiempo..."
+                        value={objInput}
+                        onChange={e => setObjInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && getObjResponse()}
+                        style={{
+                          flex:1, padding:'8px 12px', background:'rgba(255,255,255,0.06)',
+                          border:'1px solid rgba(255,255,255,0.1)', borderRadius:8,
+                          fontFamily:'var(--f-display)', fontSize:13, color:'#fff', outline:'none',
+                        }}
+                      />
+                      <button onClick={getObjResponse} disabled={gettingObj || !objInput.trim()}
+                        style={{ ...btnStyle('#EF4444'), padding:'8px 14px', fontSize:11, whiteSpace:'nowrap' }}>
+                        {gettingObj ? '⏳' : '→'}
+                      </button>
+                    </div>
+                    {objResp && (
+                      <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:8 }}>
+                        <div>
+                          <p style={{ margin:'0 0 4px', ...s, color:'rgba(255,255,255,0.3)', fontSize:9 }}>Respuesta</p>
+                          <p style={{ margin:0, fontFamily:'var(--f-display)', fontSize:13, color:'#fff', lineHeight:1.5 }}>{objResp.response}</p>
+                        </div>
+                        <div>
+                          <p style={{ margin:'0 0 4px', ...s, color:'rgba(255,255,255,0.3)', fontSize:9 }}>Pregunta de seguimiento</p>
+                          <p style={{ margin:0, fontFamily:'var(--f-display)', fontSize:13, color:'#F59E0B', fontStyle:'italic' }}>"{objResp.follow_up_question}"</p>
+                        </div>
+                        <div>
+                          <p style={{ margin:'0 0 4px', ...s, color:'rgba(255,255,255,0.3)', fontSize:9 }}>Cierre suave</p>
+                          <p style={{ margin:0, fontFamily:'var(--f-display)', fontSize:13, color:'#10B981' }}>{objResp.close_attempt}</p>
+                        </div>
+                        <button onClick={() => copy(`${objResp.response} ${objResp.close_attempt}`, 'obj')}
+                          style={{ ...btnStyle(copied==='obj'?'#10B981':'#EF4444'), padding:'5px 14px', fontSize:10, alignSelf:'flex-start' }}>
+                          {copied==='obj' ? '✓ Copiado' : 'Copiar respuesta'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <button onClick={generateProposal} disabled={generating}
