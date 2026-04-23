@@ -178,20 +178,19 @@ export default function HeroV3() {
 
           {/* Headline principal */}
           <h1
-            className="h-display"
             style={{
+              fontFamily: 'var(--f-display)',
+              fontWeight: 700,
               fontSize: 'clamp(60px, 11vw, 148px)',
               color: 'var(--ink)',
               margin: '0 auto 28px',
-              lineHeight: 0.88,
-              letterSpacing: '-0.045em',
-              textTransform: 'uppercase',
-              fontStyle: 'normal',
+              lineHeight: 0.9,
+              letterSpacing: '-0.04em',
             }}
           >
             Tu negocio<br />
             funciona<br />
-            <em style={{ color: 'var(--lime)', fontStyle: 'normal' }}>solo.</em>
+            <em style={{ color: 'var(--lime)' }}>solo.</em>
           </h1>
 
           {/* Subtítulo */}
