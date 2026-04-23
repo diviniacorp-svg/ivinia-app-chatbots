@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { BookingConfig, Service, Professional, formatDateAR, formatPriceARS, getNextAvailableDates, getFirstAvailableMonth } from '@/lib/bookings'
+import { BookingConfig, Service, Professional, Product, formatDateAR, formatPriceARS, getNextAvailableDates, getFirstAvailableMonth } from '@/lib/bookings'
 import SplashIntro from './SplashIntro'
 import { getThemeForRubro } from '@/lib/turnero-themes'
 
@@ -13,7 +13,6 @@ const DIAS_FULL = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'vierne
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 type PastAppt = { service_name: string; appointment_date: string; appointment_time: string; status: string }
-
 
 // ── Barra de progreso ─────────────────────────────────────────────
 function ProgressBar({ step, color }: { step: Step; color: string }) {
@@ -34,24 +33,24 @@ function ProgressBar({ step, color }: { step: Step; color: string }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%',
-                background: isDone ? color : isActive ? color : 'rgba(255,255,255,0.1)',
-                border: `2px solid ${isDone || isActive ? color : 'rgba(255,255,255,0.15)'}`,
+                background: isDone ? color : isActive ? color : 'var(--paper-3)',
+                border: `2px solid ${isDone || isActive ? color : 'var(--line)'}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700,
-                color: isDone || isActive ? '#000' : 'rgba(255,255,255,0.4)',
+                color: isDone || isActive ? '#fff' : 'var(--muted)',
                 transition: 'all 0.3s ease',
                 boxShadow: isActive ? `0 0 16px ${color}66` : 'none',
               }}>
                 {isDone ? (
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 7l3.5 3.5L12 3.5" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 7l3.5 3.5L12 3.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : i + 1}
               </div>
               <span style={{
                 fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.06em',
                 textTransform: 'uppercase', marginTop: 5,
-                color: isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)',
+                color: isActive ? 'var(--ink)' : 'var(--muted)',
                 whiteSpace: 'nowrap',
               }}>{s.label}</span>
             </div>
@@ -60,7 +59,7 @@ function ProgressBar({ step, color }: { step: Step; color: string }) {
                 height: 1, flex: 1, marginBottom: 18,
                 background: i < currentIdx
                   ? `linear-gradient(to right, ${color}, ${color})`
-                  : 'rgba(255,255,255,0.1)',
+                  : 'var(--line)',
                 transition: 'background 0.3s ease',
               }} />
             )}
@@ -71,7 +70,7 @@ function ProgressBar({ step, color }: { step: Step; color: string }) {
   )
 }
 
-// ── Mini Calendar (dark premium) ─────────────────────────────────
+// ── Mini Calendar ─────────────────────────────────────────────────
 function MiniCalendar({ availableDates, selectedDate, onSelect, color, viewYear, viewMonth, onPrev, onNext }: {
   availableDates: string[]
   selectedDate: string
@@ -90,32 +89,31 @@ function MiniCalendar({ availableDates, selectedDate, onSelect, color, viewYear,
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.05)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      background: 'var(--paper)',
       borderRadius: 20,
-      border: `1px solid rgba(255,255,255,0.1)`,
+      border: '1px solid var(--line)',
       overflow: 'hidden',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: '14px 16px', borderBottom: '1px solid var(--line)',
       }}>
         <button onClick={onPrev} style={{
           width: 34, height: 34, borderRadius: 10,
-          background: 'rgba(255,255,255,0.08)', border: 'none', cursor: 'pointer',
+          background: 'var(--paper-2)', border: '1px solid var(--line)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'rgba(255,255,255,0.7)', fontSize: 18, transition: 'all 0.15s',
+          color: 'var(--muted)', fontSize: 18, transition: 'all 0.15s',
         }}>‹</button>
         <span style={{
           fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14,
-          color: '#fff', letterSpacing: '-0.01em',
+          color: 'var(--ink)', letterSpacing: '-0.01em',
         }}>{MESES[viewMonth]} {viewYear}</span>
         <button onClick={onNext} style={{
           width: 34, height: 34, borderRadius: 10,
-          background: 'rgba(255,255,255,0.08)', border: 'none', cursor: 'pointer',
+          background: 'var(--paper-2)', border: '1px solid var(--line)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'rgba(255,255,255,0.7)', fontSize: 18, transition: 'all 0.15s',
+          color: 'var(--muted)', fontSize: 18, transition: 'all 0.15s',
         }}>›</button>
       </div>
 
@@ -124,7 +122,7 @@ function MiniCalendar({ availableDates, selectedDate, onSelect, color, viewYear,
           <div key={d} style={{
             textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 9,
             letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.3)', paddingBottom: 6,
+            color: 'var(--muted)', paddingBottom: 6,
           }}>{d}</div>
         ))}
       </div>
@@ -147,10 +145,11 @@ function MiniCalendar({ availableDates, selectedDate, onSelect, color, viewYear,
                 fontFamily: 'var(--f-display)', fontSize: 13,
                 fontWeight: isSel ? 700 : 400,
                 transition: 'all 0.15s ease',
-                background: isSel ? color : isAvail && !isPast ? `${color}22` : 'transparent',
-                color: isSel ? '#000' : isAvail && !isPast ? '#fff' : 'rgba(255,255,255,0.2)',
+                background: isSel ? color : isAvail && !isPast ? `${color}18` : 'transparent',
+                color: isSel ? '#fff' : isAvail && !isPast ? color : 'var(--muted)',
                 boxShadow: isSel ? `0 0 16px ${color}66` : 'none',
                 transform: isSel ? 'scale(1.05)' : 'scale(1)',
+                opacity: isPast && !isAvail ? 0.3 : 1,
               }}
             >
               {day}
@@ -161,29 +160,28 @@ function MiniCalendar({ availableDates, selectedDate, onSelect, color, viewYear,
 
       <div style={{
         display: 'flex', gap: 16, padding: '10px 16px',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(0,0,0,0.2)',
+        borderTop: '1px solid var(--line)',
+        background: 'var(--paper-2)',
       }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)' }}>
           <span style={{ width: 10, height: 10, borderRadius: 3, display: 'inline-block', background: `${color}44` }} />Disponible
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
-          <span style={{ width: 10, height: 10, borderRadius: 3, display: 'inline-block', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }} />Sin turnos
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)' }}>
+          <span style={{ width: 10, height: 10, borderRadius: 3, display: 'inline-block', background: 'var(--paper-3)', border: '1px solid var(--line)' }} />Sin turnos
         </span>
       </div>
     </div>
   )
 }
 
-// ── Glass Card ────────────────────────────────────────────────────
-function GlassCard({ children, color, style }: { children: React.ReactNode; color?: string; style?: React.CSSProperties }) {
+// ── Card ──────────────────────────────────────────────────────────
+function Card({ children, color, style }: { children: React.ReactNode; color?: string; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.05)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      background: 'var(--paper)',
       borderRadius: 20,
-      border: color ? `1px solid ${color}30` : '1px solid rgba(255,255,255,0.1)',
+      border: color ? `1px solid ${color}30` : '1px solid var(--line)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
       ...style,
     }}>
       {children}
@@ -213,7 +211,7 @@ export default function BookingWizard({
   clientId, config, companyName, color, configId,
   introEmoji, introTagline, introStyle,
   depositsEnabled, instagram, ownerPhone,
-  tipoNegocio,
+  tipoNegocio, productosEnabled, productos,
 }: {
   clientId: string
   config: BookingConfig
@@ -227,10 +225,13 @@ export default function BookingWizard({
   instagram?: string
   ownerPhone?: string
   tipoNegocio?: string
+  productosEnabled?: boolean
+  productos?: Product[]
 }) {
   const searchParams = useSearchParams()
   const [splashDone, setSplashDone] = useState(false)
   const [step, setStep] = useState<Step>('select')
+  const [activeTab, setActiveTab] = useState<'turnos' | 'productos'>('turnos')
 
   const theme = useMemo(() => getThemeForRubro(tipoNegocio), [tipoNegocio])
 
@@ -399,34 +400,33 @@ export default function BookingWizard({
   const canContinue = selectedServices.length > 0 && selectedDate && selectedTime &&
     (!hasProfessionals || selectedProfessional !== null)
 
-  const darkInputStyle: React.CSSProperties = {
+  const inputStyle: React.CSSProperties = {
     width: '100%',
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: '1px solid var(--line)',
     borderRadius: 12,
     padding: '14px 16px',
     fontFamily: 'var(--f-display)',
     fontSize: 16,
     outline: 'none',
-    background: 'rgba(255,255,255,0.06)',
-    color: '#fff',
+    background: 'var(--paper-2)',
+    color: 'var(--ink)',
     boxSizing: 'border-box',
     transition: 'border-color 0.2s',
   }
 
-  const darkLabelStyle: React.CSSProperties = {
+  const labelStyle: React.CSSProperties = {
     display: 'block',
     fontFamily: 'var(--f-mono)',
     fontSize: 9,
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'var(--muted)',
     marginBottom: 7,
   }
 
-  // ── Shared layout wrapper ──
   const pageStyle: React.CSSProperties = {
     minHeight: '100vh',
-    background: '#060609',
+    background: 'var(--paper-2)',
     position: 'relative',
     overflowX: 'hidden',
   }
@@ -456,19 +456,15 @@ export default function BookingWizard({
     return (
       <div style={pageStyle}>
         <style>{`
-          @keyframes dp-circle-draw {
-            to { stroke-dashoffset: 0; }
-          }
-          @keyframes dp-check-draw {
-            to { stroke-dashoffset: 0; }
-          }
+          @keyframes dp-circle-draw { to { stroke-dashoffset: 0; } }
+          @keyframes dp-check-draw { to { stroke-dashoffset: 0; } }
           @keyframes dp-success-in {
             from { opacity: 0; transform: translateY(30px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
           }
         `}</style>
         <div style={{
-          maxWidth: 480, margin: '0 auto', padding: '80px 24px 100px',
+          maxWidth: 480, margin: '0 auto', padding: '40px 24px 100px',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           textAlign: 'center', position: 'relative', zIndex: 1,
           animation: 'dp-success-in 0.6s ease both',
@@ -479,15 +475,15 @@ export default function BookingWizard({
 
           <h2 style={{
             fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 28,
-            color: '#fff', margin: '0 0 10px', letterSpacing: '-0.02em',
+            color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.02em',
           }}>
             {paidSuccess ? '¡Seña confirmada!' : '¡Turno solicitado!'}
           </h2>
 
-          <GlassCard color={color} style={{ width: '100%', padding: 24, marginBottom: 28, textAlign: 'left' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>Resumen de tu turno</p>
+          <Card color={color} style={{ width: '100%', padding: 24, marginBottom: 28, textAlign: 'left' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>Resumen de tu turno</p>
             {selectedServices.length > 0 && (
-              <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 12px' }}>
+              <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 17, color: 'var(--ink)', margin: '0 0 12px' }}>
                 {selectedServices.map(s => s.name).join(' + ')}
               </p>
             )}
@@ -495,27 +491,27 @@ export default function BookingWizard({
               {selectedDate && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 16 }}>📅</span>
-                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)' }}>
                     <span style={{ textTransform: 'capitalize' }}>{DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]}</span> {formatDateAR(selectedDate)} · {selectedTime}hs
                   </span>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 16 }}>👤</span>
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{form.name || 'Tu turno'}</span>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)' }}>{form.name || 'Tu turno'}</span>
               </div>
               {typeof selectedProfessional === 'object' && selectedProfessional && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 16 }}>{selectedProfessional.emoji || '👩‍💼'}</span>
-                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{selectedProfessional.name}</span>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)' }}>{selectedProfessional.name}</span>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 16 }}>📍</span>
-                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>Te esperamos en {companyName}</span>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--ink)' }}>Te esperamos en {companyName}</span>
               </div>
             </div>
-          </GlassCard>
+          </Card>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
             {waPhone && (
@@ -551,7 +547,7 @@ export default function BookingWizard({
 
           <button onClick={reset} style={{
             marginTop: 24, fontFamily: 'var(--f-mono)', fontSize: 10,
-            color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none',
+            color: 'var(--muted)', background: 'none', border: 'none',
             cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
             Hacer otra reserva
@@ -570,14 +566,10 @@ export default function BookingWizard({
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
           }
-          .dp-dark-input:focus {
-            border-color: ${color} !important;
-            box-shadow: 0 0 0 3px ${color}22;
-          }
-          .dp-dark-input::placeholder { color: rgba(255,255,255,0.25); }
+          .dp-input:focus { border-color: ${color} !important; box-shadow: 0 0 0 3px ${color}22; }
+          .dp-input::placeholder { color: var(--muted); }
         `}</style>
-
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 20px 100px', position: 'relative', zIndex: 1, animation: 'dp-slide-in 0.4s ease both' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 100px', position: 'relative', zIndex: 1, animation: 'dp-slide-in 0.4s ease both' }}>
           <button onClick={() => setStep('select')} style={{
             fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
             color: color, background: 'none', border: 'none', cursor: 'pointer',
@@ -587,32 +579,32 @@ export default function BookingWizard({
 
           <ProgressBar step="form" color={color} />
 
-          <h2 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 22, color: 'var(--ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
             Tus datos
           </h2>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.06em', marginBottom: 28 }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', letterSpacing: '0.06em', marginBottom: 28 }}>
             {selectedServices.map(s => s.name).join(' + ')} · {formatDateAR(selectedDate)} {selectedTime}hs
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={darkLabelStyle}>Nombre completo *</label>
+              <label style={labelStyle}>Nombre completo *</label>
               <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="dp-dark-input" style={darkInputStyle} placeholder="Ej: María González" />
+                className="dp-input" style={inputStyle} placeholder="Ej: María González" />
             </div>
             <div>
-              <label style={darkLabelStyle}>WhatsApp *</label>
+              <label style={labelStyle}>WhatsApp *</label>
               <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                 onBlur={e => fetchHistory(e.target.value)}
-                className="dp-dark-input" style={darkInputStyle} placeholder="Ej: 2664 XXX XXX" />
+                className="dp-input" style={inputStyle} placeholder="Ej: 2664 XXX XXX" />
               {loadingHistory && (
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>Buscando visitas anteriores...</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', marginTop: 6 }}>Buscando visitas anteriores...</p>
               )}
               {!loadingHistory && history.length > 0 && (
                 <div style={{ marginTop: 10, padding: '14px 16px', borderRadius: 14, border: `1px solid ${color}30`, background: `${color}0a` }}>
                   <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color, marginBottom: 10 }}>¡Bienvenida de vuelta!</p>
                   {history.map((h, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
                       <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.service_name}</span>
                       <span style={{ flexShrink: 0, marginLeft: 12 }}>{formatDateAR(h.appointment_date)}</span>
                     </div>
@@ -621,55 +613,55 @@ export default function BookingWizard({
               )}
             </div>
             <div>
-              <label style={darkLabelStyle}>Email (opcional)</label>
+              <label style={labelStyle}>Email (opcional)</label>
               <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className="dp-dark-input" style={darkInputStyle} placeholder="tu@email.com" />
+                className="dp-input" style={inputStyle} placeholder="tu@email.com" />
             </div>
             <div>
-              <label style={darkLabelStyle}>Notas (opcional)</label>
+              <label style={labelStyle}>Notas (opcional)</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                rows={3} className="dp-dark-input" style={{ ...darkInputStyle, resize: 'none' }}
+                rows={3} className="dp-input" style={{ ...inputStyle, resize: 'none' }}
                 placeholder="Diseño deseado, alergias, consultas..." />
             </div>
 
             {/* Resumen */}
-            <GlassCard color={color} style={{ padding: 20 }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: '0 0 14px' }}>Resumen</p>
+            <Card color={color} style={{ padding: 20 }}>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 14px' }}>Resumen</p>
               {selectedServices.map(s => (
-                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 8 }}>
+                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--ink)', marginBottom: 8 }}>
                   <span>{s.name}</span>
                   <span style={{ color, fontWeight: 700 }}>{formatPriceARS(s.price_ars)}</span>
                 </div>
               ))}
               {selectedServices.length > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10, marginTop: 6 }}>
-                  <span style={{ color: '#fff' }}>Total</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, borderTop: '1px solid var(--line)', paddingTop: 10, marginTop: 6 }}>
+                  <span style={{ color: 'var(--ink)' }}>Total</span>
                   <span style={{ color }}>{formatPriceARS(totalPrice)}</span>
                 </div>
               )}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>
+              <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>
                   📅 <span style={{ textTransform: 'capitalize' }}>{selectedDate ? `${DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]} ${formatDateAR(selectedDate)}` : '—'}</span>
                 </p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>⏰ {selectedTime ? `${selectedTime}hs` : '—'}</p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: 0 }}>⏱ {totalDuration} min en total</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>⏰ {selectedTime ? `${selectedTime}hs` : '—'}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', margin: 0 }}>⏱ {totalDuration} min en total</p>
                 {selectedProfessional && selectedProfessional !== 'any' && typeof selectedProfessional === 'object' && (
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--ink)', margin: 0 }}>
                     {selectedProfessional.emoji || '👩‍💼'} {selectedProfessional.name}
                   </p>
                 )}
               </div>
               {depositAmount > 0 && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 14, marginTop: 10 }}>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: '0 0 4px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Seña requerida ({maxDepositPct}%)</p>
+                <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, marginTop: 10 }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', margin: '0 0 4px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Seña requerida ({maxDepositPct}%)</p>
                   <p style={{ fontFamily: 'var(--f-display)', fontSize: 32, fontWeight: 800, color, margin: 0, letterSpacing: '-0.02em', textShadow: `0 0 20px ${color}66` }}>{formatPriceARS(depositAmount)}</p>
                 </div>
               )}
-            </GlassCard>
+            </Card>
 
             {error && (
-              <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)' }}>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: '#f87171', margin: 0 }}>{error}</p>
+              <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: '#dc2626', margin: 0 }}>{error}</p>
               </div>
             )}
 
@@ -678,7 +670,7 @@ export default function BookingWizard({
                 <>
                   <button onClick={handlePayDeposit} disabled={submitting || !form.name.trim()}
                     style={{
-                      width: '100%', background: color, color: '#000', border: 'none',
+                      width: '100%', background: color, color: '#fff', border: 'none',
                       borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)',
                       fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
                       cursor: 'pointer', fontWeight: 700,
@@ -701,7 +693,7 @@ export default function BookingWizard({
               ) : (
                 <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
                   style={{
-                    width: '100%', background: color, color: '#000', border: 'none',
+                    width: '100%', background: color, color: '#fff', border: 'none',
                     borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)',
                     fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
                     cursor: 'pointer', fontWeight: 700,
@@ -720,6 +712,19 @@ export default function BookingWizard({
   }
 
   // ── PASO SELECT ─────────────────────────────────────────────────
+
+  // ── Products tab view ────────────────────────────────────────────
+  const productosGrouped = useMemo(() => {
+    if (!productos?.length) return new Map<string, Product[]>()
+    const map = new Map<string, Product[]>()
+    productos.forEach(p => {
+      const cat = p.category || 'Productos'
+      if (!map.has(cat)) map.set(cat, [])
+      map.get(cat)!.push(p)
+    })
+    return map
+  }, [productos])
+
   return (
     <div style={pageStyle}>
       <style>{`
@@ -731,27 +736,132 @@ export default function BookingWizard({
           from { opacity: 0; transform: translateY(12px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .dp-slot-btn:hover {
-          transform: scale(1.04);
-        }
-        .dp-service-row:hover {
-          background: rgba(255,255,255,0.07) !important;
-        }
+        .dp-slot-btn:hover { transform: scale(1.04); }
+        .dp-service-row:hover { background: var(--paper-3) !important; }
       `}</style>
 
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 20px 100px', position: 'relative', zIndex: 1 }}>
+      {/* ── Header ── */}
+      <div style={{
+        background: color,
+        padding: '20px 20px 16px',
+        color: '#fff',
+      }}>
+        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 24 }}>{introEmoji || theme.emoji}</span>
+              <div>
+                <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 18, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>{companyName}</h1>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.75)', margin: 0, letterSpacing: '0.04em' }}>San Luis · Reservas online</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {ownerPhone && (
+                <a href={`https://wa.me/${ownerPhone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.2)', color: '#fff', textDecoration: 'none', fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em' }}>
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.545 5.875L0 24l6.29-1.518A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.017-1.38l-.36-.214-3.733.9.944-3.637-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+                  WA
+                </a>
+              )}
+              {instagram && (
+                <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.2)', color: '#fff', textDecoration: 'none', fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.04em' }}>
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                  IG
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tabs ── */}
+      {productosEnabled && (
+        <div style={{ background: 'var(--paper)', borderBottom: '1px solid var(--line)' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', padding: '0 16px' }}>
+            {(['turnos', 'productos'] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                style={{
+                  flex: 1, padding: '14px 0', border: 'none', background: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  fontWeight: 700,
+                  color: activeTab === tab ? color : 'var(--muted)',
+                  borderBottom: activeTab === tab ? `2.5px solid ${color}` : '2.5px solid transparent',
+                  transition: 'all 0.2s',
+                }}>
+                {tab === 'turnos' ? `✨ Turnos` : `🛍️ Productos`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Productos view ── */}
+      {activeTab === 'productos' && productosEnabled && (
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 100px' }}>
+          {productosGrouped.size === 0 ? (
+            <Card style={{ padding: 32, textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: 'var(--muted)', margin: 0 }}>Sin productos cargados todavía.</p>
+            </Card>
+          ) : (
+            <Card style={{ overflow: 'hidden' }}>
+              {Array.from(productosGrouped.entries()).map(([cat, prods]) => (
+                <div key={cat}>
+                  <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
+                  </div>
+                  {prods.map((prod, i) => (
+                    <div key={prod.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '15px 16px',
+                        borderBottom: i < prods.length - 1 ? '1px solid var(--line)' : 'none',
+                      }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{prod.name}</p>
+                        {prod.description && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', margin: '3px 0 0' }}>{prod.description}</p>}
+                      </div>
+                      <span style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color, flexShrink: 0, marginLeft: 12 }}>
+                        {prod.price_ars > 0 ? formatPriceARS(prod.price_ars) : 'Consultar'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </Card>
+          )}
+          {ownerPhone && (
+            <a href={`https://wa.me/${ownerPhone.replace(/\D/g,'')}?text=${encodeURIComponent(`Hola ${companyName}! Quiero consultar por un producto 🛍️`)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                marginTop: 16, width: '100%', padding: '16px 0', borderRadius: 14,
+                fontFamily: 'var(--f-mono)', fontSize: 12, letterSpacing: '0.06em',
+                textDecoration: 'none', background: '#25d366', color: '#fff', fontWeight: 700,
+                boxShadow: '0 4px 20px rgba(37,211,102,0.3)',
+              }}>
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.545 5.875L0 24l6.29-1.518A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.017-1.38l-.36-.214-3.733.9.944-3.637-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+              Consultar por WhatsApp
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* ── Turnos view ── */}
+      {activeTab === 'turnos' && (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 100px', position: 'relative', zIndex: 1 }}>
 
         <ProgressBar step="select" color={color} />
 
         {/* ── Servicios ── */}
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
           1 — Elegí el servicio
         </p>
 
-        <GlassCard style={{ overflow: 'hidden', marginBottom: 20 }}>
+        <Card style={{ overflow: 'hidden', marginBottom: 20 }}>
           {Array.from(grouped.entries()).map(([cat, services]) => (
             <div key={cat}>
-              <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)' }}>
+              <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--line)', background: 'var(--paper-2)' }}>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color, margin: 0, fontWeight: 700 }}>{cat}</p>
               </div>
               {services.map((service, i) => {
@@ -763,13 +873,13 @@ export default function BookingWizard({
                       width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14,
                       padding: '15px 16px',
                       border: 'none',
-                      borderBottom: i < services.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                      background: isSel ? `${color}14` : 'transparent',
+                      borderBottom: i < services.length - 1 ? '1px solid var(--line)' : 'none',
+                      background: isSel ? `${color}12` : 'transparent',
                       cursor: 'pointer', transition: 'background 0.15s',
                     }}>
                     <div style={{
                       width: 22, height: 22, borderRadius: 7, flexShrink: 0,
-                      border: `2px solid ${isSel ? color : 'rgba(255,255,255,0.2)'}`,
+                      border: `2px solid ${isSel ? color : 'var(--line)'}`,
                       background: isSel ? color : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       transition: 'all 0.15s',
@@ -777,16 +887,16 @@ export default function BookingWizard({
                     }}>
                       {isSel && (
                         <svg width="12" height="12" fill="none" viewBox="0 0 12 12">
-                          <path d="M2 6l3 3 5-5" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>{service.name}</p>
+                      <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{service.name}</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{service.duration_minutes} min</span>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)' }}>{service.duration_minutes} min</span>
                         {depositsEnabled && (service.deposit_percentage ?? 0) > 0 && (
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'rgba(251,191,36,0.15)', color: '#fbbf24', borderRadius: 100, padding: '2px 8px' }}>Seña {service.deposit_percentage}%</span>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, background: 'rgba(251,191,36,0.15)', color: '#b45309', borderRadius: 100, padding: '2px 8px', border: '1px solid rgba(251,191,36,0.3)' }}>Seña {service.deposit_percentage}%</span>
                         )}
                       </div>
                     </div>
@@ -796,16 +906,16 @@ export default function BookingWizard({
               })}
             </div>
           ))}
-        </GlassCard>
+        </Card>
 
         {selectedServices.length > 0 && (
           <div style={{
             marginBottom: 24, padding: '12px 16px', borderRadius: 12,
-            background: `${color}18`, border: `1px solid ${color}30`,
+            background: `${color}12`, border: `1px solid ${color}30`,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             animation: 'dp-slide-in 0.3s ease both',
           }}>
-            <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+            <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--ink)' }}>
               {selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''} · {totalDuration} min
             </span>
             <span style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 800, color }}>{formatPriceARS(totalPrice)}</span>
@@ -815,7 +925,7 @@ export default function BookingWizard({
         {/* ── Profesionales ── */}
         {config.professionals && config.professionals.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
               {config.professionals.length === 1 ? 'Profesional' : '¿Con quién?'}
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -826,9 +936,9 @@ export default function BookingWizard({
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: '10px 18px', borderRadius: 12,
-                      border: `1.5px solid ${isSel ? color : 'rgba(255,255,255,0.15)'}`,
-                      background: isSel ? color : 'rgba(255,255,255,0.06)',
-                      color: isSel ? '#000' : '#fff',
+                      border: `1.5px solid ${isSel ? color : 'var(--line)'}`,
+                      background: isSel ? color : 'var(--paper)',
+                      color: isSel ? '#fff' : 'var(--ink)',
                       fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', transition: 'all 0.15s',
                       boxShadow: isSel ? `0 0 16px ${color}55` : 'none',
@@ -843,9 +953,9 @@ export default function BookingWizard({
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '10px 18px', borderRadius: 12,
-                    border: `1.5px solid ${selectedProfessional === 'any' ? color : 'rgba(255,255,255,0.15)'}`,
-                    background: selectedProfessional === 'any' ? `${color}22` : 'rgba(255,255,255,0.06)',
-                    color: selectedProfessional === 'any' ? color : 'rgba(255,255,255,0.5)',
+                    border: `1.5px solid ${selectedProfessional === 'any' ? color : 'var(--line)'}`,
+                    background: selectedProfessional === 'any' ? `${color}18` : 'var(--paper)',
+                    color: selectedProfessional === 'any' ? color : 'var(--muted)',
                     fontFamily: 'var(--f-display)', fontSize: 13,
                     cursor: 'pointer', transition: 'all 0.15s',
                   }}>
@@ -857,7 +967,7 @@ export default function BookingWizard({
         )}
 
         {/* ── Fecha ── */}
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
           2 — Elegí la fecha
         </p>
         <div style={{ marginBottom: 24 }}>
@@ -872,22 +982,22 @@ export default function BookingWizard({
         {/* ── Horarios ── */}
         {selectedDate && (
           <div style={{ marginBottom: 24, animation: 'dp-slide-in 0.35s ease both' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
               3 — Elegí la hora · <span style={{ textTransform: 'capitalize' }}>{DIAS_FULL[new Date(selectedDate + 'T12:00:00').getDay()]}</span> {formatDateAR(selectedDate)}
             </p>
 
             {selectedServices.length === 0 ? (
-              <GlassCard style={{ padding: '20px 16px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Primero elegí al menos un servicio</p>
-              </GlassCard>
+              <Card style={{ padding: '20px 16px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', margin: 0 }}>Primero elegí al menos un servicio</p>
+              </Card>
             ) : loadingSlots ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Cargando horarios...</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)' }}>Cargando horarios...</p>
               </div>
             ) : slots.length === 0 ? (
-              <GlassCard style={{ padding: '20px 16px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>No hay horarios disponibles para {totalDuration} min este día.</p>
-              </GlassCard>
+              <Card style={{ padding: '20px 16px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted)', margin: 0 }}>No hay horarios disponibles para {totalDuration} min este día.</p>
+              </Card>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 {slots.map((slot, idx) => {
@@ -901,9 +1011,9 @@ export default function BookingWizard({
                       className="dp-slot-btn"
                       style={{
                         padding: '12px 0', borderRadius: 12,
-                        border: `1.5px solid ${isSel ? 'transparent' : 'rgba(255,255,255,0.12)'}`,
-                        background: isSel ? color : 'rgba(255,255,255,0.06)',
-                        color: isSel ? '#000' : '#fff',
+                        border: `1.5px solid ${isSel ? 'transparent' : 'var(--line)'}`,
+                        background: isSel ? color : 'var(--paper)',
+                        color: isSel ? '#fff' : 'var(--ink)',
                         fontFamily: 'var(--f-mono)', fontSize: 13, fontWeight: isSel ? 700 : 400,
                         textAlign: 'center', cursor: 'pointer',
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -928,7 +1038,7 @@ export default function BookingWizard({
         {canContinue && (
           <button onClick={() => setStep('form')}
             style={{
-              width: '100%', background: color, color: '#000', border: 'none',
+              width: '100%', background: color, color: '#fff', border: 'none',
               borderRadius: 14, padding: '18px 0', fontFamily: 'var(--f-mono)',
               fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
               cursor: 'pointer', fontWeight: 700,
@@ -940,6 +1050,7 @@ export default function BookingWizard({
           </button>
         )}
       </div>
+      )}
     </div>
   )
 }

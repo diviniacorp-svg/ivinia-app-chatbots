@@ -40,13 +40,20 @@ export async function GET(request: NextRequest, { params }: { params: { configId
     saldo_ars: (a.service_price_ars ?? 0) - (a.sena_ars ?? 0),
   }))
 
+  const customCfg = (client?.custom_config as Record<string, string>) || {}
+  const productos = customCfg.productos ? JSON.parse(customCfg.productos) : []
+  const productos_enabled = customCfg.productos_enabled === 'true'
+
   return NextResponse.json({
     company_name: client?.company_name || '',
-    color: client?.custom_config?.color || '#7c3aed',
+    color: customCfg.color || '#7c3aed',
     owner_phone: config.owner_phone || '',
+    rubro: customCfg.rubro || '',
     appointments,
     services: config.services || [],
     schedule: config.schedule || {},
+    productos,
+    productos_enabled,
   })
 }
 
@@ -79,10 +86,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { config
   return NextResponse.json({ appointment: updated })
 }
 
-// PUT — guardar configuración (servicios, horarios, teléfono, PIN)
+// PUT — guardar configuración (servicios, horarios, teléfono, PIN, productos)
 export async function PUT(request: NextRequest, { params }: { params: { configId: string } }) {
   const body = await request.json()
-  const { pin, services, schedule, owner_phone, owner_pin } = body
+  const { pin, services, schedule, owner_phone, owner_pin, productos } = body
 
   if (!pin) return NextResponse.json({ error: 'PIN requerido' }, { status: 401 })
 
@@ -98,6 +105,14 @@ export async function PUT(request: NextRequest, { params }: { params: { configId
 
   const { error: updateError } = await db.from('booking_configs').update(update).eq('id', params.configId)
   if (updateError) return NextResponse.json({ error: 'Error al guardar' }, { status: 500 })
+
+  // Update products in clients.custom_config if provided
+  if (productos !== undefined) {
+    const { data: currentClient } = await db.from('clients').select('custom_config').eq('id', config.client_id).maybeSingle()
+    const currentCfg = (currentClient?.custom_config as Record<string, string>) || {}
+    const newCfg = { ...currentCfg, productos: JSON.stringify(productos) }
+    await db.from('clients').update({ custom_config: newCfg }).eq('id', config.client_id)
+  }
 
   return NextResponse.json({ ok: true })
 }

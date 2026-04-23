@@ -32,6 +32,14 @@ interface Service {
 interface DaySlot { open: string; close: string }
 interface Schedule { lun: DaySlot|null; mar: DaySlot|null; mie: DaySlot|null; jue: DaySlot|null; vie: DaySlot|null; sab: DaySlot|null; dom: DaySlot|null }
 
+interface Product {
+  id: string
+  name: string
+  category?: string
+  price_ars: number
+  description?: string
+}
+
 interface PanelData {
   company_name: string
   color: string
@@ -40,6 +48,8 @@ interface PanelData {
   appointments: Appointment[]
   services: Service[]
   schedule: Schedule
+  productos: Product[]
+  productos_enabled: boolean
 }
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -183,14 +193,14 @@ export default function OwnerPanel() {
   const params = useParams()
   const configId = params.configId as string
 
-  const [darkMode, setDarkMode] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
+
   const [pin, setPin] = useState('')
   const [authed, setAuthed] = useState(false)
   const [pinError, setPinError] = useState('')
   const [data, setData] = useState<PanelData|null>(null)
   const [loading, setLoading] = useState(false)
-  const [tab, setTab] = useState<'agenda'|'solicitudes'|'historial'|'config'>('agenda')
+  const [tab, setTab] = useState<'agenda'|'solicitudes'|'historial'|'config'|'productos'>('agenda')
   const [selectedDay, setSelectedDay] = useState(todayStr())
   const [solFilter, setSolFilter] = useState<'todas'|'pendiente'|'confirmado'|'cancelado'>('todas')
   const [apptState, setApptState] = useState<Record<string,{sena:string;processing:boolean;done:'approved'|'rejected'|null}>>({})
@@ -202,6 +212,13 @@ export default function OwnerPanel() {
   const [editPin, setEditPin] = useState('')
   const [editSvcId, setEditSvcId] = useState<string|null>(null)
   const [newSvcForm, setNewSvcForm] = useState<Partial<Service>|null>(null)
+
+  // Productos state
+  const [editProductos, setEditProductos] = useState<Product[]>([])
+  const [newProdForm, setNewProdForm] = useState<Partial<Product>|null>(null)
+  const [editProdId, setEditProdId] = useState<string|null>(null)
+  const [savingProds, setSavingProds] = useState(false)
+  const [prodMsg, setProdMsg] = useState('')
   const [savingCfg, setSavingCfg] = useState(false)
   const [cfgMsg, setCfgMsg] = useState('')
 
@@ -221,6 +238,7 @@ export default function OwnerPanel() {
     setEditServices(d.services||[])
     setEditSchedule(d.schedule||{})
     setEditPhone(d.owner_phone||'')
+    setEditProductos(d.productos||[])
     setAuthed(true)
     setLoading(false)
   },[configId])
@@ -361,7 +379,7 @@ export default function OwnerPanel() {
 
   // ── PANEL ──
   return (
-    <div data-theme={darkMode ? 'dark' : undefined} style={{ minHeight:'100vh', background:'var(--paper-2)' }}>
+    <div style={{ minHeight:'100vh', background:'var(--paper-2)' }}>
       <style>{`
         .panel-light-input { background: var(--paper-2) !important; color: var(--ink) !important; border: 1px solid var(--line) !important; }
         .panel-light-input::placeholder { color: var(--muted) !important; }
@@ -380,9 +398,6 @@ export default function OwnerPanel() {
           <p style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--muted)', margin:'2px 0 0' }}>Panel de Gestión · {theme.emoji} {theme.label}</p>
         </div>
         <button onClick={()=>loadData(pin)} style={{ fontFamily:'var(--f-mono)', fontSize:11, letterSpacing:'0.06em', color:'var(--muted)', background:'var(--paper-2)', border:'1px solid var(--line)', borderRadius:8, padding:'6px 12px', cursor:'pointer', flexShrink:0 }}>↻</button>
-        <button onClick={()=>setDarkMode(d=>!d)} title={darkMode?'Modo claro':'Modo oscuro'} style={{ width:36, height:36, borderRadius:10, background:'var(--paper-2)', border:'1px solid var(--line)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
-          {darkMode ? '☀️' : '🌙'}
-        </button>
       </header>
 
       {/* Stats rápidas */}
@@ -407,6 +422,7 @@ export default function OwnerPanel() {
           {key:'agenda',label:'Agenda'},
           {key:'solicitudes',label:`Solicitudes${pending.length>0?` (${pending.length})`:''}`},
           {key:'historial',label:'Historial'},
+          ...(data?.productos_enabled ? [{key:'productos',label:'🛍️ Productos'}] : []),
           {key:'config',label:'Configurar'},
         ].map(t=>(
           <button key={t.key} onClick={()=>setTab(t.key as typeof tab)}
@@ -623,6 +639,96 @@ export default function OwnerPanel() {
                   </div>
                 </div>
               }
+            </Card>
+          </div>
+        )}
+
+        {/* ── PRODUCTOS ── */}
+        {tab==='productos'&&!loading&&(
+          <div style={{ maxWidth:640, margin:'0 auto', display:'flex', flexDirection:'column', gap:16 }}>
+            <Card>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderBottom:'1px solid var(--line)' }}>
+                <div>
+                  <p style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:14, color:'var(--ink)', margin:0 }}>Productos</p>
+                  <p style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--muted)', margin:'2px 0 0' }}>Los productos se muestran en el turno público</p>
+                </div>
+                <button onClick={()=>setNewProdForm({})}
+                  style={{ fontFamily:'var(--f-mono)', fontSize:10, letterSpacing:'0.06em', background:color, color:'#fff', border:'none', borderRadius:8, padding:'6px 12px', cursor:'pointer', fontWeight:700 }}>+ Agregar</button>
+              </div>
+
+              {newProdForm!==null&&(
+                <div style={{ padding:16, borderBottom:'1px dashed var(--line)', background:'var(--paper-2)', display:'flex', flexDirection:'column', gap:10 }}>
+                  <p style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:'0.1em', textTransform:'uppercase', color, margin:0 }}>Nuevo producto</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                    <input placeholder="Nombre *" value={newProdForm.name||''} onChange={e=>setNewProdForm(p=>({...p,name:e.target.value}))}
+                      className="panel-light-input" style={{...lightInput,fontSize:12}} />
+                    <input placeholder="Categoría" value={newProdForm.category||''} onChange={e=>setNewProdForm(p=>({...p,category:e.target.value}))}
+                      className="panel-light-input" style={{...lightInput,fontSize:12}} />
+                    <input placeholder="Precio ARS (0 = Consultar)" type="number" value={newProdForm.price_ars||''} onChange={e=>setNewProdForm(p=>({...p,price_ars:Number(e.target.value)}))}
+                      className="panel-light-input" style={{...lightInput,fontSize:12}} />
+                    <input placeholder="Descripción (opcional)" value={newProdForm.description||''} onChange={e=>setNewProdForm(p=>({...p,description:e.target.value}))}
+                      className="panel-light-input" style={{...lightInput,fontSize:12}} />
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={()=>{
+                      if(!newProdForm.name?.trim()) return
+                      const prod: Product = { id: crypto.randomUUID(), name: newProdForm.name, category: newProdForm.category||'General', price_ars: Number(newProdForm.price_ars)||0, description: newProdForm.description||'' }
+                      setEditProductos(p=>[...p,prod]); setNewProdForm(null)
+                    }} style={{ background:color, color:'#fff', border:'none', borderRadius:8, padding:'8px 16px', fontFamily:'var(--f-mono)', fontSize:10, fontWeight:700, cursor:'pointer' }}>Agregar</button>
+                    <button onClick={()=>setNewProdForm(null)} style={{ background:'var(--paper)', border:'1px solid var(--line)', color:'var(--muted)', borderRadius:8, padding:'8px 14px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer' }}>Cancelar</button>
+                  </div>
+                </div>
+              )}
+
+              {editProductos.length===0&&newProdForm===null&&(
+                <div style={{ padding:32, textAlign:'center' }}>
+                  <p style={{ fontFamily:'var(--f-display)', fontSize:14, color:'var(--muted)', margin:0 }}>Sin productos. Agregá el primero.</p>
+                </div>
+              )}
+
+              {editProductos.map(prod=>(
+                <div key={prod.id} style={{ padding:'12px 16px', borderBottom:'1px solid var(--line)', display:'flex', alignItems:'center', gap:12 }}>
+                  {editProdId===prod.id ? (
+                    <div style={{ flex:1, display:'flex', flexDirection:'column', gap:8 }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                        <input value={prod.name} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,name:e.target.value}:x))}
+                          className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Nombre"/>
+                        <input value={prod.category||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,category:e.target.value}:x))}
+                          className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Categoría"/>
+                        <input type="number" value={prod.price_ars||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,price_ars:Number(e.target.value)}:x))}
+                          className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Precio ARS"/>
+                        <input value={prod.description||''} onChange={e=>setEditProductos(p=>p.map(x=>x.id===prod.id?{...x,description:e.target.value}:x))}
+                          className="panel-light-input" style={{...lightInput,fontSize:12}} placeholder="Descripción"/>
+                      </div>
+                      <button onClick={()=>setEditProdId(null)} style={{ alignSelf:'flex-start', background:color, color:'#fff', border:'none', borderRadius:8, padding:'6px 14px', fontFamily:'var(--f-mono)', fontSize:10, fontWeight:700, cursor:'pointer' }}>Listo</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontFamily:'var(--f-display)', fontWeight:600, fontSize:13, color:'var(--ink)', margin:0 }}>{prod.name}</p>
+                        <p style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--muted)', margin:'2px 0 0' }}>{prod.category||'General'}{prod.description?` · ${prod.description}`:''}</p>
+                      </div>
+                      <span style={{ fontFamily:'var(--f-mono)', fontSize:13, fontWeight:700, color, flexShrink:0 }}>{prod.price_ars>0?fARS(prod.price_ars):'Consultar'}</span>
+                      <button onClick={()=>setEditProdId(prod.id)} style={{ background:'var(--paper-2)', border:'1px solid var(--line)', color:'var(--muted)', borderRadius:8, padding:'6px 12px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer', flexShrink:0 }}>✏️</button>
+                      <button onClick={()=>setEditProductos(p=>p.filter(x=>x.id!==prod.id))} style={{ background:'rgba(220,38,38,0.08)', border:'1px solid rgba(220,38,38,0.2)', color:'#dc2626', borderRadius:8, padding:'6px 10px', fontFamily:'var(--f-mono)', fontSize:10, cursor:'pointer', flexShrink:0 }}>✕</button>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              <div style={{ padding:16, borderTop:'1px solid var(--line)', display:'flex', alignItems:'center', gap:12 }}>
+                <button onClick={async()=>{
+                  setSavingProds(true); setProdMsg('')
+                  const res = await fetch(`/api/panel/${configId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin,productos:editProductos})})
+                  setSavingProds(false)
+                  if(res.ok){setProdMsg('✅ Guardado');setTimeout(()=>setProdMsg(''),3000);await loadData(pin)}
+                  else setProdMsg('❌ Error al guardar')
+                }} disabled={savingProds}
+                  style={{ background:color, color:'#fff', border:'none', borderRadius:8, padding:'10px 20px', fontFamily:'var(--f-mono)', fontSize:11, fontWeight:700, cursor:'pointer', letterSpacing:'0.06em', textTransform:'uppercase', opacity:savingProds?0.5:1 }}>
+                  {savingProds?'Guardando...':'Guardar productos'}
+                </button>
+                {prodMsg&&<span style={{ fontFamily:'var(--f-mono)', fontSize:11, color:'var(--ink)' }}>{prodMsg}</span>}
+              </div>
             </Card>
           </div>
         )}

@@ -71,12 +71,14 @@ export default async function ReservasPage({ params }: { params: { id: string } 
   const depositsEnabled = customCfg.deposits_enabled === 'true'
   const instagram = customCfg.instagram || ''
   const ownerPhone = customCfg.whatsapp || config.owner_phone || ''
+  const productosEnabled = customCfg.productos_enabled === 'true'
+  const productos = customCfg.productos ? JSON.parse(customCfg.productos) : []
 
-  // Rubro del negocio para el tema oscuro por industria
+  // Rubro del negocio
   const tipoNegocio: string = customCfg.rubro || (config as unknown as Record<string, string>).rubro || ''
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
       <BookingWizard
         clientId={clientId}
         config={config}
@@ -90,6 +92,8 @@ export default async function ReservasPage({ params }: { params: { id: string } 
         instagram={instagram}
         ownerPhone={ownerPhone}
         tipoNegocio={tipoNegocio}
+        productosEnabled={productosEnabled}
+        productos={productos}
       />
     </div>
   )

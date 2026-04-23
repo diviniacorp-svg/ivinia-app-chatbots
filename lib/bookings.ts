@@ -30,6 +30,14 @@ export type Professional = {
   service_ids?: string[]  // which services — empty means all
 }
 
+export type Product = {
+  id: string
+  name: string
+  category?: string
+  price_ars: number
+  description?: string
+}
+
 export type BookingConfig = {
   id: string
   client_id: string
