@@ -1,4 +1,7 @@
 import Orb from './Orb'
+import Link from 'next/link'
+
+const WA = 'https://wa.me/5492665286110'
 
 export default function CasesV2() {
   return (
@@ -8,11 +11,11 @@ export default function CasesV2() {
         <div style={{ display: 'grid', gap: 40, marginBottom: 64 }}
           className="grid-cols-2-mobile-1 md:grid-cols-[1fr_2fr]">
           <div>
-            <div className="eyebrow" style={{ marginBottom: 20 }}>Casos — 04/04</div>
-            <h2 className="h-title">Lo que ya <em>operamos</em>.</h2>
+            <div className="eyebrow" style={{ marginBottom: 20 }}>Casos reales — 04/04</div>
+            <h2 className="h-title">Negocios que ya <em>funcionan solos</em>.</h2>
           </div>
           <p style={{ alignSelf: 'end', fontSize: 20, lineHeight: 1.45, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', maxWidth: '56ch' }}>
-            PYMEs reales de San Luis y LATAM. Con nombre, números y permiso para publicar.
+            Rubros distintos, mismo resultado: el negocio funciona aunque el dueño no esté mirando el teléfono.
           </p>
         </div>
 
@@ -20,7 +23,7 @@ export default function CasesV2() {
         <div style={{ display: 'grid', gap: 24 }}
           className="grid-cols-3-mobile-1 md:grid-cols-3">
 
-          {/* Card 1 — hero */}
+          {/* Card 1 — Rufina Nails (cliente real) */}
           <article style={{
             background: 'var(--paper-2)', borderRadius: 28, padding: 40,
             minHeight: 500, position: 'relative', overflow: 'hidden',
@@ -28,91 +31,114 @@ export default function CasesV2() {
           }}>
             <Orb
               size={200}
-              color="#FF5E3A" colorDeep="#CC3A1A" shade="rgba(80,10,0,0.4)"
+              color="#d63384" colorDeep="#a21057" shade="rgba(80,0,40,0.4)"
               float
               style={{ position: 'absolute', top: -40, right: -40 }}
             />
             <div style={{ position: 'relative', zIndex: 2 }}>
-              <span className="tag-v2"><span className="tag-dot" />{' '}Barbería · San Luis</span>
-              <h3 className="h-title" style={{ marginTop: 24, fontSize: 44 }}>
-                Don Pepe<br />recuperó <em>4 h/día.</em>
+              <span className="tag-v2"><span className="tag-dot" style={{ background: '#d63384' }} />{' '}Nail Bar · San Luis Capital</span>
+              <h3 className="h-title" style={{ marginTop: 24, fontSize: 40 }}>
+                Rufina Nails<br />llena agenda <em>sin llamar.</em>
               </h3>
+              <p style={{ fontSize: 15, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', marginTop: 16, lineHeight: 1.5 }}>
+                Antes anotaba turnos en papel y perdía clientes que llamaban cuando estaba trabajando.
+                Ahora el Turnero recibe las reservas solas, cobra la seña y ella solo mira el panel.
+              </p>
             </div>
             <div style={{ position: 'relative', zIndex: 2 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
                 {[
-                  { val: '+48%', label: 'Turnos confirmados' },
-                  { val: '4h', label: 'Devueltas / día' },
-                  { val: '38d', label: 'De 0 a producción' },
+                  { val: '100%', label: 'Digital' },
+                  { val: '0', label: 'Llamadas perdidas' },
+                  { val: '48hs', label: 'Setup' },
                 ].map(m => (
                   <div key={m.label}>
-                    <div className="h-title" style={{ fontSize: 36 }}>{m.val}</div>
+                    <div className="h-title" style={{ fontSize: 32 }}>{m.val}</div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted-2)', marginTop: 6 }}>{m.label}</div>
                   </div>
                 ))}
               </div>
-              <a href="#demo" className="btn-v2 btn-ghost-v2" style={{ fontSize: 14 }}>Hablá con nosotros →</a>
+              <Link href="/reservas/rufina-nails-demo" className="btn-v2 btn-ghost-v2" style={{ fontSize: 14 }}>
+                Ver su Turnero en vivo →
+              </Link>
             </div>
           </article>
 
-          {/* Card 2 — dark */}
+          {/* Card 2 — Hotel (dark) */}
           <article style={{
             background: 'var(--ink)', color: 'var(--paper)', borderRadius: 28, padding: 40,
             minHeight: 500, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
           }}>
             <div>
               <span className="tag-v2" style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.12)', color: 'var(--paper)' }}>
-                <span className="tag-dot" style={{ background: '#2FC998' }} />{' '}Veterinaria · Mendoza
+                <span className="tag-dot" style={{ background: '#0f766e' }} />{' '}Hotelería · San Luis
               </span>
               <h3 className="h-title" style={{ marginTop: 24, fontSize: 32, color: 'var(--paper)' }}>
-                Vet Central automatizó el <em>seguimiento post-cirugía</em>.
+                Cantera Hotel acepta reservas <em>a las 3am</em>.
               </h3>
+              <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--f-display)', marginTop: 16, lineHeight: 1.5 }}>
+                Los turistas planifican de noche. Con Turnero, cada consulta tiene respuesta y cada reserva queda confirmada, sin importar la hora.
+              </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Orb size={60} color="#2FC998" colorDeep="#1E8D66" shade="rgba(0,60,40,0.5)" />
+              <Orb size={60} color="#0f766e" colorDeep="#0d5c58" shade="rgba(0,60,50,0.5)" />
               <div>
-                <div className="h-section" style={{ color: 'var(--paper)' }}>210 check-ins auto / semana</div>
-                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(246,245,242,0.6)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Reemplazando 1 FTE parcial
+                <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, fontWeight: 600, color: 'var(--paper)' }}>Reservas 24/7</div>
+                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Sin recepcionista extra
                 </div>
               </div>
             </div>
           </article>
 
-          {/* Card 3 */}
+          {/* Card 3 — Profesionales */}
           <article style={{
             background: 'var(--paper-2)', borderRadius: 28, padding: 40,
             minHeight: 500, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
           }}>
             <div>
-              <span className="tag-v2"><span className="tag-dot" style={{ background: '#7B61FF' }} />{' '}Estudio contable · CABA</span>
+              <span className="tag-v2"><span className="tag-dot" style={{ background: '#7c3aed' }} />{' '}Contabilidad · San Luis</span>
               <h3 className="h-title" style={{ marginTop: 24, fontSize: 32 }}>
-                Estudio 21 procesa <em>facturas</em> sin tocarlas.
+                FA Estudio agenda <em>sin secretaria</em>.
               </h3>
+              <p style={{ fontSize: 15, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', marginTop: 16, lineHeight: 1.5 }}>
+                Estudio contable con múltiples profesionales. Cada cliente elige horario, tipo de consulta y profesional. El pago de la seña va solo por MercadoPago.
+              </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Orb size={60} color="#7B61FF" colorDeep="#4A35CC" shade="rgba(30,10,90,0.5)" />
+              <Orb size={60} color="#7c3aed" colorDeep="#5b21b6" shade="rgba(30,10,90,0.5)" />
               <div>
-                <div className="h-section">1.800 facturas / mes</div>
+                <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, fontWeight: 600, color: 'var(--ink)' }}>3 profesionales, 1 panel</div>
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted-2)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Con validación humana al 3%
+                  Gestión centralizada
                 </div>
               </div>
             </div>
           </article>
         </div>
 
-        {/* Demo banner */}
-        <div style={{ marginTop: 32, background: 'var(--paper-2)', borderRadius: 20, padding: '28px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, border: '1px solid var(--line)' }}>
+        {/* CTA banner */}
+        <div style={{
+          marginTop: 32, background: 'var(--ink)', borderRadius: 20, padding: '36px 40px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 24,
+        }}>
           <div>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>DEMO — Web Scrolling Premium</div>
-            <p style={{ fontSize: 16, color: 'var(--muted-2)', fontFamily: 'var(--f-display)', margin: 0 }}>
-              Así se ve una landing con scroll animado tipo Apple. Listo en 48hs por $100.000 ARS.
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--lime)', marginBottom: 10 }}>
+              Tu rubro está cubierto
+            </div>
+            <p style={{ fontSize: 20, color: 'var(--paper)', fontFamily: 'var(--f-display)', margin: 0, maxWidth: '50ch' }}>
+              Mirá cómo quedaría el Turnero para tu negocio — en vivo, sin registrarte.
             </p>
           </div>
-          <a href="/demo/scroll-premium" target="_blank" rel="noopener noreferrer" className="btn-v2 btn-ink" style={{ fontSize: 14, padding: '12px 24px', flexShrink: 0 }}>
-            Ver demo en vivo →
-          </a>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link href="/rubros" className="btn-v2 btn-ink" style={{ background: 'var(--lime)', color: 'var(--ink)', fontSize: 15, padding: '13px 24px', fontWeight: 700 }}>
+              Ver demo de mi rubro →
+            </Link>
+            <a href={WA} target="_blank" rel="noopener noreferrer" className="btn-v2 btn-ghost-v2" style={{ color: 'var(--paper)', borderColor: 'rgba(255,255,255,0.2)', fontSize: 15 }}>
+              Hablar por WhatsApp
+            </a>
+          </div>
         </div>
       </div>
     </section>

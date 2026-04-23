@@ -500,13 +500,13 @@ export default function PreciosPage() {
               </p>
               <div style={{ marginBottom: 32 }}>
                 <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(52px,6vw,80px)', color: 'var(--lime)', letterSpacing: '-0.04em', lineHeight: 1 }}>
-                  $250.000
+                  $120.000
                 </div>
                 <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'rgba(246,245,242,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 4 }}>
                   por mes · sin permanencia mínima
                 </div>
               </div>
-              <a href={`${WA}?text=Quiero%20el%20plan%20Todo%20DIVINIA%20($250.000/mes)`} target="_blank" rel="noopener noreferrer" style={{
+              <a href={`${WA}?text=Quiero%20el%20plan%20Todo%20DIVINIA%20($120.000/mes)`} target="_blank" rel="noopener noreferrer" style={{
                 display: 'inline-block', background: 'var(--lime)', color: 'var(--ink)', borderRadius: 12, padding: '15px 32px',
                 fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 16, textDecoration: 'none', letterSpacing: '-0.01em',
               }}>

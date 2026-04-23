@@ -1,10 +1,10 @@
 import Orb from './Orb'
 
 const stats = [
-  { n: '24/7', label: 'Disponibilidad total', sub: 'El sistema trabaja mientras vos dormís' },
-  { n: '< 3s', label: 'Tiempo de respuesta', sub: 'Más rápido que cualquier empleado' },
-  { n: '48hs', label: 'Setup completo', sub: 'Del contrato a estar en vivo' },
-  { n: '+40%', label: 'Más turnos cubiertos', sub: 'En negocios que usan Turnero' },
+  { n: '15', label: 'Rubros disponibles', sub: 'Peluquería, nails, clínica, hotel, gym y más' },
+  { n: '48hs', label: 'Setup completo', sub: 'Del primer mensaje a estar en vivo' },
+  { n: '$45k', label: 'Desde por mes', sub: 'Sin permanencia, cancelás cuando querés' },
+  { n: '24/7', label: 'Tu negocio activo', sub: 'Reservas a las 3am, confirmadas al instante' },
 ]
 
 export default function StatsV2() {
