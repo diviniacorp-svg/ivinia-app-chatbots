@@ -563,6 +563,7 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'lista' | 'nuevo'>('lista')
   const [search, setSearch] = useState('')
+  const [planFilter, setPlanFilter] = useState<string>('todos')
   const [seeding, setSeeding] = useState(false)
   const [seedMsg, setSeedMsg] = useState('')
 
@@ -628,17 +629,25 @@ export default function ClientesPage() {
     fetch('/api/templates').then(r => r.json()).then(d => setTemplates(d.templates || []))
   }, [])
 
-  const filtered = clients.filter(c =>
-    !search ||
-    c.company_name.toLowerCase().includes(search.toLowerCase()) ||
-    c.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = clients.filter(c => {
+    const matchSearch = !search ||
+      c.company_name.toLowerCase().includes(search.toLowerCase()) ||
+      c.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.email?.toLowerCase().includes(search.toLowerCase())
+    const matchPlan = planFilter === 'todos' || c.plan === planFilter || c.status === planFilter
+    return matchSearch && matchPlan
+  })
 
   const countActive  = clients.filter(c => c.status === 'active').length
   const countTrial   = clients.filter(c => c.status === 'trial').length
   const countTurnos  = clients.filter(c => c.booking_configs && c.booking_configs.length > 0).length
   const countChatbot = clients.filter(c => !!c.chatbot_id).length
+
+  // MRR: clientes activos × precio de su plan
+  const PLAN_PRICES: Record<string, number> = { mensual: 45000, anual: 35000, unico: 0, trial: 0, basic: 45000, starter: 45000, pro: 35000, enterprise: 35000 }
+  const mrr = clients.filter(c => c.status === 'active').reduce((sum, c) => sum + (PLAN_PRICES[c.plan] || 0), 0)
+
+  const allPlans = Array.from(new Set(clients.map(c => c.plan))).filter(Boolean) as string[]
 
   return (
     <div style={{ background: 'var(--paper-2)', minHeight: '100vh' }}>
@@ -661,6 +670,11 @@ export default function ClientesPage() {
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 6 }}>
               {countActive} activos · {countTrial} en trial · {countTurnos} con turnos · {countChatbot} con chatbot
             </p>
+            {mrr > 0 && (
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink)', marginTop: 4 }}>
+                💰 MRR estimado: {new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(mrr)}
+              </p>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
@@ -711,17 +725,26 @@ export default function ClientesPage() {
         </Suspense>
       ) : (
         <>
-          {clients.length > 3 && (
-            <div style={{ marginBottom: 20 }}>
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar por empresa, contacto o email..."
-                style={{
-                  maxWidth: 360, border: '1px solid var(--line)', borderRadius: 10,
-                  padding: '10px 16px', fontSize: 13, outline: 'none',
-                  background: 'var(--paper)', color: 'var(--ink)',
-                }} />
+          <div style={{ marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar..."
+              style={{
+                border: '1px solid var(--line)', borderRadius: 10,
+                padding: '8px 14px', fontSize: 13, outline: 'none',
+                background: 'var(--paper)', color: 'var(--ink)', width: 220,
+              }} />
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {(['todos', 'active', 'trial', ...allPlans] as string[]).filter((v,i,a)=>a.indexOf(v)===i).map(f => {
+                const label: Record<string,string> = {todos:'Todos',active:'Activos',trial:'Trial',mensual:'Mensual',anual:'Anual',unico:'Pago único',basic:'Básico',pro:'Pro',enterprise:'Enterprise'}
+                return (
+                  <button key={f} onClick={() => setPlanFilter(f)}
+                    style={{ padding: '6px 12px', borderRadius: 100, fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', border: '1px solid var(--line)', cursor: 'pointer', fontWeight: planFilter === f ? 700 : 400, background: planFilter === f ? 'var(--ink)' : 'var(--paper)', color: planFilter === f ? 'var(--paper)' : 'var(--muted)', transition: 'all 0.15s' }}>
+                    {label[f] || f}
+                  </button>
+                )
+              })}
             </div>
-          )}
+          </div>
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
               {[1,2,3].map(i => (

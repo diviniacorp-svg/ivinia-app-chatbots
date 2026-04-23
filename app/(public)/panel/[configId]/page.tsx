@@ -204,6 +204,7 @@ export default function OwnerPanel() {
   const [selectedDay, setSelectedDay] = useState(todayStr())
   const [solFilter, setSolFilter] = useState<'todas'|'pendiente'|'confirmado'|'cancelado'>('todas')
   const [apptState, setApptState] = useState<Record<string,{sena:string;processing:boolean;done:'approved'|'rejected'|null}>>({})
+  const [copiedId, setCopiedId] = useState<string|null>(null)
 
   // Config editing state
   const [editServices, setEditServices] = useState<Service[]>([])
@@ -317,6 +318,15 @@ export default function OwnerPanel() {
   const monthRevenue = monthAppts.reduce((s,a)=>s+a.service_price_ars,0)
   const todayCob = todayConf.reduce((s,a)=>s+(a.sena_ars||0),0)
 
+  // Semana actual (lun–dom)
+  const weekStart = (()=>{ const d=new Date(); const day=d.getDay(); const diff=d.getDate()-(day===0?6:day-1); d.setDate(diff); d.setHours(0,0,0,0); return d.toISOString().split('T')[0] })()
+  const weekEnd = (()=>{ const d=new Date(); const day=d.getDay(); const diff=d.getDate()+(day===0?0:7-day); d.setDate(diff); d.setHours(23,59,59,999); return d.toISOString().split('T')[0] })()
+  const weekAppts = appts.filter(a=>a.appointment_date>=weekStart&&a.appointment_date<=weekEnd&&['confirmed','completed'].includes(a.status))
+  const weekRevenue = weekAppts.reduce((s,a)=>s+a.service_price_ars,0)
+  const weekPrev = (()=>{ const d=new Date(weekStart); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0] })()
+  const weekPrevAppts = appts.filter(a=>a.appointment_date>=weekPrev&&a.appointment_date<weekStart&&['confirmed','completed'].includes(a.status))
+  const weekTrend = weekAppts.length - weekPrevAppts.length
+
   const dayAppts = appts
     .filter(a=>a.appointment_date===selectedDay&&['confirmed','pending'].includes(a.status))
     .sort((a,b)=>a.appointment_time.localeCompare(b.appointment_time))
@@ -386,6 +396,7 @@ export default function OwnerPanel() {
         .panel-light-input:focus { border-color: ${color} !important; outline: none !important; box-shadow: 0 0 0 3px ${color}22 !important; }
         .panel-tab-btn:hover { color: var(--ink) !important; }
         .panel-appt-row:hover { background: var(--paper-2) !important; }
+        @media(max-width:700px){.panel-agenda-grid{grid-template-columns:1fr !important}}
       `}</style>
 
       {/* Header light */}
@@ -401,17 +412,19 @@ export default function OwnerPanel() {
       </header>
 
       {/* Stats rápidas */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'var(--line)', borderBottom:'1px solid var(--line)' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:1, background:'var(--line)', borderBottom:'1px solid var(--line)' }}>
         {[
-          {label:'Hoy',val:String(todayConf.length)+' turnos',sub:todayCob>0?fARS(todayCob):undefined},
-          {label:'Pendientes',val:String(pending.length),sub:pending.length>0?'aprobar':undefined},
-          {label:'Este mes',val:String(monthAppts.length)+' turnos',sub:undefined},
-          {label:'Facturado',val:fARS(monthRevenue),sub:undefined},
+          {label:'Hoy',val:String(todayConf.length)+' turnos',sub:todayCob>0?fARS(todayCob):undefined,trend:undefined},
+          {label:'Esta semana',val:String(weekAppts.length)+' turnos',sub:weekRevenue>0?fARS(weekRevenue):undefined,trend:weekTrend},
+          {label:'Pendientes',val:String(pending.length),sub:pending.length>0?'aprobar':undefined,trend:undefined},
+          {label:'Este mes',val:String(monthAppts.length)+' turnos',sub:undefined,trend:undefined},
+          {label:'Facturado',val:fARS(monthRevenue),sub:undefined,trend:undefined},
         ].map((s)=>(
           <div key={s.label} style={{ padding:'14px 8px', textAlign:'center', background:'var(--paper)' }}>
             <p style={{ fontFamily:'var(--f-mono)', fontSize:8, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--muted)', marginBottom:4 }}>{s.label}</p>
             <p style={{ fontFamily:'var(--f-mono)', fontSize:12, fontWeight:700, color, margin:0 }}>{s.val}</p>
             {s.sub&&<p style={{ fontFamily:'var(--f-mono)', fontSize:8, color:'var(--muted)', margin:'2px 0 0' }}>{s.sub}</p>}
+            {s.trend!==undefined&&s.trend!==0&&<p style={{ fontFamily:'var(--f-mono)', fontSize:8, margin:'2px 0 0', color:s.trend>0?'#16a34a':'#dc2626' }}>{s.trend>0?'↑':'↓'} {Math.abs(s.trend)} vs sem. ant.</p>}
           </div>
         ))}
       </div>
@@ -443,7 +456,7 @@ export default function OwnerPanel() {
 
         {/* ── AGENDA ── */}
         {tab==='agenda'&&!loading&&(
-          <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:16 }}>
+          <div className="panel-agenda-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
             <AgendaCal appointments={appts} color={color} selectedDay={selectedDay} onSelectDay={setSelectedDay}/>
             <Card color={color}>
               <div style={{ padding:'14px 16px', borderBottom:'1px solid var(--line)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -558,7 +571,10 @@ export default function OwnerPanel() {
                           </div>
                         </>}
                         {(waOK||waNO)&&<div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:8 }}>
-                          {waOK&&<a href={waOK} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'12px 0', borderRadius:10, fontFamily:'var(--f-mono)', fontSize:11, letterSpacing:'0.06em', textDecoration:'none', background:'#16a34a', color:'#fff', fontWeight:700 }}>Avisar — confirmado</a>}
+                          {waOK&&<div style={{ display:'flex', gap:8 }}>
+                            <a href={waOK} target="_blank" rel="noopener noreferrer" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'12px 0', borderRadius:10, fontFamily:'var(--f-mono)', fontSize:11, letterSpacing:'0.06em', textDecoration:'none', background:'#16a34a', color:'#fff', fontWeight:700 }}>💬 Avisar — confirmado</a>
+                            <button onClick={()=>{const txt=`Hola ${appt.customer_name}! Tu turno de *${appt.service_name}* el *${fDate(appt.appointment_date)}* a las *${appt.appointment_time}* fue *confirmado*. ¡Te esperamos!`;navigator.clipboard.writeText(txt);setCopiedId(appt.id);setTimeout(()=>setCopiedId(null),2000)}} style={{ padding:'12px 14px', borderRadius:10, border:'1px solid #16a34a', background:'rgba(22,163,74,0.08)', color:'#16a34a', fontFamily:'var(--f-mono)', fontSize:11, cursor:'pointer', flexShrink:0 }}>{copiedId===appt.id?'✓':'📋'}</button>
+                          </div>}
                           {waNO&&<a href={waNO} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'12px 0', borderRadius:10, fontFamily:'var(--f-mono)', fontSize:11, letterSpacing:'0.06em', textDecoration:'none', background:'var(--paper-2)', color:'var(--muted)', border:'1px solid var(--line)' }}>Avisar — rechazado</a>}
                         </div>}
                       </div>
@@ -586,6 +602,39 @@ export default function OwnerPanel() {
                 </Card>
               ))}
             </div>
+
+            {/* Gráfico semanal */}
+            {(()=>{
+              const completed = historial.filter(a=>a.status==='completed')
+              if(completed.length===0) return null
+              // Últimas 8 semanas
+              const weeks:{label:string;total:number;count:number}[]=[]
+              for(let w=7;w>=0;w--){
+                const start=new Date(); start.setDate(start.getDate()-start.getDay()+1-w*7); start.setHours(0,0,0,0)
+                const end=new Date(start); end.setDate(end.getDate()+6); end.setHours(23,59,59,999)
+                const s0=start.toISOString().split('T')[0]; const e0=end.toISOString().split('T')[0]
+                const wa=completed.filter(a=>a.appointment_date>=s0&&a.appointment_date<=e0)
+                const label=`${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}`
+                weeks.push({label,total:wa.reduce((s,a)=>s+a.service_price_ars,0),count:wa.length})
+              }
+              const maxVal=Math.max(...weeks.map(w=>w.total),1)
+              return (
+                <Card>
+                  <div style={{ padding:'14px 16px', borderBottom:'1px solid var(--line)' }}>
+                    <p style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:14, color:'var(--ink)', margin:0 }}>Ingresos por semana</p>
+                  </div>
+                  <div style={{ padding:'20px 16px', display:'flex', alignItems:'flex-end', gap:8, height:120 }}>
+                    {weeks.map((w,i)=>(
+                      <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4, height:'100%', justifyContent:'flex-end' }}>
+                        <span style={{ fontFamily:'var(--f-mono)', fontSize:8, color:'var(--muted)', whiteSpace:'nowrap' }}>{w.count>0?String(w.count)+'t':''}</span>
+                        <div title={w.total>0?fARS(w.total):''} style={{ width:'100%', borderRadius:6, background:i===7?color:`${color}44`, minHeight:4, height:`${Math.max(4,(w.total/maxVal)*80)}px`, transition:'height 0.4s ease' }}/>
+                        <span style={{ fontFamily:'var(--f-mono)', fontSize:8, color:'var(--muted)', whiteSpace:'nowrap' }}>{w.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )
+            })()}
 
             {/* Top clientes */}
             {topClients.length>0&&(
