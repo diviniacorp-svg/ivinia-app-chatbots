@@ -26,7 +26,7 @@ export default function NeuralGraphClient() {
         selectedNode={selected}
         onNodeClick={id => {
           if (id !== 'ceo') {
-            router.push(`/dashboard/agents/${id}`)
+            router.push(`/agents/${id}`)
           }
           setSelected(id === selected ? null : id)
         }}
@@ -55,7 +55,7 @@ export default function NeuralGraphClient() {
             </Link>
             {selectedNode.id !== 'ceo' && (
               <button
-                onClick={() => router.push(`/dashboard/agents/${selectedNode.id}`)}
+                onClick={() => router.push(`/agents/${selectedNode.id}`)}
                 style={{
                   marginTop: 16, width: '100%', padding: '10px 16px',
                   background: 'var(--lime)', color: 'var(--ink)', border: 'none',

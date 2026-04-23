@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 import { getAvailableSlots, BookingConfig } from '@/lib/bookings'
+import { sendBookingNotification } from '@/lib/resend'
 
 export const dynamic = 'force-dynamic'
 
@@ -144,6 +145,24 @@ export async function POST(
       .single()
 
     if (error) throw error
+
+    // Notificación email al dueño (fire-and-forget)
+    const { data: clientRow } = await db
+      .from('clients')
+      .select('company_name, email')
+      .eq('id', params.clientId)
+      .single()
+    sendBookingNotification({
+      company_name: clientRow?.company_name ?? 'Negocio',
+      owner_email: clientRow?.email,
+      customer_name: safeName,
+      customer_phone: safePhone,
+      service_names: safeNames,
+      date,
+      time,
+      price: safePrice > 0 ? safePrice : undefined,
+      client_id: params.clientId,
+    })
 
     return NextResponse.json({ appointment: appt })
   } catch (error) {

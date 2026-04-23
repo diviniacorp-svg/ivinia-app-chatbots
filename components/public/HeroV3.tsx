@@ -96,12 +96,6 @@ const RUBROS = [
   },
 ]
 
-const STATS = [
-  { val: '24hs', label: 'Setup', desc: 'Tu turnero activo mañana' },
-  { val: '$0', label: 'Costo por llamada', desc: 'Sin telefonistas, sin recepción' },
-  { val: '0', label: 'Costo oculto', desc: 'Sin letra chica, sin sorpresas' },
-]
-
 const INTERVAL = 3000
 
 export default function HeroV3() {
@@ -157,25 +151,25 @@ export default function HeroV3() {
       padding: '120px 0 80px',
       position: 'relative',
       overflow: 'hidden',
-      background: 'var(--ink)',
+      background: '#ffffff',
     }}>
       <div className="wrap-v2">
 
-        {/* ── BLOQUE CENTRAL CENTRADO — dark ── */}
+        {/* ── BLOQUE CENTRAL CENTRADO ── */}
         <div style={{ textAlign: 'center', marginBottom: 72 }}>
 
           {/* Badge ubicación */}
           <div style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              border: '1px solid rgba(246,245,242,0.12)', borderRadius: 100,
+              border: '1px solid rgba(0,0,0,0.12)', borderRadius: 100,
               padding: '7px 18px',
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--lime)', display: 'inline-block' }} />
               <span style={{
                 fontFamily: 'var(--f-mono)', fontSize: 10,
                 letterSpacing: '0.16em', textTransform: 'uppercase',
-                color: 'rgba(246,245,242,0.5)', fontWeight: 500,
+                color: 'rgba(0,0,0,0.45)', fontWeight: 500,
               }}>
                 San Luis · Cuyo · Argentina
               </span>
@@ -187,7 +181,7 @@ export default function HeroV3() {
             className="h-display"
             style={{
               fontSize: 'clamp(60px, 11vw, 148px)',
-              color: 'var(--paper)',
+              color: 'var(--ink)',
               margin: '0 auto 28px',
               lineHeight: 0.88,
               letterSpacing: '-0.045em',
@@ -197,20 +191,20 @@ export default function HeroV3() {
           >
             Tu negocio<br />
             funciona<br />
-            <em style={{ color: 'var(--lime)' }}>solo.</em>
+            <em style={{ color: 'var(--lime)', fontStyle: 'normal' }}>solo.</em>
           </h1>
 
-          {/* Subtítulo — sin mencionar productos específicos */}
+          {/* Subtítulo */}
           <p style={{
             fontFamily: 'var(--f-display)',
             fontSize: 'clamp(17px, 1.8vw, 22px)',
-            color: 'rgba(246,245,242,0.5)',
+            color: 'rgba(0,0,0,0.45)',
             maxWidth: '48ch',
             lineHeight: 1.55,
             margin: '0 auto 40px',
           }}>
             Automatizaciones a medida para tu negocio.{' '}
-            <span style={{ color: 'rgba(246,245,242,0.85)' }}>
+            <span style={{ color: 'rgba(0,0,0,0.8)' }}>
               De noche, los domingos, sin que atiendas el teléfono.
             </span>
           </p>
@@ -235,7 +229,7 @@ export default function HeroV3() {
               href="#demo"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                border: '1px solid rgba(246,245,242,0.2)', color: 'rgba(246,245,242,0.7)',
+                border: '1px solid rgba(0,0,0,0.15)', color: 'rgba(0,0,0,0.55)',
                 borderRadius: 100, padding: '14px 24px', textDecoration: 'none',
                 fontFamily: 'var(--f-display)', fontSize: 16, transition: 'border-color 0.2s',
               }}
@@ -247,7 +241,7 @@ export default function HeroV3() {
           {/* Trust strip */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 0,
-            border: '1px solid rgba(246,245,242,0.1)', borderRadius: 100,
+            border: '1px solid rgba(0,0,0,0.1)', borderRadius: 100,
             overflow: 'hidden',
           }}>
             {[
@@ -259,15 +253,15 @@ export default function HeroV3() {
               <div key={s.val} style={{
                 display: 'flex', alignItems: 'baseline', gap: 5,
                 padding: '9px 20px',
-                borderRight: i < arr.length - 1 ? '1px solid rgba(246,245,242,0.1)' : 'none',
+                borderRight: i < arr.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none',
               }}>
                 <span style={{
-                  fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
-                  fontSize: 16, color: 'var(--lime)', letterSpacing: '-0.03em',
+                  fontFamily: 'var(--f-display)', fontWeight: 700,
+                  fontSize: 16, color: 'var(--ink)', letterSpacing: '-0.03em',
                 }}>{s.val}</span>
                 <span style={{
                   fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase',
-                  letterSpacing: '0.1em', color: 'rgba(246,245,242,0.3)',
+                  letterSpacing: '0.1em', color: 'rgba(0,0,0,0.35)',
                 }}>{s.label}</span>
               </div>
             ))}
@@ -276,7 +270,7 @@ export default function HeroV3() {
         </div>
 
         {/* ── SEPARADOR ── */}
-        <div style={{ borderTop: '1px solid rgba(246,245,242,0.08)', marginBottom: 48 }} />
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', marginBottom: 48 }} />
 
         {/* Selector de rubro */}
         <div style={{ marginBottom: 48 }}>
@@ -285,7 +279,7 @@ export default function HeroV3() {
             fontSize: 10,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color: 'rgba(246,245,242,0.3)',
+            color: 'rgba(0,0,0,0.35)',
             display: 'block',
             marginBottom: 14,
           }}>
@@ -301,8 +295,8 @@ export default function HeroV3() {
               r.id === 'otro' ? (
                 <Link key={r.id} href="/rubros" style={{
                   padding: '8px 16px', borderRadius: 100,
-                  border: '1.5px solid var(--lime)',
-                  background: 'transparent', color: 'var(--lime)',
+                  border: '1.5px solid var(--ink)',
+                  background: 'transparent', color: 'var(--ink)',
                   fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                   textDecoration: 'none', flexShrink: 0,
@@ -312,9 +306,9 @@ export default function HeroV3() {
               ) : (
                 <button key={r.id} onClick={() => { selectRubro(idx); setPaused(true) }} style={{
                   padding: '8px 16px', borderRadius: 100,
-                  border: activeIdx === idx ? '1.5px solid var(--lime)' : '1.5px solid rgba(246,245,242,0.12)',
+                  border: activeIdx === idx ? '1.5px solid var(--lime)' : '1.5px solid rgba(0,0,0,0.12)',
                   background: activeIdx === idx ? 'var(--lime)' : 'transparent',
-                  color: activeIdx === idx ? 'var(--ink)' : 'rgba(246,245,242,0.5)',
+                  color: activeIdx === idx ? 'var(--ink)' : 'rgba(0,0,0,0.5)',
                   fontFamily: 'var(--f-display)', fontSize: 13,
                   fontWeight: activeIdx === idx ? 700 : 400,
                   cursor: 'pointer', transition: 'all 0.2s',
@@ -324,7 +318,7 @@ export default function HeroV3() {
                   {activeIdx === idx && !paused && (
                     <span style={{
                       position: 'absolute', bottom: 0, left: 0, height: 2,
-                      background: 'var(--ink)',
+                      background: 'var(--lime)',
                       animation: `pillProgress ${INTERVAL}ms linear`,
                       animationFillMode: 'forwards',
                     }} />
@@ -347,24 +341,26 @@ export default function HeroV3() {
               style={{
                 fontSize: 'clamp(32px, 4.5vw, 62px)',
                 marginBottom: 18,
-                color: 'var(--paper)',
+                color: 'var(--ink)',
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(10px)',
                 transition: 'opacity 0.25s ease, transform 0.25s ease',
                 lineHeight: 1.02,
                 letterSpacing: '-0.03em',
+                textTransform: 'uppercase',
+                fontStyle: 'normal',
               }}
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
                 i === arr.length - 1
-                  ? <em key={i} style={{ color: 'var(--lime)' }}> {word}</em>
+                  ? <span key={i} style={{ color: 'var(--lime)' }}> {word}</span>
                   : <span key={i}>{i === 0 ? '' : ' '}{word}</span>
               )}
             </h2>
 
             <p style={{
               fontSize: 17, lineHeight: 1.6,
-              color: 'rgba(246,245,242,0.45)',
+              color: 'rgba(0,0,0,0.45)',
               marginBottom: 32, maxWidth: '44ch',
               fontFamily: 'var(--f-display)',
               opacity: visible ? 1 : 0,
@@ -376,11 +372,11 @@ export default function HeroV3() {
 
             <a href={waLink} target="_blank" rel="noopener noreferrer" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              border: '1px solid rgba(246,245,242,0.15)', borderRadius: 100,
+              border: '1px solid rgba(0,0,0,0.15)', borderRadius: 100,
               padding: '10px 20px', textDecoration: 'none',
               fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700,
               letterSpacing: '0.1em', textTransform: 'uppercase',
-              color: 'rgba(246,245,242,0.6)', transition: 'border-color 0.2s, color 0.2s',
+              color: 'rgba(0,0,0,0.55)', transition: 'border-color 0.2s, color 0.2s',
             }}>
               ⚡ Quiero esto para mi {rubroActivo.label.toLowerCase()} →
             </a>
@@ -392,28 +388,28 @@ export default function HeroV3() {
               size={360}
               color="#C6FF3D"
               colorDeep="#9EE028"
-              shade="rgba(12,80,0,0.6)"
+              shade="rgba(12,80,0,0.3)"
               float
               squash
               style={{ position: 'absolute', right: -40, top: 0 }}
             />
             <div style={{
               position: 'absolute', right: 0, top: 40,
-              background: 'rgba(246,245,242,0.05)',
+              background: 'rgba(0,0,0,0.03)',
               backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(246,245,242,0.1)',
+              border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: 20, padding: '24px 28px', width: 210, zIndex: 2,
             }}>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(246,245,242,0.35)', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(0,0,0,0.35)', marginBottom: 8 }}>
                 Desde
               </div>
-              <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: 'var(--lime)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 40, color: 'var(--lime)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}>
                 $45k
               </div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(246,245,242,0.3)', letterSpacing: '0.06em', marginBottom: 16 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(0,0,0,0.4)', letterSpacing: '0.06em', marginBottom: 16 }}>
                 / mes · sin permanencia
               </div>
-              <div style={{ borderTop: '1px solid rgba(246,245,242,0.08)', paddingTop: 14, fontFamily: 'var(--f-display)', fontSize: 12, color: 'rgba(246,245,242,0.45)', lineHeight: 1.6 }}>
+              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 14, fontFamily: 'var(--f-display)', fontSize: 12, color: 'rgba(0,0,0,0.5)', lineHeight: 1.6 }}>
                 ✓ Activo en 24 horas<br />
                 ✓ QR para el local<br />
                 ✓ Confirma por WhatsApp

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase'
 import Link from 'next/link'
+import NeuralGraphClient from './_components/NeuralGraphClient'
 
 async function getDashboardData() {
   const db = createAdminClient()
@@ -257,7 +258,13 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Neural Graph — temporalmente desactivado */}
+      {/* ── Neural Graph ────────────────────────────────────────────── */}
+      <div style={{ padding: '0 28px 32px', maxWidth: 1400, margin: '0 auto' }}>
+        <SectionHeader title="Red de Agentes IA" sub="actividad en tiempo real" action={{ label: 'Sala de Mando →', href: '/agents' }} />
+        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E4E4E7', padding: '4px 4px', overflow: 'hidden' }}>
+          <NeuralGraphClient />
+        </div>
+      </div>
     </div>
   )
 }

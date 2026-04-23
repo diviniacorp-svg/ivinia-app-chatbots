@@ -157,6 +157,64 @@ export async function sendTrialNotification(params: {
   if (error) console.error('Trial notification error:', error)
 }
 
+export async function sendBookingNotification(params: {
+  company_name: string
+  owner_email?: string | null
+  customer_name: string
+  customer_phone: string
+  service_names: string
+  date: string
+  time: string
+  price?: number
+  client_id: string
+}): Promise<void> {
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'ventas@divinia.ar'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
+  const dateObj = new Date(params.date + 'T12:00:00')
+  const dateStr = dateObj.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  const waLink = params.customer_phone
+    ? `https://wa.me/${params.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${params.customer_name}! Confirmo tu turno de ${params.service_names} el ${dateStr} a las ${params.time}hs en ${params.company_name}. ¡Nos vemos!`)}`
+    : null
+
+  const recipients = ['diviniacorp@gmail.com']
+  if (params.owner_email && params.owner_email !== 'diviniacorp@gmail.com') {
+    recipients.push(params.owner_email)
+  }
+
+  await getResend().emails.send({
+    from: `DIVINIA Turnero <${fromEmail}>`,
+    to: recipients,
+    subject: `📅 Nuevo turno: ${params.customer_name} — ${params.service_names}`,
+    html: `
+      <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+      <body style="font-family:-apple-system,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9f9f9">
+        <div style="background:#06060A;border-radius:16px 16px 0 0;padding:20px 24px">
+          <div style="color:#C6FF3D;font-weight:900;font-size:18px;letter-spacing:-0.03em">DIVINIA.</div>
+          <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;font-family:monospace;letter-spacing:0.06em">NUEVO TURNO — ${params.company_name.toUpperCase()}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:28px;border-radius:0 0 16px 16px">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.06em">Turno confirmado</p>
+            <p style="margin:0;font-size:20px;font-weight:800;color:#111">${params.service_names}</p>
+          </div>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;color:#6b7280;font-size:14px;width:110px">Cliente</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-weight:700;color:#111;font-size:14px">${params.customer_name}</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;color:#6b7280;font-size:14px">Teléfono</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;color:#111;font-size:14px">${params.customer_phone || '—'}</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;color:#6b7280;font-size:14px">Fecha</td><td style="padding:8px 0;border-bottom:1px solid #f3f4f6;color:#111;font-size:14px;text-transform:capitalize">${dateStr}</td></tr>
+            <tr><td style="padding:8px 0;color:#6b7280;font-size:14px">Hora</td><td style="padding:8px 0;color:#111;font-size:14px;font-weight:700">${params.time}hs</td></tr>
+            ${params.price ? `<tr><td style="padding:8px 0;color:#6b7280;font-size:14px">Precio</td><td style="padding:8px 0;color:#111;font-size:14px">$${params.price.toLocaleString('es-AR')}</td></tr>` : ''}
+          </table>
+          <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+            ${waLink ? `<a href="${waLink}" style="background:#25D366;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block">💬 Confirmar por WA</a>` : ''}
+            <a href="${appUrl}/dashboard/turnos" style="background:#06060A;color:#C6FF3D;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block">Ver turnos →</a>
+          </div>
+        </div>
+        <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:12px">DIVINIA Turnero · San Luis, Argentina</p>
+      </body></html>
+    `,
+  }).catch(e => console.error('[booking-notif]', e))
+}
+
 export async function sendWelcomeEmail(params: {
   company_name: string
   contact_name: string
