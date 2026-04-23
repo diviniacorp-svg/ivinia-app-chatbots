@@ -4,7 +4,23 @@ import Link from 'next/link'
 import Orb from '@/components/public/Orb'
 
 const WA = 'https://wa.me/5492665286110?text=Hola%2C%20quiero%20el%20Turnero%20para%20mi%20negocio'
-const DEMO_ID = 'rufina-nails-demo'
+
+// Demos reales por rubro — chatbot_id o booking_config UUID
+const DEMOS: Record<string, string> = {
+  nails:          'rufina-nails-demo',
+  peluqueria:     'fa-faby-demo',
+  barberia:       'fa-faby-demo',
+  hotel:          'cantera2026bot',
+  hosteria:       'mininco2026bot',
+  cabanas:        'paraisos2026bt',
+  turismo:        'potrero-hotel-demo',
+  natacion:       'top-quality-demo',
+}
+const FALLBACK_DEMO = 'rufina-nails-demo'
+
+function demoUrl(slug: string) {
+  return `/reservas/${DEMOS[slug] ?? FALLBACK_DEMO}`
+}
 
 interface Rubro {
   emoji: string
@@ -272,7 +288,7 @@ export default function RubrosPage() {
             <div key={rubro.slug} style={{ position: 'relative' }}>
               {/* Demo link (primary action) */}
               <Link
-                href={`/reservas/${DEMO_ID}`}
+                href={demoUrl(rubro.slug)}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
                   textAlign: 'center', gap: 10,
