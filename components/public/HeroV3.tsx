@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Orb from './Orb'
 
@@ -102,10 +102,47 @@ const STATS = [
   { val: '90d', label: 'Garantía', desc: 'O te devolvemos la plata' },
 ]
 
-export default function HeroV3() {
-  const [rubroActivo, setRubroActivo] = useState(RUBROS[0])
+const INTERVAL = 3000
 
+export default function HeroV3() {
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [animKey, setAnimKey] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const rubroActivo = RUBROS[activeIdx]
   const waLink = WA_BASE + rubroActivo.wa
+
+  const selectRubro = (idx: number) => {
+    setActiveIdx(idx)
+    setAnimKey(k => k + 1)
+    // Scroll pill into view
+    const container = scrollRef.current
+    if (container) {
+      const pill = container.children[idx] as HTMLElement
+      if (pill) {
+        pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (paused) return
+    intervalRef.current = setInterval(() => {
+      setActiveIdx(prev => {
+        const next = (prev + 1) % (RUBROS.length - 1) // skip "ver todos"
+        setAnimKey(k => k + 1)
+        const container = scrollRef.current
+        if (container) {
+          const pill = container.children[next] as HTMLElement
+          if (pill) pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        }
+        return next
+      })
+    }, INTERVAL)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [paused])
 
   return (
     <section style={{
@@ -117,30 +154,37 @@ export default function HeroV3() {
       <div className="wrap-v2">
 
         {/* Selector de rubro */}
-        <div style={{
-          display: 'flex',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 48,
-        }}>
+        <div style={{ marginBottom: 48 }}>
           <span style={{
             fontFamily: 'var(--f-mono)',
             fontSize: 11,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--muted)',
-            alignSelf: 'center',
-            marginRight: 4,
+            display: 'block',
+            marginBottom: 12,
           }}>
             Mi negocio es:
           </span>
-          {RUBROS.map(r =>
+          <div
+            ref={scrollRef}
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            style={{
+              display: 'flex',
+              gap: 8,
+              overflowX: 'auto',
+              paddingBottom: 4,
+              scrollbarWidth: 'none',
+            }}
+          >
+          {RUBROS.map((r, idx) =>
             r.id === 'otro' ? (
               <Link
                 key={r.id}
                 href="/rubros"
                 style={{
-                  padding: '7px 14px',
+                  padding: '7px 16px',
                   borderRadius: 100,
                   border: '1.5px solid var(--lime)',
                   background: 'transparent',
@@ -149,11 +193,11 @@ export default function HeroV3() {
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
                   textDecoration: 'none',
+                  flexShrink: 0,
                 }}
               >
                 <span>{r.emoji}</span>
@@ -162,30 +206,44 @@ export default function HeroV3() {
             ) : (
               <button
                 key={r.id}
-                onClick={() => setRubroActivo(r)}
+                onClick={() => { selectRubro(idx); setPaused(true) }}
                 style={{
-                  padding: '7px 14px',
+                  padding: '7px 16px',
                   borderRadius: 100,
-                  border: rubroActivo.id === r.id
-                    ? '1.5px solid var(--ink)'
-                    : '1.5px solid var(--line)',
-                  background: rubroActivo.id === r.id ? 'var(--ink)' : 'transparent',
-                  color: rubroActivo.id === r.id ? 'var(--paper)' : 'var(--muted-2)',
+                  border: activeIdx === idx ? '1.5px solid var(--ink)' : '1.5px solid var(--line)',
+                  background: activeIdx === idx ? 'var(--ink)' : 'transparent',
+                  color: activeIdx === idx ? 'var(--paper)' : 'var(--muted-2)',
                   fontFamily: 'var(--f-display)',
                   fontSize: 13,
-                  fontWeight: 500,
+                  fontWeight: activeIdx === idx ? 600 : 400,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.25s ease',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
+                  flexShrink: 0,
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
               >
+                {/* Progress bar on active pill */}
+                {activeIdx === idx && !paused && (
+                  <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    height: 2,
+                    background: 'var(--lime)',
+                    animation: `pillProgress ${INTERVAL}ms linear`,
+                    animationFillMode: 'forwards',
+                  }} />
+                )}
                 <span>{r.emoji}</span>
                 <span>{r.label}</span>
               </button>
             )
           )}
+          </div>
         </div>
 
         {/* Grid hero */}
@@ -195,13 +253,13 @@ export default function HeroV3() {
           {/* Left: copy dinámico */}
           <div>
             <h1
-              key={rubroActivo.id}
+              key={animKey}
               className="h-display"
               style={{
                 fontSize: 'clamp(44px, 8vw, 120px)',
                 marginBottom: 28,
                 color: 'var(--ink)',
-                animation: 'heroFadeIn 0.4s ease',
+                animation: 'heroFadeIn 0.35s ease',
               }}
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
@@ -212,7 +270,7 @@ export default function HeroV3() {
             </h1>
 
             <p
-              key={rubroActivo.id + '_sub'}
+              key={animKey + '_sub'}
               style={{
                 fontSize: 19,
                 lineHeight: 1.5,
@@ -220,7 +278,7 @@ export default function HeroV3() {
                 marginBottom: 40,
                 maxWidth: '46ch',
                 fontFamily: 'var(--f-display)',
-                animation: 'heroFadeIn 0.5s ease 0.05s both',
+                animation: 'heroFadeIn 0.45s ease 0.06s both',
               }}
             >
               {rubroActivo.sub}
@@ -387,9 +445,14 @@ export default function HeroV3() {
 
       <style>{`
         @keyframes heroFadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes pillProgress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+        div[style*="scrollbar-width: none"]::-webkit-scrollbar { display: none; }
       `}</style>
     </section>
   )
