@@ -198,7 +198,12 @@ export default function OwnerPanel() {
   const searchParams = useSearchParams()
   const configId = params.configId as string
 
-  const [splashDone, setSplashDone] = useState(false)
+  const [splashDone, setSplashDone] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).has('autopin')
+    }
+    return false
+  })
 
   const [pin, setPin] = useState('')
   const [authed, setAuthed] = useState(false)
@@ -396,7 +401,7 @@ export default function OwnerPanel() {
         <h1 style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:20, color:'var(--ink)', margin:'0 0 4px' }}>Panel de turnos</h1>
         <p style={{ color:'var(--muted)', fontSize:13, marginBottom:24, fontFamily:'var(--f-mono)' }}>Ingresá tu PIN de 4 dígitos</p>
         <form onSubmit={handlePin} style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          <input type="text" inputMode="numeric" maxLength={4} value={pin}
+          <input type="password" inputMode="numeric" maxLength={4} value={pin}
             onChange={e=>setPin(e.target.value.replace(/\D/g,'').slice(0,4))}
             placeholder="· · · ·" autoFocus className="panel-pin-input"
             style={{ width:'100%', textAlign:'center', fontSize:28, fontFamily:'var(--f-mono)', letterSpacing:'0.5em', border:'1px solid var(--line)', borderRadius:12, padding:'14px 0', outline:'none', background:'var(--paper-2)', color:'var(--ink)', boxSizing:'border-box', transition:'border-color 0.2s, box-shadow 0.2s' }}/>

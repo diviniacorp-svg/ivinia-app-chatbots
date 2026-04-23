@@ -10,8 +10,8 @@ const DEMOS = [
     color: '#d63384',
     emoji: '💅',
     descripcion: 'Nail bar real de San Luis. Reservas online con cobro de seña incluido.',
-    publicId: '061fe680-ace1-4261-8aaa-58ecd87493b5',
-    panelId: '7429a083-7da5-4878-a9e1-2e6258a98be5',
+    publicId: 'c06c28e8-9d85-45af-ac05-7cde190b14c9',
+    panelId: 'c06c28e8-9d85-45af-ac05-7cde190b14c9',
     pin: '1234',
   },
 ]
