@@ -24,7 +24,7 @@ export default function Manifiesto() {
               Cada automatización que entregamos está medida. Si no te devuelve al menos{' '}
               <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>10 horas por semana</strong>{' '}
               o no te hace ganar un múltiplo de lo que te cobramos en 6 meses, está mal hecha.
-              Y si en 90 días no la tenemos funcionando, te devolvemos la plata.
+              Y si no funciona como te prometimos, lo arreglamos sin costo extra — antes de que pagues el saldo final.
             </p>
           </div>
         </div>

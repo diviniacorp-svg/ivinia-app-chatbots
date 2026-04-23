@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Reveal from './Reveal'
 
@@ -12,10 +12,15 @@ const DEMOS = [
     descripcion: 'Nail bar real de San Luis. Reservas online con cobro de seña incluido.',
     publicId: '061fe680-ace1-4261-8aaa-58ecd87493b5',
     panelId: '7429a083-7da5-4878-a9e1-2e6258a98be5',
+    pin: '1234',
   },
 ]
 
 type DemoView = 'public' | 'panel'
+
+const PIN_ANIM_DELAY = 600   // ms antes de empezar a tipear
+const PIN_CHAR_DELAY = 380   // ms entre cada dígito
+const PIN_SUBMIT_DELAY = 500 // ms después del 4to dígito antes de "enviar"
 
 export default function DemoViva() {
   const [demoActiva] = useState(DEMOS[0])
@@ -23,20 +28,66 @@ export default function DemoViva() {
   const [iframeLoaded, setIframeLoaded] = useState(false)
   const [iframeError, setIframeError] = useState(false)
 
+  // PIN animation state
+  const [showPinAnim, setShowPinAnim] = useState(false)
+  const [pinTyped, setPinTyped] = useState('')
+  const [pinSubmitting, setPinSubmitting] = useState(false)
+  const [pinDone, setPinDone] = useState(false)
+  const animRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const iframeSrc = vista === 'public'
     ? `/reservas/${demoActiva.publicId}`
-    : `/panel/${demoActiva.panelId}`
+    : `/panel/${demoActiva.panelId}?autopin=${demoActiva.pin}`
 
   const iframeKey = `${demoActiva.nombre}-${vista}`
 
+  // Reset on view/demo change
   useEffect(() => {
     setIframeLoaded(false)
     setIframeError(false)
-    const t = setTimeout(() => {
-      setIframeError(true)
-    }, 6000)
-    return () => clearTimeout(t)
-  }, [iframeKey])
+    setPinTyped('')
+    setPinSubmitting(false)
+    setPinDone(false)
+
+    if (animRef.current) clearTimeout(animRef.current)
+
+    if (vista === 'panel') {
+      setShowPinAnim(true)
+      // Start typing animation after initial delay
+      const pin = demoActiva.pin
+      let step = 0
+      const typeNext = () => {
+        if (step < pin.length) {
+          step++
+          setPinTyped(pin.slice(0, step))
+          animRef.current = setTimeout(typeNext, PIN_CHAR_DELAY)
+        } else {
+          // All digits typed — brief pause then "submit"
+          animRef.current = setTimeout(() => {
+            setPinSubmitting(true)
+            animRef.current = setTimeout(() => {
+              setPinDone(true)
+              // Keep overlay a bit so iframe can render behind it
+              animRef.current = setTimeout(() => {
+                setShowPinAnim(false)
+              }, 600)
+            }, 700)
+          }, PIN_SUBMIT_DELAY)
+        }
+      }
+      animRef.current = setTimeout(typeNext, PIN_ANIM_DELAY)
+    } else {
+      setShowPinAnim(false)
+    }
+
+    const t = setTimeout(() => { setIframeError(true) }, 8000)
+    return () => { clearTimeout(t); if (animRef.current) clearTimeout(animRef.current) }
+  }, [iframeKey, vista, demoActiva.pin])
+
+  const changeVista = (v: DemoView) => {
+    if (v === vista) return
+    setVista(v)
+  }
 
   return (
     <section id="demo" style={{
@@ -84,7 +135,7 @@ export default function DemoViva() {
             ]).map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setVista(tab.key)}
+                onClick={() => changeVista(tab.key)}
                 style={{
                   padding: '9px 18px',
                   borderRadius: 100,
@@ -116,7 +167,7 @@ export default function DemoViva() {
             borderRadius: 24,
             overflow: 'hidden',
             display: 'grid',
-            minHeight: 600,
+            minHeight: 680,
           }}
             className="grid-cols-2-mobile-1 md:grid-cols-[1fr_2fr]"
           >
@@ -175,7 +226,7 @@ export default function DemoViva() {
                     color: 'var(--lime)',
                     marginBottom: 4,
                   }}>
-                    {vista === 'public' ? '👤 Vista cliente — esto es real' : '🔧 Vista dueño — PIN: 1234'}
+                    {vista === 'public' ? '👤 Vista cliente — esto es real' : '🔧 Vista dueño — acceso automático'}
                   </div>
                   <div style={{
                     fontFamily: 'var(--f-display)',
@@ -185,7 +236,7 @@ export default function DemoViva() {
                   }}>
                     {vista === 'public'
                       ? 'Podés reservar de verdad. Así es como lo van a usar tus clientes.'
-                      : 'Ingresá el PIN 1234 para ver cómo gestionás los turnos, servicios y cobros.'}
+                      : 'Estás viendo el panel de gestión real. Aquí gestionás turnos, servicios y cobros.'}
                   </div>
                 </div>
               </div>
@@ -224,9 +275,82 @@ export default function DemoViva() {
             </div>
 
             {/* iframe / fallback */}
-            <div style={{ position: 'relative', minHeight: 600, background: 'var(--paper)' }}>
+            <div style={{ position: 'relative', minHeight: 680, background: 'var(--paper)' }}>
+
+              {/* PIN animation overlay */}
+              {showPinAnim && (
+                <div style={{
+                  position: 'absolute', inset: 0, zIndex: 10,
+                  background: 'var(--paper)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 24,
+                  opacity: pinDone ? 0 : 1,
+                  transition: pinDone ? 'opacity 0.5s ease' : 'none',
+                  pointerEvents: 'none',
+                }}>
+                  <div style={{ fontSize: 36 }}>{demoActiva.emoji}</div>
+                  <div style={{
+                    fontFamily: 'var(--f-display)',
+                    fontWeight: 700,
+                    fontSize: 20,
+                    color: 'var(--ink)',
+                    letterSpacing: '-0.02em',
+                  }}>
+                    {demoActiva.nombre}
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--f-mono)',
+                    fontSize: 11,
+                    color: 'var(--muted)',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                  }}>
+                    {pinSubmitting ? 'Entrando al panel...' : 'Ingresá tu PIN de 4 dígitos'}
+                  </div>
+                  {/* PIN dots */}
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    {[0, 1, 2, 3].map(i => {
+                      const filled = i < pinTyped.length
+                      return (
+                        <div key={i} style={{
+                          width: 48, height: 56,
+                          borderRadius: 10,
+                          border: `2px solid ${filled ? demoActiva.color : 'var(--line)'}`,
+                          background: filled ? demoActiva.color + '15' : 'var(--paper-2)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.15s ease',
+                          transform: filled ? 'scale(1.05)' : 'scale(1)',
+                        }}>
+                          {filled && (
+                            <div style={{
+                              width: 10, height: 10, borderRadius: '50%',
+                              background: demoActiva.color,
+                            }} />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {pinSubmitting && (
+                    <div style={{
+                      display: 'flex', gap: 6, alignItems: 'center',
+                      fontFamily: 'var(--f-mono)', fontSize: 10,
+                      color: demoActiva.color, letterSpacing: '0.08em',
+                    }}>
+                      <div style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: demoActiva.color,
+                        animation: 'pulse 0.8s infinite',
+                      }} />
+                      Verificando PIN
+                    </div>
+                  )}
+                  <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }`}</style>
+                </div>
+              )}
+
               {/* Loading state */}
-              {!iframeLoaded && !iframeError && (
+              {!iframeLoaded && !iframeError && !showPinAnim && (
                 <div style={{
                   position: 'absolute', inset: 0,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -238,8 +362,9 @@ export default function DemoViva() {
                   </div>
                 </div>
               )}
+
               {/* Error / blocked fallback */}
-              {iframeError && (
+              {iframeError && !showPinAnim && (
                 <div style={{
                   position: 'absolute', inset: 0,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -269,11 +394,12 @@ export default function DemoViva() {
                   </div>
                 </div>
               )}
+
               <iframe
                 key={iframeKey}
                 src={iframeSrc}
                 style={{
-                  width: '100%', height: '100%', minHeight: 600,
+                  width: '100%', height: '100%', minHeight: 680,
                   border: 'none', display: iframeError ? 'none' : 'block',
                 }}
                 onLoad={() => { setIframeLoaded(true); setIframeError(false) }}

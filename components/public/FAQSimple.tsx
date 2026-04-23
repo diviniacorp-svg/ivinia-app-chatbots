@@ -9,7 +9,7 @@ const PREGUNTAS = [
   },
   {
     q: '¿Qué pasa si quiero cancelar el plan mensual?',
-    a: 'Cancelás cuando querés, sin preguntas. No hay permanencia mínima. Si pagás el plan anual y querés salir antes, te devolvemos los meses que no usaste.',
+    a: 'Cancelás cuando querés, sin preguntas. No hay permanencia mínima. El plan anual se factura en un pago y no tiene devolución, pero podés seguir usándolo hasta que venza.',
   },
   {
     q: '¿En cuánto tiempo está listo mi Turnero?',
@@ -20,8 +20,8 @@ const PREGUNTAS = [
     a: 'Sí. Tenés las demos de Rufina Nails, Cantera Boutique y Los Paraísos disponibles arriba para probar de verdad. Si después de probar querés el tuyo, hablamos.',
   },
   {
-    q: '¿Qué garantía tienen?',
-    a: '90 días de garantía real. Si el sistema no funciona como te prometimos o no notás ninguna mejora en ese período, te devolvemos el dinero. Sin letra chica.',
+    q: '¿Qué pasa si el sistema no funciona como esperaba?',
+    a: 'Joaco lo resuelve. Si algo no funciona como te explicamos, lo arreglamos sin costo adicional. Entregamos con el sistema probado y funcionando antes de cobrarte el 50% final.',
   },
 ]
 

@@ -341,7 +341,7 @@ export default function ProductosV3() {
                   color: PRODUCTOS[0].badgeColor,
                   marginBottom: 4,
                 }}>
-                  Garantía DIVINIA
+                  Compromiso DIVINIA
                 </div>
                 <div style={{
                   fontFamily: 'var(--f-display)',
@@ -349,7 +349,7 @@ export default function ProductosV3() {
                   color: 'rgba(246,245,242,0.55)',
                   lineHeight: 1.5,
                 }}>
-                  90 días o te devolvemos la plata. Sin preguntas.
+                  Entregamos funcionando antes de cobrar el saldo. Sin contratos ni letra chica.
                 </div>
               </div>
             </div>

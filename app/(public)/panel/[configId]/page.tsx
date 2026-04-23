@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { getThemeForRubro } from '@/lib/turnero-themes'
 
 interface Appointment {
@@ -195,6 +195,7 @@ const lightInput: React.CSSProperties = {
 // ─── Panel principal ──────────────────────────────────────────────
 export default function OwnerPanel() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const configId = params.configId as string
 
   const [splashDone, setSplashDone] = useState(false)
@@ -250,6 +251,14 @@ export default function OwnerPanel() {
   },[configId])
 
   function handlePin(e:React.FormEvent){e.preventDefault();setPinError('');loadData(pin)}
+
+  useEffect(() => {
+    const autopin = searchParams.get('autopin')
+    if (autopin && autopin.length === 4) {
+      setPin(autopin)
+      loadData(autopin)
+    }
+  }, [searchParams, loadData])
 
   async function uploadPhoto(file: File, prodId: string | 'new') {
     setUploadingPhoto(prodId)

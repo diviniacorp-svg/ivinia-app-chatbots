@@ -99,7 +99,7 @@ const RUBROS = [
 const STATS = [
   { val: '24hs', label: 'Setup', desc: 'Tu turnero activo mañana' },
   { val: '$0', label: 'Costo por llamada', desc: 'Sin telefonistas, sin recepción' },
-  { val: '90d', label: 'Garantía', desc: 'O te devolvemos la plata' },
+  { val: '0', label: 'Costo oculto', desc: 'Sin letra chica, sin sorpresas' },
 ]
 
 const INTERVAL = 3000
@@ -294,7 +294,7 @@ export default function HeroV3() {
               {rubroActivo.sub}
             </p>
 
-            {/* Garantía badge */}
+            {/* Setup badge */}
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -305,7 +305,7 @@ export default function HeroV3() {
               padding: '6px 14px',
               marginBottom: 32,
             }}>
-              <span style={{ fontSize: 14 }}>🛡️</span>
+              <span style={{ fontSize: 14 }}>⚡</span>
               <span style={{
                 fontFamily: 'var(--f-mono)',
                 fontSize: 11,
@@ -313,7 +313,7 @@ export default function HeroV3() {
                 textTransform: 'uppercase',
                 color: 'var(--ink)',
               }}>
-                90 días de garantía o devolvemos la plata
+                Listo en 24hs · sin contratos · 50% al confirmar
               </span>
             </div>
 

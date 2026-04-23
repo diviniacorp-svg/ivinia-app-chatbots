@@ -153,9 +153,9 @@ export default function CTAFinal() {
               color: 'rgba(246,245,242,0.25)',
             }}>
               {[
-                '🛡️ Garantía 90 días',
                 '⚡ Listo en 24hs',
                 '💳 50% al confirmar',
+                '🤝 Sin contratos de permanencia',
                 '📍 San Luis, Argentina',
               ].map(s => (
                 <span key={s}>{s}</span>

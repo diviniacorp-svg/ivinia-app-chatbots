@@ -298,7 +298,7 @@ export default function PricingV3() {
           color: 'var(--muted)',
           letterSpacing: '0.06em',
         }}>
-          Todos los precios en ARS · Pagos por MercadoPago · 50% al confirmar — 50% al entregar · Garantía 90 días
+          Todos los precios en ARS · Pagos por MercadoPago · 50% al confirmar — 50% al entregar · Sin contratos de permanencia
         </p>
       </div>
     </section>
