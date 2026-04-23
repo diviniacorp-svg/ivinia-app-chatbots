@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase'
-import NeuralGraphClient from './_components/NeuralGraphClient'
 import Link from 'next/link'
 
 async function getDashboardData() {
@@ -202,17 +201,9 @@ export default async function DashboardPage() {
             {PRODUCTOS.map(p => (
               <Link key={p.nombre} href={p.href} style={{
                 display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 16px', borderRadius: 12,
-                background: '#fff', border: '1px solid #E4E4E7', textDecoration: 'none',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
+                background: '#fff', border: `1px solid ${p.estado === 'listo' ? '#4ade8030' : p.estado === 'nuevo' ? '#C6FF3D30' : '#E4E4E7'}`,
+                textDecoration: 'none',
               }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = p.color
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 3px ${p.color}18`
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = '#E4E4E7'
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
-                }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 20 }}>{p.icon}</span>
@@ -266,15 +257,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Neural Graph ────────────────────────────────────────────────── */}
-      <div style={{ background: INK, padding: '24px 28px 0' }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 14 }}>
-            Sistema DIVINIA · grafo neuronal · tiempo real
-          </div>
-          <NeuralGraphClient />
-        </div>
-      </div>
+      {/* Neural Graph — temporalmente desactivado */}
     </div>
   )
 }
