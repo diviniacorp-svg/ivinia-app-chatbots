@@ -154,62 +154,121 @@ export default function HeroV3() {
 
   return (
     <section style={{
-      padding: '140px 0 80px',
+      padding: '120px 0 80px',
       position: 'relative',
       overflow: 'hidden',
       background: 'var(--paper)',
     }}>
       <div className="wrap-v2">
 
-        {/* Eyebrow badge */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 10,
-            background: 'var(--ink)', borderRadius: 100,
-            padding: '7px 18px',
-          }}>
-            <span style={{ fontSize: 12 }}>⚡</span>
-            <span style={{
-              fontFamily: 'var(--f-mono)', fontSize: 10,
-              letterSpacing: '0.14em', textTransform: 'uppercase',
-              color: 'var(--lime)', fontWeight: 700,
-            }}>
-              San Luis · Cuyo · Argentina
-            </span>
-          </div>
-        </div>
+        {/* ── BLOQUE CENTRAL CENTRADO ── */}
+        <div style={{ textAlign: 'center', marginBottom: 64 }}>
 
-        {/* Headline principal — grande, uppercase, centrado */}
-        <div style={{ marginBottom: 40, textAlign: 'center' }}>
+          {/* Badge */}
+          <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'var(--ink)', borderRadius: 100, padding: '7px 18px',
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--lime)', display: 'inline-block' }} />
+              <span style={{
+                fontFamily: 'var(--f-mono)', fontSize: 10,
+                letterSpacing: '0.16em', textTransform: 'uppercase',
+                color: 'var(--paper)', fontWeight: 500,
+              }}>
+                San Luis · Cuyo · Argentina
+              </span>
+            </div>
+          </div>
+
+          {/* Headline — TU NEGOCIO FUNCIONA SOLO. */}
           <h1
             className="h-display"
             style={{
-              fontSize: 'clamp(56px, 10vw, 136px)',
+              fontSize: 'clamp(60px, 11vw, 148px)',
               color: 'var(--ink)',
-              margin: '0 auto',
-              lineHeight: 0.9,
-              letterSpacing: '-0.04em',
+              margin: '0 auto 28px',
+              lineHeight: 0.88,
+              letterSpacing: '-0.045em',
               textTransform: 'uppercase',
               fontStyle: 'normal',
             }}
           >
             Tu negocio<br />
             funciona<br />
-            <em>solo.</em>
+            <em style={{
+              color: 'var(--lime)',
+              WebkitTextStroke: '2px var(--ink)',
+              paintOrder: 'stroke fill',
+            }}>solo.</em>
           </h1>
+
+          {/* Subtítulo */}
           <p style={{
             fontFamily: 'var(--f-display)',
-            fontSize: 'clamp(16px, 1.8vw, 21px)',
+            fontSize: 'clamp(17px, 1.8vw, 22px)',
             color: 'var(--muted-2)',
-            marginTop: 24,
-            maxWidth: '54ch',
-            lineHeight: 1.45,
-            marginLeft: 'auto',
-            marginRight: 'auto',
+            maxWidth: '52ch',
+            lineHeight: 1.5,
+            margin: '0 auto 36px',
           }}>
-            Turnero IA · Chatbot 24hs · Automatizaciones a medida.<br />
-            Lo configuramos para tu rubro en 24 horas.
+            Turnero IA · Chatbot 24hs · Automatizaciones a medida.{' '}
+            <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>
+              Listo en 24hs.
+            </strong>
           </p>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginBottom: 36 }}>
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-v2 btn-ink"
+              style={{ fontSize: 16, padding: '15px 24px 15px 28px' }}
+            >
+              Quiero el Turnero
+              <span className="btn-arrow">→</span>
+            </a>
+            <a
+              href="#demo"
+              className="btn-v2 btn-ghost-v2"
+              style={{ fontSize: 16 }}
+            >
+              Ver demo en vivo ↓
+            </a>
+          </div>
+
+          {/* Trust strip */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 20,
+            border: '1px solid var(--line)', borderRadius: 100,
+            padding: '10px 24px', flexWrap: 'wrap', justifyContent: 'center',
+          }}>
+            {[
+              { val: '24hs', label: 'setup' },
+              { val: '$0', label: 'costo oculto' },
+              { val: '+45', label: 'rubros' },
+              { val: 'sin', label: 'contratos' },
+            ].map((s, i, arr) => (
+              <div key={s.val} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                  <span style={{
+                    fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
+                    fontSize: 18, color: 'var(--ink)', letterSpacing: '-0.03em',
+                  }}>{s.val}</span>
+                  <span style={{
+                    fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase',
+                    letterSpacing: '0.1em', color: 'var(--muted)',
+                  }}>{s.label}</span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div style={{ width: 1, height: 16, background: 'var(--line)' }} />
+                )}
+              </div>
+            ))}
+          </div>
+
         </div>
 
         {/* Selector de rubro */}
@@ -359,47 +418,22 @@ export default function HeroV3() {
               {rubroActivo.sub}
             </p>
 
-            {/* Setup badge */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'rgba(198,255,61,0.12)',
-              border: '1px solid rgba(198,255,61,0.3)',
-              borderRadius: 100,
-              padding: '6px 14px',
-              marginBottom: 32,
-            }}>
-              <span style={{ fontSize: 14 }}>⚡</span>
-              <span style={{
-                fontFamily: 'var(--f-mono)',
-                fontSize: 11,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'var(--ink)',
-              }}>
-                Listo en 24hs · sin contratos · 50% al confirmar
-              </span>
-            </div>
-
-            {/* CTAs */}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 56 }}>
+            {/* CTA contextual por rubro */}
+            <div style={{ marginBottom: 48 }}>
               <a
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-v2 btn-ink"
-                style={{ fontSize: 16, padding: '15px 22px 15px 26px' }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'rgba(198,255,61,0.1)', border: '1px solid rgba(198,255,61,0.35)',
+                  borderRadius: 100, padding: '9px 18px', textDecoration: 'none',
+                  fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)',
+                  transition: 'background 0.2s',
+                }}
               >
-                Quiero el Turnero
-                <span className="btn-arrow">→</span>
-              </a>
-              <a
-                href="#demo"
-                className="btn-v2 btn-ghost-v2"
-                style={{ fontSize: 16 }}
-              >
-                Ver cómo funciona ↓
+                <span>⚡</span> Quiero esto para mi {rubroActivo.label.toLowerCase()} →
               </a>
             </div>
 
