@@ -53,7 +53,7 @@ function timeAgo(dateStr: string) {
 }
 
 // ── Card individual de cliente ────────────────────────────────────
-function ClientCard({ client }: { client: Client }) {
+function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => void }) {
   const cfg = client.custom_config || {}
   const color = cfg.color || '#6366f1'
   const hasTurnos = client.booking_configs && client.booking_configs.length > 0
@@ -62,6 +62,19 @@ function ClientCard({ client }: { client: Client }) {
   const hasChatbot = !!client.chatbot_id
   const status = STATUS_LABEL[client.status] || STATUS_LABEL.active
   const initial = (client.company_name || '?').charAt(0).toUpperCase()
+  const productosEnabled = cfg.productos_enabled === 'true'
+  const [togglingProds, setTogglingProds] = useState(false)
+
+  async function toggleProductos() {
+    setTogglingProds(true)
+    await fetch(`/api/clients/${client.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productos_enabled: productosEnabled ? 'false' : 'true' }),
+    })
+    setTogglingProds(false)
+    onRefresh()
+  }
 
   return (
     <div style={{
@@ -143,6 +156,19 @@ function ClientCard({ client }: { client: Client }) {
             )}
           </div>
         </div>
+
+        {/* Toggle productos DIVINIA */}
+        {hasTurnos && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: 'var(--paper-2)', border: '1px solid var(--line)', marginBottom: 12 }}>
+            <span style={{ fontSize: 12, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🛍️ <span>Módulo Productos</span>
+            </span>
+            <button onClick={toggleProductos} disabled={togglingProds}
+              style={{ width: 38, height: 22, borderRadius: 100, border: 'none', position: 'relative', cursor: 'pointer', background: productosEnabled ? '#16a34a' : 'var(--line)', transition: 'background 0.2s', opacity: togglingProds ? 0.5 : 1 }}>
+              <span style={{ position: 'absolute', top: 3, width: 16, height: 16, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', left: productosEnabled ? 19 : 3 }} />
+            </button>
+          </div>
+        )}
 
         {/* Acciones */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -759,7 +785,7 @@ export default function ClientesPage() {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-              {filtered.map(client => <ClientCard key={client.id} client={client} />)}
+              {filtered.map(client => <ClientCard key={client.id} client={client} onRefresh={() => loadClients()} />)}
             </div>
           )}
         </>

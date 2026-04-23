@@ -465,8 +465,20 @@ export default function BookingWizard({
     <footer style={{ background: `linear-gradient(135deg, ${color}dd, ${color})`, padding: '32px 24px', textAlign: 'center', marginTop: 40 }}>
       <div style={{ fontSize: 28, marginBottom: 10 }}>{introEmoji || theme.emoji}</div>
       <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 4px' }}>{companyName}</p>
-      {instagram && <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.7)', margin: '0 0 8px' }}>📸 @{instagram}</p>}
-      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.5)', margin: 0 }}>© {new Date().getFullYear()} · Reservas online · San Luis Capital</p>
+      {instagram && (
+        <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noopener noreferrer"
+          style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.75)', margin: '0 0 8px', display: 'block', textDecoration: 'none' }}>
+          📸 @{instagram}
+        </a>
+      )}
+      <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,0.2)', margin: '14px auto' }} />
+      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+        Reservas online · {new Date().getFullYear()}
+      </p>
+      <a href="https://divinia.vercel.app" target="_blank" rel="noopener noreferrer"
+        style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 4, display: 'block', textDecoration: 'none', letterSpacing: '0.08em' }}>
+        ⚡ Creado con DIVINIA
+      </a>
     </footer>
   )
 
