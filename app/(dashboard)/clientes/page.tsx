@@ -56,42 +56,24 @@ function timeAgo(dateStr: string) {
 function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => void }) {
   const cfg = client.custom_config || {}
   const color = cfg.color || '#6366f1'
-  const hasTurnos = client.booking_configs && client.booking_configs.length > 0
+  const hasTurnos = !!(client.booking_configs && client.booking_configs.length > 0)
   const turnosId = hasTurnos ? client.booking_configs![0].id : null
   const turnosActive = hasTurnos ? client.booking_configs![0].is_active : false
-  const hasChatbot = !!client.chatbot_id
   const status = STATUS_LABEL[client.status] || STATUS_LABEL.active
   const initial = (client.company_name || '?').charAt(0).toUpperCase()
-  const productosEnabled = cfg.productos_enabled === 'true'
-  const [togglingProds, setTogglingProds] = useState(false)
-
-  async function toggleProductos() {
-    setTogglingProds(true)
-    await fetch(`/api/clients/${client.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productos_enabled: productosEnabled ? 'false' : 'true' }),
-    })
-    setTogglingProds(false)
-    onRefresh()
-  }
+  const activeProducts = getClientProducts(client)
 
   return (
-    <div style={{
-      background: 'var(--paper)',
-      borderRadius: 16,
-      border: '1px solid var(--line)',
-      overflow: 'hidden',
-    }}>
+    <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', overflow: 'hidden' }}>
       <div style={{ height: 4, width: '100%', backgroundColor: color }} />
       <div style={{ padding: '20px' }}>
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 10,
+            width: 42, height: 42, borderRadius: 10, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 900, fontSize: 18, flexShrink: 0,
-            backgroundColor: color,
+            color: '#fff', fontWeight: 900, fontSize: 17, backgroundColor: color,
           }}>
             {initial}
           </div>
@@ -104,83 +86,49 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
             )}
             <p style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.email}</p>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-            <span style={{
-              fontFamily: 'var(--f-mono)',
-              fontSize: 10,
-              color: status.color,
-              background: status.bg,
-              borderRadius: 100,
-              padding: '3px 10px',
-            }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: status.color, background: status.bg, borderRadius: 100, padding: '3px 10px' }}>
               {status.label}
             </span>
-            <span style={{
-              fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase',
-              color: getPlanColor(client.plan) === '#C6FF3D' ? 'var(--ink)' : '#fff',
-              background: getPlanColor(client.plan),
-              borderRadius: 100, padding: '3px 8px', fontWeight: 700,
-            }}>{PLAN_LABEL[client.plan] || client.plan}</span>
-          </div>
-        </div>
-
-        {/* Productos activos */}
-        <div style={{ marginBottom: 16 }}>
-          <p style={{
-            fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em',
-            textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8,
-          }}>Servicios</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {hasChatbot && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 10px', borderRadius: 10, fontSize: 12, fontWeight: 500,
-                backgroundColor: color + '15', color,
-              }}>
-                <MessageSquare size={12} /> Chatbot
-              </div>
-            )}
-            {hasTurnos ? (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 10px', borderRadius: 10, fontSize: 12, fontWeight: 500,
-                ...(turnosActive
-                  ? { backgroundColor: 'rgba(198,255,61,0.2)', color: 'var(--ink)' }
-                  : { backgroundColor: 'var(--paper-2)', color: 'var(--muted)' }),
-              }}>
-                <Calendar size={12} /> Turnos {!turnosActive && '(inactivo)'}
-              </div>
-            ) : null}
-            {!hasChatbot && !hasTurnos && (
-              <span style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>Sin productos activos</span>
-            )}
-          </div>
-        </div>
-
-        {/* Toggle productos DIVINIA */}
-        {hasTurnos && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: 'var(--paper-2)', border: '1px solid var(--line)', marginBottom: 12 }}>
-            <span style={{ fontSize: 12, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🛍️ <span>Módulo Productos</span>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: getPlanColor(client.plan) === '#C6FF3D' ? 'var(--ink)' : '#fff', background: getPlanColor(client.plan), borderRadius: 100, padding: '3px 8px', fontWeight: 700 }}>
+              {PLAN_LABEL[client.plan] || client.plan}
             </span>
-            <button onClick={toggleProductos} disabled={togglingProds}
-              style={{ width: 38, height: 22, borderRadius: 100, border: 'none', position: 'relative', cursor: 'pointer', background: productosEnabled ? '#16a34a' : 'var(--line)', transition: 'background 0.2s', opacity: togglingProds ? 0.5 : 1 }}>
-              <span style={{ position: 'absolute', top: 3, width: 16, height: 16, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', left: productosEnabled ? 19 : 3 }} />
-            </button>
           </div>
-        )}
+        </div>
 
-        {/* Acciones */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {hasChatbot && client.chatbot_id && (
+        {/* Productos activos — badges por cada producto */}
+        <div style={{ marginBottom: 14 }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+            Productos
+          </p>
+          {activeProducts.length === 0 ? (
+            <span style={{ fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>Sin productos registrados</span>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {activeProducts.map(pid => {
+                const p = PRODUCTOS.find(x => x.id === pid || (pid === 'turnos' && x.id === 'turnero'))
+                if (!p) return null
+                return (
+                  <span key={pid} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    background: p.bg, color: p.color, border: `1px solid ${p.color}30`,
+                  }}>
+                    {p.emoji} {p.title}
+                  </span>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Acciones contextuales según productos */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {client.chatbot_id && (
             <a href={`/api/chatbot/${client.chatbot_id}`} target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)',
-                fontSize: 13, color: 'var(--ink)', textDecoration: 'none',
-              }}>
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <MessageSquare size={14} style={{ color }} /> Probar chatbot
+                <MessageSquare size={13} style={{ color: '#6366F1' }} /> Probar chatbot
               </span>
               <ExternalLink size={12} style={{ color: 'var(--muted)' }} />
             </a>
@@ -188,70 +136,59 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
           {hasTurnos && turnosId && (
             <>
               <a href={`/panel/${turnosId}`} target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)',
-                  fontSize: 13, color: 'var(--ink)', textDecoration: 'none',
-                }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Calendar size={14} style={{ color: '#16a34a' }} /> Panel del negocio
+                  <Calendar size={13} style={{ color: '#10B981' }} /> Panel del negocio {!turnosActive && <span style={{ fontSize: 10, color: 'var(--muted)' }}>(inactivo)</span>}
                 </span>
                 <ExternalLink size={12} style={{ color: 'var(--muted)' }} />
               </a>
               <a href={`/reservas/${turnosId}`} target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)',
-                  fontSize: 13, color: 'var(--ink)', textDecoration: 'none',
-                }}>
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Calendar size={14} style={{ color: '#3b82f6' }} /> Link de reservas (público)
+                  <Calendar size={13} style={{ color: '#3b82f6' }} /> Link de reservas
                 </span>
                 <ExternalLink size={12} style={{ color: 'var(--muted)' }} />
               </a>
             </>
           )}
           <a href={`/turnos/config/${client.id}`}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)',
-              fontSize: 13, color: 'var(--ink)', textDecoration: 'none',
-            }}>
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Settings size={14} style={{ color: 'var(--muted)' }} />
-              {hasTurnos ? 'Editar turnos' : 'Activar sistema de turnos'}
+              <Settings size={13} style={{ color: 'var(--muted)' }} />
+              {hasTurnos ? 'Configurar' : 'Agregar Turnero'}
             </span>
             <ChevronRight size={12} style={{ color: 'var(--muted)' }} />
           </a>
         </div>
 
-        <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 12, textAlign: 'right', fontFamily: 'var(--f-mono)' }}>
-          Cliente {timeAgo(client.created_at)}
+        <p style={{ fontSize: 10, color: 'var(--muted)', marginTop: 12, textAlign: 'right', fontFamily: 'var(--f-mono)' }}>
+          {timeAgo(client.created_at)}
         </p>
       </div>
     </div>
   )
 }
 
-// ── Formulario nuevo cliente — 2 pasos ───────────────────────────
+// ── Productos disponibles ─────────────────────────────────────────
 const PRODUCTOS = [
-  {
-    id: 'turnos',
-    emoji: '📅',
-    title: 'Sistema de Turnos',
-    desc: 'Reservas online, panel de agenda, notificaciones',
-    color: '#16a34a',
-    bg: '#dcfce7',
-  },
-  {
-    id: 'chatbot',
-    emoji: '💬',
-    title: 'Chatbot WhatsApp',
-    desc: 'Asistente IA para responder consultas automáticamente',
-    color: '#6366f1',
-    bg: '#ede9fe',
-  },
+  { id: 'web',     emoji: '🌐', title: 'Web / Landing',    desc: 'Página o webapp administrada por DIVINIA',          color: '#38BDF8', bg: '#EFF6FF' },
+  { id: 'turnero', emoji: '📅', title: 'Turnero IA',       desc: 'Sistema de reservas online con panel de agenda',    color: '#10B981', bg: '#F0FDF4' },
+  { id: 'chatbot', emoji: '💬', title: 'Chatbot IA',       desc: 'Asistente IA para WhatsApp o web',                  color: '#6366F1', bg: '#EDE9FE' },
+  { id: 'nucleus', emoji: '🧠', title: 'NUCLEUS IA',       desc: 'Cerebro IA completo — panel público + privado',     color: '#A78BFA', bg: '#F5F3FF' },
+  { id: 'content', emoji: '✨', title: 'Content Factory',  desc: 'Gestión de contenido y redes sociales con IA',      color: '#F59E0B', bg: '#FFFBEB' },
 ]
+
+// ── Helper: productos activos de un cliente ───────────────────────
+function getClientProducts(client: Client): string[] {
+  const fromConfig = (client.custom_config?.products || '').split(',').filter(Boolean)
+  const detected: string[] = []
+  if (client.chatbot_id && !fromConfig.includes('chatbot')) detected.push('chatbot')
+  if (client.booking_configs?.length && !fromConfig.includes('turnero')) detected.push('turnero')
+  const combined = [...fromConfig, ...detected]
+  return combined.filter((v, i) => combined.indexOf(v) === i)
+}
+
+// ── Formulario nuevo cliente — 2 pasos ───────────────────────────
 
 function NuevoClienteForm({ templates, onCreated }: { templates: { id: string; name: string; rubro: string }[]; onCreated: () => void }) {
   const searchParams = useSearchParams()
@@ -280,10 +217,12 @@ function NuevoClienteForm({ templates, onCreated }: { templates: { id: string; n
   async function createClient() {
     setLoading(true); setError('')
     try {
+      // Mapear 'turnero' → 'turnos' para el API (compatibilidad)
+      const apiProducts = selectedProducts.map(p => p === 'turnero' ? 'turnos' : p)
       const res = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, products: selectedProducts }),
+        body: JSON.stringify({ ...form, products: apiProducts }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al crear cliente')
@@ -486,35 +425,36 @@ function NuevoClienteForm({ templates, onCreated }: { templates: { id: string; n
           color: 'var(--paper)', fontSize: 11, fontWeight: 700,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>2</span>
-        <h2 style={{ fontWeight: 700, color: 'var(--ink)', margin: 0 }}>¿Qué productos contrata?</h2>
+        <h2 style={{ fontWeight: 700, color: 'var(--ink)', margin: 0 }}>¿Qué productos tiene?</h2>
         <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--f-mono)' }}>Paso 2 de 2</span>
       </div>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20, marginLeft: 32 }}>
-        Para <strong style={{ color: 'var(--ink)' }}>{form.company_name}</strong> — podés elegir uno o los dos
+        Para <strong style={{ color: 'var(--ink)' }}>{form.company_name}</strong> — elegí todos los que aplican
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 20 }}>
         {PRODUCTOS.map(prod => {
           const sel = selectedProducts.includes(prod.id)
           return (
             <button key={prod.id} onClick={() => toggleProduct(prod.id)}
               style={{
-                textAlign: 'left', padding: 16, borderRadius: 10, border: `2px solid ${sel ? prod.color : 'var(--line)'}`,
+                textAlign: 'left', padding: '14px 16px', borderRadius: 10,
+                border: `2px solid ${sel ? prod.color : 'var(--line)'}`,
                 background: sel ? prod.bg : 'var(--paper)', cursor: 'pointer', transition: 'all 0.15s',
               }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <div style={{
-                  width: 20, height: 20, borderRadius: 6, border: `2px solid ${sel ? prod.color : 'var(--line)'}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
+                  width: 18, height: 18, borderRadius: 5, border: `2px solid ${sel ? prod.color : 'var(--line)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
                   background: sel ? prod.color : 'transparent', transition: 'all 0.15s',
                 }}>
-                  {sel && <svg width="12" height="12" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {sel && <svg width="10" height="10" fill="none" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                     {prod.emoji} {prod.title}
-                  </p>
-                  <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, margin: 0 }}>{prod.desc}</p>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 3, lineHeight: 1.4 }}>{prod.desc}</div>
                 </div>
               </div>
             </button>
@@ -644,12 +584,11 @@ export default function ClientesPage() {
       c.contact_name?.toLowerCase().includes(search.toLowerCase()) ||
       c.email?.toLowerCase().includes(search.toLowerCase())
     const matchPlan = planFilter === 'todos' || c.plan === planFilter || c.status === planFilter
-    const hasChatbot = !!c.chatbot_id
-    const hasTurnos = c.booking_configs && c.booking_configs.length > 0
+    const prods = getClientProducts(c)
     const matchServicio = servicioFilter === 'todos' ||
-      (servicioFilter === 'nucleus' && hasChatbot) ||
-      (servicioFilter === 'turnero' && hasTurnos) ||
-      (servicioFilter === 'web' && !hasChatbot && !hasTurnos)
+      servicioFilter === 'pendientes' ||
+      prods.includes(servicioFilter) ||
+      (servicioFilter === 'turnero' && prods.includes('turnos'))
     return matchSearch && matchPlan && matchServicio
   })
 
