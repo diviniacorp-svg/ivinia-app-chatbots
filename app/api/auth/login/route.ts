@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
   const { password } = await request.json()
   const secret = process.env.ADMIN_SECRET || 'divinia2024'
 
+  console.log('[login] ADMIN_SECRET set:', !!process.env.ADMIN_SECRET, '| len:', secret.length)
   if (password !== secret) {
     return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
   }
