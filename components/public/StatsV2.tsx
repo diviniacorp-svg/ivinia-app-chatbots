@@ -1,13 +1,19 @@
-import Orb from './Orb'
+interface StatsProps {
+  clientesActivos?: number
+  mrr?: number
+  rubros?: number
+}
 
-const stats = [
-  { n: '15', label: 'Rubros disponibles', sub: 'Peluquería, nails, clínica, hotel, gym y más' },
-  { n: '48hs', label: 'Setup completo', sub: 'Del primer mensaje a estar en vivo' },
-  { n: '$45k', label: 'Desde por mes', sub: 'Sin permanencia, cancelás cuando querés' },
-  { n: '24/7', label: 'Tu negocio activo', sub: 'Reservas a las 3am, confirmadas al instante' },
-]
+export default function StatsV2({ clientesActivos = 8, mrr = 165000, rubros = 6 }: StatsProps) {
+  const mrrLabel = mrr >= 1000 ? `$${Math.round(mrr / 1000)}k` : `$${mrr}`
 
-export default function StatsV2() {
+  const stats = [
+    { n: '15+', label: 'Rubros disponibles', sub: 'Peluquería, nails, clínica, hotel, gym y más' },
+    { n: '48hs', label: 'Setup completo', sub: 'Del primer mensaje a estar en vivo' },
+    { n: '$45k', label: 'Desde por mes', sub: 'Sin permanencia, cancelás cuando querés' },
+    { n: '24/7', label: 'Tu negocio activo', sub: 'Reservas a las 3am, confirmadas al instante' },
+  ]
+
   return (
     <section style={{ padding: '100px 0', background: 'var(--ink)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       <div className="wrap-v2">

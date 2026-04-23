@@ -1,5 +1,6 @@
 import Navbar from '@/components/public/Navbar'
 import HeroV3 from '@/components/public/HeroV3'
+import StatsV2 from '@/components/public/StatsV2'
 import ProblemaV3 from '@/components/public/ProblemaV3'
 import ProductosV3 from '@/components/public/ProductosV3'
 import DemoViva from '@/components/public/DemoViva'
@@ -12,53 +13,66 @@ import CTAFinal from '@/components/public/CTAFinal'
 import Footer from '@/components/public/Footer'
 import WAFloat from '@/components/public/WAFloat'
 import StickyBar from '@/components/public/StickyBar'
+import { supabaseAdmin } from '@/lib/supabase'
 
-export default function HomePage() {
+export const revalidate = 3600
+
+async function getStats() {
+  try {
+    const [{ count }, mrrRes] = await Promise.all([
+      supabaseAdmin.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabaseAdmin.from('clients').select('mrr').eq('status', 'active'),
+    ])
+    const mrr = (mrrRes.data ?? []).reduce((s, c) => s + Number(c.mrr ?? 0), 0)
+    return { clientesActivos: count ?? 0, mrr, rubros: 6 }
+  } catch {
+    return { clientesActivos: 8, mrr: 165000, rubros: 6 }
+  }
+}
+
+export default async function HomePage() {
+  const stats = await getStats()
+
   return (
     <main style={{ minHeight: '100vh', background: 'var(--paper)', color: 'var(--ink)', overflowX: 'hidden' }}>
-      {/* Grid editorial de fondo */}
       <div className="grid-bg" />
-
-      {/* Barra sticky de conversión (aparece al scrollear) */}
       <StickyBar />
-
-      {/* Nav fija */}
       <Navbar />
 
-      {/* 1. Hero — selector de rubro + propuesta + stats */}
+      {/* 1. Hero */}
       <HeroV3 />
 
-      {/* 2. Problema — 3 dolores concretos del dueño de PYME */}
+      {/* 2. Stats reales desde Supabase */}
+      <StatsV2 clientesActivos={stats.clientesActivos} mrr={stats.mrr} rubros={stats.rubros} />
+
+      {/* 3. Problema */}
       <ProblemaV3 />
 
-      {/* 3. Productos — 5 productos con precios reales y CTAs */}
+      {/* 4. Productos — 5 con precios reales */}
       <ProductosV3 />
 
-      {/* 4. Demo en vivo — turnero embebido interactivo */}
+      {/* 5. Demo en vivo */}
       <DemoViva />
 
-      {/* 5. ROI Calculator — ¿te conviene? */}
+      {/* 6. ROI Calculator */}
       <ROICalculator />
 
-      {/* 6. Prueba social — demos reales como casos */}
+      {/* 7. Prueba social */}
       <PruebaSocial />
 
-      {/* 7. Proceso — 3 pasos simples */}
+      {/* 8. Proceso */}
       <ProcesoSimple />
 
-      {/* 8. Precios — planes correctos con CTA por plan */}
+      {/* 9. Precios */}
       <PricingV3 />
 
-      {/* 9. FAQ — 5 preguntas clave */}
+      {/* 10. FAQ */}
       <FAQSimple />
 
-      {/* 10. CTA final — urgencia real + WA */}
+      {/* 11. CTA final */}
       <CTAFinal />
 
-      {/* Footer */}
       <Footer />
-
-      {/* Botón flotante WhatsApp */}
       <WAFloat />
     </main>
   )

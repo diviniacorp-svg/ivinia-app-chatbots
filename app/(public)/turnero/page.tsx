@@ -1,5 +1,6 @@
 import Navbar from '@/components/public/Navbar'
 import Footer from '@/components/public/Footer'
+import WAFloat from '@/components/public/WAFloat'
 import Link from 'next/link'
 import { TURNERO_PLANS, formatPrecio } from '@/lib/turnero-plans'
 import type { Metadata } from 'next'
@@ -288,6 +289,7 @@ export default function TurneroPage() {
       </section>
 
       <Footer />
+      <WAFloat />
     </main>
   )
 }
