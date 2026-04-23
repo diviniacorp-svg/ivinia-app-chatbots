@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: 'Servidor mal configurado' }, { status: 503 })
     }
   }
-  const secret = validSecret || 'divinia2024'
+  const secret = validSecret || 'DiViNiA2050'
   const token = await sessionToken(secret)
 
   const isAdminRoute =
