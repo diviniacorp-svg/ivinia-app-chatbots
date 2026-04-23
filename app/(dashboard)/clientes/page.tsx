@@ -290,6 +290,68 @@ function EditClientDrawer({
   )
 }
 
+// ── Secciones de clientes (3 categorías) ─────────────────────────
+function ClientSections({ clients, onRefresh }: { clients: Client[]; onRefresh: () => void }) {
+  const realClients = clients.filter(c => getClientType(c) === 'client')
+  const ownApps     = clients.filter(c => getClientType(c) === 'own_app')
+  const demos       = clients.filter(c => getClientType(c) === 'demo')
+
+  const SectionHeader = ({
+    emoji, title, count, color, desc,
+  }: { emoji: string; title: string; count: number; color: string; desc: string }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <span style={{ fontSize: 18 }}>{emoji}</span>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h3 style={{ fontWeight: 700, color: 'var(--ink)', margin: 0, fontSize: 15 }}>{title}</h3>
+          <span style={{
+            background: color + '18', color, border: `1px solid ${color}40`,
+            borderRadius: 100, padding: '2px 10px',
+            fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700,
+          }}>{count}</span>
+        </div>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0, marginTop: 2 }}>{desc}</p>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
+
+      {/* Sección 1 — Clientes */}
+      {realClients.length > 0 && (
+        <div>
+          <SectionHeader emoji="🏢" title="Clientes" count={realClients.length} color="#10B981" desc="Proyectos reales — tienen o tuvieron contrato" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {realClients.map(c => <ClientCard key={c.id} client={c} onRefresh={onRefresh} />)}
+          </div>
+        </div>
+      )}
+
+      {/* Sección 2 — Apps propias DIVINIA */}
+      {ownApps.length > 0 && (
+        <div>
+          <SectionHeader emoji="🚀" title="Apps Propias DIVINIA" count={ownApps.length} color="#8B5CF6" desc="Productos de DIVINIA — sin cliente externo, en desarrollo" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {ownApps.map(c => <ClientCard key={c.id} client={c} onRefresh={onRefresh} />)}
+          </div>
+        </div>
+      )}
+
+      {/* Sección 3 — Demos */}
+      {demos.length > 0 && (
+        <div>
+          <SectionHeader emoji="🎭" title="Demos" count={demos.length} color="#6366F1" desc="Clientes demo — aparecen en la landing pública" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {demos.map(c => <ClientCard key={c.id} client={c} onRefresh={onRefresh} />)}
+          </div>
+        </div>
+      )}
+
+    </div>
+  )
+}
+
 // ── Card individual de cliente ────────────────────────────────────
 function ClientCard({ client: initialClient, onRefresh }: { client: Client; onRefresh: () => void }) {
   const [client, setClient] = useState(initialClient)
@@ -415,11 +477,11 @@ function ClientCard({ client: initialClient, onRefresh }: { client: Client; onRe
               </a>
             </>
           )}
-          <a href={`/turnos/config/${client.id}`}
+          <a href={`/clientes/${client.id}`}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Settings size={13} style={{ color: 'var(--muted)' }} />
-              Configurar
+              Ver detalle
             </span>
             <ChevronRight size={12} style={{ color: 'var(--muted)' }} />
           </a>
@@ -442,6 +504,16 @@ const PRODUCTOS = [
   { id: 'nucleus', emoji: '🧠', title: 'NUCLEUS IA',       desc: 'Cerebro IA completo — panel público + privado',     color: '#A78BFA', bg: '#F5F3FF' },
   { id: 'content', emoji: '✨', title: 'Content Factory',  desc: 'Gestión de contenido y redes sociales con IA',      color: '#F59E0B', bg: '#FFFBEB' },
 ]
+
+// ── Clasificación de cliente por tipo ────────────────────────────
+type ClientType = 'client' | 'own_app' | 'demo'
+
+function getClientType(client: Client): ClientType {
+  const id = client.chatbot_id || ''
+  if (id.endsWith('-app')) return 'own_app'
+  if (id.includes('demo') || id.includes('2026bot') || id.includes('2026bt')) return 'demo'
+  return 'client'
+}
 
 // ── Helper: productos activos de un cliente ───────────────────────
 function getClientProducts(client: Client): string[] {
@@ -1000,32 +1072,15 @@ export default function ClientesPage() {
               background: 'var(--paper)', borderRadius: 16, border: '1px dashed var(--line)',
               padding: '64px 40px', textAlign: 'center',
             }}>
-              {seeding ? (
-                <>
-                  <div style={{
-                    width: 48, height: 48, border: '4px solid var(--line)', borderTopColor: 'var(--ink)',
-                    borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite',
-                  }} />
-                  <p style={{ fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>Cargando clientes...</p>
-                  <p style={{ color: 'var(--muted)', fontSize: 13 }}>Reconectando con la base de datos</p>
-                </>
-              ) : seedMsg ? (
+              {seedMsg ? (
                 <>
                   <p style={{ fontSize: 40, marginBottom: 12 }}>⚠️</p>
                   <p style={{ fontWeight: 700, color: '#dc2626', marginBottom: 8 }}>Error al cargar clientes</p>
-                  <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 8, maxWidth: 400, margin: '0 auto 8px' }}>
-                    Falta <code style={{ fontFamily: 'var(--f-mono)', fontSize: 11, background: 'var(--paper-2)', padding: '2px 6px', borderRadius: 4 }}>SUPABASE_SERVICE_ROLE_KEY</code> en las variables de entorno de Vercel.
-                  </p>
-                  <p style={{ color: 'var(--muted)', fontSize: 11, marginBottom: 16 }}>
-                    Vercel → Settings → Environment Variables → agregá la key del proyecto Supabase
+                  <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 16 }}>
+                    Revisá <code style={{ fontFamily: 'var(--f-mono)', fontSize: 11, background: 'var(--paper-2)', padding: '2px 6px', borderRadius: 4 }}>SUPABASE_SERVICE_ROLE_KEY</code> en Vercel
                   </p>
                   <button onClick={cargarDemos} disabled={seeding}
-                    style={{
-                      background: 'var(--ink)', color: 'var(--paper)', fontFamily: 'var(--f-mono)',
-                      fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-                      border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer',
-                      opacity: seeding ? 0.5 : 1,
-                    }}>
+                    style={{ background: 'var(--ink)', color: 'var(--paper)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer' }}>
                     🔄 Reintentar
                   </button>
                 </>
@@ -1036,11 +1091,7 @@ export default function ClientesPage() {
                   <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 16 }}>{search ? 'Probá con otro término' : 'Creá tu primer cliente para empezar'}</p>
                   {!search && (
                     <button onClick={() => setTab('nuevo')}
-                      style={{
-                        background: 'var(--ink)', color: 'var(--paper)', fontFamily: 'var(--f-mono)',
-                        fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-                        border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer',
-                      }}>
+                      style={{ background: 'var(--ink)', color: 'var(--paper)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer' }}>
                       + Crear cliente nuevo
                     </button>
                   )}
@@ -1048,9 +1099,7 @@ export default function ClientesPage() {
               )}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-              {filtered.map(client => <ClientCard key={client.id} client={client} onRefresh={() => loadClients()} />)}
-            </div>
+            <ClientSections clients={filtered} onRefresh={loadClients} />
           )}
         </>
       )}

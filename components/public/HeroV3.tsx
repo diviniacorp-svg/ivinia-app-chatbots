@@ -179,31 +179,35 @@ export default function HeroV3() {
           </div>
         </div>
 
-        {/* Headline principal — grande, estático */}
-        <div style={{ marginBottom: 40 }}>
+        {/* Headline principal — grande, uppercase, centrado */}
+        <div style={{ marginBottom: 40, textAlign: 'center' }}>
           <h1
             className="h-display"
             style={{
-              fontSize: 'clamp(52px, 9vw, 128px)',
+              fontSize: 'clamp(56px, 10vw, 136px)',
               color: 'var(--ink)',
-              margin: 0,
-              lineHeight: 0.95,
+              margin: '0 auto',
+              lineHeight: 0.9,
               letterSpacing: '-0.04em',
+              textTransform: 'uppercase',
+              fontStyle: 'normal',
             }}
           >
             Tu negocio<br />
             funciona<br />
-            <em style={{ color: 'var(--ink)' }}>solo.</em>
+            <em>solo.</em>
           </h1>
           <p style={{
             fontFamily: 'var(--f-display)',
-            fontSize: 'clamp(17px, 2vw, 22px)',
+            fontSize: 'clamp(16px, 1.8vw, 21px)',
             color: 'var(--muted-2)',
-            marginTop: 20,
-            maxWidth: '52ch',
+            marginTop: 24,
+            maxWidth: '54ch',
             lineHeight: 1.45,
+            marginLeft: 'auto',
+            marginRight: 'auto',
           }}>
-            Turnero IA + Chatbot 24hs + Automatizaciones a medida.<br />
+            Turnero IA · Chatbot 24hs · Automatizaciones a medida.<br />
             Lo configuramos para tu rubro en 24 horas.
           </p>
         </div>
