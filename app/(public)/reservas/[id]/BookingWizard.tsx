@@ -279,6 +279,17 @@ export default function BookingWizard({
     return map
   }, [config.services])
 
+  const productosGrouped = useMemo(() => {
+    if (!productos?.length) return new Map<string, Product[]>()
+    const map = new Map<string, Product[]>()
+    productos.forEach(p => {
+      const cat = p.category || 'Productos'
+      if (!map.has(cat)) map.set(cat, [])
+      map.get(cat)!.push(p)
+    })
+    return map
+  }, [productos])
+
   function prevMonth() { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }
   function nextMonth() { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) } else setViewMonth(m => m + 1) }
 
@@ -712,19 +723,6 @@ export default function BookingWizard({
   }
 
   // ── PASO SELECT ─────────────────────────────────────────────────
-
-  // ── Products tab view ────────────────────────────────────────────
-  const productosGrouped = useMemo(() => {
-    if (!productos?.length) return new Map<string, Product[]>()
-    const map = new Map<string, Product[]>()
-    productos.forEach(p => {
-      const cat = p.category || 'Productos'
-      if (!map.has(cat)) map.set(cat, [])
-      map.get(cat)!.push(p)
-    })
-    return map
-  }, [productos])
-
   return (
     <div style={pageStyle}>
       <style>{`
