@@ -73,30 +73,6 @@ export const TURNERO_PLANS = [
       chatbot: false,
     },
   },
-  {
-    id: 'enterprise',
-    nombre: 'Todo DIVINIA',
-    precio: 120000,
-    billing: '/mes',
-    color: '#FF5E3A',
-    descripcion: 'Turnero + Chatbot WA + Contenido IA.',
-    popular: false,
-    features: [
-      'Turnero completo ilimitado',
-      'Chatbot WhatsApp 24hs con IA',
-      '12 posts mensuales con IA',
-      'Captions + hashtags + diseño',
-      'Múltiples sucursales',
-      'Soporte dedicado WhatsApp',
-    ],
-    limites: {
-      servicios: -1,
-      profesionales: -1,
-      recordatorios_auto: true,
-      sena_online: true,
-      chatbot: true,
-    },
-  },
 ]
 
 // Planes de mantenimiento (para clientes con pago único)

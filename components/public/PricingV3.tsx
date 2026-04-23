@@ -168,118 +168,51 @@ export default function PricingV3() {
           ))}
         </div>
 
-        {/* Card Todo DIVINIA + ayuda */}
+        {/* Card NUCLEUS + ayuda */}
         <Reveal delay={200}>
           <div style={{ display: 'grid', gap: 12 }}
             className="grid-cols-2-mobile-1 md:grid-cols-[2fr_1fr]">
 
-            {/* Todo DIVINIA */}
-            {TURNERO_PLANS.filter(p => p.id === 'enterprise').map(plan => (
-              <div key={plan.id} style={{
-                background: 'var(--paper-2)',
-                border: '1px solid var(--line)',
-                borderRadius: 20,
-                padding: '32px',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: 16,
-                  flexWrap: 'wrap',
-                  gap: 12,
-                }}>
-                  <div>
-                    <div style={{
-                      fontFamily: 'var(--f-mono)',
-                      fontSize: 9,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: plan.color,
-                      marginBottom: 4,
-                    }}>
-                      Bundle completo
-                    </div>
-                    <h3 style={{
-                      fontFamily: 'var(--f-display)',
-                      fontStyle: 'italic',
-                      fontWeight: 700,
-                      fontSize: 26,
-                      color: 'var(--ink)',
-                      letterSpacing: '-0.03em',
-                    }}>
-                      {plan.nombre}
-                    </h3>
+            {/* NUCLEUS IA */}
+            <div style={{
+              background: 'var(--paper-2)',
+              border: '1px solid var(--line)',
+              borderRadius: 20,
+              padding: '32px',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#A78BFA', marginBottom: 4 }}>
+                    Sistema completo a medida
                   </div>
-                  <div>
-                    <div style={{
-                      fontFamily: 'var(--f-display)',
-                      fontStyle: 'italic',
-                      fontWeight: 700,
-                      fontSize: 32,
-                      color: plan.color,
-                      letterSpacing: '-0.04em',
-                      lineHeight: 1,
-                    }}>
-                      {formatPrecio(plan.precio)}
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--f-mono)',
-                      fontSize: 9,
-                      color: 'var(--muted)',
-                      letterSpacing: '0.06em',
-                    }}>
-                      {plan.billing}
-                    </div>
+                  <h3 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 26, color: 'var(--ink)', letterSpacing: '-0.03em' }}>
+                    🧠 NUCLEUS IA
+                  </h3>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 28, color: '#A78BFA', letterSpacing: '-0.04em', lineHeight: 1 }}>
+                    Precio a medida
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', letterSpacing: '0.06em' }}>
+                    setup único + mantenimiento
                   </div>
                 </div>
-                <p style={{
-                  fontFamily: 'var(--f-display)',
-                  fontSize: 14,
-                  color: 'var(--muted-2)',
-                  marginBottom: 16,
-                  lineHeight: 1.55,
-                }}>
-                  {plan.descripcion}
-                </p>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
-                  {plan.features.map(f => (
-                    <span key={f} style={{
-                      fontFamily: 'var(--f-display)',
-                      fontSize: 12,
-                      color: 'var(--muted-2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                      <span style={{ color: plan.color }}>✓</span> {f}
-                    </span>
-                  ))}
-                </div>
-                <a
-                  href={`${WA_BASE}${WA_MSG.enterprise}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: plan.color,
-                    color: '#fff',
-                    borderRadius: 10,
-                    padding: '11px 22px',
-                    fontFamily: 'var(--f-mono)',
-                    fontWeight: 700,
-                    fontSize: 11,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Quiero Todo DIVINIA →
-                </a>
               </div>
-            ))}
+              <p style={{ fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)', marginBottom: 16, lineHeight: 1.55 }}>
+                Panel público para tus clientes + panel privado de gestión + agentes IA + integraciones a medida. Para negocios que necesitan más que un turno.
+              </p>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+                {['Chatbot IA en tu web y WA', 'Panel de reservas + agenda', 'Agentes IA personalizados', 'Integraciones a medida', 'Soporte dedicado'].map(f => (
+                  <span key={f} style={{ fontFamily: 'var(--f-display)', fontSize: 12, color: 'var(--muted-2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ color: '#A78BFA' }}>✓</span> {f}
+                  </span>
+                ))}
+              </div>
+              <a href={`${WA_BASE}Hola%20DIVINIA!%20Quiero%20saber%20m%C3%A1s%20sobre%20NUCLEUS%20IA`} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#A78BFA', color: '#fff', borderRadius: 10, padding: '11px 22px', fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                Consultar NUCLEUS →
+              </a>
+            </div>
 
             {/* ¿No sabés cuál? */}
             <div style={{

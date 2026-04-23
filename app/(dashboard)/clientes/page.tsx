@@ -518,53 +518,23 @@ export default function ClientesPage() {
   const [seeding, setSeeding] = useState(false)
   const [seedMsg, setSeedMsg] = useState('')
 
-  async function loadClients(autoSeedIfEmpty = false) {
-    const res = await fetch('/api/clients')
-    const data = await res.json()
-    const list: Client[] = data.clients || []
-
-    const countWithTurnos = list.filter(c => c.booking_configs && c.booking_configs.length > 0).length
-    const needsSeed = list.length === 0 || (list.length > 1 && countWithTurnos < list.length - 1)
-
-    if (needsSeed && autoSeedIfEmpty) {
-      setSeeding(true)
-      try {
-        const r1 = await fetch('/api/seed/demo-clientes')
-        const d1 = await r1.json()
-        if (!d1.success) throw new Error('demo-clientes: ' + JSON.stringify(d1))
-        const cfgErrors = d1.results?.filter((r: {cfg_error?: string}) => r.cfg_error).map((r: {name: string; cfg_error: string}) => `${r.name}: ${r.cfg_error}`)
-        if (cfgErrors?.length > 0) throw new Error('Booking config error: ' + cfgErrors.join(' | '))
-        const r2 = await fetch('/api/seed/demo-rufina')
-        const d2 = await r2.json()
-        if (d2.error) throw new Error('demo-rufina: ' + d2.error + (d2.detail ? ' — ' + d2.detail : ''))
-        const r3 = await fetch('/api/seed/demo-top-quality')
-        const d3 = await r3.json()
-        if (d3.error) throw new Error('demo-top-quality: ' + d3.error + (d3.detail ? ' — ' + d3.detail : ''))
-        const res2 = await fetch('/api/clients')
-        const data2 = await res2.json()
-        const final: Client[] = data2.clients || []
-        if (final.length === 0) throw new Error('Seed corrió pero BD devuelve 0 clientes — revisá SUPABASE_SERVICE_ROLE_KEY en Vercel')
-        setClients(final)
-      } catch (e) {
-        setSeedMsg('❌ ' + (e instanceof Error ? e.message : 'Error conectando con Supabase — revisá SUPABASE_SERVICE_ROLE_KEY en Vercel → Settings → Environment Variables'))
-        setClients([])
-      } finally {
-        setSeeding(false)
-      }
-    } else {
-      setClients(list)
+  async function loadClients() {
+    try {
+      const res = await fetch('/api/clients')
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setClients(data.clients || [])
+    } catch (e) {
+      setSeedMsg('❌ Error conectando con Supabase — revisá SUPABASE_SERVICE_ROLE_KEY en Vercel')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   async function cargarDemos() {
     setSeeding(true)
     setSeedMsg('')
     try {
-      await fetch('/api/seed')
-      await fetch('/api/seed/demo-clientes')
-      await fetch('/api/seed/demo-rufina')
-      await fetch('/api/seed/demo-top-quality')
       await loadClients()
       setSeedMsg('✅ Clientes recargados')
       setTimeout(() => setSeedMsg(''), 3000)
@@ -576,7 +546,7 @@ export default function ClientesPage() {
   }
 
   useEffect(() => {
-    loadClients(true)
+    loadClients()
     fetch('/api/templates').then(r => r.json()).then(d => setTemplates(d.templates || []))
   }, [])
 
@@ -677,7 +647,7 @@ export default function ClientesPage() {
 
       {tab === 'nuevo' ? (
         <Suspense fallback={null}>
-          <NuevoClienteForm templates={templates} onCreated={() => { loadClients(); }} />
+          <NuevoClienteForm templates={templates} onCreated={loadClients} />
         </Suspense>
       ) : (
         <>
