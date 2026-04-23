@@ -458,7 +458,7 @@ export default function RubrosPage() {
             {CATEGORIAS.flatMap(c => c.rubros).map(r => (
               <Link
                 key={r.slug}
-                href={`/reservas/${DEMO_ID}`}
+                href={demoUrl(r.slug)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '7px 14px', borderRadius: 100,
