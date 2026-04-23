@@ -161,6 +161,24 @@ export default function HeroV3() {
     }}>
       <div className="wrap-v2">
 
+        {/* Eyebrow título */}
+        <div style={{ marginBottom: 36 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            background: 'var(--ink)', borderRadius: 100,
+            padding: '8px 20px',
+          }}>
+            <span style={{ fontSize: 13 }}>⚡</span>
+            <span style={{
+              fontFamily: 'var(--f-mono)', fontSize: 11,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: 'var(--lime)', fontWeight: 700,
+            }}>
+              Automatizaciones a medida para hacer crecer tu negocio
+            </span>
+          </div>
+        </div>
+
         {/* Selector de rubro */}
         <div style={{ marginBottom: 48 }}>
           <span style={{

@@ -10,6 +10,7 @@ const DEMOS = [
     color: '#d63384',
     emoji: '💅',
     descripcion: 'Nail bar de San Luis. Reservas con cobro de seña online.',
+    publicSlug: 'rufina-nails-demo',
     cfgId: '75c6a93f-a9e3-4e47-bf56-fa5bb8c8a7f8',
     pin: '3698',
   },
@@ -19,6 +20,7 @@ const DEMOS = [
     color: '#f59e0b',
     emoji: '🏨',
     descripcion: 'Hotel boutique en San Luis. Check-in online y reservas directas.',
+    publicSlug: 'cantera2026bot',
     cfgId: 'fff9e610-0620-4ed5-82a9-e8505bcc1148',
     pin: '4158',
   },
@@ -28,6 +30,7 @@ const DEMOS = [
     color: '#10b981',
     emoji: '🌿',
     descripcion: 'Complejo de cabañas. Reservas sin intermediarios, cobro de seña incluido.',
+    publicSlug: 'paraisos2026bt',
     cfgId: '4c05aac8-c8fc-46c9-83ec-18d53343bd64',
     pin: '2650',
   },
@@ -53,7 +56,7 @@ export default function DemoViva() {
   const demo = DEMOS[demoIdx]
 
   const iframeSrc = vista === 'public'
-    ? `/reservas/${demo.cfgId}`
+    ? `/reservas/${demo.publicSlug}`
     : `/panel/${demo.cfgId}?autopin=${demo.pin}`
 
   const iframeKey = `${demo.cfgId}-${vista}`
@@ -256,7 +259,7 @@ export default function DemoViva() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 24 }}>
-                <Link href={vista === 'public' ? `/reservas/${demo.cfgId}` : `/panel/${demo.cfgId}`} target="_blank"
+                <Link href={vista === 'public' ? `/reservas/${demo.publicSlug}` : `/panel/${demo.cfgId}`} target="_blank"
                   style={{
                     display: 'block', textAlign: 'center', padding: '10px 16px', borderRadius: 10,
                     background: 'rgba(246,245,242,0.07)', border: '1px solid rgba(246,245,242,0.12)',

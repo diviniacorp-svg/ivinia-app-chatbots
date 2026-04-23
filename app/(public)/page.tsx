@@ -1,6 +1,7 @@
 import Navbar from '@/components/public/Navbar'
 import HeroV3 from '@/components/public/HeroV3'
 import StatsV2 from '@/components/public/StatsV2'
+import RubrosMarquee from '@/components/public/RubrosMarquee'
 import ProblemaV3 from '@/components/public/ProblemaV3'
 import ProductosV3 from '@/components/public/ProductosV3'
 import DemoViva from '@/components/public/DemoViva'
@@ -44,6 +45,9 @@ export default async function HomePage() {
 
       {/* 2. Stats reales desde Supabase */}
       <StatsV2 clientesActivos={stats.clientesActivos} mrr={stats.mrr} rubros={stats.rubros} />
+
+      {/* 2b. Rubros marquee */}
+      <RubrosMarquee />
 
       {/* 3. Problema */}
       <ProblemaV3 />
