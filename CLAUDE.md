@@ -228,6 +228,17 @@ ADMIN_EMAIL=joaco@divinia.ar
 - Landing completa con 14 secciones
 - Remotion: compositions para videos IA
 
+## Agentes estrategas (abrir carpeta = cargar contexto del agente)
+
+| Agente | Carpeta | Cuándo usarlo |
+|---|---|---|
+| Estratega Turnero | `agents/turnero/` | Demos, propuestas, activar clientes nuevos |
+| Estratega Comercial | `agents/comercial/` | CRM, scoring leads, links de cobro |
+| Estratega Content Factory | `agents/content/` | Packs mensuales, @autom_atia |
+| Estratega NUCLEUS | `agents/nucleus/` | Proyectos enterprise, multi-agente |
+
+---
+
 ## Lo que NO existe todavía
 
 - Propuesta sharable pública en `/propuesta/[leadId]`
