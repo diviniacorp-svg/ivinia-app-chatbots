@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-function sessionToken(secret: string): string {
-  return createHmac('sha256', secret).update('divinia_session_v1').digest('hex')
+async function sessionToken(secret: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode('divinia_session_v1'))
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 export async function POST(request: NextRequest) {
@@ -15,7 +19,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
   }
 
-  const token = sessionToken(validSecret)
+  const token = await sessionToken(validSecret)
   const response = NextResponse.json({ ok: true })
   response.cookies.set('divinia_session', token, {
     httpOnly: true,

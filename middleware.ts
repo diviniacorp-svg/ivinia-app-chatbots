@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
 
-function sessionToken(secret: string): string {
-  return createHmac('sha256', secret).update('divinia_session_v1').digest('hex')
+async function sessionToken(secret: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode('divinia_session_v1'))
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 const ADMIN_ROUTES = [
@@ -55,7 +59,7 @@ const PROTECTED_API_ROUTES = [
   '/api/nucleo',
 ]
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const validSecret = process.env.ADMIN_SECRET
@@ -65,7 +69,7 @@ export function middleware(request: NextRequest) {
     }
   }
   const secret = validSecret || 'divinia2024'
-  const token = sessionToken(secret)
+  const token = await sessionToken(secret)
 
   const isAdminRoute =
     ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/')) ||
