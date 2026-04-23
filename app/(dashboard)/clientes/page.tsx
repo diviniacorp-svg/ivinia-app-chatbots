@@ -23,6 +23,7 @@ interface Client {
   embed_code: string | null
   trial_end: string
   created_at: string
+  mrr: number
   custom_config?: Record<string, string>
   booking_configs?: BookingConfigMin[]
 }
@@ -124,13 +125,22 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
 
         {/* Acciones contextuales según productos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {client.chatbot_id && (
+          {client.chatbot_id && !activeProducts.includes('nucleus') && (
             <a href={`/api/chatbot/${client.chatbot_id}`} target="_blank" rel="noopener noreferrer"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <MessageSquare size={13} style={{ color: '#6366F1' }} /> Probar chatbot
               </span>
               <ExternalLink size={12} style={{ color: 'var(--muted)' }} />
+            </a>
+          )}
+          {activeProducts.includes('nucleus') && (
+            <a href={`/nucleo?client=${client.id}`}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: '#A78BFA', fontSize: 13 }}>🧠</span> Panel NUCLEUS
+              </span>
+              <ChevronRight size={12} style={{ color: 'var(--muted)' }} />
             </a>
           )}
           {hasTurnos && turnosId && (
@@ -155,7 +165,7 @@ function ClientCard({ client, onRefresh }: { client: Client; onRefresh: () => vo
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink)', textDecoration: 'none' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Settings size={13} style={{ color: 'var(--muted)' }} />
-              {hasTurnos ? 'Configurar' : 'Agregar Turnero'}
+              Configurar
             </span>
             <ChevronRight size={12} style={{ color: 'var(--muted)' }} />
           </a>
@@ -570,14 +580,6 @@ export default function ClientesPage() {
     fetch('/api/templates').then(r => r.json()).then(d => setTemplates(d.templates || []))
   }, [])
 
-  const CLIENTES_PENDIENTES = [
-    { nombre: 'Shopping del Usado', contacto: '', servicio: 'NUCLEUS', status: '⭐ Primer cierre — propuesta enviada', color: '#A78BFA', icon: '🛍️', accion: 'Cerrar venta' },
-    { nombre: 'Dorotea (Santiago Peral)', contacto: 'Santiago Peral', servicio: 'NUCLEUS', status: 'En desarrollo', color: '#A78BFA', icon: '🧠', accion: 'Definir alcance' },
-    { nombre: 'Estética tuEspacio', contacto: 'Romina', servicio: 'Turnero', status: 'Cliente activo con turnos', color: '#10B981', icon: '💆', accion: 'Conectar a DIVINIA' },
-    { nombre: 'Buggi Viajes y Turismo', contacto: '', servicio: 'Web', status: 'Webapp administrada', color: '#38BDF8', icon: '✈️', accion: 'Agregar a Supabase' },
-    { nombre: 'TUBI', contacto: '', servicio: 'Web', status: 'App PHP deployada', color: '#38BDF8', icon: '🚲', accion: 'Conectar monitoring' },
-  ]
-
   const filtered = clients.filter(c => {
     const matchSearch = !search ||
       c.company_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -585,8 +587,9 @@ export default function ClientesPage() {
       c.email?.toLowerCase().includes(search.toLowerCase())
     const matchPlan = planFilter === 'todos' || c.plan === planFilter || c.status === planFilter
     const prods = getClientProducts(c)
+    const isPendiente = c.status === 'trial' || Number(c.mrr || 0) === 0
     const matchServicio = servicioFilter === 'todos' ||
-      servicioFilter === 'pendientes' ||
+      (servicioFilter === 'pendientes' && isPendiente) ||
       prods.includes(servicioFilter) ||
       (servicioFilter === 'turnero' && prods.includes('turnos'))
     return matchSearch && matchPlan && matchServicio
@@ -597,9 +600,8 @@ export default function ClientesPage() {
   const countTurnos  = clients.filter(c => c.booking_configs && c.booking_configs.length > 0).length
   const countChatbot = clients.filter(c => !!c.chatbot_id).length
 
-  // MRR: clientes activos × precio de su plan
-  const PLAN_PRICES: Record<string, number> = { mensual: 45000, anual: 35000, unico: 0, trial: 0, basic: 45000, starter: 45000, pro: 35000, enterprise: 35000 }
-  const mrr = clients.filter(c => c.status === 'active').reduce((sum, c) => sum + (PLAN_PRICES[c.plan] || 0), 0)
+  // MRR real desde el campo mrr de Supabase
+  const mrr = clients.filter(c => c.status === 'active').reduce((sum, c) => sum + Number(c.mrr || 0), 0)
 
   const allPlans = Array.from(new Set(clients.map(c => c.plan))).filter(Boolean) as string[]
 
@@ -702,34 +704,9 @@ export default function ClientesPage() {
             ))}
           </div>
 
-          {/* Sección: clientes reales pendientes de activar */}
-          {servicioFilter === 'pendientes' && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-                Clientes reales · pendientes de activar en DIVINIA
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                {CLIENTES_PENDIENTES.map(cp => (
-                  <div key={cp.nombre} style={{ background: 'var(--paper)', border: `1px solid ${cp.color}40`, borderRadius: 12, padding: '18px 20px', borderLeft: `3px solid ${cp.color}` }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: cp.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                        {cp.icon}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', marginBottom: 2 }}>{cp.nombre}</div>
-                        {cp.contacto && <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'var(--muted)', marginBottom: 4 }}>{cp.contacto}</div>}
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: cp.color, border: `1px solid ${cp.color}50`, borderRadius: 4, padding: '2px 6px' }}>{cp.servicio}</span>
-                          <span style={{ fontFamily: 'var(--f-display)', fontSize: 11, color: 'var(--muted-2)' }}>{cp.status}</span>
-                        </div>
-                        <button style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${cp.color}40`, background: cp.color + '10', cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: cp.color }} onClick={() => setTab('nuevo')}>
-                          {cp.accion} →
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {servicioFilter === 'pendientes' && filtered.length > 0 && (
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+              Clientes · pendientes de activar o sin facturación
             </div>
           )}
 
