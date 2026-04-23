@@ -114,17 +114,22 @@ export default function HeroV3() {
   const rubroActivo = RUBROS[activeIdx]
   const waLink = WA_BASE + rubroActivo.wa
 
+  const scrollPillIntoView = (idx: number) => {
+    const container = scrollRef.current
+    if (!container) return
+    const pill = container.children[idx] as HTMLElement
+    if (!pill) return
+    // Only scroll the horizontal pill container — never the page
+    const containerRect = container.getBoundingClientRect()
+    const pillRect = pill.getBoundingClientRect()
+    const offset = pillRect.left - containerRect.left - (containerRect.width / 2) + (pillRect.width / 2)
+    container.scrollBy({ left: offset, behavior: 'smooth' })
+  }
+
   const selectRubro = (idx: number) => {
     setActiveIdx(idx)
     setAnimKey(k => k + 1)
-    // Scroll pill into view
-    const container = scrollRef.current
-    if (container) {
-      const pill = container.children[idx] as HTMLElement
-      if (pill) {
-        pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-      }
-    }
+    scrollPillIntoView(idx)
   }
 
   useEffect(() => {
@@ -133,11 +138,7 @@ export default function HeroV3() {
       setActiveIdx(prev => {
         const next = (prev + 1) % (RUBROS.length - 1) // skip "ver todos"
         setAnimKey(k => k + 1)
-        const container = scrollRef.current
-        if (container) {
-          const pill = container.children[next] as HTMLElement
-          if (pill) pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-        }
+        scrollPillIntoView(next)
         return next
       })
     }, INTERVAL)
