@@ -69,6 +69,7 @@ export default function TurnosConfigPage() {
   const [introStyle, setIntroStyle] = useState('bubbles')
   const [instagram, setInstagram] = useState('')
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [productosEnabled, setProductosEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -126,6 +127,7 @@ export default function TurnosConfigPage() {
       setIntroTagline(cfg.intro_tagline || '')
       setIntroStyle(cfg.intro_style || 'bubbles')
       setInstagram(cfg.instagram || '')
+      setProductosEnabled(cfg.productos_enabled === 'true')
     }
   }, [])
 
@@ -208,6 +210,7 @@ export default function TurnosConfigPage() {
             intro_style: introStyle,
             instagram: instagram,
             whatsapp: ownerPhone,
+            productos_enabled: productosEnabled ? 'true' : 'false',
           }),
         }),
       ])
@@ -644,6 +647,28 @@ export default function TurnosConfigPage() {
             Vista previa: {selectedClient?.company_name || 'Nombre del negocio'} — {introEmoji}
           </div>
         </div>
+      </div>
+
+      {/* Módulo Productos — activación DIVINIA */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-bold text-gray-900">🛍️ Módulo Productos</h2>
+            <p className="text-xs text-gray-400 mt-1">Activa el tab "Productos" en el turnero público. El cliente carga sus productos desde su panel.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setProductosEnabled(v => !v)}
+            style={{ width: 48, height: 28, borderRadius: 100, border: 'none', position: 'relative', cursor: 'pointer', background: productosEnabled ? '#16a34a' : '#d1d5db', transition: 'background 0.2s', flexShrink: 0 }}
+          >
+            <span style={{ position: 'absolute', top: 4, width: 20, height: 20, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', left: productosEnabled ? 24 : 4 }} />
+          </button>
+        </div>
+        {productosEnabled && (
+          <p className="text-xs mt-3 text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+            ✅ Activo — el cliente verá el tab Productos en su turnero y puede gestionarlos desde su panel.
+          </p>
+        )}
       </div>
 
       {error && <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg mb-4">{error}</div>}
