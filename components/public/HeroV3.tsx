@@ -157,36 +157,37 @@ export default function HeroV3() {
       padding: '120px 0 80px',
       position: 'relative',
       overflow: 'hidden',
-      background: 'var(--paper)',
+      background: 'var(--ink)',
     }}>
       <div className="wrap-v2">
 
-        {/* ── BLOQUE CENTRAL CENTRADO ── */}
-        <div style={{ textAlign: 'center', marginBottom: 64 }}>
+        {/* ── BLOQUE CENTRAL CENTRADO — dark ── */}
+        <div style={{ textAlign: 'center', marginBottom: 72 }}>
 
-          {/* Badge */}
-          <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
+          {/* Badge ubicación */}
+          <div style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'var(--ink)', borderRadius: 100, padding: '7px 18px',
+              border: '1px solid rgba(246,245,242,0.12)', borderRadius: 100,
+              padding: '7px 18px',
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--lime)', display: 'inline-block' }} />
               <span style={{
                 fontFamily: 'var(--f-mono)', fontSize: 10,
                 letterSpacing: '0.16em', textTransform: 'uppercase',
-                color: 'var(--paper)', fontWeight: 500,
+                color: 'rgba(246,245,242,0.5)', fontWeight: 500,
               }}>
                 San Luis · Cuyo · Argentina
               </span>
             </div>
           </div>
 
-          {/* Headline — TU NEGOCIO FUNCIONA SOLO. */}
+          {/* Headline principal */}
           <h1
             className="h-display"
             style={{
               fontSize: 'clamp(60px, 11vw, 148px)',
-              color: 'var(--ink)',
+              color: 'var(--paper)',
               margin: '0 auto 28px',
               lineHeight: 0.88,
               letterSpacing: '-0.045em',
@@ -196,91 +197,97 @@ export default function HeroV3() {
           >
             Tu negocio<br />
             funciona<br />
-            <em style={{
-              color: 'var(--lime)',
-              WebkitTextStroke: '2px var(--ink)',
-              paintOrder: 'stroke fill',
-            }}>solo.</em>
+            <em style={{ color: 'var(--lime)' }}>solo.</em>
           </h1>
 
-          {/* Subtítulo */}
+          {/* Subtítulo — sin mencionar productos específicos */}
           <p style={{
             fontFamily: 'var(--f-display)',
             fontSize: 'clamp(17px, 1.8vw, 22px)',
-            color: 'var(--muted-2)',
-            maxWidth: '52ch',
-            lineHeight: 1.5,
-            margin: '0 auto 36px',
+            color: 'rgba(246,245,242,0.5)',
+            maxWidth: '48ch',
+            lineHeight: 1.55,
+            margin: '0 auto 40px',
           }}>
-            Turnero IA · Chatbot 24hs · Automatizaciones a medida.{' '}
-            <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>
-              Listo en 24hs.
-            </strong>
+            Automatizaciones a medida para tu negocio.{' '}
+            <span style={{ color: 'rgba(246,245,242,0.85)' }}>
+              De noche, los domingos, sin que atiendas el teléfono.
+            </span>
           </p>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginBottom: 36 }}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-v2 btn-ink"
-              style={{ fontSize: 16, padding: '15px 24px 15px 28px' }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                background: 'var(--lime)', color: 'var(--ink)', borderRadius: 100,
+                padding: '14px 28px', textDecoration: 'none',
+                fontFamily: 'var(--f-display)', fontSize: 16, fontWeight: 700,
+                letterSpacing: '-0.01em', transition: 'opacity 0.2s',
+              }}
             >
-              Quiero el Turnero
-              <span className="btn-arrow">→</span>
+              Quiero una demo gratis →
             </a>
             <a
               href="#demo"
-              className="btn-v2 btn-ghost-v2"
-              style={{ fontSize: 16 }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                border: '1px solid rgba(246,245,242,0.2)', color: 'rgba(246,245,242,0.7)',
+                borderRadius: 100, padding: '14px 24px', textDecoration: 'none',
+                fontFamily: 'var(--f-display)', fontSize: 16, transition: 'border-color 0.2s',
+              }}
             >
-              Ver demo en vivo ↓
+              Ver cómo funciona ↓
             </a>
           </div>
 
           {/* Trust strip */}
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 20,
-            border: '1px solid var(--line)', borderRadius: 100,
-            padding: '10px 24px', flexWrap: 'wrap', justifyContent: 'center',
+            display: 'inline-flex', alignItems: 'center', gap: 0,
+            border: '1px solid rgba(246,245,242,0.1)', borderRadius: 100,
+            overflow: 'hidden',
           }}>
             {[
               { val: '24hs', label: 'setup' },
               { val: '$0', label: 'costo oculto' },
               { val: '+45', label: 'rubros' },
-              { val: 'sin', label: 'contratos' },
+              { val: 'sin', label: 'permanencia' },
             ].map((s, i, arr) => (
-              <div key={s.val} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                  <span style={{
-                    fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
-                    fontSize: 18, color: 'var(--ink)', letterSpacing: '-0.03em',
-                  }}>{s.val}</span>
-                  <span style={{
-                    fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase',
-                    letterSpacing: '0.1em', color: 'var(--muted)',
-                  }}>{s.label}</span>
-                </div>
-                {i < arr.length - 1 && (
-                  <div style={{ width: 1, height: 16, background: 'var(--line)' }} />
-                )}
+              <div key={s.val} style={{
+                display: 'flex', alignItems: 'baseline', gap: 5,
+                padding: '9px 20px',
+                borderRight: i < arr.length - 1 ? '1px solid rgba(246,245,242,0.1)' : 'none',
+              }}>
+                <span style={{
+                  fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
+                  fontSize: 16, color: 'var(--lime)', letterSpacing: '-0.03em',
+                }}>{s.val}</span>
+                <span style={{
+                  fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase',
+                  letterSpacing: '0.1em', color: 'rgba(246,245,242,0.3)',
+                }}>{s.label}</span>
               </div>
             ))}
           </div>
 
         </div>
 
+        {/* ── SEPARADOR ── */}
+        <div style={{ borderTop: '1px solid rgba(246,245,242,0.08)', marginBottom: 48 }} />
+
         {/* Selector de rubro */}
         <div style={{ marginBottom: 48 }}>
           <span style={{
             fontFamily: 'var(--f-mono)',
-            fontSize: 11,
-            letterSpacing: '0.1em',
+            fontSize: 10,
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color: 'var(--muted)',
+            color: 'rgba(246,245,242,0.3)',
             display: 'block',
-            marginBottom: 12,
+            marginBottom: 14,
           }}>
             Mi negocio es:
           </span>
@@ -288,262 +295,126 @@ export default function HeroV3() {
             ref={scrollRef}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            style={{
-              display: 'flex',
-              gap: 8,
-              overflowX: 'auto',
-              paddingBottom: 4,
-              scrollbarWidth: 'none',
-            }}
+            style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}
           >
-          {RUBROS.map((r, idx) =>
-            r.id === 'otro' ? (
-              <Link
-                key={r.id}
-                href="/rubros"
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: 100,
+            {RUBROS.map((r, idx) =>
+              r.id === 'otro' ? (
+                <Link key={r.id} href="/rubros" style={{
+                  padding: '8px 16px', borderRadius: 100,
                   border: '1.5px solid var(--lime)',
-                  background: 'transparent',
-                  color: 'var(--ink)',
-                  fontFamily: 'var(--f-display)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  textDecoration: 'none',
-                  flexShrink: 0,
-                }}
-              >
-                <span>{r.emoji}</span>
-                <span>{r.label}</span>
-              </Link>
-            ) : (
-              <button
-                key={r.id}
-                onClick={() => { selectRubro(idx); setPaused(true) }}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: 100,
-                  border: activeIdx === idx ? '1.5px solid var(--ink)' : '1.5px solid var(--line)',
-                  background: activeIdx === idx ? 'var(--ink)' : 'transparent',
-                  color: activeIdx === idx ? 'var(--paper)' : 'var(--muted-2)',
-                  fontFamily: 'var(--f-display)',
-                  fontSize: 13,
-                  fontWeight: activeIdx === idx ? 600 : 400,
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  flexShrink: 0,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Progress bar on active pill */}
-                {activeIdx === idx && !paused && (
-                  <span style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    height: 2,
-                    background: 'var(--lime)',
-                    animation: `pillProgress ${INTERVAL}ms linear`,
-                    animationFillMode: 'forwards',
-                  }} />
-                )}
-                <span>{r.emoji}</span>
-                <span>{r.label}</span>
-              </button>
-            )
-          )}
+                  background: 'transparent', color: 'var(--lime)',
+                  fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                  textDecoration: 'none', flexShrink: 0,
+                }}>
+                  <span>{r.emoji}</span><span>{r.label}</span>
+                </Link>
+              ) : (
+                <button key={r.id} onClick={() => { selectRubro(idx); setPaused(true) }} style={{
+                  padding: '8px 16px', borderRadius: 100,
+                  border: activeIdx === idx ? '1.5px solid var(--lime)' : '1.5px solid rgba(246,245,242,0.12)',
+                  background: activeIdx === idx ? 'var(--lime)' : 'transparent',
+                  color: activeIdx === idx ? 'var(--ink)' : 'rgba(246,245,242,0.5)',
+                  fontFamily: 'var(--f-display)', fontSize: 13,
+                  fontWeight: activeIdx === idx ? 700 : 400,
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  flexShrink: 0, position: 'relative', overflow: 'hidden',
+                }}>
+                  {activeIdx === idx && !paused && (
+                    <span style={{
+                      position: 'absolute', bottom: 0, left: 0, height: 2,
+                      background: 'var(--ink)',
+                      animation: `pillProgress ${INTERVAL}ms linear`,
+                      animationFillMode: 'forwards',
+                    }} />
+                  )}
+                  <span>{r.emoji}</span><span>{r.label}</span>
+                </button>
+              )
+            )}
           </div>
         </div>
 
-        {/* Grid hero */}
+        {/* Grid — copy dinámico + price card */}
         <div style={{ display: 'grid', gap: 60, alignItems: 'center' }}
           className="grid-cols-2-mobile-1 md:grid-cols-[1.5fr_1fr]">
 
-          {/* Left: copy dinámico (rubro-específico) */}
+          {/* Left: headline rubro-específico */}
           <div>
-            <p
-              style={{
-                fontFamily: 'var(--f-mono)',
-                fontSize: 9,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                color: 'var(--muted)',
-                marginBottom: 10,
-              }}
-            >
-              Para {rubroActivo.label.toLowerCase()}:
-            </p>
             <h2
               className="h-display"
               style={{
-                fontSize: 'clamp(28px, 4vw, 54px)',
-                marginBottom: 16,
-                color: 'var(--ink)',
+                fontSize: 'clamp(32px, 4.5vw, 62px)',
+                marginBottom: 18,
+                color: 'var(--paper)',
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(10px)',
                 transition: 'opacity 0.25s ease, transform 0.25s ease',
-                lineHeight: 1.05,
+                lineHeight: 1.02,
                 letterSpacing: '-0.03em',
               }}
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
                 i === arr.length - 1
-                  ? <em key={i}> {word}</em>
+                  ? <em key={i} style={{ color: 'var(--lime)' }}> {word}</em>
                   : <span key={i}>{i === 0 ? '' : ' '}{word}</span>
               )}
             </h2>
 
-            <p
-              style={{
-                fontSize: 16,
-                lineHeight: 1.5,
-                color: 'var(--muted-2)',
-                marginBottom: 36,
-                maxWidth: '46ch',
-                fontFamily: 'var(--f-display)',
-                opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(8px)',
-                transition: 'opacity 0.25s ease 0.04s, transform 0.25s ease 0.04s',
-              }}
-            >
+            <p style={{
+              fontSize: 17, lineHeight: 1.6,
+              color: 'rgba(246,245,242,0.45)',
+              marginBottom: 32, maxWidth: '44ch',
+              fontFamily: 'var(--f-display)',
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'opacity 0.25s ease 0.04s, transform 0.25s ease 0.04s',
+            }}>
               {rubroActivo.sub}
             </p>
 
-            {/* CTA contextual por rubro */}
-            <div style={{ marginBottom: 48 }}>
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  background: 'rgba(198,255,61,0.1)', border: '1px solid rgba(198,255,61,0.35)',
-                  borderRadius: 100, padding: '9px 18px', textDecoration: 'none',
-                  fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700,
-                  letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)',
-                  transition: 'background 0.2s',
-                }}
-              >
-                <span>⚡</span> Quiero esto para mi {rubroActivo.label.toLowerCase()} →
-              </a>
-            </div>
-
-            {/* Stats inline */}
-            <div style={{
-              display: 'flex',
-              gap: 40,
-              flexWrap: 'wrap',
-              paddingTop: 28,
-              borderTop: '1px solid var(--line)',
+            <a href={waLink} target="_blank" rel="noopener noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              border: '1px solid rgba(246,245,242,0.15)', borderRadius: 100,
+              padding: '10px 20px', textDecoration: 'none',
+              fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: 'rgba(246,245,242,0.6)', transition: 'border-color 0.2s, color 0.2s',
             }}>
-              {STATS.map(s => (
-                <div key={s.val}>
-                  <div style={{
-                    fontFamily: 'var(--f-display)',
-                    fontWeight: 700,
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(28px, 3vw, 40px)',
-                    color: 'var(--ink)',
-                    letterSpacing: '-0.04em',
-                    lineHeight: 1,
-                  }}>
-                    {s.val}
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--f-mono)',
-                    fontSize: 10,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: 'var(--lime)',
-                    marginTop: 4,
-                    marginBottom: 2,
-                  }}>
-                    {s.label}
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--f-display)',
-                    fontSize: 12,
-                    color: 'var(--muted)',
-                  }}>
-                    {s.desc}
-                  </div>
-                </div>
-              ))}
-            </div>
+              ⚡ Quiero esto para mi {rubroActivo.label.toLowerCase()} →
+            </a>
           </div>
 
-          {/* Right: orb + precio visible */}
-          <div style={{ position: 'relative', height: 480 }} className="hidden md:block">
+          {/* Right: price card */}
+          <div style={{ position: 'relative', height: 340 }} className="hidden md:block">
             <Orb
-              size={420}
+              size={360}
               color="#C6FF3D"
               colorDeep="#9EE028"
-              shade="rgba(12,80,0,0.5)"
+              shade="rgba(12,80,0,0.6)"
               float
               squash
-              style={{ position: 'absolute', right: -40, top: 20 }}
+              style={{ position: 'absolute', right: -40, top: 0 }}
             />
-            {/* Precio card flotando sobre el orb */}
             <div style={{
-              position: 'absolute',
-              right: 0,
-              top: 60,
-              background: 'var(--ink)',
-              borderRadius: 20,
-              padding: '24px 28px',
-              width: 200,
-              zIndex: 2,
-              boxShadow: '0 20px 60px rgba(14,14,14,0.3)',
+              position: 'absolute', right: 0, top: 40,
+              background: 'rgba(246,245,242,0.05)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(246,245,242,0.1)',
+              borderRadius: 20, padding: '24px 28px', width: 210, zIndex: 2,
             }}>
-              <div style={{
-                fontFamily: 'var(--f-mono)',
-                fontSize: 9,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'rgba(246,245,242,0.4)',
-                marginBottom: 8,
-              }}>
-                Turnero · Plan mensual
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(246,245,242,0.35)', marginBottom: 8 }}>
+                Desde
               </div>
-              <div style={{
-                fontFamily: 'var(--f-display)',
-                fontStyle: 'italic',
-                fontWeight: 700,
-                fontSize: 36,
-                color: 'var(--lime)',
-                letterSpacing: '-0.04em',
-                lineHeight: 1,
-                marginBottom: 4,
-              }}>
+              <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: 'var(--lime)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}>
                 $45k
               </div>
-              <div style={{
-                fontFamily: 'var(--f-mono)',
-                fontSize: 10,
-                color: 'rgba(246,245,242,0.4)',
-                letterSpacing: '0.06em',
-              }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(246,245,242,0.3)', letterSpacing: '0.06em', marginBottom: 16 }}>
                 / mes · sin permanencia
               </div>
-              <div style={{
-                marginTop: 16,
-                paddingTop: 14,
-                borderTop: '1px solid rgba(246,245,242,0.1)',
-                fontFamily: 'var(--f-display)',
-                fontSize: 12,
-                color: 'rgba(246,245,242,0.55)',
-                lineHeight: 1.5,
-              }}>
-                ✓ Reservas online 24hs<br />
+              <div style={{ borderTop: '1px solid rgba(246,245,242,0.08)', paddingTop: 14, fontFamily: 'var(--f-display)', fontSize: 12, color: 'rgba(246,245,242,0.45)', lineHeight: 1.6 }}>
+                ✓ Activo en 24 horas<br />
                 ✓ QR para el local<br />
                 ✓ Confirma por WhatsApp
               </div>
@@ -553,14 +424,7 @@ export default function HeroV3() {
       </div>
 
       <style>{`
-        @keyframes heroFadeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pillProgress {
-          from { width: 0%; }
-          to { width: 100%; }
-        }
+        @keyframes pillProgress { from { width: 0%; } to { width: 100%; } }
         div[style*="scrollbar-width: none"]::-webkit-scrollbar { display: none; }
       `}</style>
     </section>
