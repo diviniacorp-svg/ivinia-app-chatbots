@@ -1,7 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Copy, Check, RefreshCw, Instagram, Calendar, Layers, Film, BookOpen, Target, Eye, Globe, Image, Video, Box } from 'lucide-react'
+import { Sparkles, Copy, Check, RefreshCw, Instagram, Calendar, Layers, Film, BookOpen, Target, Eye, Globe, Image, Video, Box, ExternalLink, Users, Plus } from 'lucide-react'
+
+// ── Clientes de Fábrica de Contenidos ────────────────────────────────────────
+
+const CLIENTES_FABRICA = [
+  {
+    id: 'divinia',
+    nombre: 'DIVINIA',
+    emoji: '◉',
+    color: '#8B5CF6',
+    ig: '@autom_atia',
+    desc: 'Marca propia · San Luis · Argentina',
+    links: {
+      canva: 'https://www.canva.com/brand/folders',
+      freepik: 'https://www.freepik.com/pikaso',
+      ig: 'https://www.instagram.com/autom_atia',
+    },
+  },
+]
 
 // ── Strategy data ────────────────────────────────────────────────────────────
 
@@ -198,9 +216,152 @@ const HASHTAG_SETS: Record<string, string[]> = {
   nucleus: ['#sistemasia', '#automatizacionempresarial', '#nucleus', '#divinia', '#inteligenciaartificial', '#pymesargentinas', '#transformaciondigital', '#agentesia', '#softwareamedida', '#tecnoargentina', '#startupargentina', '#innovacion'],
 }
 
+// ── Client selector sidebar ──────────────────────────────────────────────────
+
+function ClientesSidebar({
+  clienteId,
+  onSelect,
+}: {
+  clienteId: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div style={{
+      width: 220,
+      flexShrink: 0,
+      background: 'white',
+      borderRadius: 16,
+      border: '1px solid #e5e7eb',
+      padding: '16px 12px',
+      alignSelf: 'flex-start',
+      position: 'sticky',
+      top: 24,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <Users size={14} style={{ color: '#6b7280' }} />
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9ca3af' }}>
+          Clientes
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {CLIENTES_FABRICA.map(c => (
+          <button
+            key={c.id}
+            onClick={() => onSelect(c.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: clienteId === c.id ? c.color + '15' : 'transparent',
+              outline: clienteId === c.id ? `1.5px solid ${c.color}40` : 'none',
+              textAlign: 'left', width: '100%',
+            }}
+          >
+            <span style={{
+              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: c.color + '20', fontSize: 14, fontWeight: 900, color: c.color,
+            }}>{c.emoji}</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>{c.nombre}</div>
+              <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.ig}</div>
+            </div>
+          </button>
+        ))}
+
+        {/* Agregar cliente */}
+        <button
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 12px', borderRadius: 10, border: '1.5px dashed #e5e7eb',
+            background: 'transparent', cursor: 'pointer', marginTop: 4,
+          }}
+          title="Próximamente"
+        >
+          <Plus size={13} style={{ color: '#d1d5db' }} />
+          <span style={{ fontSize: 11, color: '#d1d5db', fontWeight: 600 }}>Agregar cliente</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Workspace header for a client ────────────────────────────────────────────
+
+function WorkspaceHeader({ cliente }: { cliente: typeof CLIENTES_FABRICA[0] }) {
+  return (
+    <div style={{
+      background: 'white', borderRadius: 16, border: '1px solid #e5e7eb',
+      padding: '20px 24px', marginBottom: 20,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 35%, ${cliente.color}, ${cliente.color}99)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, fontWeight: 900, color: 'white',
+          }}>{cliente.emoji}</div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
+              {cliente.nombre}
+            </div>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 1 }}>
+              {cliente.ig} · {cliente.desc}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick links */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a
+            href={cliente.links.canva}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8, textDecoration: 'none',
+              background: '#7C3AED15', border: '1px solid #7C3AED30',
+              fontSize: 12, fontWeight: 700, color: '#7C3AED',
+            }}
+          >
+            🎨 Canva <ExternalLink size={11} />
+          </a>
+          <a
+            href={cliente.links.freepik}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8, textDecoration: 'none',
+              background: '#DB277715', border: '1px solid #DB277730',
+              fontSize: 12, fontWeight: 700, color: '#DB2777',
+            }}
+          >
+            ✨ Freepik <ExternalLink size={11} />
+          </a>
+          <a
+            href={cliente.links.ig}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8, textDecoration: 'none',
+              background: '#EC489915', border: '1px solid #EC489930',
+              fontSize: 12, fontWeight: 700, color: '#EC4899',
+            }}
+          >
+            <Instagram size={12} /> Instagram <ExternalLink size={11} />
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function ContentFactory() {
+  const [clienteId, setClienteId] = useState('divinia')
   const [producto, setProducto] = useState('turnero')
   const [pilar, setPilar] = useState('problema')
   const [tipo, setTipo] = useState('post')
@@ -212,6 +373,7 @@ export default function ContentFactory() {
   const [tab, setTab] = useState<'generator' | 'strategy' | 'hashtags' | 'spaces'>('generator')
 
   const prodData = PRODUCTOS.find(p => p.id === producto)!
+  const clienteActivo = CLIENTES_FABRICA.find(c => c.id === clienteId) ?? CLIENTES_FABRICA[0]
 
   async function generate() {
     setLoading(true)
@@ -243,12 +405,22 @@ export default function ContentFactory() {
   }
 
   return (
-    <div className="max-w-5xl">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Content Factory</h1>
-        <p className="text-sm text-gray-500 mt-1">Generador de contenido para @autom_atia · Estrategia + IA + Brief visual listo</p>
+    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', maxWidth: 1100 }}>
+
+      {/* Client sidebar */}
+      <ClientesSidebar clienteId={clienteId} onSelect={id => { setClienteId(id); setResult(null) }} />
+
+      {/* Workspace */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+
+      {/* Page header */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: '#111827', margin: 0 }}>Content Factory</h1>
+        <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 4 }}>Agentes de contenido · Estrategia + IA + Brief visual listo</p>
       </div>
+
+      {/* Client workspace header */}
+      <WorkspaceHeader cliente={clienteActivo} />
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
@@ -832,6 +1004,8 @@ export default function ContentFactory() {
           </div>
         </div>
       )}
+
+      </div>
     </div>
   )
 }
