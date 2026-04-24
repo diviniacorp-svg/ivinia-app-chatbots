@@ -10,6 +10,7 @@ type NavItem = {
   exact?: boolean
   matches?: string[]
   badge?: string
+  dim?: boolean
 }
 
 type NavGroup = {
@@ -19,17 +20,17 @@ type NavGroup = {
 
 const NAV: NavGroup[] = [
   {
-    group: 'Comando',
+    group: 'Hoy',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: '⚡', exact: true },
     ],
   },
   {
-    group: 'Venta',
+    group: 'Revenue',
     items: [
-      { href: '/comercial', label: 'Comercial', icon: '💼', matches: ['/comercial', '/leads', '/crm', '/outreach'] },
+      { href: '/comercial', label: 'Pipeline', icon: '💼', matches: ['/comercial', '/leads', '/crm', '/outreach'] },
       { href: '/clientes', label: 'Clientes', icon: '👥', matches: ['/clientes'] },
-      { href: '/finanzas', label: 'Finanzas', icon: '📊', matches: ['/finanzas', '/pagos'] },
+      { href: '/finanzas', label: 'Finanzas', icon: '💰', matches: ['/finanzas', '/pagos'] },
     ],
   },
   {
@@ -37,24 +38,16 @@ const NAV: NavGroup[] = [
     items: [
       { href: '/turnos', label: 'Turnero', icon: '📅', matches: ['/turnos', '/dashboard/turnero', '/dashboard/turnos'] },
       { href: '/chatbots', label: 'Chatbot IA', icon: '💬', matches: ['/chatbots', '/templates'] },
-      { href: '/nucleo', label: 'Núcleo IA', icon: '🧠', matches: ['/nucleo'], badge: 'nuevo' },
       { href: '/contenido', label: 'Content Factory', icon: '✨', matches: ['/contenido', '/redes', '/calendario'] },
-      { href: '/avatares', label: 'Avatares IA', icon: '🎭', matches: ['/avatares'] },
+      { href: '/avatares', label: 'Avatares IA', icon: '🎭', matches: ['/avatares'], dim: true },
+      { href: '/nucleo', label: 'NUCLEUS', icon: '🧠', matches: ['/nucleo'], badge: 'beta' },
       { href: '/publicidad', label: 'Publicidad IA', icon: '📢', matches: ['/publicidad'], badge: 'nuevo' },
     ],
   },
   {
-    group: 'Laboratorio',
+    group: 'Taller',
     items: [
-      { href: '/youtube', label: 'YouTube Empire', icon: '🎬', matches: ['/youtube'] },
-      { href: '/proyectos', label: 'Proyectos', icon: '🚀', matches: ['/proyectos'] },
-      { href: '/ideas', label: 'Banco de Ideas', icon: '💡', matches: ['/ideas'] },
-      { href: '/herramientas', label: 'Generadores IA', icon: '🔧', matches: ['/herramientas'] },
-    ],
-  },
-  {
-    group: 'Sistema',
-    items: [
+      { href: '/herramientas', label: 'Generadores', icon: '🔧', matches: ['/herramientas', '/ideas', '/proyectos', '/youtube'] },
       { href: '/agents', label: 'Agentes', icon: '🤖', matches: ['/agents', '/orquestacion', '/dispatch'] },
     ],
   },
@@ -162,6 +155,7 @@ export default function SidebarV2({ onClose }: { onClose?: () => void }) {
                     background: active ? 'rgba(198,255,61,0.08)' : 'transparent',
                     borderLeft: active ? `2px solid ${LIME}` : '2px solid transparent',
                     transition: 'background 0.15s',
+                    opacity: item.dim && !active ? 0.6 : 1,
                   }}
                   onMouseEnter={e => {
                     if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'
@@ -207,14 +201,38 @@ export default function SidebarV2({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div style={{ padding: '10px 8px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Footer — quick links para flujo de venta */}
+      <div style={{ padding: '10px 8px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Link
+          href="/rubros"
+          target="_blank"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 12px',
+            borderRadius: 6,
+            fontFamily: 'var(--f-mono)',
+            fontSize: 9,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: LIME,
+            textDecoration: 'none',
+            opacity: 0.7,
+            transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
+        >
+          <span>🎯</span>
+          <span>demos rubros ↗</span>
+        </Link>
         <Link
           href="/"
           target="_blank"
           style={{
             display: 'block',
-            padding: '6px 12px',
+            padding: '4px 12px',
             fontFamily: 'var(--f-mono)',
             fontSize: 9,
             letterSpacing: '0.1em',

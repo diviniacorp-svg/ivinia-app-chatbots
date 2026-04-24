@@ -31,10 +31,26 @@ const ADMIN_ROUTES = [
   '/avatares',
   '/dispatch',
   '/youtube',
+  '/ideas',
+  '/proyectos',
+  '/publicidad',
 ]
 
 // Exact match — /nucleo/[slug] es público, solo /nucleo exacto requiere auth
 const ADMIN_EXACT_ROUTES = ['/nucleo']
+
+// Rutas API públicas aunque su prefijo esté en PROTECTED_API_ROUTES
+// Ej: /api/agents/audit es llamado desde la página pública /auditoria
+const PUBLIC_API_EXCEPTIONS = [
+  '/api/agents/audit',       // formulario público de auditoría
+  '/api/agents/demo',        // demos públicas de agentes
+]
+
+// Para proposals: el GET de una propuesta específica es público (link compartido)
+// El POST (crear) sigue siendo protegido
+function isPublicProposalRead(pathname: string, method: string) {
+  return method === 'GET' && /^\/api\/proposals\/[^/]+$/.test(pathname)
+}
 
 const PROTECTED_API_ROUTES = [
   '/api/seed',
@@ -84,6 +100,12 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Rutas API con excepción pública explícita
+  const isPublicApiException =
+    PUBLIC_API_EXCEPTIONS.some(r => pathname === r || pathname.startsWith(r + '/')) ||
+    isPublicProposalRead(pathname, request.method)
+  if (isPublicApiException) return NextResponse.next()
+
   const isProtectedApi = PROTECTED_API_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
   if (isProtectedApi) {
     const session = request.cookies.get('divinia_session')?.value
@@ -132,6 +154,12 @@ export const config = {
     '/dispatch/:path*',
     '/youtube',
     '/youtube/:path*',
+    '/ideas',
+    '/ideas/:path*',
+    '/proyectos',
+    '/proyectos/:path*',
+    '/publicidad',
+    '/publicidad/:path*',
     '/nucleo',
     '/api/seed',
     '/api/seed/:path*',
