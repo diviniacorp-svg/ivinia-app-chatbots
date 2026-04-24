@@ -17,7 +17,7 @@ const CASOS = [
     href: '/reservas/rufina-nails-demo',
   },
   {
-    id: 'cantera-boutique',
+    id: 'cantera2026bot',
     nombre: 'Cantera Boutique',
     rubro: 'Hotel boutique',
     ciudad: 'San Luis',
@@ -27,10 +27,10 @@ const CASOS = [
     orbDeep: '#6b2d07',
     orbShade: 'rgba(60,20,0,0.5)',
     emoji: '🏨',
-    href: '/reservas/cantera-boutique',
+    href: '/reservas/cantera2026bot',
   },
   {
-    id: 'los-paraisos',
+    id: 'paraisos2026bt',
     nombre: 'Los Paraísos',
     rubro: 'Cabañas',
     ciudad: 'San Luis',
@@ -40,7 +40,7 @@ const CASOS = [
     orbDeep: '#044232',
     orbShade: 'rgba(0,40,20,0.5)',
     emoji: '🌿',
-    href: '/reservas/los-paraisos',
+    href: '/reservas/paraisos2026bt',
   },
 ]
 
