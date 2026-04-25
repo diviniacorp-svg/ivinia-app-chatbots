@@ -24,6 +24,29 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
+const MAX_SESSION_MESSAGES = 20
+
+async function getSessionHistory(chatbotId: string, sessionId: string): Promise<Message[]> {
+  if (!sessionId) return []
+  const { data } = await supabaseAdmin
+    .from('chat_sessions')
+    .select('messages')
+    .eq('chatbot_id', chatbotId)
+    .eq('session_id', sessionId)
+    .single()
+  return (data?.messages as Message[]) || []
+}
+
+async function saveSessionHistory(chatbotId: string, sessionId: string, messages: Message[]) {
+  const trimmed = messages.slice(-MAX_SESSION_MESSAGES)
+  await supabaseAdmin
+    .from('chat_sessions')
+    .upsert(
+      { chatbot_id: chatbotId, session_id: sessionId, messages: trimmed, updated_at: new Date().toISOString() },
+      { onConflict: 'chatbot_id,session_id' }
+    )
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -34,7 +57,7 @@ export async function POST(
       return NextResponse.json({ error: 'Demasiadas solicitudes. Esperá un momento.' }, { status: 429 })
     }
 
-    const { message, history = [] } = await request.json()
+    const { message, history = [], session_id } = await request.json()
 
     if (!message || typeof message !== 'string' || message.length > 2000) {
       return NextResponse.json({ error: 'message inválido' }, { status: 400 })
@@ -87,13 +110,29 @@ export async function POST(
     const rawPrompt = (config?.system_prompt as string) || `Sos el asistente de ${client.company_name}. Respondé consultas con amabilidad y brevedad (máximo 3-4 líneas). Usá español argentino.`
     const systemPrompt = replacePlaceholders(rawPrompt)
 
-    const conversationHistory: Message[] = (history as Message[]).slice(-10)
+    // Usar historia del servidor si hay session_id, sino fallback al cliente
+    let conversationHistory: Message[]
+    if (session_id) {
+      conversationHistory = await getSessionHistory(chatbotId, session_id)
+    } else {
+      conversationHistory = (history as Message[]).slice(-10)
+    }
 
     const response = await generateChatbotResponse(
       systemPrompt,
       conversationHistory,
       message
     )
+
+    // Persistir historia en servidor si hay session_id
+    if (session_id) {
+      const updatedHistory: Message[] = [
+        ...conversationHistory,
+        { role: 'user', content: message },
+        { role: 'assistant', content: response },
+      ]
+      saveSessionHistory(chatbotId, session_id, updatedHistory).catch(() => {})
+    }
 
     return NextResponse.json({ response })
   } catch (error) {

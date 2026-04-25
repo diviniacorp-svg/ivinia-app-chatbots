@@ -42,17 +42,36 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error
 
-    // Si score ≥70 → activar pipeline de ventas automáticamente
-    if (lead && lead.score >= 70) {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://divinia.vercel.app'
-        // Fire and forget — no bloqueamos la respuesta
+    if (lead) {
+      const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://divinia.vercel.app'
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ADMIN_SECRET || 'DiViNiA2050',
+      }
+
+      if (lead.score >= 60) {
+        // Score medio-alto: auditoría IA automática + notificación a Joaco
+        fetch(`${baseUrl}/api/agents/audit`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            company_name: negocio,
+            rubro: rubro || 'negocio',
+            city: ciudad || 'San Luis',
+            instagram: instagram || undefined,
+            save_as_lead: false, // Ya guardamos el lead arriba
+          }),
+        }).catch(() => {})
+      }
+
+      if (lead.score >= 70) {
+        // Score alto: outreach automático
         fetch(`${baseUrl}/api/sales/pipeline`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ accion: 'outreach', lead_id: lead.id, tipo: 'wa' }),
         }).catch(() => {})
-      } catch { /* no bloqueante */ }
+      }
     }
 
     return NextResponse.json({

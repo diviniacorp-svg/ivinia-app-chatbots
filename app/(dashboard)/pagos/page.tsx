@@ -11,36 +11,36 @@ interface PaymentLink {
 }
 
 const PLANES = [
-  // Mantenimiento mensual
-  { value: 50000,  label: 'Plan Básico — $50.000/mes',                 plan: 'basic' },
-  { value: 100000, label: 'Plan Pro — $100.000/mes',                   plan: 'pro' },
-  { value: 200000, label: 'Plan Enterprise — $200.000/mes',            plan: 'enterprise' },
-  // IA & Chatbots
-  { value: 150000, label: 'Chatbot WhatsApp básico — $150.000',        plan: 'one-time' },
-  { value: 250000, label: 'Chatbot WhatsApp pro — $250.000',           plan: 'one-time' },
-  // Automatizaciones
-  { value: 120000, label: 'Automatización de proceso — $120.000',      plan: 'one-time' },
-  { value: 300000, label: 'Pack 3 automatizaciones — $300.000',        plan: 'one-time' },
-  { value: 350000, label: 'Automatización ventas completa — $350.000', plan: 'one-time' },
-  { value: 800000, label: 'Sistema multi-agente — $800.000',           plan: 'one-time' },
-  // Web & Apps
-  { value: 100000, label: 'Landing page — $100.000',                   plan: 'one-time' },
-  { value: 300000, label: 'Sitio web completo — $300.000',             plan: 'one-time' },
-  { value: 400000, label: 'Dashboard/panel admin — $400.000',          plan: 'one-time' },
-  // Auditoría & Consultoría
-  { value: 80000,  label: 'Auditoría digital completa — $80.000',      plan: 'one-time' },
-  { value: 150000, label: 'Auditoría + plan de acción — $150.000',     plan: 'one-time' },
-  // Content Factory
-  { value: 80000,  label: 'Pack 30 posts/mes redes — $80.000/mes',     plan: 'monthly' },
-  { value: 120000, label: 'Pack 10 posts + 4 videos — $120.000/mes',   plan: 'monthly' },
-  { value: 150000, label: 'Gestión completa redes — $150.000/mes',     plan: 'monthly' },
-  // Avatares IA
-  { value: 200000, label: 'Avatar corporativo — $200.000',             plan: 'one-time' },
-  { value: 350000, label: 'Avatar + chatbot integrado — $350.000',     plan: 'one-time' },
-  // Adelantos
-  { value: 40000,  label: 'Adelanto 50% — Auditoría $80k',            plan: 'deposit' },
-  { value: 75000,  label: 'Adelanto 50% — Chatbot básico $150k',      plan: 'deposit' },
-  { value: 50000,  label: 'Adelanto 50% — Landing page $100k',        plan: 'deposit' },
+  // ── TURNERO (suscripción mensual)
+  { value: 45000,  label: 'Turnero — Plan Mensual ($45.000/mes)',        plan: 'subscription', sub_plan: 'turnero-mensual' },
+  { value: 35000,  label: 'Turnero — Plan Anual ($35.000/mes)',          plan: 'subscription', sub_plan: 'turnero-anual' },
+  { value: 120000, label: 'Turnero — Pago Único ($120.000)',             plan: 'one-time' },
+  // ── CENTRAL IA / CHATBOT WA (suscripción mensual)
+  { value: 90000,  label: 'Central IA Básico ($90.000/mes)',             plan: 'subscription', sub_plan: 'central-basico' },
+  { value: 150000, label: 'Central IA Pro ($150.000/mes)',               plan: 'subscription', sub_plan: 'central-pro' },
+  { value: 180000, label: 'Central IA — Setup Único ($180.000)',         plan: 'one-time' },
+  // ── CONTENT FACTORY (suscripción mensual)
+  { value: 80000,  label: 'Content Factory Starter ($80.000/mes)',       plan: 'subscription', sub_plan: 'content-starter' },
+  { value: 120000, label: 'Content Factory Crecimiento ($120.000/mes)',  plan: 'subscription', sub_plan: 'content-growth' },
+  { value: 150000, label: 'Content Factory Gestión Total ($150.000/mes)',plan: 'monthly' },
+  // ── TODO DIVINIA (bundle)
+  { value: 120000, label: 'Todo DIVINIA — Bundle Mensual ($120.000/mes)',plan: 'subscription', sub_plan: 'todo-divinia' },
+  { value: 280000, label: 'Todo DIVINIA — Pago Único ($280.000)',        plan: 'one-time' },
+  // ── PROYECTOS A MEDIDA
+  { value: 100000, label: 'Landing page ($100.000)',                     plan: 'one-time' },
+  { value: 120000, label: 'Automatización de proceso ($120.000)',        plan: 'one-time' },
+  { value: 300000, label: 'Pack 3 automatizaciones ($300.000)',          plan: 'one-time' },
+  { value: 400000, label: 'CRM con IA ($400.000)',                       plan: 'one-time' },
+  { value: 350000, label: 'Automatización de ventas ($350.000)',         plan: 'one-time' },
+  { value: 800000, label: 'NUCLEUS / Sistema multi-agente ($800.000+)', plan: 'one-time' },
+  // ── AVATARES IA
+  { value: 200000, label: 'Avatar IA corporativo ($200.000)',            plan: 'one-time' },
+  { value: 600000, label: 'Avatar IA premium + videos ($600.000)',       plan: 'one-time' },
+  // ── ADELANTOS 50%
+  { value: 60000,  label: 'Adelanto 50% — Turnero único $120k',         plan: 'deposit' },
+  { value: 90000,  label: 'Adelanto 50% — Central IA setup $180k',      plan: 'deposit' },
+  { value: 50000,  label: 'Adelanto 50% — Landing $100k',               plan: 'deposit' },
+  { value: 140000, label: 'Adelanto 50% — Todo DIVINIA único $280k',    plan: 'deposit' },
 ]
 
 const inputStyle: React.CSSProperties = {

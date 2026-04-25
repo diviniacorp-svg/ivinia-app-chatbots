@@ -202,10 +202,9 @@ export default function HeroV3() {
             lineHeight: 1.55,
             margin: '0 auto 40px',
           }}>
-            Automatizaciones a medida para tu negocio.{' '}
-            <span style={{ color: 'rgba(0,0,0,0.8)' }}>
-              De noche, los domingos, sin que atiendas el teléfono.
-            </span>
+            <span style={{ color: 'rgba(0,0,0,0.8)' }}>Cero WhatsApps a medianoche para pedir turno.</span>{' '}
+            Cero no-shows. Cero redes sin actualizar.{' '}
+            <span style={{ color: 'rgba(0,0,0,0.8)' }}>Tu negocio, funcionando solo — desde esta semana.</span>
           </p>
 
           {/* CTAs */}

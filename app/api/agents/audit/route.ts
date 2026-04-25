@@ -52,7 +52,30 @@ export async function POST(req: NextRequest) {
           .filter(r => r.prioridad === 'alta')
           .slice(0, 3)
           .map(r => r.accion),
-      }).catch(() => {}) // fire-and-forget
+      }).catch(() => {})
+
+      // Si score alto: disparar outreach automático
+      if (result.score_general >= 70) {
+        const { data: savedLead } = await db
+          .from('leads')
+          .select('id')
+          .eq('company_name', company_name)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (savedLead?.id) {
+          const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://divinia.vercel.app'
+          fetch(`${baseUrl}/api/sales/pipeline`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': process.env.ADMIN_SECRET || 'DiViNiA2050',
+            },
+            body: JSON.stringify({ accion: 'outreach', lead_id: savedLead.id, tipo: 'wa' }),
+          }).catch(() => {})
+        }
+      }
     }
 
     return NextResponse.json({ ok: true, ...result })
