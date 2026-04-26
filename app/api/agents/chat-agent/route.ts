@@ -10,7 +10,25 @@ export const maxDuration = 60
 const MODEL_IDS: Record<string, string> = {
   haiku: 'claude-haiku-4-5-20251001',
   sonnet: 'claude-sonnet-4-6',
-  opus: 'claude-opus-4-7',
+  opus:   'claude-opus-4-7',
+}
+
+// Busca contexto relevante en nucleus_knowledge usando full-text search
+async function searchKnowledge(query: string, limit = 3): Promise<string> {
+  try {
+    const db = createAdminClient()
+    const { data } = await db.rpc('search_knowledge', {
+      query_text: query,
+      max_results: limit,
+      filter_cat: null,
+    })
+    if (!data || data.length === 0) return ''
+    return data
+      .map((r: { title: string; content: string }) => `## ${r.title}\n${r.content}`)
+      .join('\n\n---\n\n')
+  } catch {
+    return ''
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -25,6 +43,20 @@ export async function POST(req: NextRequest) {
   if (!agent) {
     return new Response(`Agente "${agentId}" no encontrado`, { status: 404 })
   }
+
+  // Buscar contexto en la base de conocimiento DIVINIA
+  const knowledgeCtx = await searchKnowledge(message.trim())
+
+  const systemWithContext = knowledgeCtx
+    ? `${agent.systemPrompt}
+
+---
+## BASE DE CONOCIMIENTO DIVINIA (contexto relevante para esta consulta)
+Usá esta información como fuente de verdad. Si hay precios, usá exactamente estos.
+
+${knowledgeCtx}
+---`
+    : agent.systemPrompt
 
   const client = new Anthropic()
   const modelId = MODEL_IDS[agent.model] ?? MODEL_IDS.sonnet
@@ -45,7 +77,7 @@ export async function POST(req: NextRequest) {
         const response = await client.messages.create({
           model: modelId,
           max_tokens: 1500,
-          system: agent.systemPrompt,
+          system: systemWithContext,
           messages,
           stream: true,
         })
@@ -66,7 +98,7 @@ export async function POST(req: NextRequest) {
           action: `Chat: ${message.slice(0, 80)}`,
           status: 'success',
           duration_ms: Date.now() - t0,
-          metadata: { model: agent.model },
+          metadata: { model: agent.model, rag: !!knowledgeCtx },
         })).catch(() => {})
 
       } catch (err) {
