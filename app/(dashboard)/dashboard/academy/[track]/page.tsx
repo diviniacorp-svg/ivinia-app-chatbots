@@ -1,154 +1,140 @@
-import fs from 'fs'
-import path from 'path'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+'use client'
 
-function parseFrontmatter(raw: string): Record<string, any> {
-  const match = raw.match(/^---\n([\s\S]*?)\n---/)
-  if (!match) return {}
-  const obj: Record<string, any> = {}
-  match[1].split('\n').forEach(line => {
-    const [k, ...v] = line.split(':')
-    if (k && v.length) obj[k.trim()] = v.join(':').trim().replace(/^"(.*)"$/, '$1')
-  })
-  return obj
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+interface Lesson {
+  slug: string
+  title: string
+  content: string
 }
 
-export default function AcademyTrackEditorPage({ params }: { params: { track: string } }) {
-  const { track } = params
-  const trackDir = path.join(process.cwd(), 'content', 'academy', track)
+export default function AcademyTrackEditor() {
+  const { track } = useParams<{ track: string }>()
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [active, setActive] = useState<Lesson | null>(null)
+  const [draft, setDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [trackMeta, setTrackMeta] = useState<{ title?: string }>({})
 
-  if (!fs.existsSync(trackDir)) notFound()
+  useEffect(() => {
+    fetch(`/api/academy/lesson?track=${track}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.lessons) {
+          setLessons(data.lessons)
+          if (data.lessons.length > 0) {
+            setActive(data.lessons[0])
+            setDraft(data.lessons[0].content)
+          }
+        }
+        if (data.meta) setTrackMeta(data.meta)
+      })
+      .catch(() => {})
+  }, [track])
 
-  const trackRaw = fs.readFileSync(path.join(trackDir, 'track.md'), 'utf-8')
-  const trackMeta = parseFrontmatter(trackRaw)
+  function selectLesson(lesson: Lesson) {
+    setActive(lesson)
+    setDraft(lesson.content)
+    setSaved(false)
+  }
 
-  const lessonsDir = path.join(trackDir, 'lessons')
-  const lessons = fs.existsSync(lessonsDir)
-    ? fs.readdirSync(lessonsDir)
-        .filter(f => f.endsWith('.md'))
-        .sort()
-        .map(file => {
-          const raw = fs.readFileSync(path.join(lessonsDir, file), 'utf-8')
-          const meta = parseFrontmatter(raw)
-          return { file, slug: file.replace('.md', ''), ...meta }
-        })
-    : []
+  async function save() {
+    if (!active) return
+    setSaving(true)
+    setSaved(false)
+    try {
+      const res = await fetch('/api/academy/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track, lesson: active.slug, content: draft }),
+      })
+      if (res.ok) {
+        setSaved(true)
+        setLessons(prev => prev.map(l =>
+          l.slug === active.slug ? { ...l, content: draft } : l
+        ))
+        setTimeout(() => setSaved(false), 3000)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
-
-      {/* Header */}
-      <div style={{ padding: '36px 40px 28px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <Link
-            href="/dashboard/academy"
-            style={{
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', color: 'var(--muted)', textDecoration: 'none',
-            }}
-          >
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-64 shrink-0 border-r border-zinc-800 bg-zinc-950 flex flex-col">
+        <div className="p-4 border-b border-zinc-800">
+          <Link href="/dashboard/academy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
             ← Academy
           </Link>
-          <span style={{ color: 'var(--muted)' }}>·</span>
-          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-            {track}
-          </span>
+          <h2 className="text-sm font-semibold text-white mt-2 leading-tight">
+            {trackMeta.title || track}
+          </h2>
+          <p className="text-xs text-zinc-500 font-mono mt-1">{lessons.length} lecciones</p>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{
-              width: 16, height: 16, borderRadius: '50%',
-              background: trackMeta.color ?? 'var(--muted)', flexShrink: 0,
-            }} />
-            <div>
-              <h1 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 'clamp(20px, 2.5vw, 30px)', color: 'var(--ink)', letterSpacing: '-0.03em', margin: 0 }}>
-                {trackMeta.title ?? track}
-              </h1>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', marginTop: 5, letterSpacing: '0.04em' }}>
-                {trackMeta.nivel} · {lessons.length} lecciones · {trackMeta.duracion ?? '—'}
-              </p>
-            </div>
-          </div>
+        <div className="flex-1 overflow-y-auto py-2">
+          {lessons.map(lesson => (
+            <button
+              key={lesson.slug}
+              onClick={() => selectLesson(lesson)}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                active?.slug === lesson.slug
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <p className="font-medium truncate">{lesson.title || lesson.slug}</p>
+              <p className="text-xs text-zinc-600 font-mono mt-0.5 truncate">{lesson.slug}</p>
+            </button>
+          ))}
 
-          <button
-            style={{
-              padding: '9px 18px', borderRadius: 8, border: '1px solid var(--lime)',
-              fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-              textTransform: 'uppercase', color: 'var(--ink)', cursor: 'pointer',
-              background: 'var(--lime)',
-            }}
-          >
-            + Nueva lección
-          </button>
+          {lessons.length === 0 && (
+            <p className="px-4 py-3 text-xs text-zinc-600">
+              No hay lecciones en este track.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Lessons list */}
-      <div style={{ padding: '28px 40px' }}>
-        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 16 }}>
-          Lecciones
-        </div>
-
-        {lessons.length === 0 ? (
-          <div style={{ padding: '32px 0', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)' }}>
-              No hay lecciones en este track todavía.
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {lessons.map((lesson: any, i: number) => (
-              <div
-                key={lesson.slug}
-                style={{
-                  background: 'var(--paper)', border: '1px solid var(--line)',
-                  borderRadius: i === 0 ? '10px 10px 0 0' : i === lessons.length - 1 ? '0 0 10px 10px' : 0,
-                  padding: '16px 24px',
-                  display: 'flex', alignItems: 'center', gap: 16,
-                }}
-              >
-                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 12, color: 'var(--muted)', minWidth: 28 }}>
-                  {String(i + 1).padStart(2, '0')}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--f-display)', fontWeight: 600, fontSize: 15, color: 'var(--ink)', marginBottom: 3 }}>
-                    {lesson.titulo ?? lesson.slug}
-                  </div>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.06em' }}>
-                    {lesson.duracion ?? '—'} · {lesson.tipo ?? 'lectura'}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Link
-                    href={`/academy/${track}/${lesson.slug}`}
-                    target="_blank"
-                    style={{
-                      padding: '7px 14px', borderRadius: 6, border: '1px solid var(--line)',
-                      fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
-                      textTransform: 'uppercase', color: 'var(--muted)', textDecoration: 'none',
-                      background: 'var(--paper-2)',
-                    }}
-                  >
-                    Ver →
-                  </Link>
-                  <Link
-                    href={`/dashboard/academy/${track}/${lesson.slug}`}
-                    style={{
-                      padding: '7px 14px', borderRadius: 6, border: '1px solid var(--line)',
-                      fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
-                      textTransform: 'uppercase', color: 'var(--ink)', textDecoration: 'none',
-                      background: 'var(--paper)',
-                    }}
-                  >
-                    Editar →
-                  </Link>
-                </div>
+      {/* Editor */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {active ? (
+          <>
+            <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 bg-zinc-950">
+              <div>
+                <h3 className="text-sm font-semibold text-white">{active.title || active.slug}</h3>
+                <p className="text-xs text-zinc-500 font-mono">{active.slug}.md</p>
               </div>
-            ))}
+              <div className="flex items-center gap-3">
+                {saved && (
+                  <span className="text-xs text-green-400 font-medium">Guardado ✓</span>
+                )}
+                <button
+                  onClick={save}
+                  disabled={saving}
+                  className="px-4 py-1.5 bg-lime-500 hover:bg-lime-400 text-black text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'Guardando…' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              className="flex-1 bg-zinc-950 text-zinc-100 font-mono text-sm p-6 resize-none outline-none leading-relaxed"
+              spellCheck={false}
+              placeholder="Contenido markdown de la lección…"
+            />
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm">
+            Seleccioná una lección para editar
           </div>
         )}
       </div>
