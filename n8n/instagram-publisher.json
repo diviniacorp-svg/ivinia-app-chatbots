@@ -1,0 +1,220 @@
+{
+  "name": "DIVINIA — Instagram Auto Publisher",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 12 * * 1-5" }]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Lunes a Viernes 9am ARG",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $vars.DIVINIA_URL }}/api/content/next-post",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "node-get-post",
+      "name": "Obtener próximo post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": { "httpHeaderAuth": { "id": "cred-divinia-key", "name": "DIVINIA API Key" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "check-post-exists",
+            "leftValue": "={{ $json.post }}",
+            "rightValue": "",
+            "operator": { "type": "object", "operation": "notEmpty" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-post",
+      "name": "¿Hay post listo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "check-imagen-url",
+            "leftValue": "={{ $json.post.imagen_url }}",
+            "rightValue": "",
+            "operator": { "type": "string", "operation": "notEmpty" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-imagen",
+      "name": "¿Tiene imagen?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.freepik.com/v1/ai/text-to-image/mystic",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "X-Freepik-API-Key", "value": "={{ $vars.FREEPIK_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $('Obtener próximo post').item.json.post.prompt_imagen }}, dark SaaS aesthetic, black background #09090b, professional quality, Instagram post\",\n  \"aspect_ratio\": \"square_1_1\",\n  \"model\": \"realism\",\n  \"resolution\": \"2k\"\n}",
+        "options": {}
+      },
+      "id": "node-freepik-create",
+      "name": "Generar imagen (Freepik)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 100]
+    },
+    {
+      "parameters": { "amount": 25, "unit": "seconds" },
+      "id": "node-wait",
+      "name": "Esperar 25s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1340, 100],
+      "webhookId": "wait-freepik"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.freepik.com/v1/ai/text-to-image/mystic/{{ $('Generar imagen (Freepik)').item.json.data.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "X-Freepik-API-Key", "value": "={{ $vars.FREEPIK_API_KEY }}" }]
+        },
+        "options": {}
+      },
+      "id": "node-freepik-poll",
+      "name": "Obtener imagen generada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [{
+            "id": "extract-image-url",
+            "name": "image_url",
+            "value": "={{ $json.data.generated[0] }}",
+            "type": "string"
+          }]
+        },
+        "options": {}
+      },
+      "id": "node-set-image-url",
+      "name": "Extraer URL imagen",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1780, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.DIVINIA_URL }}/api/content/publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"post_id\": \"{{ $('Obtener próximo post').item.json.post.id }}\",\n  \"image_url\": \"{{ $json.image_url }}\"\n}",
+        "options": {}
+      },
+      "id": "node-publish-new-image",
+      "name": "Publicar con imagen nueva",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 100],
+      "credentials": { "httpHeaderAuth": { "id": "cred-divinia-key", "name": "DIVINIA API Key" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.DIVINIA_URL }}/api/content/publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"post_id\": \"{{ $('Obtener próximo post').item.json.post.id }}\"\n}",
+        "options": {}
+      },
+      "id": "node-publish-existing-image",
+      "name": "Publicar con imagen existente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300],
+      "credentials": { "httpHeaderAuth": { "id": "cred-divinia-key", "name": "DIVINIA API Key" } }
+    },
+    {
+      "parameters": {},
+      "id": "node-no-post",
+      "name": "Sin posts — fin",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 460]
+    }
+  ],
+  "connections": {
+    "Lunes a Viernes 9am ARG": {
+      "main": [[{ "node": "Obtener próximo post", "type": "main", "index": 0 }]]
+    },
+    "Obtener próximo post": {
+      "main": [[{ "node": "¿Hay post listo?", "type": "main", "index": 0 }]]
+    },
+    "¿Hay post listo?": {
+      "main": [
+        [{ "node": "¿Tiene imagen?", "type": "main", "index": 0 }],
+        [{ "node": "Sin posts — fin", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Tiene imagen?": {
+      "main": [
+        [{ "node": "Publicar con imagen existente", "type": "main", "index": 0 }],
+        [{ "node": "Generar imagen (Freepik)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generar imagen (Freepik)": {
+      "main": [[{ "node": "Esperar 25s", "type": "main", "index": 0 }]]
+    },
+    "Esperar 25s": {
+      "main": [[{ "node": "Obtener imagen generada", "type": "main", "index": 0 }]]
+    },
+    "Obtener imagen generada": {
+      "main": [[{ "node": "Extraer URL imagen", "type": "main", "index": 0 }]]
+    },
+    "Extraer URL imagen": {
+      "main": [[{ "node": "Publicar con imagen nueva", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
+  "staticData": null,
+  "tags": ["instagram", "content", "divinia"],
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "divinia"
+  }
+}
