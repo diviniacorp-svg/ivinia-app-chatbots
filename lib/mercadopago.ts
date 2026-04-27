@@ -113,7 +113,6 @@ export async function createSubscriptionPlan(params: CreatePlanParams) {
         currency_id: 'ARS',
       },
       back_url: `${appUrl}/checkout/success`,
-      external_reference: params.external_reference,
     },
   })
 }

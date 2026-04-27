@@ -53,6 +53,166 @@ function timeAgo(dateStr: string) {
   return `hace ${Math.floor(days / 30)}m`
 }
 
+// ── Knowledge Base RAG para chatbot ──────────────────────────────
+function KnowledgeBaseSection({ chatbotId }: { chatbotId: string }) {
+  const [open, setOpen] = useState(false)
+  const [items, setItems] = useState<{ id: string; content: string; source?: string; created_at: string }[]>([])
+  const [text, setText] = useState('')
+  const [source, setSource] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  async function load() {
+    setLoading(true)
+    try {
+      const r = await fetch(`/api/chatbot/knowledge?chatbot_id=${chatbotId}`)
+      const d = await r.json()
+      setItems(d.items || [])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function toggle() {
+    if (!open) load()
+    setOpen(v => !v)
+  }
+
+  async function add() {
+    if (!text.trim()) return
+    setSaving(true); setMsg('')
+    try {
+      const r = await fetch('/api/chatbot/knowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatbot_id: chatbotId, text: text.trim(), source: source.trim() || undefined }),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      setMsg(`✓ ${d.inserted} chunk${d.inserted !== 1 ? 's' : ''} guardado${d.inserted !== 1 ? 's' : ''}`)
+      setText(''); setSource('')
+      await load()
+    } catch (e) {
+      setMsg(`Error: ${e instanceof Error ? e.message : 'desconocido'}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function remove(id: string) {
+    await fetch(`/api/chatbot/knowledge?chatbot_id=${chatbotId}&id=${id}`, { method: 'DELETE' })
+    setItems(prev => prev.filter(i => i.id !== id))
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', border: '1px solid var(--line)', borderRadius: 8,
+    padding: '8px 10px', fontSize: 12, outline: 'none',
+    background: 'var(--paper)', color: 'var(--ink)', boxSizing: 'border-box',
+  }
+
+  return (
+    <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+      <button
+        onClick={toggle}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+          padding: 0, color: 'var(--ink)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14 }}>🧠</span>
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+            Knowledge Base RAG
+          </span>
+          {items.length > 0 && !open && (
+            <span style={{ background: 'rgba(139,92,246,0.15)', color: '#8B5CF6', borderRadius: 100, padding: '1px 8px', fontSize: 9, fontFamily: 'var(--f-mono)', fontWeight: 700 }}>
+              {items.length} chunks
+            </span>
+          )}
+        </div>
+        <ChevronRight size={14} style={{ transform: open ? 'rotate(90deg)' : 'none', transition: '0.15s', color: 'var(--muted)' }} />
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
+            Pegá texto con info del negocio (servicios, precios, FAQs, horarios). El chatbot lo va a usar para responder con precisión.
+          </p>
+
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Servicios: corte de pelo $3.000, coloración $8.000&#10;Horarios: Lun-Vie 9-19hs, Sab 9-14hs&#10;No atendemos domingos..."
+            rows={5}
+            style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }}
+          />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'flex-end' }}>
+            <div>
+              <input
+                style={inp}
+                value={source}
+                onChange={e => setSource(e.target.value)}
+                placeholder="Fuente (opcional): servicios, precios, FAQ..."
+              />
+            </div>
+            <button
+              onClick={add}
+              disabled={saving || !text.trim()}
+              style={{
+                padding: '8px 14px', background: 'var(--ink)', color: 'var(--paper)',
+                border: 'none', borderRadius: 8, cursor: 'pointer',
+                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.06em',
+                textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap',
+                opacity: saving || !text.trim() ? 0.5 : 1,
+              }}
+            >
+              {saving ? '...' : 'Agregar'}
+            </button>
+          </div>
+
+          {msg && (
+            <p style={{ fontSize: 11, color: msg.startsWith('Error') ? '#dc2626' : '#16a34a', margin: 0 }}>{msg}</p>
+          )}
+
+          {loading ? (
+            <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', padding: '8px 0' }}>Cargando...</p>
+          ) : items.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: 0 }}>
+                {items.length} chunks en la base
+              </p>
+              {items.map(item => (
+                <div key={item.id} style={{
+                  background: 'var(--paper-2)', borderRadius: 8, padding: '8px 10px',
+                  border: '1px solid var(--line)', display: 'flex', gap: 8, alignItems: 'flex-start',
+                }}>
+                  <p style={{ flex: 1, margin: 0, fontSize: 11, color: 'var(--ink)', lineHeight: 1.5 }}>
+                    {item.content.length > 120 ? item.content.slice(0, 120) + '…' : item.content}
+                    {item.source && <span style={{ display: 'block', fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--f-mono)', marginTop: 2 }}>{item.source}</span>}
+                  </p>
+                  <button
+                    onClick={() => remove(item.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 2, flexShrink: 0 }}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', padding: '8px 0', fontFamily: 'var(--f-mono)' }}>
+              Sin knowledge base — el chatbot usa solo el system prompt
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Drawer de edición de cliente ─────────────────────────────────
 function EditClientDrawer({
   client,
@@ -248,6 +408,9 @@ function EditClientDrawer({
               <input style={{ ...inp, flex: 1 }} value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} placeholder="#6366f1" />
             </div>
           </div>
+
+          {/* ── Knowledge Base RAG ──────────────────────── */}
+          {client.chatbot_id && <KnowledgeBaseSection chatbotId={client.chatbot_id} />}
 
           {error && (
             <div style={{ fontSize: 12, color: '#dc2626', background: '#fee2e2', padding: '8px 12px', borderRadius: 8 }}>{error}</div>

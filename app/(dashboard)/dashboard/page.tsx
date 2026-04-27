@@ -7,13 +7,37 @@ import NeuralGraphClient from './_components/NeuralGraphClient'
 async function getDashboardData() {
   const db = createAdminClient()
   const today = new Date().toISOString().split('T')[0]
-  const [metricsRes, leadsRes, agendaRes] = await Promise.all([
-    db.from('ceo_metrics').select('*').single(),
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString()
+
+  const [leadsRes, agendaRes, clientsRes, subsRes, bookingsRes, contentRes] = await Promise.all([
     db.from('leads').select('id, company_name, rubro, score, status, city').gte('score', 60).order('score', { ascending: false }).limit(6),
     db.from('nucleus_memory').select('id, contenido, importancia').contains('tags', ['agenda']).eq('activo', true).order('importancia', { ascending: false }).limit(5),
+    db.from('clients').select('id, status, mrr, plan'),
+    db.from('subscriptions').select('id, estado, monto_ars'),
+    db.from('bookings').select('id, status').gte('created_at', today + 'T00:00:00'),
+    db.from('leads').select('id, created_at').gte('created_at', weekAgo),
   ])
+
+  const clients = clientsRes.data ?? []
+  const subs = subsRes.data ?? []
+  const bookings = bookingsRes.data ?? []
+  const newLeads = contentRes.data ?? []
+
+  const mrr_clientes = clients.filter(c => c.status === 'active').reduce((s, c) => s + (c.mrr || 0), 0)
+  const mrr_subs = subs.filter(s => s.estado === 'active' || s.estado === 'authorized').reduce((s, sub) => s + (sub.monto_ars || 0), 0)
+
+  const metrics = {
+    mrr_actual: mrr_clientes + mrr_subs,
+    clientes_activos: clients.filter(c => c.status === 'active').length,
+    en_trial: clients.filter(c => c.status === 'trial').length,
+    reservas_hoy: bookings.filter(b => b.status !== 'cancelled').length,
+    leads_nuevos: newLeads.length,
+    leads_calientes: (leadsRes.data ?? []).filter(l => (l.score || 0) >= 70).length,
+    agent_runs_hoy: 0,
+  }
+
   return {
-    metrics: metricsRes.data as any,
+    metrics,
     leads: (leadsRes.data ?? []) as any[],
     agenda: (agendaRes.data ?? []) as any[],
   }

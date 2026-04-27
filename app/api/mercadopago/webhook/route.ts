@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPaymentById } from '@/lib/mercadopago'
+import { getPaymentById, getSubscription } from '@/lib/mercadopago'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendTurneroWelcomeEmail } from '@/lib/resend'
 import { createHmac } from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -112,14 +113,19 @@ async function provisionTurnero(clientId: string) {
     })
     .eq('id', clientId)
 
-  // Notificar a Joaco por WhatsApp
-  const joacoPhone = process.env.JOACO_WHATSAPP || '5492665286110'
-  const msg = encodeURIComponent(
-    `✅ NUEVO CLIENTE DIVINIA\n\n🏢 ${client.company_name}\n📱 ${whatsapp}\n📧 ${client.email}\n\n🔗 Turnero: ${turneroUrl}\n🔑 Panel PIN: ${pin}\n\nServicio: Turnero Plan ${client.plan}`
-  )
-  // Solo log — la notificación real se puede hacer via n8n o WhatsApp API
   console.log(`[PROVISION] Nuevo cliente: ${client.company_name} | Turnero: ${turneroUrl}`)
-  console.log(`[PROVISION] Notificar Joaco: https://wa.me/${joacoPhone}?text=${msg}`)
+
+  // Enviar email de bienvenida al cliente con sus links + PIN + QR
+  if (client.email) {
+    await sendTurneroWelcomeEmail({
+      company_name: client.company_name,
+      contact_name: (client as Record<string, unknown>).contact_name as string | null ?? null,
+      email: client.email,
+      turnero_url: turneroUrl,
+      panel_url: panelUrl,
+      panel_pin: pin,
+    })
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -132,6 +138,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = JSON.parse(rawBody)
+
+    // Suscripciones recurrentes (preapproval)
+    if (body.type === 'preapproval' && body.data?.id) {
+      const preapprovalId = String(body.data.id)
+      try {
+        const mpSub = await getSubscription(preapprovalId)
+        const estado = mpSub.status === 'authorized' ? 'active'
+          : mpSub.status === 'cancelled' ? 'cancelled'
+          : mpSub.status || 'pending'
+        await supabaseAdmin
+          .from('subscriptions')
+          .update({ estado })
+          .eq('mp_preapproval_id', preapprovalId)
+        console.log(`[WEBHOOK] preapproval ${preapprovalId} → ${estado}`)
+      } catch (e) {
+        console.error('[WEBHOOK preapproval]', e)
+      }
+    }
 
     if (body.type === 'payment' && body.data?.id) {
       const paymentId = String(body.data.id)

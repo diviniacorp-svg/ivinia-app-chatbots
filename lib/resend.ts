@@ -269,3 +269,76 @@ export async function sendWelcomeEmail(params: {
 
   if (error) console.error('Welcome email error:', error)
 }
+
+export async function sendTurneroWelcomeEmail(params: {
+  company_name: string
+  contact_name?: string | null
+  email: string
+  turnero_url: string
+  panel_url: string
+  panel_pin: string
+}): Promise<void> {
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'ventas@divinia.ar'
+  const nombre = params.contact_name || params.company_name
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&format=png&data=${encodeURIComponent(params.turnero_url)}`
+  const waLink = `https://wa.me/5492665286110?text=${encodeURIComponent(`Hola Joaco! Activé mi Turnero DIVINIA para ${params.company_name}. ¿Me ayudás con la configuración?`)}`
+
+  await getResend().emails.send({
+    from: `Joaco de DIVINIA <${fromEmail}>`,
+    to: [params.email],
+    subject: `¡Tu Turnero está listo, ${nombre}! 📅`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:#06060A;border-radius:16px 16px 0 0;padding:28px 32px">
+      <div style="color:#C6FF3D;font-weight:900;font-size:22px;letter-spacing:-0.04em;margin-bottom:4px">DIVINIA.</div>
+      <div style="color:rgba(255,255,255,0.45);font-size:11px;font-family:monospace;letter-spacing:0.1em;text-transform:uppercase">Turnero IA · Activado</div>
+    </div>
+    <div style="background:#ffffff;border:1px solid #e4e4e7;border-top:none;padding:32px;border-radius:0 0 16px 16px">
+      <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#09090b;letter-spacing:-0.03em">¡Listo, ${nombre}! 🎉</h1>
+      <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6">
+        Tu sistema de turnos online para <strong>${params.company_name}</strong> ya está funcionando. Tus clientes pueden reservar solos, 24 horas.
+      </p>
+
+      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:20px 24px;margin-bottom:16px">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.07em;font-family:monospace">📅 Link para tus clientes</p>
+        <p style="margin:0 0 10px;font-size:13px;color:#111;font-family:monospace;word-break:break-all;font-weight:600">${params.turnero_url}</p>
+        <p style="margin:0;font-size:12px;color:#6b7280">Compartí este link por WhatsApp, Instagram o pegalo en tu bio.</p>
+      </div>
+
+      <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:14px;padding:20px 24px;margin-bottom:24px">
+        <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.07em;font-family:monospace">🔑 Tu panel de administración</p>
+        <p style="margin:0 0 10px;font-size:13px;color:#111;font-family:monospace;word-break:break-all;font-weight:600">${params.panel_url}</p>
+        <div style="display:inline-block;background:#1d4ed8;color:#fff;border-radius:8px;padding:7px 16px;font-family:monospace;font-size:16px;font-weight:900;letter-spacing:0.15em">PIN: ${params.panel_pin}</div>
+        <p style="margin:10px 0 0;font-size:12px;color:#6b7280">Guardá este PIN. Lo vas a necesitar para ver y gestionar tus turnos.</p>
+      </div>
+
+      <div style="text-align:center;margin-bottom:28px">
+        <p style="margin:0 0 12px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.07em;font-family:monospace">QR para imprimir o compartir</p>
+        <img src="${qrUrl}" alt="QR Turnero" width="180" height="180" style="border-radius:12px;border:4px solid #f4f4f5">
+        <p style="margin:8px 0 0;font-size:11px;color:#9ca3af">Imprimilo y pegalo en la recepción</p>
+      </div>
+
+      <div style="background:#fafafa;border-radius:12px;padding:18px 22px;margin-bottom:24px;border:1px solid #e4e4e7">
+        <p style="margin:0 0 14px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em">Primeros pasos</p>
+        <div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start"><div style="min-width:24px;height:24px;background:#06060A;color:#C6FF3D;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;font-family:monospace;flex-shrink:0">1</div><p style="margin:2px 0 0;font-size:14px;color:#374151">Entrá a tu panel con el PIN y revisá los servicios y horarios cargados</p></div>
+        <div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start"><div style="min-width:24px;height:24px;background:#06060A;color:#C6FF3D;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;font-family:monospace;flex-shrink:0">2</div><p style="margin:2px 0 0;font-size:14px;color:#374151">Compartí tu link de turnos por WhatsApp con tus primeros clientes</p></div>
+        <div style="display:flex;gap:12px;align-items:flex-start"><div style="min-width:24px;height:24px;background:#06060A;color:#C6FF3D;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;font-family:monospace;flex-shrink:0">3</div><p style="margin:2px 0 0;font-size:14px;color:#374151">Si necesitás cambiar horarios, servicios o precios — escribime</p></div>
+      </div>
+
+      <a href="${waLink}" style="display:block;background:#25D366;color:#fff;text-align:center;padding:16px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;margin-bottom:20px">
+        💬 Escribime para configurar juntos
+      </a>
+
+      <p style="margin:0;color:#9ca3af;font-size:13px;line-height:1.8">Joaco · DIVINIA<br>
+      <a href="https://divinia.vercel.app" style="color:#9ca3af;">divinia.vercel.app</a> · San Luis, Argentina</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+  }).catch(e => console.error('[turnero-welcome]', e))
+}
