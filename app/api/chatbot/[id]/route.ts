@@ -1,27 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateChatbotResponse } from '@/lib/claude'
+import { retrieveKnowledge, hasKnowledge } from '@/lib/embeddings'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
-}
-
-// Rate limiter simple en memoria: max 20 mensajes por IP por minuto
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 })
-    return true
-  }
-  if (entry.count >= 20) return false
-  entry.count++
-  return true
 }
 
 const MAX_SESSION_MESSAGES = 20
@@ -53,7 +40,8 @@ export async function POST(
 ) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
-    if (!checkRateLimit(ip)) {
+    const allowed = await checkRateLimit(`chatbot:${ip}`, 20, 60_000)
+    if (!allowed) {
       return NextResponse.json({ error: 'Demasiadas solicitudes. Esperá un momento.' }, { status: 429 })
     }
 
@@ -108,7 +96,22 @@ export async function POST(
            .replace(/\{EMAIL\}/g, (config?.email as string) || '')
            .replace(/\{WHATSAPP\}/g, (config?.whatsapp as string) || (config?.whatsapp_number as string) || '')
     const rawPrompt = (config?.system_prompt as string) || `Sos el asistente de ${client.company_name}. Respondé consultas con amabilidad y brevedad (máximo 3-4 líneas). Usá español argentino.`
-    const systemPrompt = replacePlaceholders(rawPrompt)
+    let systemPrompt = replacePlaceholders(rawPrompt)
+
+    // RAG: recuperar contexto relevante del knowledge base del chatbot
+    try {
+      const hasKB = await hasKnowledge(chatbotId)
+      if (hasKB) {
+        const matches = await retrieveKnowledge({ chatbot_id: chatbotId, query: message })
+        if (matches.length > 0) {
+          const context = matches.map(m => m.content).join('\n\n---\n\n')
+          systemPrompt = `${systemPrompt}\n\n[INFORMACIÓN ESPECÍFICA DEL NEGOCIO]\n${context}\n[/INFORMACIÓN]\n\nUsá esta información cuando sea relevante para responder. Si la pregunta no está cubierta, respondé con lo que sabés del negocio.`
+        }
+      }
+    } catch (ragErr) {
+      console.error('[RAG]', ragErr)
+      // Falla silenciosamente — chatbot sigue funcionando con el prompt base
+    }
 
     // Usar historia del servidor si hay session_id, sino fallback al cliente
     let conversationHistory: Message[]
