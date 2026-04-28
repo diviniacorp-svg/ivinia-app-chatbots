@@ -5,6 +5,25 @@ import { publishPost } from '@/agents/instagram/publisher'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
+async function generateFreepikImage(prompt: string): Promise<string | null> {
+  const apiKey = process.env.FREEPIK_API_KEY
+  if (!apiKey) return null
+  try {
+    const res = await fetch('https://api.freepik.com/v1/ai/text-to-image/mystic', {
+      method: 'POST',
+      headers: { 'X-Freepik-API-Key': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: `${prompt}, professional quality, Instagram post`, aspect_ratio: 'square_1_1', model: 'realism', resolution: '2k' }),
+    })
+    const data = await res.json()
+    const taskId = data?.data?.task_id
+    if (!taskId) return null
+    await new Promise(r => setTimeout(r, 30000))
+    const poll = await fetch(`https://api.freepik.com/v1/ai/text-to-image/mystic/${taskId}`, { headers: { 'X-Freepik-API-Key': apiKey } })
+    const pollData = await poll.json()
+    return pollData?.data?.generated?.[0] || null
+  } catch { return null }
+}
+
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -12,14 +31,12 @@ export async function POST(req: NextRequest) {
   }
 
   const db = createAdminClient()
-  const today = new Date().toISOString().split('T')[0]
 
   const { data: posts } = await db
     .from('content_calendar')
     .select('id, titulo, caption, hashtags, imagen_url, prompt_imagen')
     .eq('status', 'listo')
     .eq('plataforma', 'instagram')
-    .lte('fecha', today)
     .order('fecha', { ascending: true })
 
   if (!posts?.length) {
@@ -29,8 +46,17 @@ export async function POST(req: NextRequest) {
   const results = []
 
   for (const post of posts) {
-    if (!post.imagen_url) {
-      results.push({ titulo: post.titulo, ok: false, reason: 'sin imagen' })
+    let imageUrl = post.imagen_url
+
+    if (!imageUrl && post.prompt_imagen) {
+      imageUrl = await generateFreepikImage(post.prompt_imagen)
+      if (imageUrl) {
+        await db.from('content_calendar').update({ imagen_url: imageUrl }).eq('id', post.id)
+      }
+    }
+
+    if (!imageUrl) {
+      results.push({ titulo: post.titulo, ok: false, reason: 'sin imagen ni prompt' })
       continue
     }
 
@@ -40,7 +66,7 @@ export async function POST(req: NextRequest) {
       id: post.id,
       caption: post.caption || post.titulo,
       hashtags,
-      imageUrl: post.imagen_url,
+      imageUrl,
       rubro: 'general',
       postType: 'educativo',
       format: 'post',
