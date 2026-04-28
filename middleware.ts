@@ -44,6 +44,8 @@ const ADMIN_EXACT_ROUTES = ['/nucleo']
 const PUBLIC_API_EXCEPTIONS = [
   '/api/agents/audit',       // formulario público de auditoría
   '/api/agents/demo',        // demos públicas de agentes
+  '/api/cron',               // cron jobs — auth via CRON_SECRET interno
+  '/api/content/publish-all', // publish manual — auth via CRON_SECRET interno
 ]
 
 // Para proposals: el GET de una propuesta específica es público (link compartido)
