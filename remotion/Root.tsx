@@ -7,6 +7,7 @@ import { ProductDemoReel } from './compositions/ProductDemoReel'
 import { TextAnimReel } from './compositions/TextAnimReel'
 import { NanoReel } from './compositions/NanoReel'
 import { InstaReel } from './compositions/InstaReel'
+import { InstaPost } from './compositions/InstaPost'
 
 const W = 1080, H = 1920, FPS = 30
 
@@ -85,6 +86,14 @@ export const RemotionRoot: React.FC = () => (
     />
     <Composition id="Insta-Post15-CTA" component={InstaReel} durationInFrames={240} fps={FPS} width={W} height={H}
       defaultProps={{ videoFile: 'post15-mockup-giro.mp4', badge: 'Mes 1 cerrado', headline: 'Tu turno', subtext: '$43.000/mes · Setup 24hs · Sin permanencia', cta: 'Escribinos ahora →', ctaColor: '#EC4899' }}
+    />
+
+    {/* ——— InstaPost — imágenes estáticas 1:1 ——— */}
+    <Composition id="Post-Llegamos" component={InstaPost} durationInFrames={1} fps={FPS} width={1080} height={1080}
+      defaultProps={{ headline: '¡Llegamos!\na San Luis.', sub: 'El Turnero IA que tu negocio estaba esperando.', badge: 'Novedad', accent: 'lime', dark: true }}
+    />
+    <Composition id="Post-Precio" component={InstaPost} durationInFrames={1} fps={FPS} width={1080} height={1080}
+      defaultProps={{ headline: '$45.000\npor mes.', sub: 'Setup en 48hs · Sin permanencia · Turnos 24hs automáticos', badge: 'Precio', accent: 'lime', dark: true }}
     />
 
     {/* ——— ProductDemo — 4 rubros ——— */}

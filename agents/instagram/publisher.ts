@@ -112,10 +112,10 @@ async function createReelContainer(
 async function waitForVideoProcessing(containerId: string, accessToken: string): Promise<void> {
   for (let i = 0; i < 20; i++) {
     await new Promise(r => setTimeout(r, 5000))
-    const res = await fetch(`${IG_API_BASE}/${containerId}?fields=status_code&access_token=${accessToken}`)
+    const res = await fetch(`${IG_API_BASE}/${containerId}?fields=status_code,status&access_token=${accessToken}`)
     const data = await res.json()
     if (data.status_code === 'FINISHED') return
-    if (data.status_code === 'ERROR') throw new Error('Error procesando video en Instagram')
+    if (data.status_code === 'ERROR') throw new Error(`Error procesando video: ${data.status || 'sin detalle'}`)
   }
   throw new Error('Timeout esperando procesamiento del video')
 }
