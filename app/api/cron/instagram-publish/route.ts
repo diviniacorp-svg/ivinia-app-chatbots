@@ -77,14 +77,13 @@ async function generateFreepikImage(prompt: string): Promise<string | null> {
   if (!apiKey) return null
 
   try {
-    const res = await fetch('https://api.freepik.com/v1/ai/text-to-image/mystic', {
+    const res = await fetch('https://api.freepik.com/v1/ai/mystic', {
       method: 'POST',
       headers: { 'X-Freepik-API-Key': apiKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: `${prompt}, professional quality, Instagram post`,
-        aspect_ratio: 'square_1_1',
-        model: 'realism',
-        resolution: '2k',
+        image: { size: '1:1' },
+        styling: { style: 'photo' },
       }),
     })
     const data = await res.json()
@@ -93,11 +92,11 @@ async function generateFreepikImage(prompt: string): Promise<string | null> {
 
     await new Promise(r => setTimeout(r, 30000))
 
-    const poll = await fetch(`https://api.freepik.com/v1/ai/text-to-image/mystic/${taskId}`, {
+    const poll = await fetch(`https://api.freepik.com/v1/ai/mystic/${taskId}`, {
       headers: { 'X-Freepik-API-Key': apiKey },
     })
     const pollData = await poll.json()
-    return pollData?.data?.generated?.[0] || null
+    return pollData?.data?.generated?.[0]?.url || pollData?.data?.generated?.[0] || null
   } catch {
     return null
   }
