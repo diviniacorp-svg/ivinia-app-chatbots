@@ -46,6 +46,8 @@ const PUBLIC_API_EXCEPTIONS = [
   '/api/agents/demo',        // demos públicas de agentes
   '/api/cron',               // cron jobs — auth via CRON_SECRET interno
   '/api/content/publish-all', // publish manual — auth via CRON_SECRET interno
+  '/api/social/publish',     // social publish — auth via panel session
+  '/api/social/generate',    // content generation — auth via panel session
 ]
 
 // Para proposals: el GET de una propuesta específica es público (link compartido)
