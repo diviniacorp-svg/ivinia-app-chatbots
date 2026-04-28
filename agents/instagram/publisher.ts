@@ -84,25 +84,64 @@ async function publishMediaContainer(
   return data.id as string
 }
 
+async function createReelContainer(
+  accountId: string,
+  accessToken: string,
+  videoUrl: string,
+  caption: string,
+): Promise<string> {
+  const params = new URLSearchParams({
+    media_type: 'REELS',
+    video_url: videoUrl,
+    caption,
+    access_token: accessToken,
+  })
+
+  const response = await fetch(`${IG_API_BASE}/${accountId}/media`, {
+    method: 'POST',
+    body: params,
+  })
+
+  const data = await response.json()
+  if (!response.ok || data.error) {
+    throw new Error(data.error?.message || `Error creando reel container: ${response.status}`)
+  }
+  return data.id as string
+}
+
+async function waitForVideoProcessing(containerId: string, accessToken: string): Promise<void> {
+  for (let i = 0; i < 20; i++) {
+    await new Promise(r => setTimeout(r, 5000))
+    const res = await fetch(`${IG_API_BASE}/${containerId}?fields=status_code&access_token=${accessToken}`)
+    const data = await res.json()
+    if (data.status_code === 'FINISHED') return
+    if (data.status_code === 'ERROR') throw new Error('Error procesando video en Instagram')
+  }
+  throw new Error('Timeout esperando procesamiento del video')
+}
+
 export async function publishPost(post: InstagramPost): Promise<PublishResult> {
   try {
     const { accessToken, accountId } = getCredentials()
 
     if (!post.imageUrl) {
-      return { success: false, error: 'El post no tiene imagen (imageUrl requerido)' }
+      return { success: false, error: 'El post no tiene imagen o video (imageUrl requerido)' }
     }
 
     const caption = `${post.caption}\n\n${post.hashtags.join(' ')}`
+    const isVideo = post.imageUrl.endsWith('.mp4') || post.imageUrl.endsWith('.mov')
 
-    // Paso 1: crear container
-    const containerId = await createMediaContainer(accountId, accessToken, post.imageUrl, caption)
+    let containerId: string
 
-    // Esperar un momento para que Instagram procese la imagen
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    if (isVideo) {
+      containerId = await createReelContainer(accountId, accessToken, post.imageUrl, caption)
+      await waitForVideoProcessing(containerId, accessToken)
+    } else {
+      containerId = await createMediaContainer(accountId, accessToken, post.imageUrl, caption)
+      await new Promise(r => setTimeout(r, 2000))
+    }
 
-    // Paso 2: publicar
     const igMediaId = await publishMediaContainer(accountId, accessToken, containerId)
-
     return { success: true, igMediaId }
   } catch (error) {
     return {
