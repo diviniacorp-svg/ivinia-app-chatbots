@@ -452,6 +452,7 @@ function ProductCard({ pid, client }: { pid: string; client: Client }) {
   if (pid === 'turnero' && bcId) {
     links.push({ label: 'Panel del negocio', href: `/panel/${bcId}`, icon: <Calendar size={13} />, external: true })
     links.push({ label: 'Link de reservas', href: `/reservas/${bcId}`, icon: <Calendar size={13} />, external: true })
+    links.push({ label: 'QR para vidriera', href: `/reservas/${bcId}/qr`, icon: <Copy size={13} />, external: true })
   }
   if (pid === 'content') {
     links.push({ label: 'Gestionar contenido', href: `/contenido?client=${client.id}`, icon: <Sparkles size={13} /> })
