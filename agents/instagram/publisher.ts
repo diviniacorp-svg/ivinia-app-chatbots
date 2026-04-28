@@ -6,7 +6,7 @@
 import type { InstagramPost, PostMetrics } from './types'
 
 const IG_API_VERSION = 'v21.0'
-const IG_API_BASE = `https://graph.facebook.com/${IG_API_VERSION}`
+const IG_API_BASE = `https://graph.instagram.com/${IG_API_VERSION}`
 
 interface PublishResult {
   success: boolean
