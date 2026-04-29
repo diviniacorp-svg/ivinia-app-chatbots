@@ -59,8 +59,9 @@ const NAV: NavGroup[] = [
   {
     group: 'Sistema',
     items: [
-      { href: '/agents',       label: 'Agentes IA',    icon: '🤖', matches: ['/agents', '/orquestacion', '/dispatch'] },
+      { href: '/estrategia',   label: 'Estrategia',    icon: '♟️', matches: ['/estrategia'] },
       { href: '/proyectos',    label: 'Proyectos',     icon: '🚀', matches: ['/proyectos'] },
+      { href: '/agents',       label: 'Agentes IA',    icon: '🤖', matches: ['/agents', '/orquestacion', '/dispatch'] },
       { href: '/herramientas', label: 'Herramientas',  icon: '🔧', matches: ['/herramientas', '/ideas', '/youtube'] },
     ],
   },

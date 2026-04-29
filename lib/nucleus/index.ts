@@ -778,6 +778,62 @@ export const NUCLEUS_AGENTS: NucleusAgent[] = [
     activadoPor: ['cron-mensual'],
     outputA: ['orquestador-ceo'],
   },
+
+  // ── ESTRATEGAS (CROSS-DEPT) ───────────────────────────────────────────────────
+  {
+    id: 'estratega-cliente',
+    nombre: 'Estratega de Cliente',
+    emoji: '🧩',
+    funcion: 'Para cada PYME, genera un plan personalizado: productos a activar, contenido ideal, health score, próximas 3 acciones.',
+    depto: 'ventas_crm',
+    modelo: 'sonnet',
+    herramientas: ['supabase', 'anthropic'],
+    systemPrompt: `Sos el estratega de clientes de DIVINIA. Para cada cliente PYME, analizás su historial, qué productos tiene activos, qué resultados está obteniendo y qué oportunidades hay. Generás:
+1. Health score (0-100): qué tan "sano" está el cliente (engagement, pagos, actividad)
+2. Objetivo a 3 meses: qué resultado concreto queremos lograr con él
+3. Productos recomendados: qué aún no tiene y debería tener
+4. Plan de contenido: qué publicar en redes según su rubro y audiencia
+5. Próximas 3 acciones: concretas, con fecha estimada
+Todo en español argentino, directo y accionable.`,
+    activadoPor: ['on-demand', 'cron-mensual', 'on-new-client'],
+    outputA: ['estratega-contenido', 'gestor-pipeline', 'redactor-outreach'],
+  },
+  {
+    id: 'estratega-proyecto',
+    nombre: 'Estratega de Proyecto',
+    emoji: '📐',
+    funcion: 'Para cada proyecto de cliente, define el scope exacto, timeline con hitos, KPIs de éxito y riesgos.',
+    depto: 'cerebro',
+    modelo: 'sonnet',
+    herramientas: ['supabase', 'anthropic'],
+    systemPrompt: `Sos el estratega de proyectos de DIVINIA. Cuando llega un nuevo proyecto, definís:
+1. Scope exacto: qué entregables incluye, qué NO incluye (evitar scope creep)
+2. Timeline: hitos semanales realistas, con buffer
+3. KPIs de éxito: cómo medimos que el proyecto funcionó para el cliente
+4. Riesgos y mitigación: qué puede fallar y cómo prevenirlo
+5. Approach técnico: cómo lo construimos, qué herramientas, en qué orden
+Al final de cada semana, revisás el avance y ajustás si hay desvíos. Siempre proponés soluciones antes de reportar problemas.`,
+    activadoPor: ['on-new-project', 'cron-semanal', 'on-demand'],
+    outputA: ['orquestador-ceo', 'estratega-general', 'dev-fullstack'],
+  },
+  {
+    id: 'estratega-crecimiento',
+    nombre: 'Estratega de Crecimiento',
+    emoji: '📈',
+    funcion: 'Define el camino de DIVINIA: expansión geográfica, nuevos productos, alianzas, canales de adquisición.',
+    depto: 'cerebro',
+    modelo: 'opus',
+    herramientas: ['supabase', 'anthropic'],
+    systemPrompt: `Sos el estratega de crecimiento de DIVINIA. Tu visión es a 6-12 meses. Definís:
+1. Expansión geográfica: cuándo y cómo ir de San Luis a Cuyo, de Cuyo a nacional
+2. Nuevos productos: qué lanzar según la demanda y las capacidades del equipo
+3. Alianzas: con quién conviene aliarse (contadores, diseñadores, cámaras de comercio)
+4. Canales de adquisición: qué canal escalar primero (orgánico, ads, referidos, partners)
+5. Pricing: cuándo y cómo ajustar precios para maximizar MRR sin aumentar churn
+Basás todas tus decisiones en data de Supabase y conversaciones con Joaco. Pensás en escalabilidad.`,
+    activadoPor: ['cron-mensual', 'on-demand'],
+    outputA: ['estratega-general', 'orquestador-ceo'],
+  },
 ]
 
 // ─── HERRAMIENTAS DISPONIBLES ─────────────────────────────────────────────────
@@ -874,6 +930,128 @@ INTELIGENCIA (semanal)
   ├── Detector Herramientas → qué es nuevo en IA
   └── Investigador Mercado → oportunidades nuevas
 `
+
+// ─── SISTEMA DE ESTRATEGIAS ───────────────────────────────────────────────────
+
+export const STRATEGY_LEVELS = {
+  divinia: {
+    id: 'divinia',
+    nombre: 'Estrategia DIVINIA',
+    descripcion: 'Posicionamiento, roadmap de productos, expansión geográfica y pricing de la empresa.',
+    agente: 'estratega-crecimiento',
+    horizonte: '6-12 meses',
+    cadencia: 'mensual',
+    color: '#C6FF3D',
+    emoji: '♟️',
+  },
+  cliente: {
+    id: 'cliente',
+    nombre: 'Estrategia de Cliente',
+    descripcion: 'Plan personalizado por PYME: health score, productos recomendados, contenido y próximas acciones.',
+    agente: 'estratega-cliente',
+    horizonte: '3 meses',
+    cadencia: 'mensual',
+    color: '#60A5FA',
+    emoji: '🧩',
+  },
+  proyecto: {
+    id: 'proyecto',
+    nombre: 'Estrategia de Proyecto',
+    descripcion: 'Scope, timeline, KPIs y approach técnico de cada entregable para un cliente.',
+    agente: 'estratega-proyecto',
+    horizonte: 'por proyecto',
+    cadencia: 'semanal',
+    color: '#A78BFA',
+    emoji: '📐',
+  },
+} as const
+
+export type StrategyLevelId = keyof typeof STRATEGY_LEVELS
+
+// Plantillas de estrategia por categoría de proyecto
+export const STRATEGY_TEMPLATES: Record<string, {
+  objetivo: string
+  kpis: Array<{ label: string; meta: string }>
+  scope_default: string[]
+  riesgos: string[]
+}> = {
+  turnero: {
+    objetivo: 'El cliente recibe reservas online y elimina el 80% de la gestión manual de turnos.',
+    kpis: [
+      { label: 'Reservas online/mes', meta: '+20 en primer mes' },
+      { label: 'Señas cobradas', meta: 'Mínimo 50% adelanto' },
+      { label: 'No-shows', meta: 'Reducir de X a <15%' },
+    ],
+    scope_default: [
+      'Configuración de horarios y servicios',
+      'Página de turnero con colores del negocio',
+      'Link de seña MP + monto personalizable',
+      'QR para mostrar en local',
+      'Capacitación al dueño (30 min)',
+    ],
+    riesgos: [
+      'Cliente no comparte el link con sus clientes → mitigación: armar story de IG para el primer día',
+      'WhatsApp del dueño no disponible para soporte → pedir número backup',
+    ],
+  },
+  chatbot: {
+    objetivo: 'El negocio responde el 100% de las consultas de WA en menos de 1 minuto, sin intervención humana en el 70% de los casos.',
+    kpis: [
+      { label: 'Consultas respondidas automáticamente', meta: '>70%' },
+      { label: 'Tiempo de respuesta promedio', meta: '<1 min' },
+      { label: 'Leads calificados por el bot/mes', meta: '+15' },
+    ],
+    scope_default: [
+      'Flow de bienvenida + preguntas frecuentes',
+      'Captura de nombre y contacto del cliente',
+      'Derivación inteligente según consulta',
+      'Integración con Turnero (si aplica)',
+      'Capacitación al dueño para responder escalados',
+    ],
+    riesgos: [
+      'Número de WA no es WhatsApp Business → gestionar migración',
+      'FAQs incompletas → primer semana de ajuste incluida',
+    ],
+  },
+  landing: {
+    objetivo: 'El negocio tiene presencia web profesional que convierte visitantes en consultas de WA.',
+    kpis: [
+      { label: 'CTR al WA desde la landing', meta: '>15%' },
+      { label: 'Posición en Google Maps', meta: 'Top 3 para rubro + ciudad' },
+      { label: 'Tiempo de carga', meta: '<2 segundos' },
+    ],
+    scope_default: [
+      'Diseño con identidad del negocio (colores, logo)',
+      'Secciones: hero, servicios, galería, testimonios, CTA WA',
+      'SEO básico (meta tags, Google My Business)',
+      'Dominio propio o subdominio DIVINIA',
+      'Formulario de contacto',
+    ],
+    riesgos: [
+      'Cliente no tiene fotos de calidad → incluir sesión básica con celular',
+      'No tienen logo → diseño básico incluido en el scope',
+    ],
+  },
+  content_factory: {
+    objetivo: 'El negocio publica 3-5 veces por semana en Instagram con contenido que genera engagement y consultas.',
+    kpis: [
+      { label: 'Posts/semana', meta: '3-5' },
+      { label: 'Engagement rate', meta: '>3%' },
+      { label: 'Consultas desde IG/mes', meta: '+10' },
+    ],
+    scope_default: [
+      'Estrategia mensual de contenido (pilares y calendario)',
+      'Diseño de templates con identidad del negocio',
+      'Captions con voz del negocio + CTA',
+      '4 reels/mes generados con IA',
+      'Informe mensual de métricas',
+    ],
+    riesgos: [
+      'Cliente quiere aprobar cada post → establecer proceso de aprobación express (24hs)',
+      'Cambios de última hora → política: 1 ronda de correcciones por pieza',
+    ],
+  },
+}
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 

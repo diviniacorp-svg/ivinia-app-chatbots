@@ -3,442 +3,245 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-type Proyecto = {
+const INK = '#09090B'
+const LIME = '#C6FF3D'
+
+type Project = {
   id: string
   nombre: string
-  tagline: string
-  descripcion: string
-  status: 'activo' | 'en-desarrollo' | 'idea' | 'pausado'
+  tagline: string | null
+  descripcion: string | null
+  tipo: 'cliente' | 'producto-divinia' | 'interno'
+  categoria: string | null
+  status: string
   icon: string
   color: string
   progreso: number
-  href?: string
   proximos: string[]
-  kpis?: { label: string; valor: string }[]
-  categoria: 'producto-divinia' | 'app-propia'
+  kpis: Array<{ label: string; valor: string; meta?: string }>
+  href: string | null
+  fecha_entrega: string | null
+  presupuesto_ars: number | null
+  estrategia: Record<string, unknown>
+  clients?: { id: string; company_name: string; rubro: string } | null
 }
 
-const PROYECTOS: Proyecto[] = [
-  {
-    id: 'turnero',
-    nombre: 'Turnero IA',
-    tagline: 'Sistema de reservas inteligente para PYMEs',
-    descripcion: 'Producto hero de DIVINIA. Sistema de turnos con IA, confirmaciones automáticas y panel de gestión. Activo y en venta desde San Luis. Cliente real: Estética tuEspacio (Romina).',
-    status: 'activo',
-    icon: '📅',
-    color: '#C6FF3D',
-    progreso: 85,
-    href: '/turnos',
-    categoria: 'producto-divinia',
-    proximos: ['Integración MercadoPago', 'Notificaciones WhatsApp', 'App móvil (PWA)', 'Analytics por rubro'],
-    kpis: [
-      { label: 'Clientes', valor: 'Romina + demos' },
-      { label: 'Precio desde', valor: '$45k/mes' },
-      { label: 'Setup', valor: '48hs' },
-    ],
-  },
-  {
-    id: 'nucleus',
-    nombre: 'NUCLEUS IA',
-    tagline: 'Cerebro IA para negocios — memoria, agentes, automatización total',
-    descripcion: 'El producto más diferenciador. Cerebro IA que automatiza el negocio completo del cliente. Primer cierre: Shopping del Usado. En desarrollo para Dorotea (Santiago Peral).',
-    status: 'en-desarrollo',
-    icon: '🧠',
-    color: '#A78BFA',
-    progreso: 40,
-    href: '/nucleo',
-    categoria: 'producto-divinia',
-    proximos: ['Cerrar Shopping del Usado', 'Entregar Dorotea (Santiago Peral)', 'Memory store en Supabase', 'Agente comercial autónomo'],
-    kpis: [
-      { label: 'Primer cliente', valor: 'Shopping del Usado' },
-      { label: 'En desarrollo', valor: 'Dorotea' },
-      { label: 'Modelo', valor: 'Claude Sonnet' },
-    ],
-  },
-  {
-    id: 'market-sl',
-    nombre: 'Market San Luis',
-    tagline: 'Super app comercio local — marketplace + delivery + oficios',
-    descripcion: 'Webapp independiente para la comunidad de San Luis. Comercios, delivery, oficios y loyalty en una sola app. Primer ciudad, luego escalable a todo el país.',
-    status: 'en-desarrollo',
-    icon: '🗺️',
-    color: '#38BDF8',
-    progreso: 20,
-    href: '/market',
-    categoria: 'producto-divinia',
-    proximos: ['Landing pública propia', 'Reclutar 10 comercios piloto', 'Sistema de delivery básico', 'Loyalty por QR', 'Integrar ECOSL reciclaje'],
-    kpis: [
-      { label: 'Comercios objetivo', valor: '50 en 6 meses' },
-      { label: 'Modelo', valor: 'Comisión + suscripción' },
-      { label: 'Ciudad piloto', valor: 'San Luis Capital' },
-    ],
-  },
-  {
-    id: 'content-factory',
-    nombre: 'Content Factory',
-    tagline: 'Producción masiva de contenido IA para clientes DIVINIA',
-    descripcion: 'Sistema para producir y programar contenido de redes sociales. Base: SocialFlow (Next.js + Prisma + BullMQ). Reels, posts, copys, calendarios en minutos.',
-    status: 'activo',
-    icon: '✨',
-    color: '#F59E0B',
-    progreso: 60,
-    categoria: 'producto-divinia',
-    href: '/contenido',
-    proximos: ['Publicación directa a Instagram', 'Templates por rubro', 'Aprobación del cliente vía link', 'Generación de avatares por cliente'],
-    kpis: [
-      { label: 'Formatos', valor: 'Reels, posts, copys' },
-      { label: 'Pipeline', valor: 'IA → Remotion → Canva' },
-      { label: 'Base', valor: 'SocialFlow' },
-    ],
-  },
-  {
-    id: 'youtube-empire',
-    nombre: 'YouTube Empire',
-    tagline: '15 canales faceless virales en español, full automatizado',
-    descripcion: 'Proyecto personal de Joaco. 15 nichos virales producidos con IA: Claude para guiones, ElevenLabs para voz, Remotion para montaje, YouTube API para subida. Sin aparecer en cámara.',
-    status: 'en-desarrollo',
-    icon: '🎬',
-    color: '#EF4444',
-    progreso: 10,
-    href: '/youtube',
-    categoria: 'app-propia',
-    proximos: ['Lanzar canal #1 (La Mente Oscura)', 'Setup ElevenLabs voice clone', 'Pipeline Remotion automático', 'Primeros 10 videos x canal'],
-    kpis: [
-      { label: 'Canales planificados', valor: '15' },
-      { label: 'Proyección mes 12', valor: '$10-20k USD' },
-      { label: 'Inversión mensual', valor: '~$37 USD' },
-    ],
-  },
-  {
-    id: 'ecosl',
-    nombre: 'ECOSL — Reciclaje SL',
-    tagline: 'App de reciclaje gamificada para San Luis',
-    descripcion: 'MVP funcional. Mapas de puntos de reciclaje, scanner QR, puntos/rewards, MercadoPago. Contactos de recicladores y supermercados identificados.',
-    status: 'en-desarrollo',
-    icon: '♻️',
-    color: '#84CC16',
-    progreso: 35,
-    categoria: 'app-propia',
-    proximos: ['Migrar a Supabase/Vercel', 'Configurar Google Maps API', 'Contactar recicladores (NOVA SRL, Reciclados Rurales)', 'Integrar en Market SL'],
-    kpis: [
-      { label: 'Stack', valor: 'React PWA + Node.js' },
-      { label: 'Modelo', valor: 'Publicidad + Premium' },
-      { label: 'Mercado', valor: 'San Luis → ciudades' },
-    ],
-  },
-  {
-    id: 'sl-parking',
-    nombre: 'SL-Parking',
-    tagline: 'App de estacionamiento para San Luis',
-    descripcion: 'App de gestión de estacionamiento San Luis. Potencial como módulo de Market SL o producto independiente para municipios.',
-    status: 'idea',
-    icon: '🅿️',
-    color: '#06B6D4',
-    progreso: 15,
-    categoria: 'app-propia',
-    proximos: ['Explorar código existente', 'Definir si va en Market SL o es producto separado', 'Evaluar modelo de negocio'],
-    kpis: [],
-  },
-  {
-    id: 'oneiric',
-    nombre: 'Oneiric — App de Sueños',
-    tagline: 'Registro e interpretación de sueños con IA',
-    descripcion: 'App Next.js para registrar y analizar sueños. Nicho de bienestar/psicología. Candidata a monetización con Claude para interpretación.',
-    status: 'idea',
-    icon: '🌙',
-    color: '#6366F1',
-    progreso: 20,
-    categoria: 'app-propia',
-    proximos: ['Explorar funcionalidades', 'Evaluar mercado', 'Agregar interpretación con Claude'],
-    kpis: [
-      { label: 'Stack', valor: 'Next.js + Supabase' },
-    ],
-  },
-]
-
-const APPS_PROPIAS = PROYECTOS.filter(p => p.categoria === 'app-propia')
-const PRODUCTOS_DIVINIA = PROYECTOS.filter(p => p.categoria === 'producto-divinia')
-
-const STATUS_CONFIG = {
-  activo: { label: 'Activo', color: '#10B981', bg: '#10B98115' },
-  'en-desarrollo': { label: 'En desarrollo', color: '#38BDF8', bg: '#38BDF815' },
-  idea: { label: 'Idea', color: '#A78BFA', bg: '#A78BFA15' },
-  pausado: { label: 'Pausado', color: '#6B7280', bg: '#6B728015' },
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  'activo':        { label: 'Activo',        color: '#4ade80' },
+  'en-desarrollo': { label: 'En desarrollo', color: '#FBBF24' },
+  'idea':          { label: 'Idea',          color: '#60A5FA' },
+  'pausado':       { label: 'Pausado',       color: '#F87171' },
+  'completado':    { label: 'Completado',    color: '#A78BFA' },
 }
 
-// ── Helpers para separar clientes demo/app propias ───────────────
-type ClientItem = { id: string; company_name: string; plan: string; status: string; chatbot_id: string | null; booking_configs?: { id: string }[]; custom_config?: Record<string,string>; mrr?: number }
-
-function clientTag(c: ClientItem): 'own_app' | 'demo' | null {
-  const id = c.chatbot_id || ''
-  if (id.endsWith('-app')) return 'own_app'
-  if (id.includes('demo') || id.includes('2026bot') || id.includes('2026bt')) return 'demo'
-  return null
+const CATEGORIAS: Record<string, { label: string; color: string }> = {
+  turnero:         { label: 'Turnero', color: LIME },
+  chatbot:         { label: 'Chatbot', color: '#60A5FA' },
+  landing:         { label: 'Landing', color: '#38BDF8' },
+  content_factory: { label: 'Content', color: '#F472B6' },
+  nucleus:         { label: 'Nucleus', color: '#A78BFA' },
+  ads:             { label: 'Ads',     color: '#FBBF24' },
+  marketplace:     { label: 'Market',  color: '#38BDF8' },
 }
 
-const TAG_CONFIG = {
-  own_app: { label: 'App propia', color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
-  demo: { label: 'Demo', color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
-}
+export default function ProyectosPage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<'cliente' | 'producto-divinia'>('cliente')
+  const [statusFilter, setStatusFilter] = useState<string>('todos')
 
-function SupabaseCard({ client }: { client: ClientItem }) {
-  const tag = clientTag(client)
-  const cfg = TAG_CONFIG[tag!]
-  const color = client.custom_config?.color || '#6B7280'
-  const initial = (client.company_name || '?').charAt(0).toUpperCase()
-  const hasTurnos = !!(client.booking_configs && client.booking_configs.length > 0)
-  const turnosId = hasTurnos ? client.booking_configs![0].id : null
-  const PLAN_LABEL: Record<string,string> = { trial: 'Trial', basic: 'Básico', pro: 'Pro', enterprise: 'Enterprise', mensual: 'Mensual' }
+  useEffect(() => {
+    fetch('/api/projects')
+      .then(r => r.json())
+      .then(data => { setProjects(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const filtered = projects
+    .filter(p => p.tipo === tab)
+    .filter(p => statusFilter === 'todos' || p.status === statusFilter)
+
+  const clienteProjects = projects.filter(p => p.tipo === 'cliente')
+  const diviniaProjects = projects.filter(p => p.tipo === 'producto-divinia')
 
   return (
-    <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ height: 3, background: color }} />
-      <div style={{ padding: '16px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 900, fontSize: 15, background: color,
-          }}>{initial}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-              <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 14 }}>{client.company_name}</span>
-              {tag && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 4, fontWeight: 700, color: cfg.color, background: cfg.bg }}>{cfg.label}</span>}
-            </div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
-              {PLAN_LABEL[client.plan] || client.plan} · {client.status}
-            </div>
+    <div style={{ height: '100%', overflowY: 'auto', background: INK, color: '#fff', padding: '24px 28px' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>
+            DIVINIA OS · PROYECTOS
           </div>
+          <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>
+            Proyectos
+          </h1>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {client.chatbot_id && (
-            <a href={`/api/chatbot/${client.chatbot_id}`} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', textDecoration: 'none' }}>
-              <span>💬 Probar chatbot</span>
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>↗</span>
-            </a>
-          )}
-          {hasTurnos && turnosId && (
-            <>
-              <a href={`/panel/${turnosId}`} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', textDecoration: 'none' }}>
-                <span>📅 Panel del negocio</span>
-                <span style={{ fontSize: 10, color: 'var(--muted)' }}>↗</span>
-              </a>
-              <a href={`/reservas/${turnosId}`} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', textDecoration: 'none' }}>
-                <span>🔗 Link de reservas</span>
-                <span style={{ fontSize: 10, color: 'var(--muted)' }}>↗</span>
-              </a>
-            </>
-          )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/estrategia" style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', padding: '6px 12px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6 }}>
+            ♟️ Estrategia
+          </Link>
+          <Link href="/proyectos/nuevo" style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: INK, background: LIME, textDecoration: 'none', padding: '6px 14px', borderRadius: 6, fontWeight: 700 }}>
+            + Nuevo proyecto
+          </Link>
         </div>
       </div>
+
+      {/* Resumen numérico */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+        {[
+          { label: 'Proyectos de clientes', valor: clienteProjects.length, color: '#60A5FA' },
+          { label: 'En desarrollo', valor: projects.filter(p => p.status === 'en-desarrollo').length, color: '#FBBF24' },
+          { label: 'Activos', valor: projects.filter(p => p.status === 'activo').length, color: '#4ade80' },
+          { label: 'Productos DIVINIA', valor: diviniaProjects.length, color: LIME },
+        ].map(m => (
+          <div key={m.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)', padding: '10px 14px', flex: 1 }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 18, fontWeight: 700, color: m.color }}>{m.valor}</div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 3, width: 'fit-content' }}>
+        {([['cliente', '🤝 Clientes'], ['producto-divinia', '🚀 Productos DIVINIA']] as const).map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)} style={{
+            padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer',
+            fontFamily: 'var(--f-mono)', fontSize: 10,
+            background: tab === key ? 'rgba(255,255,255,0.12)' : 'transparent',
+            color: tab === key ? '#fff' : 'rgba(255,255,255,0.35)',
+            transition: 'all 0.15s',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* Filtros de estado */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+        {['todos', 'en-desarrollo', 'activo', 'idea', 'pausado', 'completado'].map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)} style={{
+            padding: '4px 10px', borderRadius: 20, border: `1px solid ${statusFilter === s ? (STATUS_MAP[s]?.color ?? LIME) : 'rgba(255,255,255,0.1)'}`,
+            background: statusFilter === s ? `${STATUS_MAP[s]?.color ?? LIME}18` : 'transparent',
+            color: statusFilter === s ? (STATUS_MAP[s]?.color ?? LIME) : 'rgba(255,255,255,0.3)',
+            fontFamily: 'var(--f-mono)', fontSize: 9, cursor: 'pointer',
+          }}>
+            {s === 'todos' ? 'Todos' : STATUS_MAP[s]?.label ?? s}
+          </button>
+        ))}
+      </div>
+
+      {/* Lista de proyectos */}
+      {loading ? (
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.25)', padding: 40, textAlign: 'center' }}>
+          Cargando...
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px dashed rgba(255,255,255,0.1)', padding: 48, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontSize: 28, marginBottom: 10 }}>📁</div>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+            {tab === 'cliente' ? 'No hay proyectos de clientes todavía' : 'No hay proyectos de productos'}
+          </div>
+          {tab === 'cliente' && (
+            <Link href="/proyectos/nuevo" style={{ display: 'inline-block', marginTop: 14, fontFamily: 'var(--f-mono)', fontSize: 10, color: LIME, textDecoration: 'none' }}>
+              Crear primer proyecto →
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
+          {filtered.map(p => <ProjectCard key={p.id} project={p} />)}
+        </div>
+      )}
     </div>
   )
 }
 
-export default function ProyectosPage() {
-  const [seccion, setSeccion] = useState<'divinia' | 'apps' | 'supabase'>('divinia')
-  const [supabaseClients, setSupabaseClients] = useState<ClientItem[]>([])
-
-  useEffect(() => {
-    fetch('/api/clients')
-      .then(r => r.json())
-      .then(d => {
-        const all = (d.clients || []) as ClientItem[]
-        setSupabaseClients(all.filter(c => clientTag(c) !== null))
-      })
-  }, [])
-
-  const ownApps = supabaseClients.filter(c => clientTag(c) === 'own_app')
-  const demos   = supabaseClients.filter(c => clientTag(c) === 'demo')
-
-  const activos = PRODUCTOS_DIVINIA.filter(p => p.status === 'activo').length
-  const enDesarrollo = PRODUCTOS_DIVINIA.filter(p => p.status === 'en-desarrollo').length
-  const lista = seccion === 'divinia' ? PRODUCTOS_DIVINIA : APPS_PROPIAS
+function ProjectCard({ project: p }: { project: Project }) {
+  const status = STATUS_MAP[p.status] ?? { label: p.status, color: 'rgba(255,255,255,0.4)' }
+  const cat = CATEGORIAS[p.categoria ?? '']
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper-2)' }}>
-
-      {/* Header */}
-      <div style={{ padding: '36px 40px 28px', borderBottom: '1px solid var(--line)', background: 'var(--paper)' }}>
-        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
-          Laboratorio
+    <Link href={p.tipo === 'cliente' ? `/proyectos/${p.id}` : (p.href ?? `/proyectos/${p.id}`)} style={{ textDecoration: 'none' }}>
+      <div style={{
+        background: 'rgba(255,255,255,0.03)', borderRadius: 12,
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: 18, cursor: 'pointer',
+        transition: 'border-color 0.15s, background 0.15s',
+      }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `${p.color}44`; (e.currentTarget as HTMLDivElement).style.background = `${p.color}08` }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.03)' }}
+      >
+        {/* Top row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+            background: `${p.color}20`, border: `1px solid ${p.color}40`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+          }}>{p.icon}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--f-display)', fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+              {p.nombre}
+            </div>
+            {p.tagline && (
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {p.tagline}
+              </div>
+            )}
+          </div>
+          <div style={{
+            fontFamily: 'var(--f-mono)', fontSize: 8, padding: '3px 8px', borderRadius: 20, flexShrink: 0,
+            background: `${status.color}18`, color: status.color, border: `1px solid ${status.color}33`,
+          }}>
+            {status.label}
+          </div>
         </div>
-        <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 42px)', color: 'var(--ink)', letterSpacing: '-0.04em', lineHeight: 1.1, margin: 0 }}>
-          Proyectos
-        </h1>
-        <p style={{ marginTop: 8, fontFamily: 'var(--f-display)', fontSize: 14, color: 'var(--muted-2)', marginBottom: 0 }}>
-          Todo lo que se está construyendo en el universo DIVINIA
-        </p>
-        <div style={{ display: 'flex', gap: 24, marginTop: 20, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: '#10B981', letterSpacing: '-0.04em' }}>{activos}</div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>Activos</div>
+
+        {/* Cliente (si aplica) */}
+        {p.clients && (
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>
+            👥 {p.clients.company_name} · {p.clients.rubro}
           </div>
-          <div>
-            <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: '#38BDF8', letterSpacing: '-0.04em' }}>{enDesarrollo}</div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>En desarrollo</div>
+        )}
+
+        {/* Descripción */}
+        {p.descripcion && (
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 12,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {p.descripcion}
           </div>
-          <div>
-            <div style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700, fontSize: 24, color: '#A78BFA', letterSpacing: '-0.04em' }}>{APPS_PROPIAS.length}</div>
-            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)' }}>Apps propias</div>
+        )}
+
+        {/* Progress bar */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: 'rgba(255,255,255,0.25)' }}>Progreso</div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: p.color }}>{p.progreso}%</div>
+          </div>
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+            <div style={{ width: `${p.progreso}%`, height: '100%', background: p.color, borderRadius: 2 }} />
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 24, flexWrap: 'wrap' }}>
-          {([
-            { id: 'divinia', label: '🚀 Productos DIVINIA', desc: 'Lo que vendés' },
-            { id: 'apps', label: '🔬 Apps propias', desc: 'Para integrar o lanzar' },
-            { id: 'supabase', label: `🗄️ En Supabase${supabaseClients.length > 0 ? ` · ${supabaseClients.length}` : ''}`, desc: 'Apps y demos activos en la DB' },
-          ] as const).map(t => (
-            <button key={t.id} onClick={() => setSeccion(t.id)}
-              style={{
-                padding: '8px 18px', borderRadius: 8, cursor: 'pointer', border: 'none',
-                fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
-                background: seccion === t.id ? 'rgba(255,255,255,0.12)' : 'transparent',
-                color: seccion === t.id ? 'var(--paper)' : 'rgba(255,255,255,0.35)',
-                fontWeight: seccion === t.id ? 700 : 400,
-              }}>
-              {t.label}
-            </button>
+        {/* KPIs y categoría */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {cat && (
+            <span style={{
+              fontFamily: 'var(--f-mono)', fontSize: 8, padding: '2px 7px', borderRadius: 20,
+              background: `${cat.color}18`, color: cat.color, border: `1px solid ${cat.color}33`,
+            }}>{cat.label}</span>
+          )}
+          {p.kpis?.slice(0, 2).map((k, i) => (
+            <span key={i} style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: 'rgba(255,255,255,0.3)', padding: '2px 6px', background: 'rgba(255,255,255,0.05)', borderRadius: 4 }}>
+              {k.label}: {k.valor}
+            </span>
           ))}
-        </div>
-      </div>
-
-      {/* Tab supabase */}
-      {seccion === 'supabase' && (
-        <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
-          {supabaseClients.length === 0 && (
-            <div style={{ background: 'var(--paper)', border: '1px dashed var(--line)', borderRadius: 14, padding: '48px 32px', textAlign: 'center' }}>
-              <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>No hay apps propias ni demos en Supabase todavía</p>
-            </div>
-          )}
-          {ownApps.length > 0 && (
-            <div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B5CF6', display: 'inline-block' }} />
-                Apps propias DIVINIA · {ownApps.length}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
-                {ownApps.map(c => <SupabaseCard key={c.id} client={c} />)}
-              </div>
-            </div>
-          )}
-          {demos.length > 0 && (
-            <div>
-              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366F1', display: 'inline-block' }} />
-                Demos · {demos.length}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
-                {demos.map(c => <SupabaseCard key={c.id} client={c} />)}
-              </div>
-            </div>
+          {p.fecha_entrega && (
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: 'rgba(255,255,255,0.25)', marginLeft: 'auto' }}>
+              📅 {new Date(p.fecha_entrega).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}
+            </span>
           )}
         </div>
-      )}
-
-      {/* Proyectos */}
-      {seccion !== 'supabase' && (
-      <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {lista.map(p => {
-          const st = STATUS_CONFIG[p.status]
-          return (
-            <div key={p.id} style={{
-              background: 'var(--paper)',
-              border: '1px solid var(--line)',
-              borderRadius: 14,
-              overflow: 'hidden',
-            }}>
-              {/* Top bar de progreso */}
-              <div style={{ height: 3, background: 'var(--line)' }}>
-                <div style={{ height: '100%', width: `${p.progreso}%`, background: p.color, transition: 'width 0.6s ease' }} />
-              </div>
-
-              <div style={{ padding: '28px 32px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                      background: p.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 22,
-                    }}>
-                      {p.icon}
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                        <h2 style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', margin: 0 }}>{p.nombre}</h2>
-                        <span style={{
-                          fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em',
-                          textTransform: 'uppercase', color: st.color, background: st.bg,
-                          border: `1px solid ${st.color}40`, borderRadius: 5, padding: '2px 8px',
-                        }}>
-                          {st.label}
-                        </span>
-                      </div>
-                      <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)', marginBottom: 8 }}>{p.tagline}</div>
-                      <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'var(--muted-2)', lineHeight: 1.6, maxWidth: '60ch' }}>{p.descripcion}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--muted)', textAlign: 'right' }}>
-                      <span style={{ color: p.color, fontWeight: 700 }}>{p.progreso}%</span> completado
-                    </div>
-                    {p.href && (
-                      <Link href={p.href} style={{
-                        padding: '8px 16px', borderRadius: 8,
-                        border: `1px solid ${p.color}50`, background: p.color + '10',
-                        fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em',
-                        textTransform: 'uppercase', color: p.color, textDecoration: 'none',
-                        fontWeight: 700,
-                      }}>
-                        Abrir →
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 24, flexWrap: 'wrap' }}>
-                  {/* Próximos pasos */}
-                  <div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted)', marginBottom: 10 }}>
-                      Próximos pasos
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {p.proximos.map(paso => (
-                        <span key={paso} style={{
-                          fontFamily: 'var(--f-display)', fontSize: 12, color: 'var(--muted-2)',
-                          background: 'var(--paper-2)', border: '1px solid var(--line)',
-                          borderRadius: 6, padding: '4px 10px',
-                        }}>
-                          {paso}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* KPIs */}
-                  {p.kpis && (
-                    <div style={{ display: 'flex', gap: 20, flexShrink: 0, flexWrap: 'wrap' }}>
-                      {p.kpis.map(k => (
-                        <div key={k.label} style={{ textAlign: 'right' }}>
-                          <div style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>{k.valor}</div>
-                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)' }}>{k.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
       </div>
-      )}
-
-    </div>
+    </Link>
   )
 }
