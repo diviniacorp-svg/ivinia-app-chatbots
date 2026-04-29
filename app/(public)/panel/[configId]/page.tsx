@@ -226,6 +226,7 @@ export default function OwnerPanel() {
 
   // Productos state
   const [editProductos, setEditProductos] = useState<Product[]>([])
+  const [productosEnabled, setProductosEnabled] = useState(false)
   const [newProdForm, setNewProdForm] = useState<Partial<Product>|null>(null)
   const [editProdId, setEditProdId] = useState<string|null>(null)
   const [savingProds, setSavingProds] = useState(false)
@@ -251,6 +252,7 @@ export default function OwnerPanel() {
     setEditSchedule(d.schedule||{})
     setEditPhone(d.owner_phone||'')
     setEditProductos(d.productos||[])
+    setProductosEnabled(d.productos_enabled||false)
     setAuthed(true)
     setLoading(false)
   },[configId])
@@ -293,7 +295,7 @@ export default function OwnerPanel() {
 
   async function saveConfig(){
     setSavingCfg(true); setCfgMsg('')
-    const body: Record<string,unknown> = { pin, services: editServices, schedule: editSchedule, owner_phone: editPhone }
+    const body: Record<string,unknown> = { pin, services: editServices, schedule: editSchedule, owner_phone: editPhone, productos_enabled: productosEnabled }
     if(editPin.length===4) body.owner_pin = editPin
     const res = await fetch(`/api/panel/${configId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     setSavingCfg(false)
@@ -466,7 +468,7 @@ export default function OwnerPanel() {
           {key:'agenda',label:'Agenda'},
           {key:'solicitudes',label:`Solicitudes${pending.length>0?` (${pending.length})`:''}`},
           {key:'historial',label:'Historial'},
-          {key:'productos',label:'🛍️ Productos'},
+          ...(productosEnabled ? [{key:'productos',label:'🛍️ Productos'}] : []),
           {key:'config',label:'Configurar'},
         ].map(t=>(
           <button key={t.key} onClick={()=>setTab(t.key as typeof tab)}
@@ -1063,6 +1065,20 @@ export default function OwnerPanel() {
                     style={{ ...lightInput, width:'100%', boxSizing:'border-box' }}/>
                   <p style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--muted)', marginTop:4 }}>Sin espacios ni +. Ej: 5492664864731</p>
                 </div>
+                {/* Toggle módulo productos */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderTop:'1px solid var(--line)' }}>
+                  <div>
+                    <p style={{ fontFamily:'var(--f-display)', fontWeight:700, fontSize:14, color:'var(--ink)', margin:'0 0 2px' }}>🛍️ Módulo productos</p>
+                    <p style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--muted)', margin:0 }}>Muestra una vitrina de productos en tu panel</p>
+                  </div>
+                  <button type="button" onClick={()=>setProductosEnabled(v=>!v)}
+                    style={{ width:48, height:26, borderRadius:100, border:'none', cursor:'pointer', flexShrink:0, position:'relative', transition:'background 0.2s',
+                      background: productosEnabled ? color : '#0C0C0C20' }}>
+                    <span style={{ position:'absolute', top:3, width:20, height:20, borderRadius:'50%', background:'#fff', transition:'left 0.2s',
+                      left: productosEnabled ? '24px' : '4px', display:'block' }}/>
+                  </button>
+                </div>
+
                 <div>
                   <label style={{ display:'block', fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--muted)', marginBottom:6 }}>Cambiar PIN de acceso</label>
                   <input type="text" inputMode="numeric" maxLength={4} value={editPin} onChange={e=>setEditPin(e.target.value.replace(/\D/g,'').slice(0,4))}

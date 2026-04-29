@@ -100,6 +100,24 @@ export default function OnboardingPage() {
     return true
   }
 
+  async function handleTrial() {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/onboarding/trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId, negocio, servicios }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al procesar')
+      window.location.href = data.panel_url
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error inesperado')
+      setLoading(false)
+    }
+  }
+
   async function handlePagar() {
     setLoading(true)
     setError('')
@@ -558,8 +576,9 @@ export default function OnboardingPage() {
               </div>
             )}
 
+            {/* CTA principal — trial gratuito */}
             <button
-              onClick={handlePagar}
+              onClick={handleTrial}
               disabled={loading}
               className="w-full font-black text-lg py-5 rounded-2xl transition-all flex items-center justify-center gap-3"
               style={{
@@ -571,20 +590,40 @@ export default function OnboardingPage() {
               {loading ? (
                 <>
                   <Loader2 size={20} className="animate-spin" />
-                  Procesando...
+                  Creando tu Turnero...
                 </>
               ) : (
                 <>
-                  Pagar con MercadoPago
-                  <span className="text-base font-normal opacity-70">
-                    {formatPrecio(plan.precio)}
-                  </span>
+                  Empezar prueba gratuita 14 días
+                  <span className="text-sm font-normal opacity-60">→</span>
                 </>
               )}
             </button>
-            <p className="text-center text-xs text-black/40 mt-3">
-              Pago seguro via MercadoPago · Podés cancelar en cualquier momento
+            <p className="text-center text-xs text-black/40 mt-2 mb-6">
+              Sin tarjeta · Sin permanencia · Cancelás cuando querés
             </p>
+
+            {/* Separador */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex-1 h-px bg-black/10" />
+              <span className="text-xs text-black/30 font-mono">o pagá ahora y empezás activo</span>
+              <div className="flex-1 h-px bg-black/10" />
+            </div>
+
+            {/* CTA secundario — pago directo */}
+            <button
+              onClick={handlePagar}
+              disabled={loading}
+              className="w-full font-semibold text-sm py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 border-2"
+              style={{
+                borderColor: '#0C0C0C20',
+                background: 'white',
+                color: '#0C0C0C80',
+                cursor: loading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              💳 Pagar con MercadoPago — {formatPrecio(plan.precio)}
+            </button>
           </div>
         )}
 

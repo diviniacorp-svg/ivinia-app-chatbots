@@ -89,7 +89,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { config
 // PUT — guardar configuración (servicios, horarios, teléfono, PIN, productos)
 export async function PUT(request: NextRequest, { params }: { params: { configId: string } }) {
   const body = await request.json()
-  const { pin, services, schedule, owner_phone, owner_pin, productos } = body
+  const { pin, services, schedule, owner_phone, owner_pin, productos, productos_enabled } = body
 
   if (!pin) return NextResponse.json({ error: 'PIN requerido' }, { status: 401 })
 
@@ -106,11 +106,13 @@ export async function PUT(request: NextRequest, { params }: { params: { configId
   const { error: updateError } = await db.from('booking_configs').update(update).eq('id', params.configId)
   if (updateError) return NextResponse.json({ error: 'Error al guardar' }, { status: 500 })
 
-  // Update products in clients.custom_config if provided
-  if (productos !== undefined) {
+  // Update products and flags in clients.custom_config
+  if (productos !== undefined || productos_enabled !== undefined) {
     const { data: currentClient } = await db.from('clients').select('custom_config').eq('id', config.client_id).maybeSingle()
     const currentCfg = (currentClient?.custom_config as Record<string, string>) || {}
-    const newCfg = { ...currentCfg, productos: JSON.stringify(productos) }
+    const newCfg = { ...currentCfg }
+    if (productos !== undefined) newCfg.productos = JSON.stringify(productos)
+    if (productos_enabled !== undefined) newCfg.productos_enabled = String(productos_enabled)
     await db.from('clients').update({ custom_config: newCfg }).eq('id', config.client_id)
   }
 

@@ -238,6 +238,7 @@ function EditClientDrawer({
     instagram: cfg.instagram || '',
     whatsapp: cfg.whatsapp || '',
     intro_tagline: cfg.intro_tagline || '',
+    agente_responsable: cfg.agente_responsable || '',
     mp_access_token: cfg.mp_access_token || '',
   })
   const [showMpToken, setShowMpToken] = useState(false)
@@ -400,6 +401,16 @@ function EditClientDrawer({
           <div>
             <label style={lbl}>Tagline / descripción corta</label>
             <input style={inp} value={form.intro_tagline} onChange={e => setForm(p => ({ ...p, intro_tagline: e.target.value }))} placeholder="Descripción del negocio" />
+          </div>
+
+          <div>
+            <label style={lbl}>Agente responsable</label>
+            <select style={{ ...inp, cursor: 'pointer' }} value={form.agente_responsable || ''} onChange={e => setForm(p => ({ ...p, agente_responsable: e.target.value }))}>
+              <option value="">Sin asignar</option>
+              {Object.entries(AGENT_LABELS).map(([id, ag]) => (
+                <option key={id} value={id}>{ag.emoji} {ag.label}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -636,6 +647,17 @@ function ClientCard({ client: initialClient, onRefresh }: { client: Client; onRe
             <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: getPlanColor(client.plan) === '#C6FF3D' ? 'var(--ink)' : '#fff', background: getPlanColor(client.plan), borderRadius: 100, padding: '3px 8px', fontWeight: 700 }}>
               {PLAN_LABEL[client.plan] || client.plan}
             </span>
+            {/* Agente responsable */}
+            {(() => {
+              const aId = client.custom_config?.agente_responsable
+              const ag = aId ? AGENT_LABELS[aId] : null
+              if (!ag) return null
+              return (
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: ag.color, background: `${ag.color}15`, borderRadius: 100, padding: '3px 8px', border: `1px solid ${ag.color}30` }}>
+                  {ag.emoji} {ag.label}
+                </span>
+              )
+            })()}
           </div>
         </div>
 
@@ -730,6 +752,14 @@ const PRODUCTOS = [
   { id: 'nucleus', emoji: '🧠', title: 'NUCLEUS IA',       desc: 'Cerebro IA completo — panel público + privado',     color: '#A78BFA', bg: '#F5F3FF' },
   { id: 'content', emoji: '✨', title: 'Content Factory',  desc: 'Gestión de contenido y redes sociales con IA',      color: '#F59E0B', bg: '#FFFBEB' },
 ]
+
+const AGENT_LABELS: Record<string, { emoji: string; label: string; color: string }> = {
+  ventas_crm:          { emoji: '🎯', label: 'Ventas',       color: '#F59E0B' },
+  servicios_turnero:   { emoji: '📅', label: 'Servicios',    color: '#10B981' },
+  contenido_marketing: { emoji: '✨', label: 'Marketing',    color: '#E879F9' },
+  nucleus_ia:          { emoji: '🧠', label: 'NUCLEUS',      color: '#A78BFA' },
+  administracion:      { emoji: '⚙️', label: 'Admin',        color: '#6B7280' },
+}
 
 // ── Clasificación de cliente por tipo ────────────────────────────
 type ClientType = 'client' | 'own_app' | 'demo'
