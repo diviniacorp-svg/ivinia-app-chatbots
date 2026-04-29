@@ -153,7 +153,7 @@ export async function GET() {
           contact_name: demo.contact_name,
           email: demo.email,
           phone: demo.whatsapp,
-          plan: 'mensual',
+          plan: 'pro',
           status: 'active',
           mrr: 45000,
           custom_config: {
