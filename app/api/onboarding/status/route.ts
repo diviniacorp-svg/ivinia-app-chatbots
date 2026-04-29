@@ -42,5 +42,14 @@ export async function GET(request: NextRequest) {
     provisioned,
     is_ready: client.status === 'active' && !!provisioned,
     created_at: client.created_at,
+    // Shape expected by checkout/success polling:
+    client: provisioned ? {
+      company_name: client.company_name,
+      custom_config: {
+        turnero_url: provisioned.turnero_url,
+        panel_url: provisioned.panel_url,
+        panel_pin: provisioned.panel_pin,
+      },
+    } : null,
   })
 }
