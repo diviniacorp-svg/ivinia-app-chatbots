@@ -62,6 +62,7 @@ export default function Navbar() {
           <a href="#demo" style={{ color: 'inherit', textDecoration: 'none' }}>Demo en vivo</a>
           <a href="#casos" style={{ color: 'inherit', textDecoration: 'none' }}>Casos</a>
           <a href="#precios" style={{ color: 'inherit', textDecoration: 'none' }}>Precios</a>
+          <a href="/nucleus" style={{ color: 'inherit', textDecoration: 'none' }}>NUCLEUS</a>
           <a href="/auditoria" style={{
             textDecoration: 'none', fontWeight: 700, fontSize: 13,
             background: 'var(--ink)', color: 'var(--lime)',
@@ -117,6 +118,7 @@ export default function Navbar() {
             { href: '#demo', label: 'Demo en vivo' },
             { href: '#casos', label: 'Casos reales' },
             { href: '#precios', label: 'Precios' },
+            { href: '/nucleus', label: 'NUCLEUS' },
             { href: '/auditoria', label: '⚡ Auditoría gratis' },
           ].map(link => (
             <a
