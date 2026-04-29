@@ -127,7 +127,31 @@ export default function PropuestasPage() {
   ]
 
   return (
-    <div style={{ padding: '32px 40px', background: '#F4F4F5', minHeight: '100vh', color: INK }}>
+    <div style={{ background: '#F4F4F5', minHeight: '100vh', color: INK }}>
+
+      {/* Ventas flow strip */}
+      <div style={{ background: '#09090B', padding: '8px 40px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginRight: 6 }}>Ventas:</span>
+        {[
+          { href: '/leads',      label: '🎯 Leads',       active: false },
+          { href: '/comercial',  label: '🔥 Pipeline',    active: false },
+          { href: '/crm',        label: '🗂 CRM',          active: false },
+          { href: '/propuestas', label: '📄 Propuestas',  active: true  },
+          { href: '/clientes',   label: '👥 Clientes',    active: false },
+        ].map((s, i) => (
+          <span key={s.href} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Link href={s.href} style={{
+              fontFamily: 'var(--f-mono)', fontSize: 8.5, textDecoration: 'none',
+              color: s.active ? LIME : 'rgba(255,255,255,0.3)',
+              borderBottom: s.active ? `1px solid ${LIME}` : 'none',
+              paddingBottom: s.active ? 1 : 0,
+            }}>{s.label}</Link>
+            {i < 4 && <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 10 }}>→</span>}
+          </span>
+        ))}
+      </div>
+
+      <div style={{ padding: '32px 40px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
@@ -320,6 +344,7 @@ export default function PropuestasPage() {
           onSave={(p) => { setPropuestas(prev => [p, ...prev]); setShowNueva(false) }}
         />
       )}
+      </div>
     </div>
   )
 }

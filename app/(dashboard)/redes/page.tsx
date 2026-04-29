@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 
+const INK = '#09090B'
+const LIME = '#C6FF3D'
+
 interface ContentPost {
   id: string
   titulo: string
@@ -18,37 +21,34 @@ interface ContentPost {
   publish_at: string | null
 }
 
-const TIPO_BADGE: Record<string, string> = {
-  post: '📸 Post', reel: '🎬 Reel', carrusel: '🔀 Carrusel', story: '⏱ Story', shorts: '▶ Shorts',
-}
-const STATUS_STYLE: Record<string, string> = {
-  publicado: 'text-green-400 bg-green-400/10 border border-green-400/20',
-  listo: 'text-lime-400 bg-lime-400/10 border border-lime-400/20',
-  planificado: 'text-blue-400 bg-blue-400/10 border border-blue-400/20',
-  en_produccion: 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/20',
-  fallido: 'text-red-400 bg-red-400/10 border border-red-400/20',
-}
-const PILAR_COLOR: Record<string, string> = {
-  educativo: '#6E56F8', entretenimiento: '#FF6B5B', venta: '#B5FF2C', comunidad: '#FFD166', detras_escena: '#06D6A0',
+const TIPO_LABEL: Record<string, string> = {
+  post: '📸 Post', reel: '🎬 Reel', carrusel: '🔀 Carrusel', story: '⏱ Story',
 }
 
-const DIVINIA_CLIENT_ID = '857cef01-16a1-4034-8286-1b9e44dcfda3'
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  publicado:    { label: 'Publicado',    color: '#4ade80' },
+  listo:        { label: 'Listo',        color: LIME },
+  planificado:  { label: 'Planificado',  color: '#60A5FA' },
+  en_produccion:{ label: 'Producción',   color: '#FBBF24' },
+  fallido:      { label: 'Fallido',      color: '#F87171' },
+}
+
+const PILAR_COLOR: Record<string, string> = {
+  educativo: '#8B5CF6', venta: LIME, comunidad: '#22D3EE', entretenimiento: '#F97316',
+}
 
 export default function RedesPage() {
   const [posts, setPosts] = useState<ContentPost[]>([])
   const [loading, setLoading] = useState(true)
   const [publishing, setPublishing] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'todos' | 'listos' | 'publicados' | 'planificados'>('todos')
+  const [filter, setFilter] = useState<string>('todos')
 
-  useEffect(() => {
-    loadPosts()
-  }, [])
+  useEffect(() => { loadPosts() }, [])
 
   async function loadPosts() {
     setLoading(true)
     try {
-      // Use Supabase directly via social API
       const r = await fetch('/api/social/calendar')
       const d = await r.json()
       setPosts(d.posts ?? [])
@@ -59,12 +59,7 @@ export default function RedesPage() {
     }
   }
 
-  const filtered = posts.filter(p => {
-    if (filter === 'listos') return p.status === 'listo'
-    if (filter === 'publicados') return p.status === 'publicado'
-    if (filter === 'planificados') return p.status === 'planificado'
-    return true
-  })
+  const filtered = posts.filter(p => filter === 'todos' || p.status === filter)
 
   const stats = {
     total: posts.length,
@@ -92,158 +87,215 @@ export default function RedesPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-[#B5FF2C] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6 space-y-5 max-w-5xl mx-auto">
+    <div style={{ height: '100%', overflowY: 'auto', background: INK, color: '#fff' }}>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Redes Sociales</h1>
-          <p className="text-zinc-500 text-sm mt-0.5">Calendario editorial · {posts.length} posts · Instagram @autom_atia</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/redes/calendar"
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-colors">
-            📅 Almanaque
-          </Link>
-          <Link href="/redes/create"
-            className="px-4 py-2 text-sm font-black rounded-lg"
-            style={{ background: '#B5FF2C', color: '#0F0F10' }}>
-            + Crear post
-          </Link>
+      {/* ── Breadcrumb ───────────────────────────────────────────────── */}
+      <div style={{ padding: '10px 28px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link href="/contenido" style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>
+          ✨ Content Factory
+        </Link>
+        <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 10 }}>→</span>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: LIME }}>📱 Redes Sociales</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" style={{
+            padding: '3px 10px', borderRadius: 6, fontFamily: 'var(--f-mono)', fontSize: 9,
+            color: '#E1306C', background: '#E1306C15', border: '1px solid #E1306C30', textDecoration: 'none',
+          }}>
+            📸 @autom_atia ↗
+          </a>
         </div>
       </div>
 
-      {/* KPI strip — clickable filters */}
-      <div className="grid grid-cols-4 gap-3">
-        {([
-          { key: 'todos', label: 'Total', value: stats.total, color: '#F7F5EF' },
-          { key: 'publicados', label: 'Publicados', value: stats.publicados, color: '#4ade80' },
-          { key: 'listos', label: 'Listos ✓', value: stats.listos, color: '#B5FF2C' },
-          { key: 'planificados', label: 'Planificados', value: stats.planificados, color: '#60a5fa' },
-        ] as const).map(s => (
-          <button key={s.key} onClick={() => setFilter(s.key)}
-            className="text-left bg-zinc-900 border rounded-xl p-4 transition-all"
-            style={{ borderColor: filter === s.key ? s.color : '#27272a' }}>
-            <div className="text-3xl font-black" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-zinc-500 text-xs mt-1">{s.label}</div>
+      {/* ── Header ────────────────────────────────────────────────────── */}
+      <div style={{ padding: '20px 28px 0' }}>
+        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>
+          DIVINIA OS · AGENCIA
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h1 style={{ fontFamily: 'var(--f-display)', fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>
+            Redes Sociales
+          </h1>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link href="/redes/calendar" style={{
+              padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--f-mono)', fontSize: 10, textDecoration: 'none',
+            }}>
+              📅 Almanaque
+            </Link>
+            <Link href="/contenido" style={{
+              padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--f-mono)', fontSize: 10, textDecoration: 'none',
+            }}>
+              ✨ Crear con IA
+            </Link>
+            <Link href="/redes/create" style={{
+              padding: '7px 14px', borderRadius: 8, border: 'none',
+              background: LIME, color: INK, fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'none',
+            }}>
+              + Post manual
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── KPI strip ─────────────────────────────────────────────────── */}
+      <div style={{ padding: '0 28px 20px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+        {[
+          { key: 'todos',      label: 'Total',       valor: stats.total,       color: 'rgba(255,255,255,0.6)' },
+          { key: 'publicado',  label: 'Publicados',  valor: stats.publicados,  color: '#4ade80' },
+          { key: 'listo',      label: 'Listos ✓',   valor: stats.listos,      color: LIME },
+          { key: 'planificado',label: 'Planificados',valor: stats.planificados, color: '#60A5FA' },
+        ].map(s => (
+          <button key={s.key} onClick={() => setFilter(s.key)} style={{
+            textAlign: 'left', background: 'rgba(255,255,255,0.04)', borderRadius: 10, border: `1px solid ${filter === s.key ? s.color + '60' : 'rgba(255,255,255,0.07)'}`,
+            padding: '12px 16px', cursor: 'pointer', transition: 'border-color 0.15s',
+          }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 22, fontWeight: 700, color: s.color }}>{s.valor}</div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8.5, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>{s.label}</div>
           </button>
         ))}
       </div>
 
-      {/* Posts list */}
-      <div className="space-y-2">
-        {filtered.length === 0 && (
-          <div className="border border-zinc-800 border-dashed rounded-xl p-10 text-center">
-            <p className="text-zinc-600 text-sm mb-4">
-              {filter === 'todos' ? 'Sin posts en el calendario' : `Sin posts con status "${filter}"`}
-            </p>
-            <Link href="/redes/create"
-              className="px-4 py-2 text-sm font-bold rounded-lg"
-              style={{ background: '#B5FF2C', color: '#0F0F10' }}>
-              Crear primer post
+      {/* ── Posts list ────────────────────────────────────────────────── */}
+      <div style={{ padding: '0 28px 40px' }}>
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 28, height: 28, border: `2px solid ${LIME}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px dashed rgba(255,255,255,0.1)', padding: 48, textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 14 }}>
+              {filter === 'todos' ? 'Sin posts en el calendario' : `Sin posts "${STATUS_MAP[filter]?.label ?? filter}"`}
+            </div>
+            <Link href="/contenido" style={{
+              padding: '8px 20px', borderRadius: 8, background: LIME, color: INK,
+              fontFamily: 'var(--f-mono)', fontSize: 10, fontWeight: 700, textDecoration: 'none',
+            }}>
+              Crear con IA →
             </Link>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {filtered.map(post => {
+              const isExpanded = expandedId === post.id
+              const preview = post.caption?.split('\n')[0]?.slice(0, 120) ?? post.titulo?.slice(0, 120) ?? ''
+              const sm = STATUS_MAP[post.status] ?? { label: post.status, color: 'rgba(255,255,255,0.3)' }
+              const pc = PILAR_COLOR[post.pilar ?? ''] ?? 'rgba(255,255,255,0.15)'
+
+              return (
+                <div key={post.id} style={{
+                  background: 'rgba(255,255,255,0.03)', borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden',
+                  transition: 'border-color 0.15s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px' }}>
+
+                    {/* Thumbnail */}
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 8, flexShrink: 0,
+                      background: 'rgba(255,255,255,0.05)', overflow: 'hidden',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {post.imagen_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={post.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ fontSize: 20, opacity: 0.4 }}>
+                          {post.tipo === 'reel' ? '🎬' : post.tipo === 'carrusel' ? '🔀' : '📸'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8.5, color: 'rgba(255,255,255,0.25)' }}>{post.fecha}</span>
+                        {post.tipo && (
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.07)', borderRadius: 20, padding: '1px 6px' }}>
+                            {TIPO_LABEL[post.tipo] ?? post.tipo}
+                          </span>
+                        )}
+                        {post.pilar && (
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: pc, background: `${pc}18`, borderRadius: 20, padding: '1px 6px' }}>
+                            {post.pilar}
+                          </span>
+                        )}
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: sm.color, background: `${sm.color}18`, border: `1px solid ${sm.color}30`, borderRadius: 20, padding: '1px 6px' }}>
+                          {sm.label}
+                        </span>
+                        {post.ig_media_id && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: '#4ade80' }}>✓ IG</span>}
+                      </div>
+                      <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {preview}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : post.id)}
+                        style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--f-mono)', fontSize: 9, cursor: 'pointer' }}
+                      >
+                        {isExpanded ? 'Cerrar' : 'Ver'}
+                      </button>
+                      <Link href={`/redes/${post.id}`} style={{
+                        padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--f-mono)', fontSize: 9, textDecoration: 'none',
+                      }}>
+                        ✏️ Editar
+                      </Link>
+                      {post.status === 'listo' && (
+                        <button
+                          onClick={() => handlePublish(post.id)}
+                          disabled={publishing === post.id}
+                          style={{
+                            padding: '4px 12px', borderRadius: 6, border: 'none',
+                            background: publishing === post.id ? `${LIME}60` : LIME,
+                            color: INK, fontFamily: 'var(--f-mono)', fontSize: 9, fontWeight: 700,
+                            cursor: publishing === post.id ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          {publishing === post.id ? '...' : '▶ Publicar'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded caption */}
+                  {isExpanded && post.caption && (
+                    <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <pre style={{
+                        fontFamily: 'var(--f-mono)', fontSize: 10, color: 'rgba(255,255,255,0.55)',
+                        whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: '12px 0 10px',
+                        background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px',
+                        maxHeight: 240, overflowY: 'auto',
+                      }}>
+                        {post.caption}
+                      </pre>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(post.caption ?? '')}
+                        style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--f-mono)', fontSize: 9, cursor: 'pointer' }}
+                      >
+                        Copiar caption
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {filtered.map(post => {
-          const isExpanded = expandedId === post.id
-          const captionPreview = post.caption?.split('\n')[0]?.slice(0, 100) ?? post.titulo?.slice(0, 100) ?? ''
-
-          return (
-            <div key={post.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition-colors">
-
-              {/* Main row */}
-              <div className="flex items-center gap-3 p-4">
-
-                {/* Thumbnail or tipo icon */}
-                <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800 flex items-center justify-center">
-                  {post.imagen_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={post.imagen_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl opacity-40">
-                      {post.tipo === 'reel' ? '🎬' : post.tipo === 'carrusel' ? '🔀' : '📸'}
-                    </span>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs text-zinc-500 font-mono">{post.fecha}</span>
-                    {post.tipo && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-medium">
-                        {TIPO_BADGE[post.tipo] ?? post.tipo}
-                      </span>
-                    )}
-                    {post.pilar && (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: `${PILAR_COLOR[post.pilar] ?? '#666'}22`, color: PILAR_COLOR[post.pilar] ?? '#aaa' }}>
-                        {post.pilar}
-                      </span>
-                    )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_STYLE[post.status] ?? 'text-zinc-500 bg-zinc-800'}`}>
-                      {post.status}
-                    </span>
-                    {post.ig_media_id && <span className="text-green-400 text-xs">✓ IG</span>}
-                  </div>
-                  <p className="text-white text-sm font-medium truncate">{captionPreview}</p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => setExpandedId(isExpanded ? null : post.id)}
-                    className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg transition-colors">
-                    {isExpanded ? 'Cerrar' : 'Ver'}
-                  </button>
-                  <Link
-                    href={`/redes/${post.id}`}
-                    className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg transition-colors">
-                    ✏️ Editar
-                  </Link>
-                  {post.status === 'listo' && (
-                    <button
-                      onClick={() => handlePublish(post.id)}
-                      disabled={publishing === post.id}
-                      className="text-xs px-3 py-1.5 font-black rounded-lg disabled:opacity-40 transition-colors"
-                      style={{ background: '#B5FF2C', color: '#0F0F10' }}>
-                      {publishing === post.id ? '...' : '▶ Publicar'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Expanded caption */}
-              {isExpanded && post.caption && (
-                <div className="px-4 pb-4 pt-0 border-t border-zinc-800">
-                  <pre className="text-zinc-300 text-xs whitespace-pre-wrap font-sans leading-relaxed max-h-60 overflow-y-auto bg-zinc-950 rounded-lg p-3 mt-3">
-                    {post.caption}
-                  </pre>
-                </div>
-              )}
-            </div>
-          )
-        })}
+        {/* Generating note */}
+        {stats.planificados > 0 && stats.listos === 0 && (
+          <div style={{ marginTop: 16, background: '#60A5FA15', border: '1px solid #60A5FA30', borderRadius: 10, padding: '12px 16px' }}>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: '#60A5FA' }}>
+              Generando imágenes en background — los posts pasarán a "Listo" cuando la imagen esté lista.
+            </span>
+          </div>
+        )}
       </div>
-
-      {/* Image generation status note */}
-      {stats.planificados > 0 && stats.listos === 0 && (
-        <div className="border border-blue-500/20 bg-blue-500/5 rounded-xl p-4 text-sm text-blue-400">
-          <strong>Generando imágenes en background</strong> — Los posts pasarán a &quot;listo&quot; automáticamente cuando la imagen esté lista.
-          Podés publicarlos manualmente cuando quieras.
-        </div>
-      )}
     </div>
   )
 }

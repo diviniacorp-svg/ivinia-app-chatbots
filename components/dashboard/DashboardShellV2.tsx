@@ -119,18 +119,18 @@ export default function DashboardShellV2({ children }: { children: React.ReactNo
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0 24px',
-            height: 44,
-            borderBottom: '1px solid rgba(0,0,0,0.07)',
-            background: 'var(--paper-2)',
+            height: 40,
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--ink)',
             flexShrink: 0,
           }}
         >
           <span style={{
             fontFamily: 'var(--f-mono)',
-            fontSize: 10,
-            letterSpacing: '0.1em',
+            fontSize: 9,
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: 'rgba(12,12,12,0.4)',
+            color: 'rgba(255,255,255,0.25)',
           }}>
             {pageTitle}
           </span>
@@ -142,26 +142,26 @@ export default function DashboardShellV2({ children }: { children: React.ReactNo
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                padding: '4px 10px',
+                padding: '3px 10px',
                 borderRadius: 6,
-                border: '1px solid rgba(0,0,0,0.12)',
+                border: '1px solid rgba(255,255,255,0.1)',
                 fontFamily: 'var(--f-mono)',
                 fontSize: 9,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: 'rgba(12,12,12,0.5)',
+                color: 'rgba(255,255,255,0.3)',
                 textDecoration: 'none',
                 transition: 'border-color 0.15s, color 0.15s',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement
                 el.style.borderColor = '#C6FF3D'
-                el.style.color = '#5a6e00'
+                el.style.color = '#C6FF3D'
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(0,0,0,0.12)'
-                el.style.color = 'rgba(12,12,12,0.5)'
+                el.style.borderColor = 'rgba(255,255,255,0.1)'
+                el.style.color = 'rgba(255,255,255,0.3)'
               }}
             >
               <span>🎯</span>
@@ -175,26 +175,26 @@ export default function DashboardShellV2({ children }: { children: React.ReactNo
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                padding: '4px 10px',
+                padding: '3px 10px',
                 borderRadius: 6,
-                border: '1px solid rgba(0,0,0,0.12)',
+                border: '1px solid rgba(255,255,255,0.1)',
                 fontFamily: 'var(--f-mono)',
                 fontSize: 9,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: 'rgba(12,12,12,0.5)',
+                color: 'rgba(255,255,255,0.3)',
                 textDecoration: 'none',
                 transition: 'border-color 0.15s, color 0.15s',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement
                 el.style.borderColor = '#25D366'
-                el.style.color = '#1a7a3f'
+                el.style.color = '#25D366'
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(0,0,0,0.12)'
-                el.style.color = 'rgba(12,12,12,0.5)'
+                el.style.borderColor = 'rgba(255,255,255,0.1)'
+                el.style.color = 'rgba(255,255,255,0.3)'
               }}
             >
               <span>💬</span>

@@ -117,6 +117,28 @@ export default function CRMPage() {
   return (
     <div style={{ background: 'var(--paper-2)', minHeight: '100vh' }}>
 
+      {/* Ventas flow strip */}
+      <div style={{ background: '#09090B', padding: '8px 28px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginRight: 6 }}>Ventas:</span>
+        {[
+          { href: '/leads',      label: '🎯 Leads',       active: false },
+          { href: '/comercial',  label: '🔥 Pipeline',    active: false },
+          { href: '/crm',        label: '🗂 CRM',          active: true  },
+          { href: '/propuestas', label: '📄 Propuestas',  active: false },
+          { href: '/clientes',   label: '👥 Clientes',    active: false },
+        ].map((s, i) => (
+          <span key={s.href} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Link href={s.href} style={{
+              fontFamily: 'var(--f-mono)', fontSize: 8.5, textDecoration: 'none',
+              color: s.active ? '#C6FF3D' : 'rgba(255,255,255,0.3)',
+              borderBottom: s.active ? '1px solid #C6FF3D' : 'none',
+              paddingBottom: s.active ? 1 : 0,
+            }}>{s.label}</Link>
+            {i < 4 && <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 10 }}>→</span>}
+          </span>
+        ))}
+      </div>
+
       {/* Header */}
       <div style={{ background: 'var(--paper)', borderBottom: '1px solid var(--line)', padding: '20px 28px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
