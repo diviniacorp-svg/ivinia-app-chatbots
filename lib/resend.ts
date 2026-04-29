@@ -277,11 +277,14 @@ export async function sendTurneroWelcomeEmail(params: {
   turnero_url: string
   panel_url: string
   panel_pin: string
+  client_id?: string
 }): Promise<void> {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'ventas@divinia.ar'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
   const nombre = params.contact_name || params.company_name
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&format=png&data=${encodeURIComponent(params.turnero_url)}`
   const waLink = `https://wa.me/5492665286110?text=${encodeURIComponent(`Hola Joaco! Activé mi Turnero DIVINIA para ${params.company_name}. ¿Me ayudás con la configuración?`)}`
+  const portalUrl = params.client_id ? `${appUrl}/cliente/${params.client_id}` : null
 
   await getResend().emails.send({
     from: `Joaco de DIVINIA <${fromEmail}>`,
@@ -332,6 +335,14 @@ export async function sendTurneroWelcomeEmail(params: {
       <a href="${waLink}" style="display:block;background:#25D366;color:#fff;text-align:center;padding:16px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;margin-bottom:20px">
         💬 Escribime para configurar juntos
       </a>
+
+      ${portalUrl ? `
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:center">
+        <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.07em;font-family:monospace">Tu portal de cliente</p>
+        <p style="margin:0 0 12px;font-size:12px;color:#6b7280">Consultá tu plan, estado del turnero y soporte desde acá</p>
+        <a href="${portalUrl}" style="display:inline-block;background:#09090b;color:#c6ff3d;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12px;font-family:monospace;letter-spacing:0.05em">Ver mi portal →</a>
+      </div>
+      ` : ''}
 
       <p style="margin:0;color:#9ca3af;font-size:13px;line-height:1.8">Joaco · DIVINIA<br>
       <a href="https://divinia.vercel.app" style="color:#9ca3af;">divinia.vercel.app</a> · San Luis, Argentina</p>

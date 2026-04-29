@@ -50,6 +50,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: '/contenido',  label: 'Content Factory', icon: '✨', matches: ['/contenido', '/calendario'] },
       { href: '/redes',      label: 'Redes Sociales',  icon: '📱', matches: ['/redes'] },
+      { href: '/dashboard/academy', label: 'Academy', icon: '🎓', matches: ['/dashboard/academy'] },
       { href: '/avatares',   label: 'Avatares IA',     icon: '🎭', matches: ['/avatares'], dim: true },
       { href: '/publicidad', label: 'Publicidad IA',   icon: '📢', matches: ['/publicidad'], badge: 'nuevo' },
       { href: '/nucleo',     label: 'NUCLEUS',         icon: '🧠', matches: ['/nucleo'], badge: 'beta' },
