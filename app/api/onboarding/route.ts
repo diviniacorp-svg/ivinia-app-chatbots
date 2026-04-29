@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
           ciudad: negocio.ciudad || '',
           whatsapp: negocio.whatsapp,
           schedule: negocio.schedule || null,
+          ...(negocio.mp_access_token ? { mp_access_token: negocio.mp_access_token } : {}),
           // legacy fallback — kept for webhook compat with old records
           horario_apertura: '09:00',
           horario_cierre: '18:00',

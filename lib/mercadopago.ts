@@ -36,6 +36,7 @@ export interface CreatePreferenceParams {
   clientEmail?: string
   clientName?: string
   externalReference?: string
+  accessToken?: string   // si se provee, usa la cuenta MP del negocio en lugar de DIVINIA
   backUrls?: {
     success?: string
     failure?: string
@@ -46,7 +47,12 @@ export interface CreatePreferenceParams {
 export async function createPaymentPreference(params: CreatePreferenceParams) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-  const preference = await getMPPreference().create({
+  // Usar token del negocio si fue provisto, sino el de DIVINIA
+  const mpPreference = params.accessToken
+    ? new Preference(new MercadoPagoConfig({ accessToken: params.accessToken }))
+    : getMPPreference()
+
+  const preference = await mpPreference.create({
     body: {
       items: [
         {

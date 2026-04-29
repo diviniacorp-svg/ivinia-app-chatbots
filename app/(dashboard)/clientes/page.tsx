@@ -238,7 +238,9 @@ function EditClientDrawer({
     instagram: cfg.instagram || '',
     whatsapp: cfg.whatsapp || '',
     intro_tagline: cfg.intro_tagline || '',
+    mp_access_token: cfg.mp_access_token || '',
   })
+  const [showMpToken, setShowMpToken] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -407,6 +409,54 @@ function EditClientDrawer({
                 style={{ width: 40, height: 36, border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer', padding: 2 }} />
               <input style={{ ...inp, flex: 1 }} value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} placeholder="#6366f1" />
             </div>
+          </div>
+
+          {/* ── MercadoPago del negocio ──────────────────── */}
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+            <button
+              type="button"
+              onClick={() => setShowMpToken(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              }}
+            >
+              <span style={{ fontSize: 14 }}>💳</span>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                MercadoPago del negocio
+              </span>
+              {form.mp_access_token && (
+                <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', borderRadius: 100, padding: '1px 8px', fontSize: 9, fontFamily: 'var(--f-mono)', fontWeight: 700 }}>
+                  ✓ Configurado
+                </span>
+              )}
+              <ChevronRight size={14} style={{ transform: showMpToken ? 'rotate(90deg)' : 'none', transition: '0.15s', color: 'var(--muted)', marginLeft: 'auto' }} />
+            </button>
+
+            {showMpToken && (
+              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>
+                  Las señas de los turnos van directo a la cuenta MP del negocio.
+                  Token en: mercadopago.com.ar → Tus integraciones → Credenciales de producción.
+                </p>
+                <input
+                  type="password"
+                  style={inp}
+                  value={form.mp_access_token}
+                  onChange={e => setForm(p => ({ ...p, mp_access_token: e.target.value }))}
+                  placeholder="APP_USR-..."
+                />
+                {form.mp_access_token && (
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, mp_access_token: '' }))}
+                    style={{ fontSize: 11, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                  >
+                    × Quitar token
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── Knowledge Base RAG ──────────────────────── */}

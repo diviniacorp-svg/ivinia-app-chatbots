@@ -57,6 +57,7 @@ interface Negocio {
   whatsapp: string
   email: string
   schedule: Schedule
+  mp_access_token: string
 }
 
 export default function OnboardingPage() {
@@ -69,7 +70,9 @@ export default function OnboardingPage() {
     whatsapp: '',
     email: '',
     schedule: DEFAULT_SCHEDULE,
+    mp_access_token: '',
   })
+  const [showMpField, setShowMpField] = useState(false)
   const [servicios, setServicios] = useState<Servicio[]>([
     { id: crypto.randomUUID(), nombre: '', duracion: 60, precio: 0 },
   ])
@@ -318,7 +321,7 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold mb-2">Horario de atención</label>
+                <label className="block text-sm font-bold mb-1.5">Horario de atención</label>
                 <div className="bg-white border-2 border-black/15 rounded-2xl overflow-hidden">
                   {DIAS.map((dia, i) => {
                     const dayVal: DaySchedule = negocio.schedule[dia.key]
@@ -378,6 +381,40 @@ export default function OnboardingPage() {
                     )
                   })}
                 </div>
+              </div>
+
+              {/* MP Token opcional */}
+              <div className="border-t border-black/8 pt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowMpField(v => !v)}
+                  className="flex items-center gap-2 text-sm text-black/50 hover:text-black/70 transition-colors"
+                >
+                  <span className="text-base">💳</span>
+                  <span className="font-semibold">Conectar mi MercadoPago</span>
+                  <span className="text-xs text-black/30">(opcional — para recibir señas directo)</span>
+                  <span className="ml-auto text-black/30">{showMpField ? '▲' : '▼'}</span>
+                </button>
+
+                {showMpField && (
+                  <div className="mt-3 p-4 rounded-xl bg-black/[0.03] border border-black/10">
+                    <p className="text-xs text-black/50 mb-3 leading-relaxed">
+                      Cuando tus clientes paguen una seña, el dinero va directo a tu cuenta de MercadoPago.
+                      Encontrás tu Access Token en{' '}
+                      <span className="font-mono text-black/70">mercadopago.com.ar → Tus integraciones → Credenciales de producción</span>.
+                    </p>
+                    <input
+                      type="password"
+                      placeholder="APP_USR-..."
+                      value={negocio.mp_access_token}
+                      onChange={e => setNegocio(n => ({ ...n, mp_access_token: e.target.value }))}
+                      className="w-full border-2 border-black/15 rounded-xl px-4 py-3 text-sm font-mono outline-none focus:border-black/60 transition-colors bg-white"
+                    />
+                    <p className="text-xs text-black/40 mt-2">
+                      Si no lo tenés ahora, podés configurarlo después desde el panel.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

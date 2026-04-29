@@ -91,7 +91,16 @@ export async function POST(
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
 
-    // Crear preferencia de MercadoPago
+    // Leer el token MP del negocio si existe (las señas van a su cuenta)
+    const { data: clientRow } = await db
+      .from('clients')
+      .select('custom_config')
+      .eq('id', params.clientId)
+      .single()
+    const clientCfg = (clientRow?.custom_config as Record<string, string> | null) ?? {}
+    const businessMpToken = clientCfg.mp_access_token || undefined
+
+    // Crear preferencia de MercadoPago — con token del negocio si lo tiene
     const preference = await createPaymentPreference({
       title: `Seña — ${safeNames}`,
       description: `Turno el ${date} a las ${time} · ${safeName}`,
@@ -99,6 +108,7 @@ export async function POST(
       clientEmail: safeEmail || undefined,
       clientName: safeName,
       externalReference: appt.id,
+      accessToken: businessMpToken,
       backUrls: {
         success: `${appUrl}/turnos/${configId}?paid=true&appt=${appt.id}`,
         failure: `${appUrl}/turnos/${configId}?paid=false&appt=${appt.id}`,
