@@ -38,14 +38,27 @@ Creá el archivo en `/c/divinia/.claude/commands/[nombre].md` con esta estructur
 Agregarlo al listado en `/c/divinia/.claude/commands/README.md` (crear si no existe).
 
 ## Skills existentes
-- `/configurar-chatbot` — Configura chatbot personalizado para un cliente
-- `/vender-chatbot` — Flujo completo de venta de chatbot
-- `/instagram` — Gestión de contenido @divinia624
+
+### Contenido & Marketing
+- `/post-divinia` — Genera post IG completo (brief visual + caption + hashtags + prompts Freepik)
+- `/video-guion` — Guión técnico de Reel frame a frame (voz en off + prompts Freepik Seedance/Kling)
+- `/instagram` — Gestión de contenido @divinia624 (plan de 10 días legacy)
+
+### Ventas & Leads
+- `/buscar-leads` — Búsqueda Apify por rubro/ciudad + filtro + carga al CRM + plan de outreach
+- `/propuesta-divinia` — Propuesta personalizada por rubro/dolor (WA + email + demo link)
+- `/vender-chatbot` — Flujo de venta legacy (actualizar con /propuesta-divinia)
+
+### Clientes & Operación
 - `/nuevo-cliente` — Crear cliente en el sistema
+- `/configurar-chatbot` — Configura chatbot personalizado para un cliente
+- `/test-chatbot` — Probar un chatbot
+
+### Sistema
 - `/deploy` — Deployar a Vercel
 - `/status` — Ver estado del sistema
-- `/test-chatbot` — Probar un chatbot
 - `/seed` — Recargar templates
+- `/crear-skill` — Crear un nuevo skill (este archivo)
 
 ## Tips para buenos skills
 - Sé específico en los pasos (Claude los sigue literalmente)
