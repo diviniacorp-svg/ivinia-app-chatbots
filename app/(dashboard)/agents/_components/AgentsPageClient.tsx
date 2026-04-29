@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import type { AgentRun, ChatMessage } from '@/lib/agents/types'
 import DiviniaHQ from './DiviniaHQ'
 import AgentsToggleView from './AgentsToggleView'
@@ -28,6 +29,13 @@ export default function AgentsPageClient({ runs, chats }: Props) {
         justifyContent: 'flex-end',
         gap: 8,
       }}>
+        <Link href="/agents/arquitectura" style={{
+          fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.3)', textDecoration: 'none', padding: '4px 10px',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, marginRight: 8,
+        }}>
+          🗺 Arquitectura
+        </Link>
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 7, padding: 2, border: '1px solid rgba(255,255,255,0.09)' }}>
           {[
             { key: 'hq', label: '🏢 HQ en vivo' },

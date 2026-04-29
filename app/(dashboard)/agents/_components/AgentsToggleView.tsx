@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import type { AgentRun, ChatMessage } from '@/lib/agents/types'
 import { DEPARTMENTS, NUCLEUS_AGENTS, type DepartmentId } from '@/lib/nucleus'
 import OrchestratorChat from './OrchestratorChat'
@@ -125,11 +126,23 @@ export default function AgentsToggleView({ runs, chats }: Props) {
                     {count} agentes{ago ? ` · ${ago}` : ''}
                   </div>
                 </div>
-                <div style={{
-                  width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                  background: active ? '#4ade80' : 'rgba(255,255,255,0.1)',
-                  boxShadow: active ? '0 0 5px #4ade80' : 'none',
-                }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                    background: active ? '#4ade80' : 'rgba(255,255,255,0.1)',
+                    boxShadow: active ? '0 0 5px #4ade80' : 'none',
+                  }} />
+                  <Link
+                    href={`/agents/${id}`}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(255,255,255,0.2)',
+                      textDecoration: 'none', padding: '2px 4px', borderRadius: 3,
+                      border: '1px solid rgba(255,255,255,0.08)',
+                    }}
+                    title="Ver departamento"
+                  >↗</Link>
+                </div>
               </button>
             )
           })}

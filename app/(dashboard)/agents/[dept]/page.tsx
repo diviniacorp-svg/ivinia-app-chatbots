@@ -1,438 +1,205 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase'
-import Orb from '@/components/public/Orb'
+import { DEPARTMENTS, NUCLEUS_AGENTS, DepartmentId } from '@/lib/nucleus/index'
+import Link from 'next/link'
+import AgentCard from './_components/AgentCard'
 
 export const dynamic = 'force-dynamic'
 
-const DEPT_MAP: Record<string, {
-  label: string
-  color: string
-  description: string
-  agents: string[]
-  number: string
-}> = {
-  'ia-auto': {
-    label: 'IA & Automatizaciones', color: '#C6FF3D',
-    description: 'Diseño y construcción de agentes IA, workflows y automatizaciones',
-    agents: ['Director de IA', 'Dev de Agentes', 'Integrador API', 'Orquestador', 'Optimizador de Costos'],
-    number: '01',
-  },
-  'web-apps': {
-    label: 'Web Apps', color: '#38BDF8',
-    description: 'Desarrollo de sitios, dashboards y apps',
-    agents: ['Director de Desarrollo', 'Frontend Dev', 'Backend Dev', 'DevOps'],
-    number: '02',
-  },
-  'youtube': {
-    label: 'YouTube & Multimedia', color: '#FF5E3A',
-    description: 'Canal YouTube, guiones y producción con IA',
-    agents: ['Director Multimedia', 'Guionista IA', 'Productor AV', 'SEO YouTube'],
-    number: '03',
-  },
-  'content': {
-    label: 'Content Factory', color: '#E879F9',
-    description: 'Fábrica de contenido: textos, imágenes, videos',
-    agents: ['Director de Contenido', 'Copywriter IA', 'Diseñador IA', 'Video Creator'],
-    number: '04',
-  },
-  'clientes': {
-    label: 'Clientes & Servicios', color: '#34D399',
-    description: 'Pipeline comercial, propuestas y delivery',
-    agents: ['Director Comercial', 'CRM Manager', 'Vendedor IA', 'Project Delivery', 'Soporte'],
-    number: '05',
-  },
-  'avatares': {
-    label: 'Avatares IA', color: '#FCD34D',
-    description: 'Creación y venta de avatares digitales',
-    agents: ['Director de Avatares', 'Diseñador Avatares', 'Voice Cloner', 'Integrador Video'],
-    number: '06',
-  },
-  'legal': {
-    label: 'Legal & Compliance', color: '#818CF8',
-    description: 'Contratos, NDA y compliance IA',
-    agents: ['Director Legal', 'Contratos IA', 'Compliance', 'Propiedad Intelectual'],
-    number: '07',
-  },
-  'seguridad': {
-    label: 'Ciberseguridad', color: '#F87171',
-    description: 'Seguridad, accesos y auditorías',
-    agents: ['Director Seguridad', 'Security Agent', 'Infra Manager', 'Auditor'],
-    number: '08',
-  },
-  'finanzas': {
-    label: 'Contabilidad & Finanzas', color: '#FB923C',
-    description: 'Contabilidad, impuestos y flujo de caja',
-    agents: ['Director Financiero', 'Contador IA', 'Fiscal IA', 'Cash Flow', 'Facturador'],
-    number: '09',
-  },
-  'rrhh': {
-    label: 'RRHH Digital', color: '#A78BFA',
-    description: 'Crear y entrenar agentes, documentación',
-    agents: ['Director RRHH', 'Agent Creator', 'Agent Trainer', 'Documentador'],
-    number: '10',
-  },
-  'innovacion': {
-    label: 'Innovación Continua', color: '#67E8F9',
-    description: 'Monitoreo de tecnologías y mejoras',
-    agents: ['Director Innovación', 'Tech Researcher', 'System Updater', 'Innovador'],
-    number: '11',
-  },
+const MODEL_COLORS: Record<string, string> = {
+  haiku: '#06B6D4',
+  sonnet: '#8B5CF6',
+  opus: '#F59E0B',
 }
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'running':
-      return { background: 'rgba(198,255,61,0.2)', color: '#5A7A00' }
-    case 'completed':
-      return { background: 'rgba(52,211,153,0.2)', color: '#065F46' }
-    case 'failed':
-      return { background: 'rgba(248,113,113,0.2)', color: '#991B1B' }
-    default:
-      return { background: 'var(--paper-2)', color: 'var(--muted)' }
-  }
-}
-
-function formatDate(dateStr: string | null | undefined) {
-  if (!dateStr) return '—'
-  try {
-    return new Date(dateStr).toLocaleString('es-AR', {
-      day: '2-digit', month: '2-digit',
-      hour: '2-digit', minute: '2-digit',
-    })
-  } catch {
-    return dateStr
-  }
+function formatDate(d: string | null | undefined) {
+  if (!d) return '—'
+  return new Date(d).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 export default async function DeptPage({ params }: { params: { dept: string } }) {
-  const dept = DEPT_MAP[params.dept]
+  const deptId = params.dept as DepartmentId
+  const dept = DEPARTMENTS[deptId]
   if (!dept) notFound()
 
+  const agents = NUCLEUS_AGENTS.filter(a => a.depto === deptId)
   const db = createAdminClient()
-
-  const keyword = params.dept.split('-')[0]
   const oneHourAgo = new Date(Date.now() - 3_600_000).toISOString()
+  const todayStart = new Date().toISOString().split('T')[0] + 'T00:00:00'
 
-  const [{ data: logs }, { data: runs }, { data: recentRuns }] = await Promise.all([
-    db.from('agent_logs')
-      .select('id, agent, action, date, created_at')
-      .ilike('agent', `%${keyword}%`)
-      .order('date', { ascending: false })
-      .limit(15),
-    db.from('agent_runs')
-      .select('id, agent, status, created_at, duration_ms')
-      .ilike('agent', `%${keyword}%`)
-      .order('created_at', { ascending: false })
-      .limit(8),
-    db.from('agent_runs')
-      .select('id, agent, status')
+  const agentNames = agents.flatMap(a => [a.id, a.nombre])
+  const keyword = agents[0]?.id.split('-')[0] ?? deptId
+
+  const [{ data: runs }, { data: recentRuns }, { data: logs }] = await Promise.all([
+    db.from('agent_runs').select('id, agent, status, created_at, duration_ms')
+      .or(agentNames.map(n => `agent.ilike.%${n.split('-')[0]}%`).join(','))
+      .order('created_at', { ascending: false }).limit(10),
+    db.from('agent_runs').select('id, agent, status')
       .ilike('agent', `%${keyword}%`)
       .gte('created_at', oneHourAgo),
+    db.from('agent_logs').select('id, agent, action, created_at')
+      .ilike('agent', `%${keyword}%`)
+      .gte('created_at', todayStart)
+      .order('created_at', { ascending: false }).limit(15),
   ])
 
-  const hasActivity = (logs && logs.length > 0) || (runs && runs.length > 0)
   const recentCount = recentRuns?.length ?? 0
 
   return (
-    <div style={{ padding: '32px 40px', minHeight: '100vh', background: 'var(--paper)' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F4F5', color: '#09090B' }}>
 
-      {/* HEADER */}
-      <div style={{ paddingBottom: 32, borderBottom: '1px solid var(--line)', marginBottom: 32 }}>
-        <a
-          href="/dashboard/agents"
-          style={{
-            display: 'block',
-            fontFamily: 'var(--f-mono)',
-            fontSize: 11,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: 'var(--muted)',
-            textDecoration: 'none',
-            marginBottom: 20,
-          }}
-        >
+      {/* Header */}
+      <div style={{ background: '#09090B', padding: '24px 32px' }}>
+        <Link href="/agents" style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', textDecoration: 'none', display: 'block', marginBottom: 20 }}>
           ← Volver a Agentes
-        </a>
-
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 20, alignItems: 'center' }}>
-          <Orb size={52} color={dept.color} colorDeep={dept.color} shade="rgba(0,0,0,0.3)" />
+        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 24,
+            background: `radial-gradient(circle at 35% 35%, ${dept.color}44, ${dept.color}11)`,
+            border: `1.5px solid ${dept.color}40`,
+          }}>
+            {dept.emoji}
+          </div>
           <div>
-            <p style={{
-              fontFamily: 'var(--f-mono)',
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              marginBottom: 4,
-            }}>
-              Departamento {dept.number}
-            </p>
-            <h1 style={{
-              fontFamily: 'var(--f-display)',
-              fontSize: 36,
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              color: 'var(--ink)',
-              marginBottom: 4,
-              lineHeight: 1,
-            }}>
-              {dept.label}
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>
+              Departamento DIVINIA
+            </div>
+            <h1 style={{ fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 800, fontSize: 28, color: '#fff', letterSpacing: '-0.04em', margin: 0 }}>
+              {dept.nombre}
             </h1>
-            <p style={{
-              fontFamily: 'var(--f-display)',
-              fontSize: 15,
-              color: 'var(--muted-2)',
-            }}>
-              {dept.description}
+            <p style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
+              {dept.mision}
             </p>
           </div>
+        </div>
+
+        {/* Stats bar */}
+        <div style={{ display: 'flex', gap: 28, marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          {[
+            { label: 'Agentes', val: agents.length },
+            { label: 'Runs esta hora', val: recentCount, highlight: recentCount > 0 },
+            { label: 'Modelo base', val: dept.modelo_base.toUpperCase() },
+          ].map(s => (
+            <div key={s.label}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 20, color: s.highlight ? '#C6FF3D' : '#fff', letterSpacing: '-0.02em' }}>{s.val}</div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>{s.label}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* BODY */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 32 }}>
+      {/* Body */}
+      <div style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24, maxWidth: 1200, margin: '0 auto' }}>
 
-        {/* COL IZQUIERDA — Actividad */}
+        {/* Left: Agents */}
         <div>
-          <p style={{
-            fontFamily: 'var(--f-mono)',
-            fontSize: 10,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'var(--muted)',
-            marginBottom: 16,
-          }}>
-            Actividad reciente
-          </p>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A', marginBottom: 14 }}>
+            {agents.length} agentes en este departamento
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {agents.map(agent => (
+              <AgentCard key={agent.id} agent={agent} deptColor={dept.color} modelColor={MODEL_COLORS[agent.modelo] ?? '#71717A'} />
+            ))}
+          </div>
 
-          {!hasActivity ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>
-              <p style={{ fontFamily: 'var(--f-display)', fontSize: 15 }}>
-                Sin actividad registrada todavía
-              </p>
-              <p style={{
-                fontFamily: 'var(--f-mono)',
-                fontSize: 11,
-                marginTop: 8,
-              }}>
-                Los runs de los agentes de este departamento aparecerán aquí
-              </p>
-            </div>
-          ) : (
-            <>
-              {logs && logs.length > 0 && (
-                <div>
-                  {logs.map((log) => (
-                    <div
-                      key={log.id}
-                      style={{
-                        background: 'var(--paper-2)',
-                        border: '1px solid var(--line)',
-                        borderRadius: 8,
-                        padding: '14px 18px',
-                        marginBottom: 4,
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: 12,
-                        alignItems: 'flex-start',
-                      }}
-                    >
-                      <div style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: dept.color,
-                        marginTop: 6, flexShrink: 0,
-                      }} />
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontFamily: 'var(--f-mono)',
-                          fontSize: 11,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          color: 'var(--muted)',
-                          marginBottom: 2,
-                        }}>
-                          {log.agent}
-                        </p>
-                        <p style={{
-                          fontFamily: 'var(--f-display)',
-                          fontSize: 14,
-                          color: 'var(--ink)',
-                          lineHeight: 1.4,
-                        }}>
-                          {log.action}
-                        </p>
-                        <p style={{
-                          fontFamily: 'var(--f-mono)',
-                          fontSize: 10,
-                          color: 'var(--muted)',
-                          marginTop: 4,
-                        }}>
-                          {formatDate(log.date ?? log.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {runs && runs.length > 0 && (
-                <div style={{ marginTop: 32 }}>
-                  <p style={{
-                    fontFamily: 'var(--f-mono)',
-                    fontSize: 10,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: 12,
-                  }}>
-                    Ejecuciones
-                  </p>
-                  {runs.map((run) => {
-                    const statusStyle = getStatusColor(run.status ?? '')
-                    return (
-                      <div
-                        key={run.id}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 12,
-                          padding: '8px 0',
-                          borderBottom: '1px solid var(--line)',
-                        }}
-                      >
-                        <span style={{
-                          fontFamily: 'var(--f-display)',
-                          fontSize: 14,
-                          color: 'var(--ink)',
-                          flex: 1,
-                        }}>
-                          {(run as any).agent ?? (run as any).agent_name}
-                        </span>
-                        <span style={{
-                          fontFamily: 'var(--f-mono)',
-                          fontSize: 10,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          borderRadius: 20,
-                          padding: '3px 10px',
-                          ...statusStyle,
-                        }}>
-                          {run.status ?? 'unknown'}
-                        </span>
-                        <span style={{
-                          fontFamily: 'var(--f-mono)',
-                          fontSize: 10,
-                          color: 'var(--muted)',
-                        }}>
-                          {formatDate((run as any).created_at ?? (run as any).started_at)}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* COL DERECHA */}
-        <div>
-
-          {/* Card Equipo */}
-          <div style={{
-            background: 'var(--paper-2)',
-            border: '1px solid var(--line)',
-            borderRadius: 12,
-            padding: 24,
-            marginBottom: 16,
-          }}>
-            <p style={{
-              fontFamily: 'var(--f-mono)',
-              fontSize: 10,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              marginBottom: 16,
-            }}>
-              Equipo
-            </p>
-            <div>
-              {dept.agents.map((agent, i) => (
-                <div
-                  key={agent}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '12px 0',
-                    borderBottom: i < dept.agents.length - 1 ? '1px solid var(--line)' : 'none',
-                  }}
-                >
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: dept.color + '22',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <span style={{
-                      fontFamily: 'var(--f-mono)',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: dept.color,
-                    }}>
-                      {agent.charAt(0).toUpperCase()}
-                    </span>
+          {/* Activity log */}
+          {(logs && logs.length > 0) && (
+            <div style={{ marginTop: 28 }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#71717A', marginBottom: 12 }}>
+                Actividad hoy
+              </div>
+              {logs.map(log => (
+                <div key={log.id} style={{ display: 'flex', gap: 12, padding: '9px 0', borderBottom: '1px solid #E4E4E7', alignItems: 'flex-start' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: dept.color, marginTop: 4, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#71717A' }}>{log.agent}</div>
+                    <div style={{ fontFamily: 'var(--f-display)', fontSize: 13, color: '#09090B', lineHeight: 1.4 }}>{log.action}</div>
                   </div>
-                  <span style={{
-                    fontFamily: 'var(--f-display)',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: 'var(--ink)',
-                    flex: 1,
-                  }}>
-                    {agent}
-                  </span>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: '#34D399',
-                    flexShrink: 0,
-                  }} />
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: '#A1A1AA', flexShrink: 0 }}>{formatDate(log.created_at)}</div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Card Esta hora */}
-          <div style={{
-            background: 'var(--ink)',
-            borderRadius: 12,
-            padding: 20,
-          }}>
-            <p style={{
-              fontFamily: 'var(--f-display)',
-              fontSize: 48,
-              fontWeight: 700,
-              color: recentCount > 0 ? 'var(--lime)' : 'rgba(255,255,255,0.2)',
-              lineHeight: 1,
-            }}>
+        {/* Right: Runs + connections */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Runs box */}
+          <div style={{ background: '#09090B', borderRadius: 14, padding: 20 }}>
+            <div style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 48, color: recentCount > 0 ? '#C6FF3D' : 'rgba(255,255,255,0.15)', lineHeight: 1 }}>
               {recentCount}
-            </p>
-            <p style={{
-              fontFamily: 'var(--f-mono)',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.5)',
-              marginTop: 4,
-            }}>
-              ejecuciones en la última hora
-            </p>
+            </div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+              ejecuciones última hora
+            </div>
           </div>
 
+          {/* Recent runs */}
+          {(runs && runs.length > 0) && (
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E4E4E7', padding: '16px 18px' }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#71717A', marginBottom: 12 }}>
+                Últimas ejecuciones
+              </div>
+              {runs.slice(0, 6).map(run => {
+                const sc = run.status === 'running' ? { color: '#16a34a', bg: 'rgba(22,163,74,0.08)' }
+                  : run.status === 'completed' ? { color: '#71717A', bg: '#F4F4F5' }
+                  : { color: '#dc2626', bg: 'rgba(220,38,38,0.08)' }
+                return (
+                  <div key={run.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid #F4F4F5' }}>
+                    <span style={{ fontFamily: 'var(--f-display)', fontSize: 12, color: '#09090B', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {(run as any).agent}
+                    </span>
+                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, padding: '2px 7px', borderRadius: 4, color: sc.color, background: sc.bg, flexShrink: 0, letterSpacing: '0.04em' }}>
+                      {run.status}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Connects to */}
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E4E4E7', padding: '16px 18px' }}>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#71717A', marginBottom: 12 }}>
+              Conectado con
+            </div>
+            {(() => {
+              const connected = new Set<DepartmentId>()
+              for (const agent of agents) {
+                for (const outId of (agent.outputA ?? [])) {
+                  const target = NUCLEUS_AGENTS.find(a => a.id === outId)
+                  if (target && target.depto !== deptId) connected.add(target.depto)
+                }
+              }
+              const list = Array.from(connected)
+              if (list.length === 0) return (
+                <div style={{ fontFamily: 'var(--f-display)', fontSize: 12, color: '#71717A' }}>
+                  Sin salidas a otros departamentos
+                </div>
+              )
+              return list.map(id => {
+                const d = DEPARTMENTS[id]
+                return (
+                  <Link key={id} href={`/agents/${id}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid #F4F4F5', textDecoration: 'none' }}>
+                    <span style={{ fontSize: 14 }}>{d.emoji}</span>
+                    <span style={{ fontFamily: 'var(--f-display)', fontSize: 12, color: '#09090B' }}>{d.nombre}</span>
+                    <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-mono)', fontSize: 9, color: '#A1A1AA' }}>→</span>
+                  </Link>
+                )
+              })
+            })()}
+          </div>
+
+          <Link href="/agents/arquitectura" style={{
+            display: 'block', padding: '12px 16px', background: '#F4F4F5', borderRadius: 10,
+            border: '1px solid #E4E4E7', textDecoration: 'none', textAlign: 'center',
+            fontFamily: 'var(--f-mono)', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#71717A',
+          }}>
+            Ver arquitectura completa →
+          </Link>
         </div>
       </div>
     </div>
