@@ -196,9 +196,9 @@ export default function HerramientasPage() {
         {/* Links directos a otros agentes */}
         {[
           { label: 'Generador de Landings', href: '/herramientas/landing', icon: '🏗️' },
-          { label: 'Auditoría digital', href: '/auditoria', icon: '🔍' },
+          { label: 'Buscar leads (Apify)', href: '/leads', icon: '🔍' },
           { label: 'Calificar lead', href: '/comercial', icon: '🎯' },
-          { label: 'Generar propuesta', href: '/comercial', icon: '📄' },
+          { label: 'Generar propuesta', href: '/comercial?tab=propuesta', icon: '📄' },
         ].map(l => (
           <a key={l.label} href={l.href}
             style={{

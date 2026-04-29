@@ -336,6 +336,43 @@ function OutreachForm() {
           </div>
         )}
 
+        {(emailContent || whatsappMsg) && (
+          <div style={{
+            background: 'var(--paper)',
+            borderRadius: 16,
+            border: '1px solid var(--line)',
+            padding: 16,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          }}>
+            <p style={{ color: 'var(--muted)', fontSize: 12, fontFamily: 'var(--f-mono)', margin: 0 }}>
+              ¿Este prospecto ya está en el CRM?
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <a
+                href={`/crm?company=${encodeURIComponent(form.companyName)}&rubro=${encodeURIComponent(form.rubro)}&city=${encodeURIComponent(form.city)}&email=${encodeURIComponent(form.email)}`}
+                style={{
+                  padding: '7px 14px', borderRadius: 8,
+                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: 'var(--paper)', background: 'var(--ink)', textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                Ver en CRM →
+              </a>
+              <a
+                href={`/comercial?company=${encodeURIComponent(form.companyName)}&rubro=${encodeURIComponent(form.rubro)}`}
+                style={{
+                  padding: '7px 14px', borderRadius: 8,
+                  fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: 'var(--ink)', background: 'var(--lime)', textDecoration: 'none',
+                }}
+              >
+                Pipeline →
+              </a>
+            </div>
+          </div>
+        )}
+
         {!emailContent && !whatsappMsg && (
           <div style={{
             background: 'var(--paper)',

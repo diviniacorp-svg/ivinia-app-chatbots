@@ -378,27 +378,94 @@ function ChatbotForm({ templates }: { templates: Template[] }) {
 
 export default function ChatbotsPage() {
   const [templates, setTemplates] = useState<Template[]>([])
+  const [clients, setClients] = useState<Client[]>([])
 
   useEffect(() => {
     fetch('/api/templates').then(r => r.json()).then(d => setTemplates(d.templates || []))
+    fetch('/api/clients').then(r => r.json()).then(d => setClients(d.clients || []))
   }, [])
+
+  const activeClients = clients.filter(c => c.status === 'active' || c.status === 'activo' || c.status === 'trial')
 
   return (
     <div style={{ padding: '32px 40px', background: 'var(--paper-2)', minHeight: '100vh' }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-          <Bot size={24} style={{ color: 'var(--ink)' }} />
-          <h1 style={{
-            fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
-            fontSize: 36, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0,
-          }}>
-            Chatbots
-          </h1>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        gap: 16, marginBottom: 24, flexWrap: 'wrap',
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+            <Bot size={24} style={{ color: 'var(--ink)' }} />
+            <h1 style={{
+              fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
+              fontSize: 36, letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0,
+            }}>
+              Chatbots
+            </h1>
+          </div>
+          <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>
+            Creá y activá chatbots IA para tus clientes
+          </p>
         </div>
-        <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>
-          Creá y activá chatbots IA para tus clientes
-        </p>
+        <div style={{ display: 'flex', gap: 8, alignSelf: 'center' }}>
+          <a href="/clientes" style={{
+            padding: '9px 16px', borderRadius: 8, border: '1px solid var(--line)',
+            fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: 'var(--ink)', textDecoration: 'none', background: 'var(--paper)',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <Bot size={12} /> Ver todos los clientes
+          </a>
+          <a href="/templates" style={{
+            padding: '9px 16px', borderRadius: 8, border: '1px solid var(--line)',
+            fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: 'var(--ink)', textDecoration: 'none', background: 'var(--paper)',
+          }}>
+            Templates →
+          </a>
+        </div>
       </div>
+
+      {/* Active clients strip */}
+      {activeClients.length > 0 && (
+        <div style={{
+          background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12,
+          padding: '16px 20px', marginBottom: 24,
+        }}>
+          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+            Chatbots activos — {activeClients.length}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {activeClients.map(c => (
+              <a
+                key={c.id}
+                href={`/clientes/${c.id}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 14px', borderRadius: 8,
+                  border: '1px solid var(--line)', background: 'var(--paper-2)',
+                  textDecoration: 'none', color: 'var(--ink)',
+                }}
+              >
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: c.status === 'trial' ? '#F59E0B' : '#10B981',
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontFamily: 'var(--f-display)', fontSize: 13, fontWeight: 600 }}>{c.company_name}</span>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                  {c.plan}
+                </span>
+                {c.chatbot_id && (
+                  <ExternalLink size={10} style={{ color: 'var(--muted)', marginLeft: 2 }} />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Suspense fallback={
         <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>Cargando...</p>
       }>
