@@ -106,12 +106,17 @@ export default async function DashboardPage() {
   const leadsNuevos = data.metrics?.leads_nuevos ?? 0
   const agentesActivos = data.metrics?.agent_runs_hoy ?? 0
 
+  const enTrial = data.metrics?.en_trial ?? 0
+  const leadsCalientes = data.metrics?.leads_calientes ?? 0
+
   const KPIS = [
-    { label: 'MRR', value: mrr > 0 ? ars(mrr) : '—', highlight: mrr > 0, icon: '💰' },
-    { label: 'Clientes activos', value: clientes || '—', highlight: false, icon: '👥' },
-    { label: 'Turnos hoy', value: reservasHoy || '—', highlight: Number(reservasHoy) > 0, icon: '📅' },
-    { label: 'Leads nuevos', value: leadsNuevos || '—', highlight: Number(leadsNuevos) > 0, icon: '🎯' },
-    { label: 'Agentes activos', value: agentesActivos || '—', highlight: Number(agentesActivos) > 0, icon: '🤖' },
+    { label: 'MRR',              value: mrr > 0 ? ars(mrr) : '—',           highlight: mrr > 0,                    icon: '💰' },
+    { label: 'Clientes activos', value: clientes || '—',                      highlight: Number(clientes) > 0,       icon: '👥' },
+    { label: 'En trial',         value: enTrial || '—',                       highlight: Number(enTrial) > 0,        icon: '🔬' },
+    { label: 'Leads calientes',  value: leadsCalientes || '—',                highlight: Number(leadsCalientes) > 0, icon: '🔥' },
+    { label: 'Leads esta semana',value: leadsNuevos || '—',                   highlight: Number(leadsNuevos) > 0,    icon: '🎯' },
+    { label: 'Turnos hoy',       value: reservasHoy || '—',                   highlight: Number(reservasHoy) > 0,    icon: '📅' },
+    { label: 'Agentes activos',  value: agentesActivos || '—',                highlight: Number(agentesActivos) > 0, icon: '🤖' },
   ]
 
   return (
@@ -147,7 +152,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* ── KPI strip ──────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1, marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, maxWidth: 1400, margin: '20px auto 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, maxWidth: 1400, margin: '20px auto 0' }}>
           {KPIS.map((k, i) => (
             <div key={k.label} style={{ padding: '4px 0', borderRight: i < KPIS.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none', paddingRight: 20 }}>
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>
