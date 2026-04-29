@@ -126,6 +126,7 @@ async function provisionTurnero(clientId: string) {
       turnero_url: turneroUrl,
       panel_url: panelUrl,
       panel_pin: pin,
+      client_id: clientId,
     })
   }
 }
