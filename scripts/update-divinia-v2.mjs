@@ -41,13 +41,17 @@ FLUJO:
 4. Ofrecé la prueba gratis de 14 días
 5. Cerrá con: "Te conecto con Joaco para arrancar: +54 9 266 528 6110"`;
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dsekibwfbbxnglvcirso.supabase.co'
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!SUPABASE_KEY) { console.error('❌ Falta SUPABASE_SERVICE_ROLE_KEY en .env.local'); process.exit(1) }
+
 const res = await fetch(
-  'https://dsekibwfbbxnglvcirso.supabase.co/rest/v1/clients?id=eq.27dfd03a-20a4-4817-9004-08a5699a35f4',
+  `${SUPABASE_URL}/rest/v1/clients?id=eq.27dfd03a-20a4-4817-9004-08a5699a35f4`,
   {
     method: 'PATCH',
     headers: {
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZWtpYndmYmJ4bmdsdmNpcnNvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjU4NzI5NSwiZXhwIjoyMDg4MTYzMjk1fQ.xvXr3io984MXhGFWkDHfYIO406uwcG0buO-rn0Vy6co',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzZWtpYndmYmJ4bmdsdmNpcnNvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjU4NzI5NSwiZXhwIjoyMDg4MTYzMjk1fQ.xvXr3io984MXhGFWkDHfYIO406uwcG0buO-rn0Vy6co',
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({

@@ -13,16 +13,24 @@ async function sessionToken(secret: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   const { password } = await request.json()
-  const adminPassword = process.env.ADMIN_PASSWORD || 'DiViNiA2050'
-  const signingSecret = process.env.ADMIN_SECRET || 'DiViNiA2050'
+  const adminPassword = process.env.ADMIN_PASSWORD
+  const signingSecret = process.env.ADMIN_SECRET
+  if (!adminPassword || !signingSecret) {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Servidor mal configurado — faltan ADMIN_PASSWORD / ADMIN_SECRET' }, { status: 503 })
+    }
+    // dev fallback solo en local
+  }
+  const pwd = adminPassword || 'DiViNiA2050'
+  const secret = signingSecret || 'DiViNiA2050'
 
-  if (password !== adminPassword) {
+  if (password !== pwd) {
     return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
   }
+  const token = await sessionToken(secret)
 
-  const token = await sessionToken(signingSecret)
   const response = NextResponse.json({ ok: true })
-  response.cookies.set('divinia_session', token, {
+  response.cookies.set('divinia_session', await sessionToken(secret), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

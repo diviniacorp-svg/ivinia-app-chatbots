@@ -4,8 +4,9 @@ out/
 .env
 .env.local
 .env*.local
+.env*.tmp
 .vercel
 *.pem
 npm-debug.log*
-
-.vercel
+logs/
+tmp/
