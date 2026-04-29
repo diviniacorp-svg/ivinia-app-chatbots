@@ -27,7 +27,7 @@ async function getStats() {
     const mrr = (mrrRes.data ?? []).reduce((s, c) => s + Number(c.mrr ?? 0), 0)
     return { clientesActivos: count ?? 0, mrr, rubros: 6 }
   } catch {
-    return { clientesActivos: 8, mrr: 165000, rubros: 6 }
+    return { clientesActivos: 0, mrr: 0, rubros: 6 }
   }
 }
 

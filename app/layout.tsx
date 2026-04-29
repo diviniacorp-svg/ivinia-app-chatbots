@@ -1,14 +1,58 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+const APP_URL = 'https://divinia.vercel.app'
+
 export const metadata: Metadata = {
-  title: 'DIVINIA — Automatizamos tu negocio con IA',
-  description: 'Automatizamos las operaciones de tu PYME con inteligencia artificial. En 90 días o no cobros. San Luis, Argentina.',
-  keywords: 'automatización IA Argentina, chatbot WhatsApp, agentes IA, San Luis, PYME',
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: 'DIVINIA — Automatizamos tu PYME con IA · San Luis',
+    template: '%s · DIVINIA',
+  },
+  description: 'Sistema de turnos online, chatbot WhatsApp y agentes IA para PYMEs argentinas. En 48hs tu negocio acepta reservas solo. Desde $45.000/mes.',
+  keywords: [
+    'sistema de turnos online Argentina',
+    'turnero peluquería San Luis',
+    'chatbot WhatsApp PYME',
+    'automatización IA negocio',
+    'agenda online gratis Argentina',
+    'turnos online clínica',
+    'DIVINIA IA San Luis',
+  ],
+  authors: [{ name: 'DIVINIA', url: APP_URL }],
+  creator: 'DIVINIA',
+  publisher: 'DIVINIA',
+  alternates: { canonical: APP_URL },
   openGraph: {
-    title: 'DIVINIA — Automatizamos tu negocio con IA',
-    description: 'En 90 días automatizamos lo que te hace perder tiempo y plata. O no te cobramos.',
+    title: 'DIVINIA — Tu PYME en piloto automático con IA',
+    description: 'Turnero online + chatbot 24hs + contenido IA. Desde $45.000/mes. Setup en 48hs o no cobrás.',
     type: 'website',
+    url: APP_URL,
+    siteName: 'DIVINIA',
+    locale: 'es_AR',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DIVINIA — Automatización IA para PYMEs argentinas',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DIVINIA — Tu PYME en piloto automático',
+    description: 'Turnero + chatbot + contenido IA. $45k/mes. Setup 48hs.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 }
 
