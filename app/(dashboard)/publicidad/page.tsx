@@ -715,17 +715,33 @@ function NewCampaignForm({ onSave, onClose }: { onSave: (c: Campaign) => void; o
 export default function PublicidadPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState('')
   const [selected, setSelected] = useState<Campaign | null>(null)
   const [showNew, setShowNew] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterPlatform, setFilterPlatform] = useState('all')
 
   const fetchCampaigns = useCallback(async () => {
+    setFetchError('')
     try {
-      const res = await fetch('/api/publicidad/campaigns')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      const res = await fetch('/api/publicidad/campaigns', { signal: controller.signal })
+      clearTimeout(timeoutId)
       const data = await res.json()
-      setCampaigns(data.campaigns || [])
-    } catch { /* silent */ }
+      if (!res.ok) {
+        const msg = data.error || 'Error al cargar'
+        setFetchError(msg.includes('does not exist') || msg.includes('relation') ? 'tabla_faltante' : msg)
+      } else {
+        setCampaigns(data.campaigns || [])
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setFetchError('timeout')
+      } else {
+        setFetchError(err instanceof Error ? err.message : 'Error de conexión')
+      }
+    }
     setLoading(false)
   }, [])
 
@@ -815,7 +831,37 @@ export default function PublicidadPage() {
       <div style={{ padding: '24px 28px' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-            <p style={{ fontFamily: 'var(--f-mono)', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Cargando campañas...</p>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.1)', borderTopColor: LIME, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+              <p style={{ fontFamily: 'var(--f-mono)', color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>Conectando con Supabase...</p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            </div>
+          </div>
+        ) : fetchError ? (
+          <div style={{ textAlign: 'center', padding: '80px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>
+              {fetchError === 'tabla_faltante' ? '🗄️' : fetchError === 'timeout' ? '⏱️' : '⚠️'}
+            </div>
+            <p style={{ fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 18, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>
+              {fetchError === 'tabla_faltante' ? 'Tabla no configurada en Supabase'
+                : fetchError === 'timeout' ? 'La conexión tardó demasiado'
+                : fetchError}
+            </p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 24, maxWidth: 380, margin: '0 auto 24px' }}>
+              {fetchError === 'tabla_faltante'
+                ? 'Necesitás crear la tabla ad_campaigns en Supabase para usar esta sección.'
+                : 'Verificá la conexión a Supabase o revisá las env vars en Vercel.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={() => { setLoading(true); fetchCampaigns() }} style={{ ...btn(LIME), padding: '10px 24px', background: LIME, color: INK, border: 'none', fontSize: 12 }}>
+                🔄 Reintentar
+              </button>
+              {fetchError === 'tabla_faltante' && (
+                <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ ...btn('rgba(255,255,255,0.4)'), padding: '10px 24px', fontSize: 12, textDecoration: 'none' }}>
+                  Ir a Supabase ↗
+                </a>
+              )}
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
