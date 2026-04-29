@@ -78,12 +78,14 @@ const AGENTES = [
 
 // ── Acciones rápidas ─────────────────────────────────────────────────────────
 const ACCIONES = [
-  { icon: '🎯', label: 'Nuevo lead', href: '/comercial', primary: true },
-  { icon: '📄', label: 'Propuesta', href: '/comercial', primary: true },
-  { icon: '💳', label: 'Generar pago', href: '/pagos', primary: false },
-  { icon: '📅', label: 'Ver turnos', href: '/turnos', primary: false },
-  { icon: '🧠', label: 'Núcleo IA', href: '/nucleo', primary: false },
-  { icon: '🔧', label: 'Generadores', href: '/herramientas', primary: false },
+  { icon: '🎯', label: 'Buscar leads',   href: '/leads',      primary: true },
+  { icon: '🔥', label: 'Pipeline',        href: '/comercial',  primary: true },
+  { icon: '🗂',  label: 'CRM',            href: '/crm',        primary: false },
+  { icon: '👥', label: 'Clientes',        href: '/clientes',   primary: false },
+  { icon: '💳', label: 'Generar pago',    href: '/pagos',      primary: false },
+  { icon: '✨', label: 'Redes / Content', href: '/redes',      primary: false },
+  { icon: '📅', label: 'Turnos hoy',      href: '/turnos',     primary: false },
+  { icon: '🔧', label: 'Generadores',     href: '/herramientas',primary: false },
 ]
 
 const ESTADO_BADGE: Record<string, string> = {
@@ -125,11 +127,14 @@ export default async function DashboardPage() {
           </div>
           {/* CTAs principales */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/comercial" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: LIME, color: INK, borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13 }}>
-              🎯 Nuevo lead
+            <Link href="/leads" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: LIME, color: INK, borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 13 }}>
+              🎯 Buscar leads
             </Link>
             <Link href="/comercial" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontSize: 13 }}>
-              📄 Propuesta
+              🔥 Pipeline
+            </Link>
+            <Link href="/crm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontSize: 13 }}>
+              🗂 CRM
             </Link>
             <Link href="/pagos" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 9, textDecoration: 'none', fontFamily: 'var(--f-display)', fontSize: 13 }}>
               💳 Cobrar
@@ -159,13 +164,13 @@ export default async function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 300px', gap: 16, marginBottom: 16 }}>
 
           {/* Pipeline leads */}
-          <Section title="Pipeline" sub="leads con score ≥ 60" action={{ label: 'Ver CRM →', href: '/comercial' }}>
+          <Section title="Pipeline" sub="leads con score ≥ 60" action={{ label: 'Ver CRM →', href: '/crm' }}>
             {data.leads.length === 0 ? (
-              <EmptyState icon="🎯" text="Sin leads calientes." cta="Buscar leads" href="/comercial" />
+              <EmptyState icon="🎯" text="Sin leads calientes." cta="Buscar leads" href="/leads" />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {data.leads.map((lead: any) => (
-                  <Link key={lead.id} href="/comercial" style={{
+                  <Link key={lead.id} href={`/comercial?leadId=${lead.id}`} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '10px 0', borderBottom: '1px solid #E4E4E7', textDecoration: 'none',
                   }}>
@@ -183,7 +188,7 @@ export default async function DashboardPage() {
           </Section>
 
           {/* Agenda Joaco */}
-          <Section title="Agenda" sub="pendientes para vos" action={{ label: 'Ver todo →', href: '/comercial' }}>
+          <Section title="Agenda" sub="pendientes para vos" action={{ label: 'Ver leads →', href: '/leads' }}>
             {data.agenda.length === 0 ? (
               <EmptyState icon="✅" text="Sin pendientes urgentes." />
             ) : (
