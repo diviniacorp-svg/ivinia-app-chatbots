@@ -236,10 +236,8 @@ export default function ProductosV3() {
                 ))}
               </ul>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <a
-                  href={`${WA}${PRODUCTOS[0].wa}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/onboarding"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -257,7 +255,7 @@ export default function ProductosV3() {
                   }}
                 >
                   Contratar Turnero →
-                </a>
+                </Link>
                 <Link
                   href={PRODUCTOS[0].demo!}
                   style={{

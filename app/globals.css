@@ -43,6 +43,7 @@
   --muted-2: #55534C;
   --lime: #C6FF3D;
   --lime-deep: #9EE028;
+  --chrome-bg: #0E0E0E;
   --f-display: 'Bricolage Grotesque', -apple-system, sans-serif;
   --f-serif: 'Instrument Serif', Georgia, serif;
   --f-mono: 'JetBrains Mono', monospace;
@@ -57,6 +58,7 @@
   --line: #2E2E2A;
   --muted: #6E6B62;
   --muted-2: #9E9B92;
+  --chrome-bg: #080808;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Reveal from './Reveal'
 
 const PASOS = [
@@ -143,10 +144,8 @@ export default function ProcesoSimple() {
             display: 'flex',
             justifyContent: 'center',
           }}>
-            <a
-              href="https://wa.me/5492665286110?text=Hola%20Joaco%2C%20quiero%20empezar%20el%20paso%201"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/onboarding"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -164,7 +163,7 @@ export default function ProcesoSimple() {
               }}
             >
               Empezar el paso 1 ahora →
-            </a>
+            </Link>
           </div>
         </Reveal>
       </div>

@@ -22,14 +22,12 @@ export default function TrialCTA() {
                 y el sistema es tuyo para siempre.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-                <a
-                  href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/onboarding"
                   className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-indigo-50 font-black px-10 py-5 rounded-2xl text-lg transition-all shadow-2xl"
                 >
-                  Quiero mi Turnero — $80.000 <ArrowRight size={20} />
-                </a>
+                  Empezar prueba gratis <ArrowRight size={20} />
+                </Link>
                 <Link
                   href="/rubros"
                   className="flex items-center gap-2 border-2 border-white/30 hover:border-white/60 text-white font-bold px-10 py-5 rounded-2xl text-lg transition-all"

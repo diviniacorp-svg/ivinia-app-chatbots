@@ -85,7 +85,7 @@ export default function SidebarV2({ onClose }: { onClose?: () => void }) {
   return (
     <aside style={{
       width: 210,
-      background: 'var(--ink)',
+      background: 'var(--chrome-bg)',
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
@@ -117,7 +117,7 @@ export default function SidebarV2({ onClose }: { onClose?: () => void }) {
           </span>
           <span style={{
             fontFamily: 'var(--f-display)', fontWeight: 700, fontSize: 14,
-            color: 'var(--paper)', letterSpacing: '-0.04em',
+            color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.04em',
           }}>
             divinia<span style={{ color: 'rgba(255,255,255,0.22)' }}>.</span>
           </span>

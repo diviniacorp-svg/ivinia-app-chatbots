@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Orb from './Orb'
 
 export default function Navbar() {
@@ -137,16 +138,14 @@ export default function Navbar() {
               {link.label}
             </a>
           ))}
-          <a
-            href="https://wa.me/5492665286110?text=Hola%20DIVINIA%2C%20quiero%20el%20Turnero"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/onboarding"
             onClick={() => setMenuOpen(false)}
             className="btn-v2 btn-ink"
             style={{ marginTop: 16, textAlign: 'center', justifyContent: 'center' }}
           >
-            WhatsApp →
-          </a>
+            Empezar gratis →
+          </Link>
         </div>
       )}
     </nav>

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Reveal from './Reveal'
 
 const RUBROS_ROW1 = [
@@ -92,14 +93,12 @@ export default function RubrosGrid() {
       <Reveal delay={200}>
         <div className="text-center mt-16 px-6">
           <p className="text-gray-500 text-sm mb-4">¿Tu rubro no aparece?</p>
-          <a
-            href="https://wa.me/5492665286110?text=Hola%2C%20quiero%20Turnero%20para%20mi%20negocio"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/onboarding"
             className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all"
           >
-            Consultanos →
-          </a>
+            Empezar gratis →
+          </Link>
         </div>
       </Reveal>
     </section>

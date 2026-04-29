@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Orb from './Orb'
 
 const WA_BASE = 'https://wa.me/5492665286110?text='
+const DEMO_URL = '/reservas/rufina-nails-demo'
 
 const RUBROS = [
   {
@@ -209,10 +210,8 @@ export default function HeroV3() {
 
           {/* CTAs */}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={DEMO_URL}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 10,
                 background: 'var(--lime)', color: 'var(--ink)', borderRadius: 100,
@@ -221,10 +220,10 @@ export default function HeroV3() {
                 letterSpacing: '-0.01em', transition: 'opacity 0.2s',
               }}
             >
-              Quiero una demo gratis →
-            </a>
-            <a
-              href="#demo"
+              Probá la demo en vivo →
+            </Link>
+            <Link
+              href="/onboarding"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 border: '1px solid rgba(0,0,0,0.15)', color: 'rgba(0,0,0,0.55)',
@@ -232,8 +231,8 @@ export default function HeroV3() {
                 fontFamily: 'var(--f-display)', fontSize: 16, transition: 'border-color 0.2s',
               }}
             >
-              Ver cómo funciona ↓
-            </a>
+              Empezar prueba gratis ↗
+            </Link>
           </div>
 
           {/* Trust strip */}

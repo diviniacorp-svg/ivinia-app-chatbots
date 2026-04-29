@@ -268,15 +268,14 @@ export default function DemoViva() {
                   }}>
                   Abrir en pantalla completa ↗
                 </Link>
-                <a href={`https://wa.me/5492665286110?text=Quiero%20un%20turnero%20como%20${encodeURIComponent(demo.nombre)}`}
-                  target="_blank" rel="noopener noreferrer"
+                <Link href="/onboarding"
                   style={{
                     display: 'block', textAlign: 'center', padding: '11px 16px', borderRadius: 10,
                     background: 'var(--lime)', color: 'var(--ink)', textDecoration: 'none',
                     fontFamily: 'var(--f-mono)', fontWeight: 700, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
                   }}>
                   Quiero uno así →
-                </a>
+                </Link>
               </div>
             </div>
 

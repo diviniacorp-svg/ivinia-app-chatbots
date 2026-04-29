@@ -1,8 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Menu } from 'lucide-react'
+import { Menu, Sun, Moon } from 'lucide-react'
 import SidebarV2 from './SidebarV2'
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -44,11 +44,23 @@ function getPageTitle(pathname: string): string {
 
 export default function DashboardShellV2({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const pathname = usePathname()
   const pageTitle = getPageTitle(pathname)
 
+  useEffect(() => {
+    const saved = localStorage.getItem('divinia-theme') as 'light' | 'dark' | null
+    if (saved) setTheme(saved)
+  }, [])
+
+  function toggleTheme() {
+    const next = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    localStorage.setItem('divinia-theme', next)
+  }
+
   return (
-    <div style={{ display: 'flex', height: '100vh', background: 'var(--paper-2)', color: 'var(--ink)', overflow: 'hidden' }}>
+    <div data-theme={theme} style={{ display: 'flex', height: '100vh', background: 'var(--paper-2)', color: 'var(--ink)', overflow: 'hidden' }}>
 
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -85,7 +97,7 @@ export default function DashboardShellV2({ children }: { children: React.ReactNo
             alignItems: 'center',
             gap: 12,
             padding: '10px 16px',
-            background: 'var(--ink)',
+            background: 'var(--chrome-bg)',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             flexShrink: 0,
           }}
@@ -124,7 +136,7 @@ export default function DashboardShellV2({ children }: { children: React.ReactNo
             padding: '0 24px',
             height: 40,
             borderBottom: '1px solid rgba(255,255,255,0.06)',
-            background: 'var(--ink)',
+            background: 'var(--chrome-bg)',
             flexShrink: 0,
           }}
         >
@@ -138,6 +150,35 @@ export default function DashboardShellV2({ children }: { children: React.ReactNo
             {pageTitle}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'rgba(255,255,255,0.35)',
+                transition: 'border-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = '#C6FF3D'
+                el.style.color = '#C6FF3D'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'rgba(255,255,255,0.1)'
+                el.style.color = 'rgba(255,255,255,0.35)'
+              }}
+            >
+              {theme === 'light' ? <Moon size={13} /> : <Sun size={13} />}
+            </button>
             <Link
               href="/rubros"
               target="_blank"

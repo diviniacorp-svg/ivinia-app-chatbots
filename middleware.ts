@@ -46,6 +46,7 @@ const PUBLIC_API_EXCEPTIONS = [
   '/api/agents/demo',        // demos públicas de agentes
   '/api/cron',               // cron jobs — auth via CRON_SECRET interno
   '/api/content/publish-all', // publish manual — auth via CRON_SECRET interno
+  '/api/seed/demo-rufina',   // seed del turnero demo — upsert idempotente, sin datos sensibles
 ]
 
 // Para proposals: el GET de una propuesta específica es público (link compartido)

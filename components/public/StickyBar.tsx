@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-
-const WA = 'https://wa.me/5492665286110?text=Quiero%20el%20Turnero%20de%20DIVINIA'
+import Link from 'next/link'
 
 export default function StickyBar() {
   const [visible, setVisible] = useState(false)
@@ -44,10 +43,8 @@ export default function StickyBar() {
         <strong style={{ color: 'var(--lime)' }}>$45.000/mes</strong>
         {' '}· Listo en 24hs
       </span>
-      <a
-        href={WA}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href="/onboarding"
         style={{
           background: 'var(--lime)',
           color: 'var(--ink)',
@@ -63,8 +60,8 @@ export default function StickyBar() {
           flexShrink: 0,
         }}
       >
-        Lo quiero →
-      </a>
+        Empezar gratis →
+      </Link>
     </div>
   )
 }

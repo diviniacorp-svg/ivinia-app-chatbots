@@ -4,13 +4,6 @@ import { TURNERO_PLANS, formatPrecio } from '@/lib/turnero-plans'
 
 const WA_BASE = 'https://wa.me/5492665286110?text='
 
-const WA_MSG: Record<string, string> = {
-  mensual: 'Quiero%20el%20Turnero%20plan%20mensual%20%2445k',
-  anual: 'Quiero%20el%20Turnero%20plan%20anual%20%2435k%2Fmes',
-  unico: 'Quiero%20el%20Turnero%20pago%20%C3%BAnico%20%24120k',
-  enterprise: 'Quiero%20el%20plan%20Todo%20DIVINIA%20%24120k%2Fmes',
-}
-
 export default function PricingV3() {
   return (
     <section id="precios" style={{
@@ -141,10 +134,8 @@ export default function PricingV3() {
                   ))}
                 </ul>
 
-                <a
-                  href={`${WA_BASE}${WA_MSG[plan.id] ?? 'Quiero%20info%20del%20Turnero'}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/onboarding"
                   style={{
                     display: 'block',
                     textAlign: 'center',
@@ -162,7 +153,7 @@ export default function PricingV3() {
                   }}
                 >
                   Elegir este plan →
-                </a>
+                </Link>
               </div>
             </Reveal>
           ))}
