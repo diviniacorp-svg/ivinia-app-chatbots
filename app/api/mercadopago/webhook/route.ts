@@ -45,18 +45,20 @@ async function provisionTurnero(clientId: string) {
 
   if (existing) return
 
-  const apertura = (cfg.horario_apertura as string) || '09:00'
-  const cierre = (cfg.horario_cierre as string) || '18:00'
-
-  const schedule = {
-    lun: { open: apertura, close: cierre },
-    mar: { open: apertura, close: cierre },
-    mie: { open: apertura, close: cierre },
-    jue: { open: apertura, close: cierre },
-    vie: { open: apertura, close: cierre },
-    sab: { open: apertura, close: cierre },
-    dom: null,
-  }
+  // Use per-day schedule if provided by new onboarding, fall back to single-pair for old records
+  const schedule = cfg.schedule ?? (() => {
+    const apertura = (cfg.horario_apertura as string) || '09:00'
+    const cierre = (cfg.horario_cierre as string) || '18:00'
+    return {
+      lun: { open: apertura, close: cierre },
+      mar: { open: apertura, close: cierre },
+      mie: { open: apertura, close: cierre },
+      jue: { open: apertura, close: cierre },
+      vie: { open: apertura, close: cierre },
+      sab: { open: apertura, close: cierre },
+      dom: null,
+    }
+  })()
 
   const pendingServices = (cfg.pending_services as Array<{
     nombre: string

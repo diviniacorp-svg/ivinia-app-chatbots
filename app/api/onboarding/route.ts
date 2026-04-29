@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
           rubro: negocio.rubro,
           ciudad: negocio.ciudad || '',
           whatsapp: negocio.whatsapp,
-          horario_apertura: negocio.horario_apertura || '09:00',
-          horario_cierre: negocio.horario_cierre || '18:00',
+          schedule: negocio.schedule || null,
+          // legacy fallback — kept for webhook compat with old records
+          horario_apertura: '09:00',
+          horario_cierre: '18:00',
           pending_services: servicios || [],
           pending_plan: planId,
           source: 'onboarding_self_service',

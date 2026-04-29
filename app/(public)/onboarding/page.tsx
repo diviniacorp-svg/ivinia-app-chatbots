@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { TURNERO_PLANS, formatPrecio } from '@/lib/turnero-plans'
 import { Check, Plus, Trash2, ChevronRight, ArrowLeft, Loader2 } from 'lucide-react'
+import type { Schedule, DaySchedule } from '@/lib/bookings'
 
 const RUBROS = [
   { id: 'peluqueria', label: 'Peluquería / Barbería', emoji: '✂️' },
@@ -29,14 +30,33 @@ interface Servicio {
   precio: number
 }
 
+const DIAS: { key: keyof Schedule; label: string; short: string }[] = [
+  { key: 'lun', label: 'Lunes', short: 'Lun' },
+  { key: 'mar', label: 'Martes', short: 'Mar' },
+  { key: 'mie', label: 'Miércoles', short: 'Mié' },
+  { key: 'jue', label: 'Jueves', short: 'Jue' },
+  { key: 'vie', label: 'Viernes', short: 'Vie' },
+  { key: 'sab', label: 'Sábado', short: 'Sáb' },
+  { key: 'dom', label: 'Domingo', short: 'Dom' },
+]
+
+const DEFAULT_SCHEDULE: Schedule = {
+  lun: { open: '09:00', close: '18:00' },
+  mar: { open: '09:00', close: '18:00' },
+  mie: { open: '09:00', close: '18:00' },
+  jue: { open: '09:00', close: '18:00' },
+  vie: { open: '09:00', close: '18:00' },
+  sab: { open: '09:00', close: '14:00' },
+  dom: null,
+}
+
 interface Negocio {
   nombre: string
   rubro: string
   ciudad: string
   whatsapp: string
   email: string
-  horario_apertura: string
-  horario_cierre: string
+  schedule: Schedule
 }
 
 export default function OnboardingPage() {
@@ -48,8 +68,7 @@ export default function OnboardingPage() {
     ciudad: '',
     whatsapp: '',
     email: '',
-    horario_apertura: '09:00',
-    horario_cierre: '18:00',
+    schedule: DEFAULT_SCHEDULE,
   })
   const [servicios, setServicios] = useState<Servicio[]>([
     { id: crypto.randomUUID(), nombre: '', duracion: 60, precio: 0 },
@@ -300,26 +319,64 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-sm font-bold mb-2">Horario de atención</label>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <p className="text-xs text-black/50 mb-1">Apertura</p>
-                    <input
-                      type="time"
-                      value={negocio.horario_apertura}
-                      onChange={e => setNegocio(n => ({ ...n, horario_apertura: e.target.value }))}
-                      className="w-full border-2 border-black/15 rounded-xl px-4 py-3 outline-none focus:border-black/60 transition-colors bg-white"
-                    />
-                  </div>
-                  <span className="text-black/40 pt-5">→</span>
-                  <div className="flex-1">
-                    <p className="text-xs text-black/50 mb-1">Cierre</p>
-                    <input
-                      type="time"
-                      value={negocio.horario_cierre}
-                      onChange={e => setNegocio(n => ({ ...n, horario_cierre: e.target.value }))}
-                      className="w-full border-2 border-black/15 rounded-xl px-4 py-3 outline-none focus:border-black/60 transition-colors bg-white"
-                    />
-                  </div>
+                <div className="bg-white border-2 border-black/15 rounded-2xl overflow-hidden">
+                  {DIAS.map((dia, i) => {
+                    const dayVal: DaySchedule = negocio.schedule[dia.key]
+                    const isOpen = dayVal !== null
+                    return (
+                      <div
+                        key={dia.key}
+                        className="flex items-center gap-3 px-4 py-2.5"
+                        style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setNegocio(n => ({
+                            ...n,
+                            schedule: {
+                              ...n.schedule,
+                              [dia.key]: isOpen ? null : { open: '09:00', close: '18:00' },
+                            },
+                          }))}
+                          className="w-9 h-5 rounded-full transition-all shrink-0 relative"
+                          style={{ background: isOpen ? '#0C0C0C' : '#0C0C0C20' }}
+                        >
+                          <span
+                            className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+                            style={{ left: isOpen ? '18px' : '2px' }}
+                          />
+                        </button>
+                        <span className="text-sm font-semibold w-8 shrink-0" style={{ color: isOpen ? '#0C0C0C' : '#0C0C0C44' }}>
+                          {dia.short}
+                        </span>
+                        {isOpen ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <input
+                              type="time"
+                              value={dayVal!.open}
+                              onChange={e => setNegocio(n => ({
+                                ...n,
+                                schedule: { ...n.schedule, [dia.key]: { ...dayVal!, open: e.target.value } },
+                              }))}
+                              className="border border-black/15 rounded-lg px-2 py-1 text-sm outline-none focus:border-black/50 transition-colors w-24"
+                            />
+                            <span className="text-black/30 text-xs">→</span>
+                            <input
+                              type="time"
+                              value={dayVal!.close}
+                              onChange={e => setNegocio(n => ({
+                                ...n,
+                                schedule: { ...n.schedule, [dia.key]: { ...dayVal!, close: e.target.value } },
+                              }))}
+                              className="border border-black/15 rounded-lg px-2 py-1 text-sm outline-none focus:border-black/50 transition-colors w-24"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-black/30 italic">Cerrado</span>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -435,7 +492,7 @@ export default function OnboardingPage() {
                   <p className="text-sm text-black/60">📱 {negocio.whatsapp}</p>
                   <p className="text-sm text-black/60">✉️ {negocio.email}</p>
                   <p className="text-sm text-black/60">
-                    🕐 {negocio.horario_apertura} — {negocio.horario_cierre}
+                    🕐 {DIAS.filter(d => negocio.schedule[d.key] !== null).map(d => d.short).join(' · ')}
                   </p>
                 </div>
               </div>
