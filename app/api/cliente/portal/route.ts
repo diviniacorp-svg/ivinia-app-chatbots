@@ -31,11 +31,11 @@ export async function GET(req: NextRequest) {
   mesInicio.setHours(0, 0, 0, 0)
 
   const { data: bookings } = await db
-    .from('bookings')
-    .select('id, date, time, service_name, status, customer_name')
+    .from('appointments')
+    .select('id, appointment_date, appointment_time, service_name, status, customer_name')
     .eq('client_id', token)
-    .gte('date', mesInicio.toISOString().split('T')[0])
-    .order('date', { ascending: true })
+    .gte('appointment_date', mesInicio.toISOString().split('T')[0])
+    .order('appointment_date', { ascending: true })
     .limit(20)
 
   // Suscripción activa
@@ -78,7 +78,14 @@ export async function GET(req: NextRequest) {
           desde: sub.created_at,
         }
       : null,
-    turnos_este_mes: bookings ?? [],
+    turnos_este_mes: (bookings ?? []).map(b => ({
+      id: b.id,
+      date: b.appointment_date,
+      time: b.appointment_time,
+      service_name: b.service_name,
+      status: b.status,
+      customer_name: b.customer_name,
+    })),
     soporte_wa: `https://wa.me/5492665286110?text=${encodeURIComponent(`Hola Joaco, soy cliente de ${client.company_name} y necesito ayuda`)}`,
   })
 }
