@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPaymentById, getSubscription } from '@/lib/mercadopago'
+import { getPaymentById, getSubscription, createDirectSubscription } from '@/lib/mercadopago'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendTurneroWelcomeEmail } from '@/lib/resend'
 import { createHmac } from 'crypto'
@@ -117,6 +117,33 @@ async function provisionTurnero(clientId: string) {
 
   console.log(`[PROVISION] Nuevo cliente: ${client.company_name} | Turnero: ${turneroUrl}`)
 
+  // Cobro recurrente: si el plan es mensual, crear suscripción MP para mes 2 en adelante
+  const pendingPlan = (cfg.pending_plan as string) || client.plan
+  if (pendingPlan === 'mensual' && client.email) {
+    try {
+      const sub = await createDirectSubscription({
+        reason: `DIVINIA Turnero — ${client.company_name}`,
+        amount: 45000,
+        clientEmail: client.email,
+        clientName: client.company_name,
+        externalReference: clientId,
+        startDaysFromNow: 30,
+      })
+      if (sub.id) {
+        await supabaseAdmin.from('subscriptions').upsert({
+          client_id: clientId,
+          mp_preapproval_id: sub.id,
+          plan: 'mensual',
+          estado: 'pending',
+          monto_ars: 45000,
+        }, { onConflict: 'client_id' })
+        console.log(`[PROVISION] Suscripción mensual creada: ${sub.id}`)
+      }
+    } catch (e) {
+      console.error('[PROVISION] Error creando suscripción:', e)
+    }
+  }
+
   // Enviar email de bienvenida al cliente con sus links + PIN + QR
   if (client.email) {
     await sendTurneroWelcomeEmail({
@@ -154,6 +181,13 @@ export async function POST(request: NextRequest) {
           .from('subscriptions')
           .update({ estado })
           .eq('mp_preapproval_id', preapprovalId)
+        // Si el cliente cancela la suscripción, marcarlo como inactivo
+        if (estado === 'cancelled' && mpSub.external_reference) {
+          await supabaseAdmin
+            .from('clients')
+            .update({ status: 'cancelled' })
+            .eq('id', mpSub.external_reference)
+        }
         console.log(`[WEBHOOK] preapproval ${preapprovalId} → ${estado}`)
       } catch (e) {
         console.error('[WEBHOOK preapproval]', e)

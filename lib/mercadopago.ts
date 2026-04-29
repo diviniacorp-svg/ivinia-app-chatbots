@@ -142,6 +142,41 @@ export async function createSubscription(params: CreateSubscriptionParams) {
   })
 }
 
+// Suscripción directa sin plan template — para cobro recurrente mensual
+export async function createDirectSubscription(params: {
+  reason: string
+  amount: number
+  clientEmail: string
+  clientName?: string
+  externalReference?: string
+  backUrl?: string
+  startDaysFromNow?: number  // default 30 (mes siguiente)
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://divinia.vercel.app'
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() + (params.startDaysFromNow ?? 30))
+  const endDate = new Date(startDate)
+  endDate.setFullYear(endDate.getFullYear() + 2)
+
+  return await getMPPreApproval().create({
+    body: {
+      reason: params.reason,
+      payer_email: params.clientEmail,
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: 'months',
+        transaction_amount: params.amount,
+        currency_id: 'ARS',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+      },
+      back_url: params.backUrl || `${appUrl}/checkout/success`,
+      external_reference: params.externalReference,
+      status: 'pending',
+    },
+  })
+}
+
 export async function cancelSubscription(preapproval_id: string) {
   return await getMPPreApproval().update({
     id: preapproval_id,
