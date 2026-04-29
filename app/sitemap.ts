@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/rubros`, priority: 0.8, changeFrequency: 'monthly' as const },
     { url: `${BASE}/academy`, priority: 0.8, changeFrequency: 'weekly' as const },
     { url: `${BASE}/onboarding`, priority: 0.8, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/nucleus`, priority: 0.85, changeFrequency: 'monthly' as const },
     { url: `${BASE}/auditoria`, priority: 0.7, changeFrequency: 'monthly' as const },
     { url: `${BASE}/terminos`, priority: 0.3, changeFrequency: 'yearly' as const },
     { url: `${BASE}/privacidad`, priority: 0.3, changeFrequency: 'yearly' as const },

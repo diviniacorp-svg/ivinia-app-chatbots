@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: 'NUCLEUS IA — Sistema de IA completo para tu negocio',
   description:
     'NUCLEUS IA de DIVINIA: agentes IA coordinados que automatizan turnos, ventas, contenido y atención al cliente. Un solo sistema. Todo conectado.',
+  alternates: { canonical: 'https://divinia.vercel.app/nucleus' },
 }
 
 const WA = (msg: string) =>
