@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createAdminClient } from '@/lib/supabase'
 import Link from 'next/link'
 import NeuralGraphClient from './_components/NeuralGraphClient'
+import DashboardRefresh from './_components/DashboardRefresh'
 
 async function getDashboardData() {
   const db = createAdminClient()
@@ -78,14 +79,16 @@ const AGENTES = [
 
 // ── Acciones rápidas ─────────────────────────────────────────────────────────
 const ACCIONES = [
-  { icon: '🎯', label: 'Buscar leads',   href: '/leads',      primary: true },
-  { icon: '🔥', label: 'Pipeline',        href: '/comercial',  primary: true },
-  { icon: '🗂',  label: 'CRM',            href: '/crm',        primary: false },
-  { icon: '👥', label: 'Clientes',        href: '/clientes',   primary: false },
-  { icon: '💳', label: 'Generar pago',    href: '/pagos',      primary: false },
-  { icon: '✨', label: 'Redes / Content', href: '/redes',      primary: false },
-  { icon: '📅', label: 'Turnos hoy',      href: '/turnos',     primary: false },
-  { icon: '🔧', label: 'Generadores',     href: '/herramientas',primary: false },
+  { icon: '🎯', label: 'Buscar leads',    href: '/leads',       primary: true },
+  { icon: '🔥', label: 'Pipeline',         href: '/comercial',   primary: true },
+  { icon: '📞', label: 'Outreach IA',      href: '/outreach',    primary: false },
+  { icon: '📄', label: 'Propuestas',        href: '/propuestas',  primary: false },
+  { icon: '🗂',  label: 'CRM',              href: '/crm',         primary: false },
+  { icon: '💳', label: 'Generar pago',      href: '/pagos',       primary: false },
+  { icon: '📅', label: 'Turnos hoy',        href: '/turnos',      primary: false },
+  { icon: '✨', label: 'Content Factory',   href: '/contenido',   primary: false },
+  { icon: '💰', label: 'Finanzas',          href: '/finanzas',    primary: false },
+  { icon: '🤖', label: 'Agentes IA',        href: '/agents',      primary: false },
 ]
 
 const ESTADO_BADGE: Record<string, string> = {
@@ -113,6 +116,7 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F4F5', color: INK }}>
+      <DashboardRefresh />
 
       {/* ── HEADER ─────────────────────────────────────────────────────── */}
       <div style={{ background: INK, padding: '24px 28px 20px' }}>
