@@ -110,6 +110,10 @@ export default function RedesPage() {
           <p className="text-zinc-500 text-sm mt-0.5">Calendario editorial · {posts.length} posts · Instagram @autom_atia</p>
         </div>
         <div className="flex gap-2">
+          <Link href="/redes/calendar"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-colors">
+            📅 Almanaque
+          </Link>
           <Link href="/redes/create"
             className="px-4 py-2 text-sm font-black rounded-lg"
             style={{ background: '#B5FF2C', color: '#0F0F10' }}>
@@ -203,6 +207,11 @@ export default function RedesPage() {
                     className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg transition-colors">
                     {isExpanded ? 'Cerrar' : 'Ver'}
                   </button>
+                  <Link
+                    href={`/redes/${post.id}`}
+                    className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg transition-colors">
+                    ✏️ Editar
+                  </Link>
                   {post.status === 'listo' && (
                     <button
                       onClick={() => handlePublish(post.id)}
