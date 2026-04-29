@@ -478,36 +478,49 @@ function ClientSections({ clients, onRefresh }: { clients: Client[]; onRefresh: 
     </div>
   )
 
+  const hidden = ownApps.length + demos.length
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
 
-      {/* Sección 1 — Clientes */}
-      {realClients.length > 0 && (
+      {/* Solo clientes reales */}
+      {realClients.length > 0 ? (
         <div>
-          <SectionHeader emoji="🏢" title="Clientes" count={realClients.length} color="#10B981" desc="Proyectos reales — tienen o tuvieron contrato" />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
             {realClients.map(c => <ClientCard key={c.id} client={c} onRefresh={onRefresh} />)}
           </div>
         </div>
-      )}
-
-      {/* Sección 2 — Apps propias DIVINIA */}
-      {ownApps.length > 0 && (
-        <div>
-          <SectionHeader emoji="🚀" title="Apps Propias DIVINIA" count={ownApps.length} color="#8B5CF6" desc="Productos de DIVINIA — sin cliente externo, en desarrollo" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            {ownApps.map(c => <ClientCard key={c.id} client={c} onRefresh={onRefresh} />)}
-          </div>
+      ) : (
+        <div style={{
+          background: 'var(--paper)', borderRadius: 16, border: '1px dashed var(--line)',
+          padding: '48px 32px', textAlign: 'center',
+        }}>
+          <p style={{ fontSize: 36, marginBottom: 12 }}>👥</p>
+          <p style={{ fontWeight: 700, color: 'var(--ink)', marginBottom: 4 }}>Sin clientes todavía</p>
+          <p style={{ color: 'var(--muted)', fontSize: 13 }}>Creá tu primer cliente usando el botón de arriba</p>
         </div>
       )}
 
-      {/* Sección 3 — Demos */}
-      {demos.length > 0 && (
-        <div>
-          <SectionHeader emoji="🎭" title="Demos" count={demos.length} color="#6366F1" desc="Clientes demo — aparecen en la landing pública" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            {demos.map(c => <ClientCard key={c.id} client={c} onRefresh={onRefresh} />)}
-          </div>
+      {/* Nota sobre demos/apps ocultas */}
+      {hidden > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)',
+          background: 'var(--paper)',
+        }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', margin: 0 }}>
+            {ownApps.length > 0 && `${ownApps.length} app${ownApps.length > 1 ? 's' : ''} propia${ownApps.length > 1 ? 's' : ''}`}
+            {ownApps.length > 0 && demos.length > 0 && ' · '}
+            {demos.length > 0 && `${demos.length} demo${demos.length > 1 ? 's' : ''}`}
+            {' · estos van en Proyectos'}
+          </p>
+          <a href="/proyectos" style={{
+            padding: '6px 12px', borderRadius: 6, border: '1px solid var(--line)',
+            fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: 'var(--ink)', textDecoration: 'none',
+          }}>
+            Ver en Proyectos →
+          </a>
         </div>
       )}
 

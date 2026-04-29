@@ -50,7 +50,8 @@ const NAV: NavGroup[] = [
   {
     group: 'Taller',
     items: [
-      { href: '/herramientas', label: 'Generadores', icon: '🔧', matches: ['/herramientas', '/ideas', '/proyectos', '/youtube'] },
+      { href: '/proyectos',    label: 'Proyectos',   icon: '🚀', matches: ['/proyectos'] },
+      { href: '/herramientas', label: 'Generadores', icon: '🔧', matches: ['/herramientas', '/ideas', '/youtube'] },
       { href: '/agents',       label: 'Agentes',     icon: '🤖', matches: ['/agents', '/orquestacion', '/dispatch'] },
     ],
   },

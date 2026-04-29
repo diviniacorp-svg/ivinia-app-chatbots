@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 type Proyecto = {
   id: string
@@ -166,8 +166,94 @@ const STATUS_CONFIG = {
   pausado: { label: 'Pausado', color: '#6B7280', bg: '#6B728015' },
 }
 
+// ── Helpers para separar clientes demo/app propias ───────────────
+type ClientItem = { id: string; company_name: string; plan: string; status: string; chatbot_id: string | null; booking_configs?: { id: string }[]; custom_config?: Record<string,string>; mrr?: number }
+
+function clientTag(c: ClientItem): 'own_app' | 'demo' | null {
+  const id = c.chatbot_id || ''
+  if (id.endsWith('-app')) return 'own_app'
+  if (id.includes('demo') || id.includes('2026bot') || id.includes('2026bt')) return 'demo'
+  return null
+}
+
+const TAG_CONFIG = {
+  own_app: { label: 'App propia', color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
+  demo: { label: 'Demo', color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+}
+
+function SupabaseCard({ client }: { client: ClientItem }) {
+  const tag = clientTag(client)
+  const cfg = TAG_CONFIG[tag!]
+  const color = client.custom_config?.color || '#6B7280'
+  const initial = (client.company_name || '?').charAt(0).toUpperCase()
+  const hasTurnos = !!(client.booking_configs && client.booking_configs.length > 0)
+  const turnosId = hasTurnos ? client.booking_configs![0].id : null
+  const PLAN_LABEL: Record<string,string> = { trial: 'Trial', basic: 'Básico', pro: 'Pro', enterprise: 'Enterprise', mensual: 'Mensual' }
+
+  return (
+    <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ height: 3, background: color }} />
+      <div style={{ padding: '16px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontWeight: 900, fontSize: 15, background: color,
+          }}>{initial}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 14 }}>{client.company_name}</span>
+              {tag && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 4, fontWeight: 700, color: cfg.color, background: cfg.bg }}>{cfg.label}</span>}
+            </div>
+            <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              {PLAN_LABEL[client.plan] || client.plan} · {client.status}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {client.chatbot_id && (
+            <a href={`/api/chatbot/${client.chatbot_id}`} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', textDecoration: 'none' }}>
+              <span>💬 Probar chatbot</span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>↗</span>
+            </a>
+          )}
+          {hasTurnos && turnosId && (
+            <>
+              <a href={`/panel/${turnosId}`} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', textDecoration: 'none' }}>
+                <span>📅 Panel del negocio</span>
+                <span style={{ fontSize: 10, color: 'var(--muted)' }}>↗</span>
+              </a>
+              <a href={`/reservas/${turnosId}`} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, color: 'var(--ink)', textDecoration: 'none' }}>
+                <span>🔗 Link de reservas</span>
+                <span style={{ fontSize: 10, color: 'var(--muted)' }}>↗</span>
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProyectosPage() {
-  const [seccion, setSeccion] = useState<'divinia' | 'apps'>('divinia')
+  const [seccion, setSeccion] = useState<'divinia' | 'apps' | 'supabase'>('divinia')
+  const [supabaseClients, setSupabaseClients] = useState<ClientItem[]>([])
+
+  useEffect(() => {
+    fetch('/api/clients')
+      .then(r => r.json())
+      .then(d => {
+        const all = (d.clients || []) as ClientItem[]
+        setSupabaseClients(all.filter(c => clientTag(c) !== null))
+      })
+  }, [])
+
+  const ownApps = supabaseClients.filter(c => clientTag(c) === 'own_app')
+  const demos   = supabaseClients.filter(c => clientTag(c) === 'demo')
+
   const activos = PRODUCTOS_DIVINIA.filter(p => p.status === 'activo').length
   const enDesarrollo = PRODUCTOS_DIVINIA.filter(p => p.status === 'en-desarrollo').length
   const lista = seccion === 'divinia' ? PRODUCTOS_DIVINIA : APPS_PROPIAS
@@ -202,10 +288,11 @@ export default function ProyectosPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 24, flexWrap: 'wrap' }}>
           {([
             { id: 'divinia', label: '🚀 Productos DIVINIA', desc: 'Lo que vendés' },
             { id: 'apps', label: '🔬 Apps propias', desc: 'Para integrar o lanzar' },
+            { id: 'supabase', label: `🗄️ En Supabase${supabaseClients.length > 0 ? ` · ${supabaseClients.length}` : ''}`, desc: 'Apps y demos activos en la DB' },
           ] as const).map(t => (
             <button key={t.id} onClick={() => setSeccion(t.id)}
               style={{
@@ -221,7 +308,41 @@ export default function ProyectosPage() {
         </div>
       </div>
 
+      {/* Tab supabase */}
+      {seccion === 'supabase' && (
+        <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {supabaseClients.length === 0 && (
+            <div style={{ background: 'var(--paper)', border: '1px dashed var(--line)', borderRadius: 14, padding: '48px 32px', textAlign: 'center' }}>
+              <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--f-mono)' }}>No hay apps propias ni demos en Supabase todavía</p>
+            </div>
+          )}
+          {ownApps.length > 0 && (
+            <div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B5CF6', display: 'inline-block' }} />
+                Apps propias DIVINIA · {ownApps.length}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+                {ownApps.map(c => <SupabaseCard key={c.id} client={c} />)}
+              </div>
+            </div>
+          )}
+          {demos.length > 0 && (
+            <div>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366F1', display: 'inline-block' }} />
+                Demos · {demos.length}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+                {demos.map(c => <SupabaseCard key={c.id} client={c} />)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Proyectos */}
+      {seccion !== 'supabase' && (
       <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {lista.map(p => {
           const st = STATUS_CONFIG[p.status]
@@ -316,6 +437,8 @@ export default function ProyectosPage() {
           )
         })}
       </div>
+      )}
+
     </div>
   )
 }
