@@ -5,16 +5,74 @@ import Orb from '@/components/public/Orb'
 
 const WA = 'https://wa.me/5492665286110?text=Hola%2C%20quiero%20el%20Turnero%20para%20mi%20negocio'
 
-// Demos reales por rubro — chatbot_id o booking_config UUID
+// Demos reales por rubro — chatbot_id de la tabla clients
 const DEMOS: Record<string, string> = {
-  nails:          'rufina-nails-demo',
-  peluqueria:     'fa-faby-demo',
-  barberia:       'fa-faby-demo',
-  hotel:          'cantera2026bot',
-  hosteria:       'mininco2026bot',
-  cabanas:        'paraisos2026bt',
-  turismo:        'potrero-hotel-demo',
-  natacion:       'top-quality-demo',
+  // Belleza
+  nails:              'rufina-nails-demo',
+  peluqueria:         'fa-faby-demo',
+  barberia:           'barberia-el-cuchillo',
+  estetica:           'estetica-luna-llena',
+  spa:                'estetica-luna-llena',
+  masajes:            'estetica-luna-llena',
+  depilacion:         'estetica-luna-llena',
+  bronceado:          'estetica-luna-llena',
+  maquillaje:         'estetica-luna-llena',
+  tatuajes:           'tattoo-ink-house',
+  // Salud
+  clinica:            'clinica-integral-vida',
+  odontologia:        'clinica-dental-arce',
+  psicologia:         'psicologia-consultorio-luna',
+  kinesiologia:       'clinica-integral-vida',
+  nutricionista:      'nutricionista-sofia-sl',
+  oftalmologia:       'clinica-integral-vida',
+  podologia:          'clinica-integral-vida',
+  fonoaudiologia:     'clinica-integral-vida',
+  // Mascotas
+  veterinaria:        'vet-mascotas-felices',
+  peluqueriacanina:   'vet-mascotas-felices',
+  hotelmascotas:      'vet-mascotas-felices',
+  adiestramiento:     'vet-mascotas-felices',
+  // Fitness & Deporte
+  gimnasio:           'gym-iron-power',
+  yoga:               'yoga-centro-paz-sl',
+  personaltrainer:    'crossfit-box-titan-sl',
+  crossfit:           'crossfit-box-titan-sl',
+  natacion:           'top-quality-demo',
+  padel:              'padel-club-villa',
+  artesmarciales:     'crossfit-box-titan-sl',
+  danza:              'academia-danza-sol',
+  canchasfutbol:      'cancha-los-pinos',
+  // Automotriz
+  taller:             'taller-mecanico-primo',
+  lavadoautos:        'taller-mecanico-primo',
+  gomeria:            'taller-mecanico-primo',
+  detailing:          'taller-mecanico-primo',
+  // Educación
+  clases:             'academia-oxford-sl',
+  idiomas:            'academia-oxford-sl',
+  musica:             'academia-oxford-sl',
+  autoescuela:        'academia-oxford-sl',
+  // Alojamiento
+  hotel:              'cantera2026bot',
+  hosteria:           'mininco2026bot',
+  cabanas:            'paraisos2026bt',
+  camping:            'camping-rio-claro-sl',
+  turismo:            'potrero-hotel-demo',
+  alquilervehiculos:  'camping-rio-claro-sl',
+  // Profesionales
+  abogado:            'estudio-legal-borges',
+  contabilidad:       'estudio-legal-borges',
+  arquitectura:       'estudio-legal-borges',
+  escribano:          'estudio-legal-borges',
+  consultoria:        'estudio-legal-borges',
+  // Entretenimiento
+  fotografia:         'salon-los-olivos-sl',
+  salon:              'salon-los-olivos-sl',
+  escaperoom:         'escape-room-enigma-sl',
+  karting:            'karting-san-luis',
+  // Gastronomía
+  restaurante:        'restaurante-la-italiana-sl',
+  catering:           'salon-los-olivos-sl',
 }
 const FALLBACK_DEMO = 'rufina-nails-demo'
 
@@ -88,6 +146,7 @@ const CATEGORIAS: { id: string; label: string; emoji: string; rubros: Rubro[] }[
       { emoji: '🎾', nombre: 'Padel / Tenis', desc: 'Reserva de canchas y clases', color: '#50DC00', slug: 'padel', wa: 'Hola%2C%20tengo%20canchas%20de%20padel%20y%20quiero%20el%20Turnero' },
       { emoji: '🥋', nombre: 'Artes Marciales', desc: 'Judo, karate, BJJ, MMA, box', color: '#C83C00', slug: 'artesmarciales', wa: 'Hola%2C%20doy%20clases%20de%20artes%20marciales%20y%20quiero%20el%20Turnero' },
       { emoji: '💃', nombre: 'Escuela de Danza', desc: 'Tango, salsa, contemporáneo, urban', color: '#FF50B4', slug: 'danza', wa: 'Hola%2C%20tengo%20una%20escuela%20de%20danza%20y%20quiero%20el%20Turnero' },
+      { emoji: '⚽', nombre: 'Canchas de Fútbol', desc: 'Fútbol 5, 7 y 11 · reserva por hora', color: '#16a34a', slug: 'canchasfutbol', wa: 'Hola%2C%20tengo%20canchas%20de%20f%C3%BAtbol%20y%20quiero%20el%20Turnero' },
     ],
   },
   {
