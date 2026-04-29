@@ -772,6 +772,25 @@ export default function PublicidadPage() {
   return (
     <div style={{ background: INK, minHeight: '100vh', color: '#fff' }}>
 
+      {/* Marketing flow strip */}
+      <div style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '7px 28px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginRight: 6 }}>Marketing:</span>
+        {[
+          { href: '/contenido', label: '✨ Contenido', active: false },
+          { href: '/publicidad', label: '📢 Publicidad', active: true },
+          { href: '/redes', label: '📱 Redes', active: false },
+          { href: '/outreach', label: '📞 Outreach', active: false },
+        ].map((s, i, arr) => (
+          <span key={s.href} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <a href={s.href} style={{ fontFamily: 'var(--f-mono)', fontSize: 8.5, textDecoration: 'none', color: s.active ? LIME : 'rgba(255,255,255,0.3)', borderBottom: s.active ? `1px solid ${LIME}` : 'none', paddingBottom: s.active ? 1 : 0 }}>{s.label}</a>
+            {i < arr.length - 1 && <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 10 }}>→</span>}
+          </span>
+        ))}
+        <a href="/contenido" style={{ marginLeft: 'auto', fontFamily: 'var(--f-mono)', fontSize: 8.5, color: LIME, textDecoration: 'none' }}>
+          + Crear copy con IA ↗
+        </a>
+      </div>
+
       {/* ── HEADER ───────────────────────────────────────────────── */}
       <div style={{ background: INK, borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '20px 28px', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>

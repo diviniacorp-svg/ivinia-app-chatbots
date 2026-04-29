@@ -1,6 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Mail, MessageCircle, Loader2, Send, Copy, ExternalLink, Check } from 'lucide-react'
 
 const inputStyle: React.CSSProperties = {
@@ -393,7 +394,23 @@ function OutreachForm() {
 
 export default function OutreachPage() {
   return (
-    <div style={{ padding: '32px 40px', background: 'var(--paper-2)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--paper-2)', minHeight: '100vh' }}>
+      {/* Marketing flow strip */}
+      <div style={{ background: '#0E0E0E', padding: '7px 40px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginRight: 6 }}>Marketing:</span>
+        {[
+          { href: '/contenido', label: '✨ Contenido', active: false },
+          { href: '/publicidad', label: '📢 Publicidad', active: false },
+          { href: '/redes', label: '📱 Redes', active: false },
+          { href: '/outreach', label: '📞 Outreach', active: true },
+        ].map((s, i, arr) => (
+          <span key={s.href} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Link href={s.href} style={{ fontFamily: 'var(--f-mono)', fontSize: 8.5, textDecoration: 'none', color: s.active ? '#C6FF3D' : 'rgba(255,255,255,0.3)', borderBottom: s.active ? '1px solid #C6FF3D' : 'none', paddingBottom: s.active ? 1 : 0 }}>{s.label}</Link>
+            {i < arr.length - 1 && <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 10 }}>→</span>}
+          </span>
+        ))}
+      </div>
+      <div style={{ padding: '32px 40px' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{
           fontFamily: 'var(--f-display)', fontStyle: 'italic', fontWeight: 700,
@@ -410,6 +427,7 @@ export default function OutreachPage() {
       }>
         <OutreachForm />
       </Suspense>
+      </div>
     </div>
   )
 }
