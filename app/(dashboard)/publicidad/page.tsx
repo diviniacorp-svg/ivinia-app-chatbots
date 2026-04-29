@@ -725,7 +725,7 @@ export default function PublicidadPage() {
     setFetchError('')
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
       const res = await fetch('/api/publicidad/campaigns', { signal: controller.signal })
       clearTimeout(timeoutId)
       const data = await res.json()

@@ -131,8 +131,17 @@ Respondé SOLO con este JSON (sin markdown, sin texto extra):
 
   const raw = message.content[0].type === 'text' ? message.content[0].text : '{}'
 
+  // Strip markdown code fences if model wraps the JSON
+  let jsonStr = raw.trim()
+  const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (fenceMatch) jsonStr = fenceMatch[1].trim()
+  // Grab the outermost JSON object in case there's leading/trailing text
+  const start = jsonStr.indexOf('{')
+  const end = jsonStr.lastIndexOf('}')
+  if (start !== -1 && end !== -1) jsonStr = jsonStr.slice(start, end + 1)
+
   try {
-    const parsed = JSON.parse(raw)
+    const parsed = JSON.parse(jsonStr)
     return NextResponse.json({ ...parsed, herramienta })
   } catch {
     return NextResponse.json({ error: 'Error generando contenido', raw }, { status: 500 })
