@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta DIVINIA — Quality Piscinas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #09090b;
+    --paper: #fafaf9;
+    --lime: #c6ff3d;
+    --zinc: #a1a1aa;
+    --border: #e4e4e7;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 48px 40px;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 40px;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--lime);
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .header-meta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--zinc);
+    line-height: 1.8;
+  }
+  .header-meta strong {
+    color: var(--ink);
+    display: block;
+    font-size: 13px;
+  }
+
+  /* HERO */
+  .hero {
+    background: var(--ink);
+    color: white;
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: var(--lime);
+    opacity: 0.12;
+    border-radius: 50%;
+  }
+  .hero-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--lime); }
+  .hero p {
+    font-size: 15px;
+    color: #a1a1aa;
+    max-width: 520px;
+    line-height: 1.7;
+  }
+
+  /* SECTIONS */
+  h2 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::before {
+    content: '';
+    width: 4px; height: 20px;
+    background: var(--lime);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  section { margin-bottom: 40px; }
+
+  /* PROBLEMA */
+  .problema-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .problema-item {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .problema-item .icon { font-size: 18px; margin-bottom: 6px; display: block; }
+
+  /* SOLUCION */
+  .solucion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .solucion-item {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .solucion-item .icon { font-size: 18px; margin-bottom: 6px; display: block; }
+  .solucion-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+
+  /* DEMO BOX */
+  .demo-box {
+    background: var(--ink);
+    color: white;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .demo-box-text { flex: 1; }
+  .demo-box-text p { color: #a1a1aa; font-size: 13px; margin-top: 4px; }
+  .demo-box a {
+    background: var(--lime);
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 13px;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  /* PRICING */
+  .pricing-card {
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .pricing-header {
+    background: var(--ink);
+    color: white;
+    padding: 24px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pricing-header h3 { font-size: 18px; font-weight: 800; }
+  .pricing-header .badge {
+    background: var(--lime);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .pricing-body { padding: 28px; }
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .price-amount {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -1px;
+  }
+  .price-period {
+    font-size: 14px;
+    color: var(--zinc);
+  }
+  .price-note {
+    font-size: 12px;
+    color: var(--zinc);
+    margin-bottom: 20px;
+  }
+  .includes-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--zinc);
+    margin-bottom: 12px;
+  }
+  .includes-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .includes-list li {
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+  }
+  .includes-list li::before {
+    content: '✓';
+    color: #16a34a;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .monthly-card {
+    border: 2px solid #e4e4e7;
+    border-radius: 16px;
+    padding: 28px;
+    background: #fafafa;
+  }
+  .monthly-split {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .monthly-price { flex: 0 0 auto; }
+  .monthly-price .amount {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -1px;
+  }
+  .monthly-price .period { font-size: 13px; color: var(--zinc); }
+  .monthly-includes { flex: 1; }
+  .monthly-includes ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .monthly-includes ul li {
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+  }
+  .monthly-includes ul li::before {
+    content: '◉';
+    color: var(--ink);
+    font-size: 8px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* TIMELINE */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .timeline-item {
+    display: flex;
+    gap: 20px;
+    position: relative;
+  }
+  .timeline-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px;
+    flex-shrink: 0;
+  }
+  .timeline-dot {
+    width: 32px; height: 32px;
+    background: var(--ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lime);
+    font-size: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .timeline-line {
+    width: 2px;
+    flex: 1;
+    background: var(--border);
+    min-height: 32px;
+  }
+  .timeline-item:last-child .timeline-line { display: none; }
+  .timeline-content {
+    padding-bottom: 24px;
+    flex: 1;
+  }
+  .timeline-day {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--zinc);
+    margin-bottom: 4px;
+  }
+  .timeline-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .timeline-content p { font-size: 13px; color: #52525b; line-height: 1.5; }
+
+  /* GARANTIA */
+  .garantia {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .garantia-icon { font-size: 28px; flex-shrink: 0; }
+  .garantia h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .garantia p { font-size: 13px; color: #166534; line-height: 1.5; }
+
+  /* CTA */
+  .cta {
+    background: var(--ink);
+    color: white;
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    margin-top: 40px;
+  }
+  .cta h2 { font-size: 24px; font-weight: 900; margin-bottom: 12px; justify-content: center; }
+  .cta h2::before { display: none; }
+  .cta p { color: #a1a1aa; font-size: 14px; margin-bottom: 24px; }
+  .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--lime);
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: 10px;
+    display: inline-block;
+  }
+  .btn-secondary {
+    background: transparent;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: 10px;
+    border: 1px solid #3f3f46;
+    display: inline-block;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--zinc);
+  }
+
+  @media print {
+    body { background: white; font-size: 13px; }
+    .page { padding: 20px 24px; max-width: 100%; }
+    .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pricing-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .demo-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      DIVINIA
+    </div>
+    <div class="header-meta">
+      <strong>Quality Piscinas</strong>
+      Propuesta comercial · Turnero IA<br>
+      San Luis, 27 de abril de 2026<br>
+      Válida por 15 días
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">◉ Propuesta personalizada</div>
+    <h1>Turnos automáticos<br>para <span>Quality Piscinas</span></h1>
+    <p>Tus clientes reservan su mantenimiento de piscina desde el celular, a cualquier hora, sin llamadas ni mensajes de WhatsApp. Vos recibís la agenda del día y listo.</p>
+  </div>
+
+  <!-- PROBLEMA -->
+  <section>
+    <h2>El problema de hoy</h2>
+    <div class="problema-grid">
+      <div class="problema-item">
+        <span class="icon">📱</span>
+        <strong>Coordinación manual</strong><br>
+        Cada turno de mantenimiento se coordina por llamada o WhatsApp. Si no atendés, el cliente busca otro.
+      </div>
+      <div class="problema-item">
+        <span class="icon">📅</span>
+        <strong>Agenda dispersa</strong><br>
+        Los servicios de verano se acumulan y es difícil organizar qué técnico va a qué cliente y cuándo.
+      </div>
+      <div class="problema-item">
+        <span class="icon">🔁</span>
+        <strong>Ausencias sin aviso</strong><br>
+        Clientes que reservaron y no están. Técnico que viajó en vano. Tiempo y plata perdidos.
+      </div>
+      <div class="problema-item">
+        <span class="icon">🌙</span>
+        <strong>Fuera de horario</strong><br>
+        Los clientes llaman a las 10pm para coordinar el servicio del fin de semana. No hay nadie para responder.
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUCION -->
+  <section>
+    <h2>Lo que Turnero hace por vos</h2>
+    <div class="solucion-grid">
+      <div class="solucion-item">
+        <span class="icon">🔗</span>
+        <strong>Link único para reservas</strong>
+        Tu cliente entra al link, elige el tipo de servicio (mantenimiento, tratamiento, reparación), selecciona día y horario. Sin llamadas.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">📲</span>
+        <strong>Confirmación automática</strong>
+        Apenas reserva, le llega un WhatsApp con los datos del servicio. Sin que vos hagas nada.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">⏰</span>
+        <strong>Recordatorio 24hs antes</strong>
+        El sistema le avisa al cliente el día anterior. Las ausencias caen a casi cero.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">📊</span>
+        <strong>Panel de control</strong>
+        Ves todos los turnos del día y la semana. Sabés quién viene, qué servicio y a qué hora. Desde el celu o la PC.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">👥</span>
+        <strong>Multi-técnico</strong>
+        Asignás cada reserva a tu técnico disponible. Cada uno ve su agenda sin cruzarse.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">🌐</span>
+        <strong>24hs, 365 días</strong>
+        Tu sistema toma turnos aunque estés atendiendo, en la pileta, o durmiendo.
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <div class="demo-box">
+    <div class="demo-box-text">
+      <strong>Mirá cómo se ve en vivo</strong>
+      <p>Demo real del sistema · Abre desde cualquier celular</p>
+    </div>
+    <a href="https://divinia.vercel.app/turnos/demo">Ver demo →</a>
+  </div>
+
+  <!-- PRICING -->
+  <section>
+    <h2>Inversión</h2>
+
+    <div class="pricing-card">
+      <div class="pricing-header">
+        <h3>Implementación · Pago único</h3>
+        <span class="badge">Una sola vez</span>
+      </div>
+      <div class="pricing-body">
+        <div class="price-row">
+          <span class="price-amount">$50.000</span>
+          <span class="price-period">ARS · pago único</span>
+        </div>
+        <p class="price-note">Setup completo, configuración y entrega en 48hs hábiles</p>
+        <div class="includes-title">QUÉ INCLUYE</div>
+        <ul class="includes-list">
+          <li>Sistema de turnos online personalizado</li>
+          <li>Configuración de servicios de Quality Piscinas</li>
+          <li>Integración con WhatsApp (confirmaciones)</li>
+          <li>Panel de administración</li>
+          <li>Link único para compartir con clientes</li>
+          <li>Capacitación para el equipo (1hs)</li>
+          <li>Recordatorios automáticos 24hs antes</li>
+          <li>Soporte técnico primeros 30 días</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="monthly-card">
+      <div class="monthly-split">
+        <div class="monthly-price">
+          <div class="amount">$34.000</div>
+          <div class="period">ARS / mes</div>
+        </div>
+        <div class="monthly-includes">
+          <strong style="font-size:14px; display:block; margin-bottom:12px;">Soporte mensual DIVINIA</strong>
+          <ul>
+            <li>Mantenimiento y actualizaciones del sistema</li>
+            <li>Soporte técnico por WhatsApp (respuesta en el día)</li>
+            <li>Ajustes de configuración según necesidades</li>
+            <li>Hosting y backups incluidos</li>
+            <li>Nuevas funcionalidades sin costo adicional</li>
+          </ul>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <p style="font-size:12px; color:#71717a;">Sin contrato de permanencia. Podés cancelar con 15 días de aviso. Sin letras chicas.</p>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section>
+    <h2>Cómo arrancamos</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot">1</div>
+          <div class="timeline-line"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-day">Día 1</div>
+          <h4>Confirmación y datos</h4>
+          <p>Nos mandás los servicios que ofrecen (mantenimiento básico, tratamiento, reparación, etc.) y los horarios disponibles. Eso es todo lo que necesitamos.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot">2</div>
+          <div class="timeline-line"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-day">Día 2-3</div>
+          <h4>Configuración y entrega</h4>
+          <p>Configuramos el sistema con los datos de Quality Piscinas. Te entregamos el link y el acceso al panel. Prueba en vivo con vos.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot">3</div>
+          <div class="timeline-line"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-day">Semana 1</div>
+          <h4>Primeros turnos</h4>
+          <p>Compartís el link con tus primeros clientes. Los turnos empiezan a entrar solos. Nosotros estamos disponibles si surge cualquier duda.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot">✓</div>
+          <div class="timeline-line"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-day">Mes 1</div>
+          <h4>Sistema funcionando solo</h4>
+          <p>Tu agenda online activa, recordatorios automáticos funcionando, y vos dedicando ese tiempo a atender en vez de coordinar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GARANTIA -->
+  <div class="garantia">
+    <div class="garantia-icon">🛡️</div>
+    <div>
+      <h3>Garantía de funcionamiento</h3>
+      <p>Si en los primeros 30 días el sistema no funciona correctamente o no está a tu gusto, te devolvemos el 100% del pago de implementación. Sin preguntas.</p>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <h2>¿Arrancamos?</h2>
+    <p>El setup tarda 48hs. Esta semana podés tener Quality Piscinas tomando turnos online.</p>
+    <div class="cta-buttons">
+      <a href="https://wa.me/5492665286110?text=Hola+Joaco%2C+quiero+activar+Turnero+para+Quality+Piscinas" class="btn-primary">Confirmar por WhatsApp →</a>
+      <a href="https://divinia.vercel.app" class="btn-secondary">Ver más en divinia.vercel.app</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>◉ DIVINIA · San Luis, Argentina · diviniacorp@gmail.com</span>
+    <span>Propuesta válida hasta el 12 de mayo de 2026</span>
+  </div>
+
+</div>
+</body>
+</html>

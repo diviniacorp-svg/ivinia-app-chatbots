@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta DIVINIA — FA Peluquería</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #09090b;
+    --paper: #fafaf9;
+    --lime: #c6ff3d;
+    --zinc: #a1a1aa;
+    --border: #e4e4e7;
+    --accent: #8B5CF6;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 48px 40px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 40px;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { width: 10px; height: 10px; background: var(--lime); border-radius: 50%; display: inline-block; }
+  .header-meta { text-align: right; font-size: 12px; color: var(--zinc); line-height: 1.8; }
+  .header-meta strong { color: var(--ink); display: block; font-size: 13px; }
+
+  .hero {
+    background: var(--ink);
+    color: white;
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: var(--accent);
+    opacity: 0.2;
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 140px; height: 140px;
+    background: var(--lime);
+    opacity: 0.1;
+    border-radius: 50%;
+  }
+  .hero-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--lime); margin-bottom: 12px; }
+  .hero h1 { font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1.15; margin-bottom: 16px; }
+  .hero h1 span { color: var(--lime); }
+  .hero p { font-size: 15px; color: #a1a1aa; max-width: 520px; line-height: 1.7; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+  .stat-item {
+    background: white;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-number { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: var(--ink); }
+  .stat-label { font-size: 12px; color: var(--zinc); margin-top: 4px; }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::before {
+    content: '';
+    width: 4px; height: 20px;
+    background: var(--lime);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  section { margin-bottom: 40px; }
+
+  .problema-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .problema-item {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .problema-item .icon { font-size: 18px; margin-bottom: 6px; display: block; }
+
+  .solucion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .solucion-item {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .solucion-item .icon { font-size: 18px; margin-bottom: 6px; display: block; }
+  .solucion-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+
+  /* FLUJO VISUAL */
+  .flujo {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 40px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .flujo-step {
+    flex: 1;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    background: white;
+  }
+  .flujo-step + .flujo-step {
+    border-left: 1px solid var(--border);
+  }
+  .flujo-step:first-child { background: var(--ink); color: white; }
+  .flujo-step:first-child .flujo-num { background: var(--lime); color: var(--ink); }
+  .flujo-num {
+    width: 28px; height: 28px;
+    background: var(--ink);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    margin: 0 auto 10px;
+  }
+  .flujo-step h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .flujo-step p { font-size: 11px; color: var(--zinc); line-height: 1.4; }
+  .flujo-step:first-child p { color: #a1a1aa; }
+
+  .demo-box {
+    background: var(--ink);
+    color: white;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .demo-box-text { flex: 1; }
+  .demo-box-text p { color: #a1a1aa; font-size: 13px; margin-top: 4px; }
+  .demo-box a {
+    background: var(--lime);
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 13px;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  /* PRICING */
+  .pricing-wrapper { display: flex; flex-direction: column; gap: 16px; }
+  .pricing-card {
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .pricing-header {
+    background: var(--ink);
+    color: white;
+    padding: 24px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pricing-header h3 { font-size: 18px; font-weight: 800; }
+  .pricing-header .badge {
+    background: var(--lime);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .pricing-body { padding: 28px; }
+  .price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .price-amount { font-size: 36px; font-weight: 900; letter-spacing: -1px; }
+  .price-period { font-size: 14px; color: var(--zinc); }
+  .price-note { font-size: 12px; color: var(--zinc); margin-bottom: 20px; }
+  .includes-title { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--zinc); margin-bottom: 12px; }
+  .includes-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .includes-list li { font-size: 13px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+  .includes-list li::before { content: '✓'; color: #7c3aed; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  .monthly-card {
+    border: 2px solid #ddd6fe;
+    border-radius: 16px;
+    padding: 28px;
+    background: #f5f3ff;
+  }
+  .monthly-split { display: flex; gap: 24px; align-items: flex-start; }
+  .monthly-price { flex: 0 0 auto; }
+  .monthly-price .amount { font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--accent); }
+  .monthly-price .period { font-size: 13px; color: var(--zinc); }
+  .monthly-includes { flex: 1; }
+  .monthly-includes ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .monthly-includes ul li { font-size: 13px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+  .monthly-includes ul li::before { content: '◉'; color: var(--accent); font-size: 8px; flex-shrink: 0; margin-top: 4px; }
+  .divider { height: 1px; background: #ddd6fe; margin: 16px 0; }
+
+  /* COMPARATIVA */
+  .comparativa {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .comp-header {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    background: var(--ink);
+    color: white;
+  }
+  .comp-header div { padding: 12px 16px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .comp-header div:nth-child(3) { color: var(--lime); }
+  .comp-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    border-top: 1px solid var(--border);
+  }
+  .comp-row:nth-child(even) { background: #fafafa; }
+  .comp-row div { padding: 11px 16px; font-size: 13px; }
+  .comp-row div:nth-child(2) { color: #ef4444; }
+  .comp-row div:nth-child(3) { color: #16a34a; font-weight: 600; }
+
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .timeline-item { display: flex; gap: 20px; position: relative; }
+  .timeline-left { display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0; }
+  .timeline-dot { width: 32px; height: 32px; background: var(--ink); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--lime); font-size: 12px; font-weight: 800; flex-shrink: 0; }
+  .timeline-line { width: 2px; flex: 1; background: var(--border); min-height: 32px; }
+  .timeline-item:last-child .timeline-line { display: none; }
+  .timeline-content { padding-bottom: 24px; flex: 1; }
+  .timeline-day { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--zinc); margin-bottom: 4px; }
+  .timeline-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .timeline-content p { font-size: 13px; color: #52525b; line-height: 1.5; }
+
+  .garantia { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 12px; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
+  .garantia-icon { font-size: 28px; flex-shrink: 0; }
+  .garantia h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .garantia p { font-size: 13px; color: #5b21b6; line-height: 1.5; }
+
+  .cta { background: var(--ink); color: white; border-radius: 16px; padding: 36px 40px; text-align: center; margin-top: 40px; }
+  .cta h2 { font-size: 24px; font-weight: 900; margin-bottom: 12px; justify-content: center; }
+  .cta h2::before { display: none; }
+  .cta p { color: #a1a1aa; font-size: 14px; margin-bottom: 24px; }
+  .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--lime); color: var(--ink); font-weight: 800; font-size: 14px; text-decoration: none; padding: 14px 28px; border-radius: 10px; display: inline-block; }
+  .btn-secondary { background: transparent; color: white; font-weight: 600; font-size: 14px; text-decoration: none; padding: 14px 28px; border-radius: 10px; border: 1px solid #3f3f46; display: inline-block; }
+
+  .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--zinc); }
+
+  @media print {
+    body { background: white; font-size: 13px; }
+    .page { padding: 20px 24px; max-width: 100%; }
+    .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pricing-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .demo-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .comp-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="logo"><span class="logo-dot"></span>DIVINIA</div>
+    <div class="header-meta">
+      <strong>FA Peluquería</strong>
+      Propuesta comercial · Turnero IA<br>
+      San Luis, 27 de abril de 2026<br>
+      Válida por 15 días
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-label">◉ Propuesta personalizada</div>
+    <h1>Tu peluquería toma<br>turnos sola, <span>las 24hs</span></h1>
+    <p>Tus clientas reservan desde el celular, a la hora que quieren, sin que vos tengas que responder un solo mensaje. Llegás el lunes con la agenda del día ya armada.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number">5-8</div>
+      <div class="stat-label">turnos que se pierden por semana en una peluquería promedio</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">48hs</div>
+      <div class="stat-label">tiempo de setup hasta tener el sistema funcionando</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">-90%</div>
+      <div class="stat-label">reducción de ausencias con recordatorio automático</div>
+    </div>
+  </div>
+
+  <!-- PROBLEMA -->
+  <section>
+    <h2>El problema que conocés</h2>
+    <div class="problema-grid">
+      <div class="problema-item">
+        <span class="icon">✂️</span>
+        <strong>Manos ocupadas, teléfono suena</strong><br>
+        Estás con una clienta y llega un mensaje pidiendo turno. Lo dejás para después. Lo olvidás. La clienta se fue.
+      </div>
+      <div class="problema-item">
+        <span class="icon">🌙</span>
+        <strong>Las 11pm: "¿Tenés para el sábado?"</strong><br>
+        Las clientas piden turno cuando pueden, no cuando vos estás disponible. A esa hora no hay nadie.
+      </div>
+      <div class="problema-item">
+        <span class="icon">❌</span>
+        <strong>Ausencias que duelen</strong><br>
+        Reservaron, no avisaron, no vinieron. Ese hueco en el día no se recupera. Es plata que se va.
+      </div>
+      <div class="problema-item">
+        <span class="icon">📋</span>
+        <strong>La agenda que no cierra</strong><br>
+        Turnos en el cuaderno, en WhatsApp, en la cabeza. Se pisan, se confunden. Fin de semana caótico.
+      </div>
+    </div>
+  </section>
+
+  <!-- FLUJO -->
+  <section>
+    <h2>Cómo funciona para tus clientas</h2>
+  </section>
+
+  <div class="flujo">
+    <div class="flujo-step">
+      <div class="flujo-num">1</div>
+      <h4>Abre el link</h4>
+      <p>Desde el WhatsApp, las redes o el cartel del local</p>
+    </div>
+    <div class="flujo-step">
+      <div class="flujo-num">2</div>
+      <h4>Elige el servicio</h4>
+      <p>Corte, color, alisado… lo que configurás vos</p>
+    </div>
+    <div class="flujo-step">
+      <div class="flujo-num">3</div>
+      <h4>Elige día y hora</h4>
+      <p>Ve tu disponibilidad real en tiempo real</p>
+    </div>
+    <div class="flujo-step">
+      <div class="flujo-num">4</div>
+      <h4>Turno confirmado</h4>
+      <p>Le llega WA automático y recordatorio 24hs antes</p>
+    </div>
+  </div>
+
+  <!-- SOLUCION -->
+  <section>
+    <h2>Lo que ganás con Turnero</h2>
+    <div class="solucion-grid">
+      <div class="solucion-item">
+        <span class="icon">📲</span>
+        <strong>Link de reservas único</strong>
+        Lo ponés en el bio de Instagram, en el estado de WA, en la puerta del local. Tus clientas entran solas.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">🔔</span>
+        <strong>Recordatorio automático</strong>
+        24hs antes del turno, la clienta recibe un WA automático. Las ausencias se cortan casi a cero.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">📊</span>
+        <strong>Panel con tu agenda</strong>
+        Ves quién viene, a qué hora y qué servicio. Desde el celular, antes de abrir el local.
+      </div>
+      <div class="solucion-item">
+        <span class="icon">🎨</span>
+        <strong>Personalizado para vos</strong>
+        Tus servicios, tus horarios, el nombre FA. No es una app genérica, es tu sistema.
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <div class="demo-box">
+    <div class="demo-box-text">
+      <strong>Demo en vivo — FA Faby</strong>
+      <p>Así se ve el sistema desde el celular de tus clientas · ya configurado para peluquería</p>
+    </div>
+    <a href="https://divinia.vercel.app/reservas/fa-faby-demo">Ver demo →</a>
+  </div>
+
+  <!-- COMPARATIVA -->
+  <section>
+    <h2>Con y sin Turnero</h2>
+    <div class="comparativa">
+      <div class="comp-header">
+        <div>Situación</div>
+        <div>Sin Turnero</div>
+        <div>Con Turnero ✓</div>
+      </div>
+      <div class="comp-row">
+        <div>Clienta pide turno a las 11pm</div>
+        <div>No hay respuesta</div>
+        <div>Reserva sola en 30 seg</div>
+      </div>
+      <div class="comp-row">
+        <div>Ausencias por semana</div>
+        <div>3 a 5</div>
+        <div>0 a 1 (con recordatorio)</div>
+      </div>
+      <div class="comp-row">
+        <div>Tiempo coordinando turnos por día</div>
+        <div>45 min a 2hs</div>
+        <div>0 min</div>
+      </div>
+      <div class="comp-row">
+        <div>Turnos dobles / errores de agenda</div>
+        <div>Frecuentes</div>
+        <div>Imposibles (sistema en tiempo real)</div>
+      </div>
+      <div class="comp-row">
+        <div>Capacidad de reservas</div>
+        <div>Solo en horario de atención</div>
+        <div>24hs, 365 días</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section>
+    <h2>Inversión</h2>
+    <div class="pricing-wrapper">
+      <div class="pricing-card">
+        <div class="pricing-header">
+          <h3>Implementación · Pago único</h3>
+          <span class="badge">Una sola vez</span>
+        </div>
+        <div class="pricing-body">
+          <div class="price-row">
+            <span class="price-amount">$50.000</span>
+            <span class="price-period">ARS · pago único</span>
+          </div>
+          <p class="price-note">Setup completo, personalizado para FA Peluquería, entregado en 48hs</p>
+          <div class="includes-title">QUÉ INCLUYE</div>
+          <ul class="includes-list">
+            <li>Sistema configurado con tus servicios</li>
+            <li>Link único para compartir en redes</li>
+            <li>Panel de administración</li>
+            <li>Confirmaciones automáticas por WA</li>
+            <li>Recordatorios 24hs antes del turno</li>
+            <li>Capacitación de uso (30 min)</li>
+            <li>Soporte técnico primeros 30 días</li>
+            <li>Acceso al panel desde el celular</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="monthly-card">
+        <div class="monthly-split">
+          <div class="monthly-price">
+            <div class="amount">$34.000</div>
+            <div class="period">ARS / mes</div>
+          </div>
+          <div class="monthly-includes">
+            <strong style="font-size:14px; display:block; margin-bottom:12px;">Soporte mensual DIVINIA</strong>
+            <ul>
+              <li>Hosting y mantenimiento del sistema</li>
+              <li>Soporte por WhatsApp (respuesta en el día)</li>
+              <li>Ajustes de horarios y servicios cuando necesites</li>
+              <li>Actualizaciones incluidas sin costo extra</li>
+              <li>Backups automáticos de tu agenda</li>
+            </ul>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <p style="font-size:12px; color:#6d28d9;">Sin contrato. Cancelás cuando querés con 15 días de aviso. Sin sorpresas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section>
+    <h2>Cómo arrancamos</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot">1</div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-day">Hoy</div>
+          <h4>Confirmás y nos mandás los datos</h4>
+          <p>Servicios que ofrecés (corte, color, alisado, peinado…), precios si querés mostrarlos, horarios de atención. Un mensaje de WA alcanza.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot">2</div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-day">48 horas después</div>
+          <h4>Tu sistema listo</h4>
+          <p>Te entregamos el link de FA Peluquería, el acceso al panel, y hacemos una prueba juntos para que veas cómo funciona desde el celu de una clienta.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot">3</div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-day">Semana 1</div>
+          <h4>Primeras reservas online</h4>
+          <p>Compartís el link con tus clientas más fidelizadas. Ellas prueban, reservan, y te das cuenta de que ya no necesitás coordinar nada.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot">✓</div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-day">Mes 1</div>
+          <h4>FA trabaja mientras vos atendés</h4>
+          <p>Tu agenda online activa. Cero ausencias. Cero coordinación manual. Más tiempo para vos y para tus clientas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GARANTIA -->
+  <div class="garantia">
+    <div class="garantia-icon">🛡️</div>
+    <div>
+      <h3>Garantía de 30 días</h3>
+      <p>Si en el primer mes el sistema no funciona como esperabas o no te convence, te devolvemos el 100% de la implementación. Sin preguntas, sin trámites.</p>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <h2>¿Arrancamos esta semana?</h2>
+    <p>En 48hs FA Peluquería toma turnos sola. Mandame un mensaje y lo activamos.</p>
+    <div class="cta-buttons">
+      <a href="https://wa.me/5492665286110?text=Hola+Joaco%2C+quiero+activar+Turnero+para+FA+Peluquer%C3%ADa" class="btn-primary">Confirmar por WhatsApp →</a>
+      <a href="https://divinia.vercel.app/reservas/fa-faby-demo" class="btn-secondary">Ver mi demo →</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>◉ DIVINIA · San Luis, Argentina · diviniacorp@gmail.com</span>
+    <span>Propuesta válida hasta el 12 de mayo de 2026</span>
+  </div>
+
+</div>
+</body>
+</html>

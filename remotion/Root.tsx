@@ -95,6 +95,10 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="Post-Precio" component={InstaPost} durationInFrames={1} fps={FPS} width={1080} height={1080}
       defaultProps={{ headline: '$45.000\npor mes.', sub: 'Setup en 48hs · Sin permanencia · Turnos 24hs automáticos', badge: 'Precio', accent: 'lime', dark: true }}
     />
+    {/* ——— InstaPost-Gen — composición genérica para render con props dinámicos ——— */}
+    <Composition id="InstaPost-Gen" component={InstaPost} durationInFrames={1} fps={FPS} width={1080} height={1080}
+      defaultProps={{ headline: 'DIVINIA', sub: '', badge: 'IA', accent: 'lime', dark: true }}
+    />
 
     {/* ——— ProductDemo — 4 rubros ——— */}
     <Composition id="Demo-Peluqueria" component={ProductDemoReel} durationInFrames={270} fps={FPS} width={W} height={H} defaultProps={{ rubro: 'peluqueria' }} />
