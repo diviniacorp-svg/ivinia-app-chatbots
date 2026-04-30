@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 02 — Turnero</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#F6F5F2;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(9,9,11,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(9,9,11,0.04) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; }
+
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#09090B; opacity:0.4; }
+.product-tag {
+  display:inline-block; background:#09090B; color:#C6FF3D;
+  border-radius:100px; padding:5px 18px;
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase;
+}
+h1 {
+  font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:96px; line-height:0.9; letter-spacing:-0.04em; color:#09090B;
+}
+.accent { color:#09090B; }
+.lime-word { color:#09090B; position:relative; display:inline-block; }
+.lime-word::after { content:''; position:absolute; bottom:4px; left:0; right:0; height:8px; background:#C6FF3D; z-index:-1; }
+
+.features {
+  display:flex; flex-direction:column; gap:14px; margin-top:40px;
+}
+.feat {
+  display:flex; align-items:center; gap:14px;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:17px; color:#09090B; font-weight:600;
+}
+.feat-dot {
+  width:8px; height:8px; border-radius:50%; background:#C6FF3D; flex-shrink:0;
+}
+
+.price-tag {
+  margin-top:auto;
+  display:flex; justify-content:space-between; align-items:flex-end;
+}
+.price {
+  font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:64px; letter-spacing:-0.04em; color:#09090B; line-height:1;
+}
+.price-sub { font-family:'DM Mono',monospace; font-size:11px; color:#09090B; opacity:0.4; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="grid"></div>
+  <div class="content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:60px;">
+      <div class="logo">DIVINIA</div>
+      <div class="product-tag">Producto 01 — Turnero</div>
+    </div>
+
+    <h1>Tus clientes<br/><span class="lime-word">reservan</span><br/>solos.</h1>
+
+    <div class="features">
+      <div class="feat"><div class="feat-dot"></div>Página de reservas pública con tu marca</div>
+      <div class="feat"><div class="feat-dot"></div>Confirmación automática por WhatsApp</div>
+      <div class="feat"><div class="feat-dot"></div>Panel de gestión del negocio</div>
+      <div class="feat"><div class="feat-dot"></div>QR imprimible para el local</div>
+      <div class="feat"><div class="feat-dot"></div>Cobro de seña online</div>
+    </div>
+
+    <div class="price-tag">
+      <div>
+        <div class="price">$45.000</div>
+        <div class="price-sub">/mes · o $120.000 pago único</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:#09090B;opacity:0.4;text-align:right;">
+        Listo en 24hs ✓<br/>@divinia.ia
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

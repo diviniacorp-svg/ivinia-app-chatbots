@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 07 — Testimonial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#09090B;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(198,255,61,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(198,255,61,0.02) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.big-quote {
+  position:absolute; font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:480px; line-height:0.8; color:#C6FF3D; opacity:0.06;
+  top:-40px; left:40px; z-index:0; pointer-events:none; user-select:none;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; justify-content:space-between; }
+
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(198,255,61,0.6); }
+
+.quote-mark { font-family:'DM Serif Display',serif; font-style:italic; font-size:80px; color:#C6FF3D; line-height:1; margin-bottom:8px; }
+blockquote {
+  font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:52px; line-height:1.1; letter-spacing:-0.02em; color:#F6F5F2;
+}
+blockquote em { font-style:normal; color:#C6FF3D; }
+
+.attribution {
+  display:flex; flex-direction:column; gap:6px;
+}
+.attr-line { width:40px; height:2px; background:#C6FF3D; }
+.attr-name { font-family:'DM Serif Display',serif; font-size:22px; color:#F6F5F2; }
+.attr-detail { font-family:'DM Mono',monospace; font-size:11px; color:rgba(246,245,242,0.3); letter-spacing:0.1em; text-transform:uppercase; }
+
+.bottom { display:flex; justify-content:space-between; align-items:center; }
+.stars { font-size:24px; letter-spacing:4px; }
+.handle { font-family:'DM Mono',monospace; font-size:12px; color:rgba(198,255,61,0.5); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="grid"></div>
+  <div class="big-quote">"</div>
+  <div class="content">
+    <div class="logo">DIVINIA — Cliente ✓</div>
+
+    <div>
+      <div class="quote-mark">"</div>
+      <blockquote>No tuve que hacer<br/>nada. El sistema<br/>tomó mis <em>turnos</em><br/>mientras yo atendía.</blockquote>
+    </div>
+
+    <div class="attribution">
+      <div class="attr-line"></div>
+      <div class="attr-name">Peluquería San Luis</div>
+      <div class="attr-detail">Turnero IA · Activo desde enero 2026</div>
+    </div>
+
+    <div class="bottom">
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <div class="handle">@divinia.ia</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 08 — San Luis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#F6F5F2;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.bg-block {
+  position:absolute; bottom:0; left:0; right:0; height:420px;
+  background:#09090B;
+}
+.grid-dark {
+  position:absolute; bottom:0; left:0; right:0; height:420px;
+  background-image: linear-gradient(rgba(198,255,61,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(198,255,61,0.04) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.grid-light {
+  position:absolute; top:0; left:0; right:0; height:620px;
+  background-image: linear-gradient(rgba(9,9,11,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(9,9,11,0.04) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; }
+
+.top { display:flex; justify-content:space-between; align-items:center; margin-bottom:auto; }
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(9,9,11,0.4); }
+.flag { font-size:32px; }
+
+.main { flex:1; display:flex; flex-direction:column; justify-content:center; }
+.eyebrow { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(9,9,11,0.35); margin-bottom:16px; }
+h1 { font-family:'DM Serif Display',serif; font-style:italic; font-size:96px; line-height:0.9; letter-spacing:-0.04em; color:#09090B; }
+
+.divider { width:100%; height:1px; background:rgba(9,9,11,0.1); margin:40px 0; }
+
+.bottom-section { display:flex; flex-direction:column; gap:20px; }
+.tagline { font-family:'DM Serif Display',serif; font-size:28px; color:#F6F5F2; }
+.tagline em { font-style:normal; color:#C6FF3D; }
+.cities {
+  display:flex; gap:12px; flex-wrap:wrap;
+}
+.city-pill {
+  background:rgba(198,255,61,0.12); border:1px solid rgba(198,255,61,0.25);
+  border-radius:100px; padding:5px 16px;
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#C6FF3D;
+}
+.handle { font-family:'DM Mono',monospace; font-size:12px; color:rgba(198,255,61,0.6); letter-spacing:0.1em; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="bg-block"></div>
+  <div class="grid-dark"></div>
+  <div class="grid-light"></div>
+  <div class="content">
+    <div class="top">
+      <div class="logo">DIVINIA</div>
+      <div class="flag">🇦🇷</div>
+    </div>
+
+    <div class="main">
+      <div class="eyebrow">De acá para todo el país</div>
+      <h1>Nacimos<br/>en San<br/>Luis.</h1>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="bottom-section">
+      <div class="tagline">Trabajamos en <em>todo Argentina.</em></div>
+      <div class="cities">
+        <div class="city-pill">San Luis ✓</div>
+        <div class="city-pill">Villa Mercedes</div>
+        <div class="city-pill">Mendoza</div>
+        <div class="city-pill">Córdoba</div>
+        <div class="city-pill">Buenos Aires</div>
+        <div class="city-pill">+ todo el país</div>
+      </div>
+      <div class="handle">@divinia.ia</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

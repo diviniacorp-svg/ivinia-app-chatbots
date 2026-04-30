@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 04 — Central IA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#09090B;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(52,211,153,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.03) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; gap:60px; padding:72px; }
+
+/* Left column */
+.left { display:flex; flex-direction:column; justify-content:space-between; flex:1; }
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(52,211,153,0.8); }
+.product-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(246,245,242,0.3); margin-bottom:16px; }
+h1 {
+  font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:72px; line-height:0.92; letter-spacing:-0.03em; color:#F6F5F2;
+}
+h1 span { color:#34D399; }
+.desc { font-family:'DM Serif Display',serif; font-size:20px; color:rgba(246,245,242,0.45); line-height:1.55; margin-top:24px; }
+
+/* Right column — chat mockup */
+.chat-col { width:340px; display:flex; flex-direction:column; justify-content:center; gap:12px; }
+.chat-bubble {
+  border-radius:16px; padding:14px 18px;
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; line-height:1.5; max-width:290px;
+}
+.chat-in { background:rgba(255,255,255,0.06); color:rgba(246,245,242,0.7); border-bottom-left-radius:4px; }
+.chat-out { background:#34D399; color:#09090B; align-self:flex-end; border-bottom-right-radius:4px; font-weight:600; }
+.chat-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(246,245,242,0.2); margin-bottom:4px; padding-left:4px; }
+.chat-label-r { text-align:right; padding-right:4px; color:rgba(52,211,153,0.5); }
+.status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#34D399; margin-right:6px; animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="grid"></div>
+  <div class="content">
+    <div class="left">
+      <div>
+        <div class="logo">DIVINIA — Central IA</div>
+      </div>
+      <div>
+        <div class="product-label">02 — Producto</div>
+        <h1>Tu WA<br/>responde<br/><span>solo.</span></h1>
+        <p class="desc">IA entrenada con tu negocio. Responde consultas, agenda turnos y califica leads mientras dormís.</p>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(246,245,242,0.2);letter-spacing:0.08em;">
+        <span class="status-dot"></span>Activo 24/7 · @divinia.ia
+      </div>
+    </div>
+
+    <div class="chat-col">
+      <div>
+        <div class="chat-label">Cliente</div>
+        <div class="chat-bubble chat-in">Hola, ¿tienen turno el jueves a las 18hs?</div>
+      </div>
+      <div>
+        <div class="chat-label chat-label-r">Central IA ·  2s</div>
+        <div class="chat-bubble chat-out">¡Hola! Sí, el jueves 18hs está libre 🎉 ¿Lo confirmo a tu nombre?</div>
+      </div>
+      <div>
+        <div class="chat-label">Cliente</div>
+        <div class="chat-bubble chat-in">Sí, para María González, gracias</div>
+      </div>
+      <div>
+        <div class="chat-label chat-label-r">Central IA · 1s</div>
+        <div class="chat-bubble chat-out">Perfecto María, turno confirmado para el jueves. Te mando recordatorio el día anterior ✓</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

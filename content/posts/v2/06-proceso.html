@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 06 — Proceso</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#F6F5F2;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(9,9,11,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(9,9,11,0.04) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; justify-content:space-between; }
+
+.top { display:flex; justify-content:space-between; align-items:center; }
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(9,9,11,0.4); }
+.eyebrow { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#09090B; opacity:0.4; }
+
+h1 { font-family:'DM Serif Display',serif; font-style:italic; font-size:72px; line-height:0.92; letter-spacing:-0.03em; color:#09090B; }
+
+.steps { display:flex; flex-direction:column; gap:0; }
+.step {
+  display:grid; grid-template-columns:96px 1fr;
+  border-top:1px solid rgba(9,9,11,0.12);
+  padding:28px 0;
+}
+.step:last-child { border-bottom:1px solid rgba(9,9,11,0.12); }
+.step-num { font-family:'DM Mono',monospace; font-size:13px; letter-spacing:0.12em; color:rgba(9,9,11,0.3); padding-top:4px; }
+.step-content { display:flex; flex-direction:column; gap:6px; }
+.step-title { font-family:'DM Serif Display',serif; font-style:italic; font-size:32px; color:#09090B; line-height:1; }
+.step-desc { font-family:'Plus Jakarta Sans',sans-serif; font-size:16px; color:rgba(9,9,11,0.5); }
+
+.lime-bar {
+  background:#09090B; border-radius:12px; padding:20px 28px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.lime-bar-text { font-family:'DM Serif Display',serif; font-style:italic; font-size:22px; color:#F6F5F2; }
+.lime-bar-pill { background:#C6FF3D; border-radius:100px; padding:8px 20px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#09090B; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="grid"></div>
+  <div class="content">
+    <div class="top">
+      <div class="logo">DIVINIA</div>
+      <div class="eyebrow">Así funciona</div>
+    </div>
+
+    <h1>Así de<br/>simple.</h1>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-title">Me contactás</div>
+          <div class="step-desc">WhatsApp, web o formulario. Te respondo en el día.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-title">Configuramos juntos</div>
+          <div class="step-desc">Personalizamos el sistema con tu marca, horarios y servicios.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-title">Tu negocio funciona solo</div>
+          <div class="step-desc">En 24hs tenés el sistema andando. Vos seguís trabajando.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lime-bar">
+      <div class="lime-bar-text">Entregamos funcionando antes de cobrar.</div>
+      <div class="lime-bar-pill">@divinia.ia</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

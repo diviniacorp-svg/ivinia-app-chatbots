@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 03 — Pain Point</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#09090B;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(198,255,61,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(198,255,61,0.025) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; justify-content:space-between; }
+
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(198,255,61,0.7); }
+h1 {
+  font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:82px; line-height:0.95; letter-spacing:-0.03em; color:#F6F5F2;
+}
+.question-mark {
+  font-family:'DM Serif Display',serif; font-style:italic;
+  font-size:200px; line-height:1; letter-spacing:-0.05em;
+  color:#C6FF3D; opacity:0.15; position:absolute; right:60px; top:160px;
+}
+.answer {
+  display:flex; flex-direction:column; gap:0;
+}
+.answer-num {
+  font-family:'DM Mono',monospace; font-size:80px; letter-spacing:-0.04em;
+  color:#C6FF3D; line-height:1;
+}
+.answer-text {
+  font-family:'DM Serif Display',serif;
+  font-size:22px; color:rgba(246,245,242,0.5); line-height:1.5;
+}
+.bottom {
+  display:flex; justify-content:space-between; align-items:flex-end;
+}
+.cta {
+  background:#C6FF3D; color:#09090B;
+  border-radius:100px; padding:10px 24px;
+  font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-weight:500;
+}
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="grid"></div>
+  <div class="question-mark">?</div>
+  <div class="content">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="logo">DIVINIA — Turnero IA</div>
+    </div>
+
+    <div>
+      <h1>¿Cuántos<br/>turnos<br/>perdiste<br/>hoy?</h1>
+    </div>
+
+    <div class="answer">
+      <div class="answer-num">1.6</div>
+      <div class="answer-text">el promedio de turnos perdidos<br/>por día en negocios sin sistema.<br/>Son $320.000 por mes.</div>
+    </div>
+
+    <div class="bottom">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(246,245,242,0.25);letter-spacing:0.08em;">03 / 09</div>
+      <div class="cta">Probá gratis 14 días →</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

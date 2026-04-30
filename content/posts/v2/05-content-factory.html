@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 05 — Content Factory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#09090B;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.stripe {
+  position:absolute; top:0; left:0; right:0;
+  height:6px; background:#E879F9;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(232,121,249,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(232,121,249,0.03) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; justify-content:space-between; }
+
+.top { display:flex; justify-content:space-between; align-items:center; }
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(232,121,249,0.8); }
+.pill { background:rgba(232,121,249,0.1); border:1px solid rgba(232,121,249,0.3); border-radius:100px; padding:5px 16px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#E879F9; }
+
+h1 { font-family:'DM Serif Display',serif; font-style:italic; font-size:90px; line-height:0.92; letter-spacing:-0.04em; color:#F6F5F2; }
+h1 em { font-style:normal; color:#E879F9; }
+
+/* Post grid mockup */
+.post-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.mini-post {
+  aspect-ratio:1; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em;
+}
+
+.stat-row { display:flex; gap:48px; }
+.stat { display:flex; flex-direction:column; }
+.stat-num { font-family:'DM Serif Display',serif; font-style:italic; font-size:56px; color:#E879F9; line-height:1; letter-spacing:-0.04em; }
+.stat-label { font-family:'DM Mono',monospace; font-size:10px; color:rgba(246,245,242,0.3); letter-spacing:0.1em; text-transform:uppercase; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="stripe"></div>
+  <div class="grid"></div>
+  <div class="content">
+    <div class="top">
+      <div class="logo">DIVINIA — Content Factory</div>
+      <div class="pill">03 · Producto</div>
+    </div>
+
+    <h1>Redes en<br/><em>piloto</em><br/>automático.</h1>
+
+    <div class="post-grid">
+      <div class="mini-post" style="background:rgba(232,121,249,0.12);border:1px solid rgba(232,121,249,0.2);color:#E879F9;">Post ✓</div>
+      <div class="mini-post" style="background:rgba(232,121,249,0.08);border:1px solid rgba(232,121,249,0.15);color:rgba(232,121,249,0.6);">Reel ✓</div>
+      <div class="mini-post" style="background:rgba(232,121,249,0.06);border:1px solid rgba(232,121,249,0.12);color:rgba(232,121,249,0.5);">Story ✓</div>
+      <div class="mini-post" style="background:rgba(232,121,249,0.06);border:1px solid rgba(232,121,249,0.12);color:rgba(232,121,249,0.5);">Post ✓</div>
+      <div class="mini-post" style="background:rgba(232,121,249,0.08);border:1px solid rgba(232,121,249,0.15);color:rgba(232,121,249,0.6);">Reel ✓</div>
+      <div class="mini-post" style="background:rgba(232,121,249,0.04);border:1px solid rgba(232,121,249,0.1);color:rgba(232,121,249,0.4);">Más →</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">30</div>
+        <div class="stat-label">posts / mes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">horas tuyas</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">$80k</div>
+        <div class="stat-label">por mes</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

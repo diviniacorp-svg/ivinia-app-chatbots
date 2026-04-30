@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Post 09 — CTA 14 días</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#111; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+.post {
+  width:1080px; height:1080px;
+  background:#C6FF3D;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(9,9,11,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(9,9,11,0.07) 1px, transparent 1px);
+  background-size:54px 54px; z-index:0;
+}
+.orb {
+  position:absolute; border-radius:50%;
+  background: rgba(9,9,11,0.08);
+}
+.content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:72px; justify-content:space-between; }
+
+.logo { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(9,9,11,0.5); }
+.big-num { font-family:'DM Serif Display',serif; font-style:italic; font-size:300px; line-height:0.8; letter-spacing:-0.06em; color:#09090B; }
+.days-label { font-family:'DM Mono',monospace; font-size:16px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(9,9,11,0.6); margin-top:-8px; }
+h1 { font-family:'DM Serif Display',serif; font-style:italic; font-size:72px; line-height:0.95; letter-spacing:-0.03em; color:#09090B; }
+
+.guarantees { display:flex; gap:32px; flex-wrap:wrap; }
+.guarantee { display:flex; align-items:center; gap:10px; }
+.g-dot { width:8px; height:8px; border-radius:50%; background:#09090B; flex-shrink:0; }
+.g-text { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(9,9,11,0.65); }
+
+.url-block {
+  background:#09090B; border-radius:14px; padding:20px 32px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.url-text { font-family:'DM Mono',monospace; font-size:18px; color:#C6FF3D; letter-spacing:0.06em; }
+.url-arrow { font-family:'DM Mono',monospace; font-size:24px; color:#C6FF3D; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="grid"></div>
+  <div class="orb" style="width:500px;height:500px;top:-200px;right:-150px;"></div>
+  <div class="content">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="logo">DIVINIA</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(9,9,11,0.4);">09 / 09</div>
+    </div>
+
+    <div>
+      <div class="big-num">14</div>
+      <div class="days-label">días gratis</div>
+    </div>
+
+    <h1>Sin tarjeta.<br/>Sin contrato.<br/>Sin trampa.</h1>
+
+    <div class="guarantees">
+      <div class="guarantee"><div class="g-dot"></div><div class="g-text">Setup en 24hs</div></div>
+      <div class="guarantee"><div class="g-dot"></div><div class="g-text">Somos de San Luis</div></div>
+      <div class="guarantee"><div class="g-dot"></div><div class="g-text">Entregamos antes de cobrar</div></div>
+    </div>
+
+    <div class="url-block">
+      <div class="url-text">divinia.vercel.app</div>
+      <div class="url-arrow">→</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
