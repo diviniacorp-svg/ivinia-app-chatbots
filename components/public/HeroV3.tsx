@@ -156,22 +156,22 @@ export default function HeroV3() {
     }}>
       {/* Orb naranja — identidad de marca, top-left */}
       <Orb
-        size={480}
+        size={520}
         color="#FF6B2B"
         colorDeep="#E8440A"
         shade="rgba(80,20,0,0.4)"
         float
-        style={{ position: 'absolute', top: -180, left: -160, opacity: 0.18, pointerEvents: 'none', zIndex: 0 }}
+        style={{ position: 'absolute', top: -200, left: -180, opacity: 0.55, pointerEvents: 'none', zIndex: 0 }}
         delay="1.2s"
       />
       {/* Orb violeta — top-right */}
       <Orb
-        size={320}
+        size={380}
         color="#8B5CF6"
         colorDeep="#6D28D9"
         shade="rgba(40,0,80,0.5)"
         float
-        style={{ position: 'absolute', top: -60, right: -100, opacity: 0.15, pointerEvents: 'none', zIndex: 0 }}
+        style={{ position: 'absolute', top: -80, right: -120, opacity: 0.45, pointerEvents: 'none', zIndex: 0 }}
         delay="0.4s"
       />
       <div className="wrap-v2">
