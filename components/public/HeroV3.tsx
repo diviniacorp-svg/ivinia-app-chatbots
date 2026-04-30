@@ -154,6 +154,26 @@ export default function HeroV3() {
       overflow: 'hidden',
       background: '#ffffff',
     }}>
+      {/* Orb naranja — identidad de marca, top-left */}
+      <Orb
+        size={480}
+        color="#FF6B2B"
+        colorDeep="#E8440A"
+        shade="rgba(80,20,0,0.4)"
+        float
+        style={{ position: 'absolute', top: -180, left: -160, opacity: 0.18, pointerEvents: 'none', zIndex: 0 }}
+        delay="1.2s"
+      />
+      {/* Orb violeta — top-right */}
+      <Orb
+        size={320}
+        color="#8B5CF6"
+        colorDeep="#6D28D9"
+        shade="rgba(40,0,80,0.5)"
+        float
+        style={{ position: 'absolute', top: -60, right: -100, opacity: 0.15, pointerEvents: 'none', zIndex: 0 }}
+        delay="0.4s"
+      />
       <div className="wrap-v2">
 
         {/* ── BLOQUE CENTRAL CENTRADO ── */}
@@ -380,13 +400,23 @@ export default function HeroV3() {
           {/* Right: price card */}
           <div style={{ position: 'relative', height: 340 }} className="hidden md:block">
             <Orb
-              size={360}
+              size={400}
               color="#C6FF3D"
               colorDeep="#9EE028"
-              shade="rgba(12,80,0,0.3)"
+              shade="rgba(12,80,0,0.35)"
               float
               squash
-              style={{ position: 'absolute', right: -40, top: 0 }}
+              style={{ position: 'absolute', right: -60, top: -20 }}
+            />
+            {/* Orb naranja pequeño encima del lime */}
+            <Orb
+              size={120}
+              color="#FF6B2B"
+              colorDeep="#E8440A"
+              shade="rgba(80,20,0,0.4)"
+              float
+              style={{ position: 'absolute', right: 60, top: 20, zIndex: 3 }}
+              delay="0.8s"
             />
             <div style={{
               position: 'absolute', right: 0, top: 40,

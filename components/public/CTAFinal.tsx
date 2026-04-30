@@ -22,12 +22,21 @@ export default function CTAFinal() {
         style={{ position: 'absolute', right: -100, top: -100, opacity: 0.35 }}
       />
       <Orb
-        size={200}
-        color="#818CF8"
-        colorDeep="#4338CA"
-        shade="rgba(20,10,80,0.5)"
+        size={280}
+        color="#8B5CF6"
+        colorDeep="#6D28D9"
+        shade="rgba(40,0,80,0.5)"
         float
-        style={{ position: 'absolute', left: -50, bottom: -50, opacity: 0.25 }}
+        style={{ position: 'absolute', left: -80, bottom: -80, opacity: 0.3 }}
+      />
+      <Orb
+        size={160}
+        color="#FF6B2B"
+        colorDeep="#E8440A"
+        shade="rgba(80,20,0,0.4)"
+        float
+        style={{ position: 'absolute', left: '42%', bottom: -50, opacity: 0.22 }}
+        delay="1s"
       />
 
       <div className="wrap-v2" style={{ position: 'relative', zIndex: 1 }}>
