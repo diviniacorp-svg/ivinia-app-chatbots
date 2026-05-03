@@ -86,9 +86,7 @@ export function getPlan(id: string) {
 }
 
 export function formatPrecio(precio: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-  }).format(precio)
+  const rounded = Math.round(precio)
+  const withDots = rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `$${withDots}`
 }
