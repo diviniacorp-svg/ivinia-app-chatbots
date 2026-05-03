@@ -34,6 +34,7 @@ const ADMIN_ROUTES = [
   '/ideas',
   '/proyectos',
   '/publicidad',
+  '/fabrica',
 ]
 
 // Exact match — /nucleo/[slug] es público, solo /nucleo exacto requiere auth
@@ -166,6 +167,8 @@ export const config = {
     '/proyectos/:path*',
     '/publicidad',
     '/publicidad/:path*',
+    '/fabrica',
+    '/fabrica/:path*',
     '/nucleo',
     '/api/seed',
     '/api/seed/:path*',
