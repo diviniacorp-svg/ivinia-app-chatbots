@@ -220,9 +220,8 @@ function simulateActivity(
 export default function FabricaPage() {
   const deptIds = Object.keys(DEPARTMENTS) as DepartmentId[]
 
-  const [deptStates, setDeptStates] = useState<Record<DepartmentId, DeptState>>(() =>
-    Object.fromEntries(deptIds.map(id => [id, { status: 'idle' as Status, runsToday: 0 }]))
-    as Record<DepartmentId, DeptState>
+  const [deptStates, setDeptStates] = useState<Record<DepartmentId, DeptState>>(
+    () => Object.fromEntries(deptIds.map(id => [id, { status: 'idle' as Status, runsToday: 0 }])) as Record<DepartmentId, DeptState>
   )
   const [selected, setSelected] = useState<DepartmentId | null>(null)
   const [ticker, setTicker] = useState<Array<{ agent: string; status: string; ts: string }>>([])
