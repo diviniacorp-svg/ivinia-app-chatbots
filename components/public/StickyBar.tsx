@@ -39,9 +39,9 @@ export default function StickyBar() {
         letterSpacing: '-0.01em',
       }}>
         <strong style={{ color: 'var(--paper)' }}>Turnero DIVINIA</strong>
-        {' '}· desde{' '}
+        {' · desde '}
         <strong style={{ color: 'var(--lime)' }}>$45.000/mes</strong>
-        {' '}· Listo en 24hs
+        {' · Listo en 24hs'}
       </span>
       <Link
         href="/onboarding"
