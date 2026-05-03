@@ -5,12 +5,10 @@ import Reveal from './Reveal'
 const WA = 'https://wa.me/5492665286110?text='
 
 function formatARS(n: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n)
+  const rounded = Math.round(n)
+  const str = rounded.toString()
+  const withDots = str.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `$ ${withDots}`
 }
 
 export default function ROICalculator() {
