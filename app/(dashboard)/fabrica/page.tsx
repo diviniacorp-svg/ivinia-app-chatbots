@@ -136,7 +136,7 @@ function PixelRoom({
       style={{
         position: 'relative',
         height: isCerebro ? 140 : '100%',
-        minHeight: isCerebro ? 140 : 148,
+        minHeight: isCerebro ? 140 : 160,
         cursor: 'pointer',
         overflow: 'hidden',
         background: tileFloor,
@@ -553,41 +553,36 @@ export default function FabricaPage() {
           ))}
         </div>
 
-        {/* Grid of 11 depts + optional detail panel */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: selected ? 'repeat(3, 1fr) 1fr' : 'repeat(4, 1fr)',
-          gap: 4,
-          transition: 'grid-template-columns 0.3s',
-        }}>
-          {rest.map(id => (
-            <PixelRoom
-              key={id}
-              deptId={id}
-              state={states[id]}
-              isSelected={selected === id}
-              onClick={() => setSelected(selected === id ? null : id)}
-            />
-          ))}
+        {/* Grid + side panel */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
+          <div style={{
+            flex: 1,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 4,
+          }}>
+            {rest.map(id => (
+              <PixelRoom
+                key={id}
+                deptId={id}
+                state={states[id]}
+                isSelected={selected === id}
+                onClick={() => setSelected(selected === id ? null : id)}
+              />
+            ))}
+          </div>
 
-          {/* Detail panel if dept selected */}
-          {selected && selected !== cerebro && (
-            <DetailPanel
-              deptId={selected}
-              state={states[selected]}
-              onClose={() => setSelected(null)}
-            />
+          {/* Side detail panel */}
+          {selected && (
+            <div style={{ width: 260, flexShrink: 0 }}>
+              <DetailPanel
+                deptId={selected}
+                state={states[selected]}
+                onClose={() => setSelected(null)}
+              />
+            </div>
           )}
         </div>
-
-        {/* Cerebro detail if selected */}
-        {selected === cerebro && (
-          <DetailPanel
-            deptId={cerebro}
-            state={states[cerebro]}
-            onClose={() => setSelected(null)}
-          />
-        )}
       </div>
 
       {/* ── Activity ticker ── */}
