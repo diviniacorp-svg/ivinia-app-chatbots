@@ -150,7 +150,7 @@ export default function DemoViva() {
                 cursor: 'pointer', transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', gap: 6,
               }}>
-                <span>{d.emoji}</span> {d.nombre}
+                <span>{d.emoji}</span>{' ' + d.nombre}
               </button>
             ))}
           </div>
