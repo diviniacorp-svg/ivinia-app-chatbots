@@ -1,603 +1,663 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { DEPARTMENTS, NUCLEUS_AGENTS, DepartmentId } from '@/lib/nucleus/index'
 
-type Status = 'idle' | 'working' | 'done' | 'error'
-interface DeptState {
-  status: Status
-  runsToday: number
-  activeAgent?: string
-  lastRun?: string
+// ─── Tile / canvas constants ────────────────────────────────────────────────
+const T = 32   // tile size px
+const P = 2    // game-pixel size (2 CSS px = 1 game px)
+const MAP_W = 50
+const MAP_H = 54
+
+type Status = 'idle' | 'working' | 'done'
+type RoomId = DepartmentId | 'corridor' | 'meeting' | 'kitchen'
+
+interface RoomDef {
+  id: RoomId
+  tx: number; ty: number; tw: number; th: number
+}
+
+// ─── Building floor plan (all in tile units) ────────────────────────────────
+const ROOMS: RoomDef[] = [
+  // Cerebro — command center, full width
+  { id: 'cerebro',              tx: 1,  ty: 1,  tw: 48, th: 8  },
+  // Horizontal corridor below Cerebro
+  { id: 'corridor',             tx: 1,  ty: 9,  tw: 48, th: 2  },
+  // ── Row 1 departments (y=11..22) ──
+  { id: 'ventas_crm',           tx: 1,  ty: 11, tw: 11, th: 11 },
+  { id: 'developers',           tx: 13, ty: 11, tw: 11, th: 11 },
+  { id: 'content_factory',      tx: 25, ty: 11, tw: 11, th: 11 },
+  { id: 'publicidad',           tx: 37, ty: 11, tw: 11, th: 11 },
+  // Right corridor (vertical)
+  { id: 'corridor',             tx: 49, ty: 11, tw: 0,  th: 32 }, // wall only
+  // Horizontal corridor between row 1 and 2
+  { id: 'corridor',             tx: 1,  ty: 22, tw: 47, th: 2  },
+  // ── Row 2 departments (y=24..35) ──
+  { id: 'finanzas',             tx: 1,  ty: 24, tw: 11, th: 11 },
+  { id: 'legal_seguridad',      tx: 13, ty: 24, tw: 11, th: 11 },
+  { id: 'customer_success',     tx: 25, ty: 24, tw: 11, th: 11 },
+  { id: 'inteligencia',         tx: 37, ty: 24, tw: 11, th: 11 },
+  // Horizontal corridor between row 2 and 3
+  { id: 'corridor',             tx: 1,  ty: 35, tw: 47, th: 2  },
+  // ── Row 3 departments (y=37..48) ──
+  { id: 'canales_monetizacion', tx: 1,  ty: 37, tw: 11, th: 11 },
+  { id: 'gestiones',            tx: 13, ty: 37, tw: 11, th: 11 },
+  { id: 'rrhh_digital',         tx: 25, ty: 37, tw: 11, th: 11 },
+  // Meeting room (right side, spans rows 22-48)
+  { id: 'meeting',              tx: 37, ty: 37, tw: 12, th: 11 },
+  // Kitchen (bottom right strip)
+  { id: 'kitchen',              tx: 37, ty: 22, tw: 12, th: 15 },
+]
+
+// ─── Floor + wall colors per room ──────────────────────────────────────────
+function floorColor(id: RoomId): string {
+  if (id === 'corridor') return '#2a2318'
+  if (id === 'meeting')  return '#1a1a2a'
+  if (id === 'kitchen')  return '#1a2418'
+  const dept = DEPARTMENTS[id as DepartmentId]
+  if (!dept) return '#1a1a1a'
+  const { r, g, b } = hex2rgb(dept.color)
+  return `rgb(${Math.round(r * 0.12)},${Math.round(g * 0.12)},${Math.round(b * 0.12)})`
+}
+function wallColor(id: RoomId): string {
+  if (id === 'corridor') return '#3a3228'
+  if (id === 'meeting')  return '#3a3a5a'
+  if (id === 'kitchen')  return '#2a3a2a'
+  return DEPARTMENTS[id as DepartmentId]?.color ?? '#555'
 }
 
 function hex2rgb(hex: string) {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return { r, g, b }
+  return {
+    r: parseInt(hex.slice(1,3),16),
+    g: parseInt(hex.slice(3,5),16),
+    b: parseInt(hex.slice(5,7),16),
+  }
 }
 function rgba(hex: string, a: number) {
-  const { r, g, b } = hex2rgb(hex)
+  const {r,g,b} = hex2rgb(hex)
   return `rgba(${r},${g},${b},${a})`
 }
 
-// ── Pixel sprite: agent character ──
-function AgentSprite({
-  color, active, idx, x, y,
-}: { color: string; active: boolean; idx: number; x: number; y: number }) {
-  const dur = 2.8 + idx * 0.4
-  const delay = idx * 0.55
-  const wanders = [
-    `agW0 ${dur}s ${delay}s ease-in-out infinite`,
-    `agW1 ${dur}s ${delay}s ease-in-out infinite`,
-    `agW2 ${dur}s ${delay}s ease-in-out infinite`,
-  ]
-  return (
-    <div style={{
-      position: 'absolute', left: x, top: y,
-      animation: active ? wanders[idx % 3] : 'none',
-      transition: 'opacity 0.4s',
-      opacity: active ? 1 : 0.45,
-    }}>
-      {/* head */}
-      <div style={{
-        width: 8, height: 8, borderRadius: '50%',
-        background: color,
-        margin: '0 auto',
-        boxShadow: active ? `0 0 6px ${color}` : 'none',
-      }} />
-      {/* torso */}
-      <div style={{
-        width: 6, height: 5, margin: '1px auto 0',
-        background: color, opacity: 0.6,
-      }} />
-      {/* legs */}
-      <div style={{ display: 'flex', gap: 1, marginTop: 1, justifyContent: 'center' }}>
-        <div style={{ width: 2, height: 3, background: color, opacity: 0.4,
-          animation: active ? `legL 0.4s ${delay}s ease-in-out infinite` : 'none' }} />
-        <div style={{ width: 2, height: 3, background: color, opacity: 0.4,
-          animation: active ? `legR 0.4s ${delay + 0.2}s ease-in-out infinite` : 'none' }} />
-      </div>
-    </div>
-  )
-}
-
-// ── Pixel desk + monitor ──
-function PixelDesk({ color, x, y }: { color: string; x: number; y: number }) {
-  return (
-    <div style={{ position: 'absolute', left: x, top: y, pointerEvents: 'none' }}>
-      <div style={{
-        width: 14, height: 10, background: '#111',
-        border: `1px solid ${rgba(color, 0.4)}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 1,
-      }}>
-        <div style={{ width: 8, height: 5, background: rgba(color, 0.18) }} />
-      </div>
-      <div style={{
-        width: 18, height: 4, background: '#2a231a',
-        border: '1px solid rgba(255,255,255,0.1)', marginLeft: -2,
-      }} />
-    </div>
-  )
-}
-
-// ── Pixel bookshelf ──
-function PixelShelf({ color, x, y }: { color: string; x: number; y: number }) {
-  const books = ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
-  return (
-    <div style={{ position: 'absolute', left: x, top: y, display: 'flex', gap: 2, pointerEvents: 'none' }}>
-      {books.map((c, i) => (
-        <div key={i} style={{ width: 4, height: 12, background: c, opacity: 0.6 }} />
-      ))}
-    </div>
-  )
-}
-
-// ── A single department room ──
-function PixelRoom({
-  deptId, state, isSelected, onClick, isCerebro,
-}: {
+// ─── Agent type ─────────────────────────────────────────────────────────────
+interface AgentSprite {
+  id: string
+  name: string
   deptId: DepartmentId
-  state: DeptState
-  isSelected: boolean
-  onClick: () => void
-  isCerebro?: boolean
-}) {
-  const dept = DEPARTMENTS[deptId]
-  const agents = NUCLEUS_AGENTS.filter(a => a.depto === deptId)
-  const color = dept.color
-  const working = state.status === 'working'
-  const done = state.status === 'done'
-
-  const tileFloor = `
-    repeating-linear-gradient(0deg, transparent, transparent 15px, ${rgba(color, 0.04)} 15px, ${rgba(color, 0.04)} 16px),
-    repeating-linear-gradient(90deg, transparent, transparent 15px, ${rgba(color, 0.04)} 15px, ${rgba(color, 0.04)} 16px),
-    ${rgba(color, 0.06)}
-  `
-
-  // agent positions: 3 columns × 2 rows
-  const agentSlots = isCerebro
-    ? Array.from({ length: Math.min(agents.length, 6) }, (_, i) => ({
-        x: 30 + i * 80, y: 55,
-      }))
-    : [
-        { x: 22, y: 56 }, { x: 58, y: 56 }, { x: 94, y: 56 },
-        { x: 30, y: 88 }, { x: 66, y: 88 }, { x: 102, y: 82 },
-      ]
-  const deskSlots = isCerebro
-    ? Array.from({ length: 6 }, (_, i) => ({ x: 18 + i * 80, y: 42 }))
-    : [{ x: 14, y: 42 }, { x: 50, y: 42 }, { x: 86, y: 42 }]
-
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        position: 'relative',
-        height: isCerebro ? 140 : '100%',
-        minHeight: isCerebro ? 140 : 160,
-        cursor: 'pointer',
-        overflow: 'hidden',
-        background: tileFloor,
-        border: isSelected
-          ? `2px solid ${color}`
-          : `2px solid ${working ? rgba(color, 0.6) : 'rgba(255,255,255,0.08)'}`,
-        boxShadow: working
-          ? `0 0 24px ${rgba(color, 0.3)}, inset 0 0 60px ${rgba(color, 0.05)}`
-          : isSelected
-          ? `0 0 16px ${rgba(color, 0.2)}`
-          : 'none',
-        transition: 'border 0.3s, box-shadow 0.3s',
-        imageRendering: 'pixelated',
-      }}
-    >
-      {/* Top bar */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0,
-        padding: '5px 8px',
-        background: rgba(color, 0.14),
-        borderBottom: `1px solid ${rgba(color, 0.2)}`,
-        display: 'flex', alignItems: 'center', gap: 6,
-        fontFamily: 'JetBrains Mono, monospace',
-        fontSize: isCerebro ? 11 : 9,
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: color,
-        zIndex: 3,
-      }}>
-        <span>{dept.emoji}</span>
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {dept.nombre}
-        </span>
-        {isCerebro && (
-          <span style={{ fontSize: 8, opacity: 0.6, letterSpacing: '0.06em' }}>
-            COMMAND CENTER
-          </span>
-        )}
-        {/* status LED */}
-        <div style={{
-          width: isCerebro ? 7 : 5, height: isCerebro ? 7 : 5,
-          borderRadius: '50%', flexShrink: 0,
-          background: working ? color : done ? '#10b981' : 'rgba(255,255,255,0.15)',
-          boxShadow: working ? `0 0 8px ${color}` : done ? '0 0 6px #10b981' : 'none',
-          animation: working ? 'blink 1s ease-in-out infinite' : 'none',
-        }} />
-      </div>
-
-      {/* Desks */}
-      {deskSlots.map((d, i) => (
-        <PixelDesk key={i} color={color} x={d.x} y={d.y} />
-      ))}
-
-      {/* Bookshelves on walls */}
-      {!isCerebro && <PixelShelf color={color} x={6} y={28} />}
-
-      {/* Agent sprites */}
-      {agents.slice(0, isCerebro ? 6 : 6).map((agent, i) => (
-        <AgentSprite
-          key={agent.id}
-          color={color}
-          active={working || (done && i === 0)}
-          idx={i}
-          x={agentSlots[i]?.x ?? 20 + i * 18}
-          y={agentSlots[i]?.y ?? 60}
-        />
-      ))}
-
-      {/* Scanline overlay (subtle) */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)',
-        zIndex: 1,
-      }} />
-
-      {/* Bottom HUD */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '3px 8px',
-        background: 'rgba(0,0,0,0.65)',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 8, letterSpacing: '0.04em',
-        zIndex: 3,
-      }}>
-        <span style={{ color: 'rgba(255,255,255,0.3)' }}>{agents.length} agts</span>
-        <span style={{
-          color: working ? color : done ? '#10b981' : 'rgba(255,255,255,0.18)',
-          fontWeight: 700, fontSize: 8,
-        }}>
-          {working && state.activeAgent
-            ? state.activeAgent.slice(0, 14)
-            : state.status.toUpperCase()}
-        </span>
-        <span style={{ color: 'rgba(255,255,255,0.2)' }}>{state.runsToday}r</span>
-      </div>
-    </div>
-  )
+  color: string
+  x: number; y: number       // pixel position on canvas
+  tx: number; ty: number     // target pixel position
+  animFrame: number
+  speed: number
+  wanderTimer: number
 }
 
-// ── Selected room detail panel ──
-function DetailPanel({ deptId, state, onClose }: { deptId: DepartmentId; state: DeptState; onClose: () => void }) {
-  const dept = DEPARTMENTS[deptId]
-  const agents = NUCLEUS_AGENTS.filter(a => a.depto === deptId)
-  const color = dept.color
+// ─── Canvas drawing helpers ─────────────────────────────────────────────────
 
-  return (
-    <div style={{
-      background: '#0a0a0a',
-      border: `2px solid ${color}`,
-      padding: 20,
-      display: 'flex', flexDirection: 'column', gap: 14,
-      position: 'relative',
-      boxShadow: `0 0 30px ${rgba(color, 0.25)}`,
-    }}>
-      <button onClick={onClose} style={{
-        position: 'absolute', top: 12, right: 14,
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: 'rgba(255,255,255,0.3)', fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 11, padding: 0,
-      }}>[ X ]</button>
+function drawFloor(ctx: CanvasRenderingContext2D, room: RoomDef) {
+  const { tx, ty, tw, th } = room
+  const fc = floorColor(room.id)
+  const wc = wallColor(room.id)
 
-      <div>
-        <div style={{
-          fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
-          letterSpacing: '0.12em', textTransform: 'uppercase',
-          color: color, marginBottom: 4,
-        }}>
-          {dept.emoji} {dept.nombre}
-        </div>
-        <p style={{
-          fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
-          color: 'rgba(255,255,255,0.35)', lineHeight: 1.6,
-          letterSpacing: '0.03em',
-        }}>
-          {dept.mision}
-        </p>
-      </div>
+  // Floor fill
+  ctx.fillStyle = fc
+  ctx.fillRect(tx*T, ty*T, tw*T, th*T)
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {agents.map(agent => (
-          <div key={agent.id} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '5px 8px',
-            background: rgba(color, 0.07),
-            border: `1px solid ${rgba(color, 0.15)}`,
-          }}>
-            <span style={{ fontSize: 12 }}>{agent.emoji}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
-                fontWeight: 700, color: 'rgba(255,255,255,0.8)',
-                letterSpacing: '0.04em', overflow: 'hidden',
-                textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {agent.nombre}
-              </div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace', fontSize: 7,
-                color: 'rgba(255,255,255,0.3)', letterSpacing: '0.03em',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {agent.funcion}
-              </div>
-            </div>
-            <div style={{
-              fontFamily: 'JetBrains Mono, monospace', fontSize: 7,
-              color: agent.modelo === 'haiku' ? '#06b6d4' : agent.modelo === 'sonnet' ? '#8b5cf6' : '#f59e0b',
-              letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0,
-            }}>
-              {agent.modelo}
-            </div>
-          </div>
-        ))}
-      </div>
+  // Tile grid pattern (subtle)
+  ctx.strokeStyle = rgba(wc, 0.15)
+  ctx.lineWidth = 0.5
+  for (let x = tx; x < tx+tw; x++) {
+    ctx.beginPath(); ctx.moveTo(x*T, ty*T); ctx.lineTo(x*T, (ty+th)*T); ctx.stroke()
+  }
+  for (let y = ty; y < ty+th; y++) {
+    ctx.beginPath(); ctx.moveTo(tx*T, y*T); ctx.lineTo((tx+tw)*T, y*T); ctx.stroke()
+  }
 
-      <Link href={`/agents/${deptId}`} style={{
-        display: 'block', textAlign: 'center',
-        padding: '8px', fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        background: rgba(color, 0.15),
-        border: `1px solid ${rgba(color, 0.3)}`,
-        color: color, textDecoration: 'none',
-      }}>
-        ABRIR DEPARTAMENTO →
-      </Link>
-    </div>
-  )
+  // Wall border
+  ctx.strokeStyle = wc
+  ctx.lineWidth = 2.5
+  ctx.strokeRect(tx*T + 1, ty*T + 1, tw*T - 2, th*T - 2)
 }
 
-// ── Activity ticker ──
-function Ticker({ items }: { items: Array<{ agent: string; dept: string; status: string; ts: string }> }) {
-  const ref = useRef<HTMLDivElement>(null)
-  if (!items.length) return null
-
-  return (
-    <div style={{
-      borderTop: '1px solid rgba(255,255,255,0.06)',
-      background: '#050505',
-      padding: '6px 0',
-      overflow: 'hidden',
-    }}>
-      <div ref={ref} style={{
-        display: 'flex', gap: 32,
-        animation: 'tickerScroll 24s linear infinite',
-        whiteSpace: 'nowrap',
-      }}>
-        {[...items, ...items].map((item, i) => (
-          <span key={i} style={{
-            fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
-            color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em',
-          }}>
-            <span style={{ color: '#C6FF3D', marginRight: 6 }}>▸</span>
-            {item.agent}
-            <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>·</span>
-            {item.dept}
-            <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 6px' }}>·</span>
-            <span style={{ color: item.status === 'done' ? '#10b981' : '#ef4444' }}>
-              {item.status.toUpperCase()}
-            </span>
-            <span style={{ color: 'rgba(255,255,255,0.15)', marginLeft: 6 }}>{item.ts}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  )
+function drawDoor(ctx: CanvasRenderingContext2D, px: number, py: number, horiz: boolean) {
+  ctx.fillStyle = '#2a2318'
+  if (horiz) ctx.fillRect(px - 16, py - 1, 32, 3)
+  else       ctx.fillRect(px - 1, py - 16, 3, 32)
 }
 
-// ══ MAIN PAGE ════════════════════════════════════════════════════════════════
+function drawDesk(ctx: CanvasRenderingContext2D, px: number, py: number, color: string) {
+  // desk surface
+  ctx.fillStyle = '#5C4033'
+  ctx.fillRect(px, py, 28, 18)
+  // desk top edge
+  ctx.fillStyle = '#7B5544'
+  ctx.fillRect(px, py, 28, 4)
+  // monitor base
+  ctx.fillStyle = '#1a1a1a'
+  ctx.fillRect(px + 6, py - 12, 16, 10)
+  // monitor screen
+  ctx.fillStyle = rgba(color, 0.4)
+  ctx.fillRect(px + 8, py - 10, 12, 7)
+  // screen glow line
+  ctx.fillStyle = color
+  ctx.fillRect(px + 9, py - 7, 8, 1)
+  // chair
+  ctx.fillStyle = '#333'
+  ctx.fillRect(px + 5, py + 18, 18, 12)
+  ctx.fillStyle = '#444'
+  ctx.fillRect(px + 7, py + 16, 14, 4)
+}
+
+function drawShelf(ctx: CanvasRenderingContext2D, px: number, py: number) {
+  const bookColors = ['#c0392b','#2980b9','#f39c12','#27ae60','#8e44ad','#e67e22']
+  ctx.fillStyle = '#4a3728'
+  ctx.fillRect(px, py, 6, 36)
+  ctx.fillStyle = '#5C4033'
+  ctx.fillRect(px, py, 6, 4)
+  ctx.fillRect(px, py+16, 6, 4)
+  ctx.fillRect(px, py+32, 6, 4)
+  bookColors.forEach((c, i) => {
+    ctx.fillStyle = c
+    ctx.fillRect(px + 1, py + 5 + i * 5, 4, 4)
+  })
+}
+
+function drawPlant(ctx: CanvasRenderingContext2D, px: number, py: number) {
+  // pot
+  ctx.fillStyle = '#8B4513'
+  ctx.fillRect(px + 3, py + 14, 10, 8)
+  ctx.fillStyle = '#A0522D'
+  ctx.fillRect(px + 2, py + 12, 12, 4)
+  // leaves
+  ctx.fillStyle = '#2d5a1b'
+  ctx.fillRect(px + 5, py + 4, 6, 10)
+  ctx.fillStyle = '#3a7a24'
+  ctx.fillRect(px + 1, py + 2, 5, 8)
+  ctx.fillRect(px + 10, py + 2, 5, 8)
+  ctx.fillStyle = '#4a9a2e'
+  ctx.fillRect(px + 3, py, 10, 6)
+}
+
+function drawCharacter(
+  ctx: CanvasRenderingContext2D,
+  px: number, py: number,
+  color: string, frame: number, facing: 'left' | 'right'
+) {
+  const legAnim = Math.sin(frame * 0.2) * 3
+  const flip = facing === 'left'
+
+  ctx.save()
+  if (flip) {
+    ctx.translate(px + 10, py)
+    ctx.scale(-1, 1)
+    ctx.translate(-10, 0)
+  }
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'
+  ctx.beginPath()
+  ctx.ellipse(px + 9, py + 34, 9, 3, 0, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Back leg
+  ctx.fillStyle = '#1a1a2e'
+  ctx.fillRect(px + 9, py + 22, 4, 10 - legAnim)
+
+  // Body / shirt (dept color)
+  ctx.fillStyle = color
+  ctx.fillRect(px + 4, py + 12, 12, 12)
+  // shirt collar
+  ctx.fillStyle = rgba(color, 0.6)
+  ctx.fillRect(px + 7, py + 12, 6, 3)
+
+  // Front leg
+  ctx.fillStyle = '#1a1a2e'
+  ctx.fillRect(px + 5, py + 22, 4, 10 + legAnim)
+
+  // Shoes
+  ctx.fillStyle = '#111'
+  ctx.fillRect(px + 4, py + 30, 6, 4)
+  ctx.fillRect(px + 9, py + 30 + (legAnim > 0 ? -1 : 0), 6, 4)
+
+  // Neck
+  ctx.fillStyle = '#E8B89A'
+  ctx.fillRect(px + 7, py + 9, 6, 4)
+
+  // Head
+  ctx.fillStyle = '#F4C5A0'
+  ctx.fillRect(px + 4, py + 1, 12, 10)
+
+  // Hair
+  ctx.fillStyle = color
+  ctx.fillRect(px + 4, py + 1, 12, 4)
+  // hair side
+  ctx.fillRect(px + 4, py + 4, 2, 3)
+  ctx.fillRect(px + 14, py + 4, 2, 3)
+
+  // Eyes
+  ctx.fillStyle = '#1a1a1a'
+  ctx.fillRect(px + 6, py + 6, 2, 2)
+  ctx.fillRect(px + 11, py + 6, 2, 2)
+
+  // Ear
+  ctx.fillStyle = '#E8B89A'
+  ctx.fillRect(px + 3, py + 5, 2, 3)
+  ctx.fillRect(px + 15, py + 5, 2, 3)
+
+  ctx.restore()
+}
+
+function drawRoomLabel(ctx: CanvasRenderingContext2D, room: RoomDef, status: Status) {
+  const id = room.id as DepartmentId
+  const dept = DEPARTMENTS[id]
+  if (!dept) return
+
+  const cx = (room.tx + room.tw / 2) * T
+  const ty = (room.ty + 0.35) * T
+
+  ctx.font = `bold ${P * 4}px JetBrains Mono, monospace`
+  ctx.textAlign = 'center'
+
+  // Status dot
+  const dotColor = status === 'working' ? dept.color : status === 'done' ? '#10b981' : 'rgba(255,255,255,0.2)'
+  ctx.fillStyle = dotColor
+  ctx.beginPath()
+  ctx.arc(cx - 30, ty, 4, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Label
+  ctx.fillStyle = rgba(dept.color, 0.85)
+  ctx.fillText(`${dept.emoji} ${dept.nombre.toUpperCase()}`, cx, ty + 5)
+}
+
+function drawCerebroLabel(ctx: CanvasRenderingContext2D, room: RoomDef, status: Status) {
+  const cx = (room.tx + room.tw / 2) * T
+  const ty = (room.ty + 0.4) * T
+
+  ctx.font = `bold ${P * 5}px JetBrains Mono, monospace`
+  ctx.textAlign = 'center'
+  ctx.fillStyle = rgba('#8B5CF6', 0.9)
+  ctx.fillText('🧠 CEREBRO — COMMAND CENTER', cx, ty + 6)
+
+  if (status === 'working') {
+    ctx.font = `${P * 3}px JetBrains Mono, monospace`
+    ctx.fillStyle = rgba('#8B5CF6', 0.5)
+    ctx.fillText('PROCESSING...', cx, ty + 22)
+  }
+}
+
+// ─── Main Page Component ─────────────────────────────────────────────────────
 export default function FabricaPage() {
-  const deptIds = Object.keys(DEPARTMENTS) as DepartmentId[]
-  const cerebro = deptIds[0]
-  const rest = deptIds.slice(1)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animRef = useRef<number>(0)
+  const agentsRef = useRef<AgentSprite[]>([])
 
-  const [states, setStates] = useState<Record<DepartmentId, DeptState>>(
-    () => Object.fromEntries(deptIds.map(id => [id, { status: 'idle' as Status, runsToday: 0 }])) as Record<DepartmentId, DeptState>
-  )
+  const [zoom, setZoom] = useState(0.65)
   const [selected, setSelected] = useState<DepartmentId | null>(null)
-  const [ticker, setTicker] = useState<Array<{ agent: string; dept: string; status: string; ts: string }>>([])
-  const [liveMode, setLiveMode] = useState(false)
+  const [statuses, setStatuses] = useState<Record<DepartmentId, Status>>(
+    () => Object.fromEntries(Object.keys(DEPARTMENTS).map(id => [id, 'idle' as Status])) as Record<DepartmentId, Status>
+  )
+  const [runsToday, setRunsToday] = useState(0)
+  const [ticker, setTicker] = useState<string[]>([])
+  const simTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Simulation loop
-  const simRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const scheduleNext = useCallback(() => {
-    const delay = 1800 + Math.random() * 2400
-    simRef.current = setTimeout(() => {
-      const id = deptIds[Math.floor(Math.random() * deptIds.length)]
-      const dept = DEPARTMENTS[id]
-      const agents = NUCLEUS_AGENTS.filter(a => a.depto === id)
-      const agent = agents[Math.floor(Math.random() * agents.length)]
-
-      setStates(prev => ({
-        ...prev,
-        [id]: { ...prev[id], status: 'working', activeAgent: agent?.nombre },
-      }))
-
-      const workDur = 1600 + Math.random() * 2200
-      setTimeout(() => {
-        setStates(prev => ({
-          ...prev,
-          [id]: { ...prev[id], status: 'done', runsToday: prev[id].runsToday + 1, lastRun: new Date().toISOString() },
-        }))
-        setTicker(prev => [{
-          agent: agent?.nombre ?? 'Agente', dept: dept.nombre, status: 'done',
-          ts: new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
-        }, ...prev].slice(0, 20))
-        setTimeout(() => {
-          setStates(prev => ({ ...prev, [id]: { ...prev[id], status: 'idle' } }))
-          scheduleNext()
-        }, 2000)
-      }, workDur)
-    }, delay)
-  }, [deptIds])
-
+  // ── Init agents ────────────────────────────────────────────────────────────
   useEffect(() => {
-    scheduleNext()
-    return () => { if (simRef.current) clearTimeout(simRef.current) }
-  }, [scheduleNext])
-
-  // Live data fetch
-  const fetchLive = useCallback(async () => {
-    try {
-      const res = await fetch('/api/agents/status')
-      if (!res.ok) return
-      const { runs } = await res.json()
-      if (!runs?.length) return
-      setLiveMode(true)
-      const byDept: Record<string, DeptState> = {}
-      for (const run of runs) {
-        if (!byDept[run.department]) {
-          byDept[run.department] = { status: 'done', runsToday: 0 }
-        }
-        byDept[run.department].runsToday++
-        if (run.status === 'running') byDept[run.department].status = 'working'
-      }
-      setStates(prev => {
-        const next = { ...prev }
-        for (const [id, s] of Object.entries(byDept)) {
-          if (next[id as DepartmentId]) {
-            next[id as DepartmentId] = { ...next[id as DepartmentId], ...s }
-          }
-        }
-        return next
+    const agents: AgentSprite[] = []
+    ROOMS.forEach(room => {
+      const id = room.id as DepartmentId
+      if (!DEPARTMENTS[id]) return
+      const dept = DEPARTMENTS[id]
+      const deptAgents = NUCLEUS_AGENTS.filter(a => a.depto === id).slice(0, 5)
+      deptAgents.forEach((agent, i) => {
+        const baseX = (room.tx + 1) * T + (i % 3) * 85 + 20
+        const baseY = (room.ty + 2) * T + Math.floor(i / 3) * 85 + 40
+        agents.push({
+          id: agent.id, name: agent.nombre,
+          deptId: id, color: dept.color,
+          x: baseX, y: baseY, tx: baseX, ty: baseY,
+          animFrame: Math.random() * 100,
+          speed: 0.6 + Math.random() * 0.4,
+          wanderTimer: Math.random() * 120,
+        })
       })
-    } catch {}
+    })
+    agentsRef.current = agents
+  }, [])
+
+  // ── Simulation loop ────────────────────────────────────────────────────────
+  const scheduleNext = useCallback(() => {
+    const delay = 2000 + Math.random() * 3000
+    simTimerRef.current = setTimeout(() => {
+      const deptIds = Object.keys(DEPARTMENTS) as DepartmentId[]
+      const id = deptIds[Math.floor(Math.random() * deptIds.length)]
+      const deptAgents = NUCLEUS_AGENTS.filter(a => a.depto === id)
+      const agent = deptAgents[Math.floor(Math.random() * deptAgents.length)]
+
+      setStatuses(prev => ({ ...prev, [id]: 'working' }))
+      setTicker(prev => [`${DEPARTMENTS[id].emoji} ${agent?.nombre ?? 'Agente'} (${DEPARTMENTS[id].nombre})`, ...prev].slice(0, 12))
+
+      setTimeout(() => {
+        setStatuses(prev => ({ ...prev, [id]: 'done' }))
+        setRunsToday(r => r + 1)
+        setTimeout(() => {
+          setStatuses(prev => ({ ...prev, [id]: 'idle' }))
+          scheduleNext()
+        }, 2500)
+      }, 1800 + Math.random() * 2200)
+    }, delay)
   }, [])
 
   useEffect(() => {
-    fetchLive()
-    const iv = setInterval(fetchLive, 8000)
-    return () => clearInterval(iv)
-  }, [fetchLive])
+    scheduleNext()
+    return () => { if (simTimerRef.current) clearTimeout(simTimerRef.current) }
+  }, [scheduleNext])
 
-  const totalAgents = NUCLEUS_AGENTS.length
-  const activeNow = deptIds.filter(id => states[id].status === 'working').length
-  const runsToday = deptIds.reduce((s, id) => s + states[id].runsToday, 0)
+  // ── Canvas render loop ────────────────────────────────────────────────────
+  const renderFrame = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.imageSmoothingEnabled = false
+
+    // Background
+    ctx.fillStyle = '#070707'
+    ctx.fillRect(0, 0, MAP_W * T, MAP_H * T)
+
+    // Draw outer building shadow
+    ctx.fillStyle = '#0d0d0d'
+    ctx.fillRect(T, T, 48*T, 50*T)
+
+    // Draw rooms (floors + walls)
+    ROOMS.forEach(room => {
+      if (room.id === 'corridor' && room.tw === 0) return // vertical wall marker
+      drawFloor(ctx, room)
+    })
+
+    // Draw door openings (where rooms connect to corridors)
+    // Doors between Cerebro and corridor below
+    drawDoor(ctx, 6*T, 9*T, true)
+    drawDoor(ctx, 18*T, 9*T, true)
+    drawDoor(ctx, 30*T, 9*T, true)
+    drawDoor(ctx, 42*T, 9*T, true)
+    // Doors between row 1 and corridor
+    drawDoor(ctx, 6*T, 22*T, true)
+    drawDoor(ctx, 18*T, 22*T, true)
+    drawDoor(ctx, 30*T, 22*T, true)
+    drawDoor(ctx, 42*T, 22*T, true)
+    // Doors between row 2 and corridor
+    drawDoor(ctx, 6*T, 35*T, true)
+    drawDoor(ctx, 18*T, 35*T, true)
+    drawDoor(ctx, 30*T, 35*T, true)
+    drawDoor(ctx, 42*T, 35*T, true)
+
+    // Draw furniture per room
+    ROOMS.forEach(room => {
+      const id = room.id as DepartmentId
+      const dept = DEPARTMENTS[id]
+      if (!dept) return
+
+      const color = dept.color
+      const rx = room.tx * T
+      const ry = room.ty * T
+
+      // Bookshelves on left wall
+      drawShelf(ctx, rx + 4, ry + T * 2)
+      drawShelf(ctx, rx + 4, ry + T * 4.5)
+
+      // 2-3 desks per room
+      const deskY = room.id === 'cerebro' ? ry + T * 3 : ry + T * 4
+      drawDesk(ctx, rx + T * 1.5, deskY, color)
+      drawDesk(ctx, rx + T * 4, deskY, color)
+      if (room.tw > 8) drawDesk(ctx, rx + T * 6.5, deskY, color)
+
+      // Plants in corners
+      drawPlant(ctx, rx + room.tw * T - 28, ry + room.th * T - 36)
+      if (room.tw > 10) drawPlant(ctx, rx + room.tw * T - 28, ry + T * 2)
+    })
+
+    // Update and draw agents
+    const agents = agentsRef.current
+    agents.forEach(agent => {
+      // Update position toward target
+      const dx = agent.tx - agent.x
+      const dy = agent.ty - agent.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist > 2) {
+        agent.x += (dx / dist) * agent.speed * 1.5
+        agent.y += (dy / dist) * agent.speed * 1.5
+        agent.animFrame++
+      }
+
+      // Wander: pick new target within room
+      agent.wanderTimer--
+      if (agent.wanderTimer <= 0 || dist < 2) {
+        const room = ROOMS.find(r => r.id === agent.deptId)
+        if (room) {
+          agent.tx = (room.tx + 1.5 + Math.random() * (room.tw - 3)) * T
+          agent.ty = (room.ty + 3.5 + Math.random() * (room.th - 5)) * T
+        }
+        agent.wanderTimer = 60 + Math.random() * 180
+      }
+
+      const status = statuses[agent.deptId]
+      const facing = agent.tx < agent.x ? 'left' : 'right'
+      drawCharacter(ctx, agent.x - 9, agent.y - 17, agent.color, agent.animFrame, facing)
+
+      // Name tag when working
+      if (status === 'working') {
+        ctx.font = `${P * 3}px JetBrains Mono, monospace`
+        ctx.textAlign = 'center'
+        ctx.fillStyle = 'rgba(0,0,0,0.7)'
+        ctx.fillRect(agent.x - 28, agent.y - 30, 56, 12)
+        ctx.fillStyle = agent.color
+        ctx.fillText(agent.name.slice(0, 12), agent.x, agent.y - 20)
+      }
+    })
+
+    // Draw room labels (on top of everything)
+    ROOMS.forEach(room => {
+      const id = room.id as DepartmentId
+      if (!DEPARTMENTS[id]) return
+      const status = statuses[id] ?? 'idle'
+      if (id === 'cerebro') drawCerebroLabel(ctx, room, status)
+      else drawRoomLabel(ctx, room, status)
+    })
+
+    // Highlight selected room
+    if (selected) {
+      const room = ROOMS.find(r => r.id === selected)
+      if (room) {
+        const dept = DEPARTMENTS[selected]
+        ctx.strokeStyle = dept.color
+        ctx.lineWidth = 3
+        ctx.strokeRect(room.tx * T + 2, room.ty * T + 2, room.tw * T - 4, room.th * T - 4)
+        // Glow
+        ctx.shadowColor = dept.color
+        ctx.shadowBlur = 16
+        ctx.strokeRect(room.tx * T + 2, room.ty * T + 2, room.tw * T - 4, room.th * T - 4)
+        ctx.shadowBlur = 0
+      }
+    }
+
+    animRef.current = requestAnimationFrame(renderFrame)
+  }, [statuses, selected])
+
+  useEffect(() => {
+    animRef.current = requestAnimationFrame(renderFrame)
+    return () => cancelAnimationFrame(animRef.current)
+  }, [renderFrame])
+
+  // ── Click detection ────────────────────────────────────────────────────────
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const tx = Math.floor((e.clientX - rect.left) / (T * zoom))
+    const ty = Math.floor((e.clientY - rect.top) / (T * zoom))
+
+    const hit = ROOMS.find(r =>
+      r.id !== 'corridor' && r.id !== 'meeting' && r.id !== 'kitchen' && r.tw > 0 &&
+      tx >= r.tx && tx < r.tx + r.tw && ty >= r.ty && ty < r.ty + r.th
+    )
+    setSelected(hit?.id === selected ? null : (hit?.id as DepartmentId) ?? null)
+  }, [zoom, selected])
+
+  const activeNow = (Object.entries(statuses) as [DepartmentId, Status][]).filter(([,s]) => s === 'working').length
+
+  const selectedDept = selected ? DEPARTMENTS[selected] : null
+  const selectedAgents = selected ? NUCLEUS_AGENTS.filter(a => a.depto === selected) : []
 
   return (
-    <div style={{ background: '#070707', minHeight: '100vh', color: '#fff' }}>
-      <style>{`
-        @keyframes agW0 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(10px,5px)} 66%{transform:translate(-5px,9px)} }
-        @keyframes agW1 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(-8px,4px)} 66%{transform:translate(9px,-5px)} }
-        @keyframes agW2 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(5px,-8px)} 66%{transform:translate(-9px,3px)} }
-        @keyframes legL { 0%,100%{height:3px} 50%{height:5px} }
-        @keyframes legR { 0%,100%{height:5px} 50%{height:3px} }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-      `}</style>
+    <div style={{ background: '#070707', minHeight: '100vh', display: 'flex', flexDirection: 'column', color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>
 
       {/* ── Header ── */}
       <div style={{
-        padding: '10px 20px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex', alignItems: 'center', gap: 16,
-        fontFamily: 'JetBrains Mono, monospace',
+        padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
       }}>
-        <Link href="/dashboard" style={{
-          color: 'rgba(255,255,255,0.3)', textDecoration: 'none',
-          fontSize: 9, letterSpacing: '0.1em',
-        }}>← PANEL</Link>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: '#C6FF3D',
-            boxShadow: '0 0 8px #C6FF3D',
-            animation: 'blink 2s ease-in-out infinite',
-          }} />
-          <span style={{
-            fontSize: 11, fontWeight: 700, letterSpacing: '0.14em',
-            textTransform: 'uppercase', color: '#C6FF3D',
-          }}>
-            DIVINIA FACTORY
-          </span>
-          <span style={{
-            fontSize: 8, color: 'rgba(255,255,255,0.3)',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            padding: '2px 6px',
-          }}>
-            {liveMode ? 'LIVE' : 'SIM'}
-          </span>
-        </div>
-
+        <Link href="/dashboard" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none', fontSize: 9, letterSpacing: '0.1em' }}>← PANEL</Link>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C6FF3D', boxShadow: '0 0 8px #C6FF3D' }} />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#C6FF3D' }}>DIVINIA FACTORY</span>
+        <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 6px' }}>SIM</span>
         <div style={{ flex: 1 }} />
-
-        {/* Stats */}
         {[
-          { val: 12, label: 'DEPTOS' },
-          { val: totalAgents, label: 'AGENTES' },
-          { val: activeNow, label: 'ACTIVOS', accent: activeNow > 0 },
-          { val: runsToday, label: 'RUNS HOY' },
+          { v: 12, l: 'DEPTOS' }, { v: NUCLEUS_AGENTS.length, l: 'AGENTES' },
+          { v: activeNow, l: 'ACTIVOS', lime: activeNow > 0 }, { v: runsToday, l: 'RUNS HOY' },
         ].map(s => (
-          <div key={s.label} style={{ textAlign: 'center' }}>
-            <div style={{
-              fontSize: 18, fontWeight: 700, lineHeight: 1,
-              color: s.accent ? '#C6FF3D' : '#fff',
-              textShadow: s.accent ? '0 0 12px #C6FF3D' : 'none',
-            }}>{s.val}</div>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em' }}>{s.label}</div>
+          <div key={s.l} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: s.lime ? '#C6FF3D' : '#fff', textShadow: s.lime ? '0 0 10px #C6FF3D' : 'none' }}>{s.v}</div>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>{s.l}</div>
           </div>
         ))}
+        {/* Zoom controls */}
+        <div style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
+          {[['−', -0.1], ['+', 0.1]].map(([label, delta]) => (
+            <button key={String(label)} onClick={() => setZoom(z => Math.min(1.4, Math.max(0.35, z + Number(delta))))}
+              style={{ width: 24, height: 24, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {label}
+            </button>
+          ))}
+          <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', alignSelf: 'center', marginLeft: 4 }}>{Math.round(zoom * 100)}%</span>
+        </div>
       </div>
 
-      {/* ── Building map ── */}
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* ── Main area: canvas + side panel ── */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* Cerebro — full width command center */}
-        <PixelRoom
-          deptId={cerebro}
-          state={states[cerebro]}
-          isSelected={selected === cerebro}
-          onClick={() => setSelected(selected === cerebro ? null : cerebro)}
-          isCerebro
-        />
-
-        {/* Connector lines */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 0,
-          height: 12,
-          padding: '0 25%',
-        }}>
-          {[0,1,2,3].map(i => (
-            <div key={i} style={{
-              width: 1, height: '100%', background: 'rgba(255,255,255,0.08)',
-              margin: '0 auto',
-            }} />
-          ))}
+        {/* Canvas viewport */}
+        <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+          <canvas
+            ref={canvasRef}
+            width={MAP_W * T}
+            height={MAP_H * T}
+            onClick={handleCanvasClick}
+            style={{
+              display: 'block',
+              width: MAP_W * T * zoom,
+              height: MAP_H * T * zoom,
+              imageRendering: 'pixelated',
+              cursor: 'crosshair',
+            }}
+          />
         </div>
 
-        {/* Grid + side panel */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
+        {/* Side detail panel */}
+        {selectedDept && (
           <div style={{
-            flex: 1,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 4,
+            width: 260, flexShrink: 0,
+            background: '#0a0a0a',
+            borderLeft: `2px solid ${selectedDept.color}`,
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
           }}>
-            {rest.map(id => (
-              <PixelRoom
-                key={id}
-                deptId={id}
-                state={states[id]}
-                isSelected={selected === id}
-                onClick={() => setSelected(selected === id ? null : id)}
-              />
-            ))}
-          </div>
-
-          {/* Side detail panel */}
-          {selected && (
-            <div style={{ width: 260, flexShrink: 0 }}>
-              <DetailPanel
-                deptId={selected}
-                state={states[selected]}
-                onClose={() => setSelected(null)}
-              />
+            {/* Panel header */}
+            <div style={{
+              padding: '12px 14px 10px',
+              background: rgba(selectedDept.color, 0.1),
+              borderBottom: `1px solid ${rgba(selectedDept.color, 0.2)}`,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+            }}>
+              <div>
+                <div style={{ fontSize: 16, marginBottom: 3 }}>{selectedDept.emoji}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: selectedDept.color, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  {selectedDept.nombre}
+                </div>
+                <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', marginTop: 2, letterSpacing: '0.06em' }}>
+                  {selectedDept.modelo_base.toUpperCase()} · {selectedAgents.length} AGENTES
+                </div>
+              </div>
+              <button onClick={() => setSelected(null)} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'rgba(255,255,255,0.3)', fontSize: 11, padding: 0,
+              }}>[ X ]</button>
             </div>
-          )}
-        </div>
+
+            {/* Misión */}
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65, letterSpacing: '0.03em' }}>
+                {selectedDept.mision}
+              </p>
+            </div>
+
+            {/* Agent list */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {selectedAgents.map(agent => (
+                <div key={agent.id} style={{
+                  padding: '6px 8px',
+                  background: rgba(selectedDept.color, 0.07),
+                  border: `1px solid ${rgba(selectedDept.color, 0.12)}`,
+                  display: 'flex', alignItems: 'flex-start', gap: 7,
+                }}>
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>{agent.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.04em' }}>
+                      {agent.nombre}
+                    </div>
+                    <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {agent.funcion}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 7, flexShrink: 0, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    color: agent.modelo === 'haiku' ? '#06b6d4' : agent.modelo === 'sonnet' ? '#8b5cf6' : '#f59e0b',
+                  }}>{agent.modelo}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ padding: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <Link href={`/agents/${selected}`} style={{
+                display: 'block', textAlign: 'center', padding: '8px',
+                background: rgba(selectedDept.color, 0.15),
+                border: `1px solid ${rgba(selectedDept.color, 0.3)}`,
+                color: selectedDept.color, textDecoration: 'none',
+                fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+              }}>
+                ABRIR DEPARTAMENTO →
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Activity ticker ── */}
-      <Ticker items={ticker} />
-
-      {/* ── Floor label ── */}
-      <div style={{
-        textAlign: 'center', padding: '8px',
-        fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 8, color: 'rgba(255,255,255,0.1)',
-        letterSpacing: '0.12em', textTransform: 'uppercase',
-        borderTop: '1px solid rgba(255,255,255,0.04)',
-      }}>
-        DIVINIA NUCLEUS v1 · {deptIds.length} departamentos · {totalAgents} agentes IA
-      </div>
+      {ticker.length > 0 && (
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          background: '#050505', padding: '5px 0', overflow: 'hidden', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', gap: 28, animation: 'tickerScroll 20s linear infinite', whiteSpace: 'nowrap' }}>
+            {[...ticker, ...ticker].map((t, i) => (
+              <span key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
+                <span style={{ color: '#C6FF3D', marginRight: 6 }}>▸</span>{t}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
     </div>
   )
 }
