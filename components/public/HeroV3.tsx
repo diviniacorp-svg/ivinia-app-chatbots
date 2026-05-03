@@ -306,6 +306,7 @@ export default function HeroV3() {
             ref={scrollRef}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
+            className="hero-pills-scroll"
             style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}
           >
             {RUBROS.map((r, idx) =>
@@ -415,7 +416,7 @@ export default function HeroV3() {
               colorDeep="#E8440A"
               shade="rgba(80,20,0,0.4)"
               float
-              style={{ position: 'absolute', right: 60, top: 20, zIndex: 3 }}
+              style={{ position: 'absolute', right: 60, top: 20, zIndex: 1 }}
               delay="0.8s"
             />
             <div style={{
@@ -443,10 +444,6 @@ export default function HeroV3() {
         </div>
       </div>
 
-      <style>{`
-        @keyframes pillProgress { from { width: 0%; } to { width: 100%; } }
-        div[style*="scrollbar-width: none"]::-webkit-scrollbar { display: none; }
-      `}</style>
     </section>
   )
 }

@@ -195,7 +195,7 @@ export default function PricingV3() {
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
                 {['Chatbot IA en tu web y WA', 'Panel de reservas + agenda', 'Agentes IA personalizados', 'Integraciones a medida', 'Soporte dedicado'].map(f => (
                   <span key={f} style={{ fontFamily: 'var(--f-display)', fontSize: 12, color: 'var(--muted-2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ color: '#A78BFA' }}>✓</span> {f}
+                    <span style={{ color: '#A78BFA' }}>✓</span>{' ' + f}
                   </span>
                 ))}
               </div>
