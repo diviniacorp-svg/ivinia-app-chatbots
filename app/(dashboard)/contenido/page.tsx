@@ -100,6 +100,8 @@ export default function ContenidoPage() {
   const [clientStats, setClientStats] = useState<Record<string, ClientStats>>({})
   const [generating, setGenerating] = useState<string | null>(null)
   const [genResult, setGenResult] = useState<Record<string, string>>({})
+  const [generatingImages, setGeneratingImages] = useState<string | null>(null)
+  const [imgResult, setImgResult] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (tab === 'clientes') {
@@ -121,6 +123,33 @@ export default function ContenidoPage() {
         .catch(() => setLoadingClients(false))
     }
   }, [tab])
+
+  async function generarImagenes(client: ClientRow) {
+    setGeneratingImages(client.id)
+    setImgResult(prev => ({ ...prev, [client.id]: '' }))
+    try {
+      const res = await fetch('/api/content-factory/generate-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: client.id }),
+      })
+      const d = await res.json()
+      if (d.ok) {
+        setImgResult(prev => ({ ...prev, [client.id]: `✓ ${d.successful}/${d.total} imágenes` }))
+        // Recargar stats
+        fetch(`/api/content-factory/client?client_id=${client.id}`)
+          .then(r => r.json())
+          .then(s => setClientStats(prev => ({ ...prev, [client.id]: s })))
+          .catch(() => {})
+      } else {
+        setImgResult(prev => ({ ...prev, [client.id]: `Error: ${d.error}` }))
+      }
+    } catch {
+      setImgResult(prev => ({ ...prev, [client.id]: 'Error de conexión' }))
+    } finally {
+      setGeneratingImages(null)
+    }
+  }
 
   async function generarMes(client: ClientRow) {
     setGenerating(client.id)
@@ -341,6 +370,11 @@ export default function ContenidoPage() {
                         {result}
                       </span>
                     )}
+                    {imgResult[client.id] && (
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: imgResult[client.id].startsWith('✓') ? '#7C3AED' : '#DC2626' }}>
+                        {imgResult[client.id]}
+                      </span>
+                    )}
                     {hasContent && (
                       <a href={`/contenido/${client.id}`} target="_blank" style={{
                         padding: '7px 14px', borderRadius: 8, border: `1px solid ${LINE}`,
@@ -348,6 +382,23 @@ export default function ContenidoPage() {
                       }}>
                         Ver panel cliente ↗
                       </a>
+                    )}
+                    {hasContent && (
+                      <button
+                        onClick={() => generarImagenes(client)}
+                        disabled={generatingImages === client.id}
+                        style={{
+                          padding: '7px 14px', borderRadius: 8,
+                          cursor: generatingImages === client.id ? 'wait' : 'pointer',
+                          background: generatingImages === client.id ? LINE : '#F3E8FF',
+                          color: '#7C3AED', border: '1px solid #DDD6FE',
+                          fontFamily: 'var(--f-mono)', fontSize: 9, fontWeight: 700,
+                          letterSpacing: '0.06em', textTransform: 'uppercase',
+                          opacity: generatingImages === client.id ? 0.6 : 1,
+                        }}
+                      >
+                        {generatingImages === client.id ? 'Generando…' : 'Imágenes Freepik'}
+                      </button>
                     )}
                     <button
                       onClick={() => generarMes(client)}
