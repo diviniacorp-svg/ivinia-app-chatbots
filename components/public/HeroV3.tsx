@@ -223,8 +223,8 @@ export default function HeroV3() {
             lineHeight: 1.55,
             margin: '0 auto 40px',
           }}>
-            <span style={{ color: 'rgba(0,0,0,0.8)' }}>Cero WhatsApps a medianoche para pedir turno.</span>{' '}
-            Cero no-shows. Cero redes sin actualizar.{' '}
+            <span style={{ color: 'rgba(0,0,0,0.8)' }}>Cero WhatsApps a medianoche para pedir turno.</span>
+            {' Cero no-shows. Cero redes sin actualizar. '}
             <span style={{ color: 'rgba(0,0,0,0.8)' }}>Tu negocio, funcionando solo — desde esta semana.</span>
           </p>
 
@@ -368,8 +368,8 @@ export default function HeroV3() {
             >
               {rubroActivo.headline.split(' ').map((word, i, arr) =>
                 i === arr.length - 1
-                  ? <em key={i} style={{ color: 'var(--lime)' }}> {word}</em>
-                  : <span key={i}>{i === 0 ? '' : ' '}{word}</span>
+                  ? <em key={i} style={{ color: 'var(--lime)' }}>{' ' + word}</em>
+                  : <span key={i}>{(i === 0 ? '' : ' ') + word}</span>
               )}
             </h2>
 
@@ -393,7 +393,7 @@ export default function HeroV3() {
               letterSpacing: '0.1em', textTransform: 'uppercase',
               color: 'rgba(0,0,0,0.55)', transition: 'border-color 0.2s, color 0.2s',
             }}>
-              ⚡ Quiero esto para mi {rubroActivo.label.toLowerCase()} →
+              {`⚡ Quiero esto para mi ${rubroActivo.label.toLowerCase()} →`}
             </a>
           </div>
 
