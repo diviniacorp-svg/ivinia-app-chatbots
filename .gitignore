@@ -10,3 +10,4 @@ out/
 npm-debug.log*
 logs/
 tmp/
+.playwright-profile/

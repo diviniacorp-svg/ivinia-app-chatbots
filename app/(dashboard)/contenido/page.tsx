@@ -42,11 +42,29 @@ const PLAN_SEMANAL = [
 ]
 
 const TABS = [
+  { id: 'clientes',   n: '0', label: 'Clientes',   desc: 'Content Factory por cliente' },
   { id: 'estrategia', n: '1', label: 'Estrategia', desc: 'Pilares y mix 40/30/20/10' },
   { id: 'crear',      n: '2', label: 'Crear',      desc: 'IA genera caption + visual' },
   { id: 'feed',       n: '3', label: 'Feed',       desc: 'Posts y estados' },
   { id: 'metricas',   n: '4', label: 'Métricas',   desc: 'Qué funciona' },
 ]
+
+type ClientRow = {
+  id: string
+  company_name: string
+  rubro: string
+  phone: string
+  plan: string
+  estado: string
+}
+
+type ClientStats = {
+  total: number
+  aprobados: number
+  pendientes: number
+  con_cambios: number
+  mes: string
+}
 
 type Post = {
   id: string
@@ -70,11 +88,70 @@ const PILAR_COLOR: Record<string, string> = {
 }
 
 export default function ContenidoPage() {
-  const [tab, setTab] = useState('estrategia')
+  const [tab, setTab] = useState('clientes')
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingPosts, setLoadingPosts] = useState(false)
   const [statusFilter, setStatusFilter] = useState('todos')
   const [expandedPost, setExpandedPost] = useState<string | null>(null)
+
+  // Content Factory por cliente
+  const [clients, setClients] = useState<ClientRow[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
+  const [clientStats, setClientStats] = useState<Record<string, ClientStats>>({})
+  const [generating, setGenerating] = useState<string | null>(null)
+  const [genResult, setGenResult] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (tab === 'clientes') {
+      setLoadingClients(true)
+      fetch('/api/clients')
+        .then(r => r.json())
+        .then(d => {
+          const list: ClientRow[] = (d.clients ?? []).filter((c: ClientRow) => c.estado === 'activo' || c.plan !== 'trial')
+          setClients(list)
+          setLoadingClients(false)
+          // Cargar stats de cada cliente en paralelo
+          list.forEach(c => {
+            fetch(`/api/content-factory/client?client_id=${c.id}`)
+              .then(r => r.json())
+              .then(s => setClientStats(prev => ({ ...prev, [c.id]: s })))
+              .catch(() => {})
+          })
+        })
+        .catch(() => setLoadingClients(false))
+    }
+  }, [tab])
+
+  async function generarMes(client: ClientRow) {
+    setGenerating(client.id)
+    setGenResult(prev => ({ ...prev, [client.id]: '' }))
+    try {
+      const res = await fetch('/api/content-factory/client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: client.id,
+          business_name: client.company_name,
+          rubro: client.rubro,
+        }),
+      })
+      const d = await res.json()
+      if (d.ok) {
+        setGenResult(prev => ({ ...prev, [client.id]: `✓ ${d.posts_generados} posts generados` }))
+        // Recargar stats
+        fetch(`/api/content-factory/client?client_id=${client.id}`)
+          .then(r => r.json())
+          .then(s => setClientStats(prev => ({ ...prev, [client.id]: s })))
+          .catch(() => {})
+      } else {
+        setGenResult(prev => ({ ...prev, [client.id]: `Error: ${d.error}` }))
+      }
+    } catch {
+      setGenResult(prev => ({ ...prev, [client.id]: 'Error de conexión' }))
+    } finally {
+      setGenerating(null)
+    }
+  }
 
   useEffect(() => {
     if (tab === 'feed' || tab === 'metricas') {
@@ -165,6 +242,143 @@ export default function ContenidoPage() {
           ))}
         </div>
       </div>
+
+      {/* ── Tab 0: Content Factory por cliente ───────────────────────── */}
+      {tab === 'clientes' && (
+        <div style={{ padding: '28px 28px 60px', maxWidth: 900 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <div>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, marginBottom: 4 }}>
+                CONTENT FACTORY — {new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }).toUpperCase()}
+              </p>
+              <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 20, fontWeight: 800, margin: 0 }}>
+                Contenido por cliente
+              </h2>
+            </div>
+            <div style={{ background: '#F0FFF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--f-mono)', fontSize: 10, color: '#16A34A' }}>
+              $80.000–$150.000/mes por cliente
+            </div>
+          </div>
+
+          {loadingClients && (
+            <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: 11, color: MUTED }}>
+              Cargando clientes…
+            </div>
+          )}
+
+          {!loadingClients && clients.length === 0 && (
+            <div style={{ background: '#fff', borderRadius: 12, border: `1px solid ${LINE}`, padding: '32px 24px', textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--f-display)', fontSize: 15, color: MUTED, marginBottom: 12 }}>
+                No hay clientes activos todavía.
+              </p>
+              <a href="/clientes" style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: '#2563EB' }}>
+                Ir a Clientes →
+              </a>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {clients.map(client => {
+              const stats = clientStats[client.id]
+              const isGen = generating === client.id
+              const result = genResult[client.id]
+              const allApproved = stats && stats.total > 0 && stats.aprobados === stats.total
+              const hasContent = stats && stats.total > 0
+
+              return (
+                <div key={client.id} style={{
+                  background: '#fff', borderRadius: 14,
+                  border: `1px solid ${allApproved ? '#BBF7D0' : LINE}`,
+                  padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap',
+                }}>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontFamily: 'var(--f-display)', fontSize: 15, fontWeight: 700 }}>
+                        {client.company_name}
+                      </span>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', background: `${LIME}30`, color: '#3F3F46', borderRadius: 4, padding: '2px 7px' }}>
+                        {client.rubro}
+                      </span>
+                    </div>
+                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: MUTED }}>
+                      {client.plan} · {client.phone || 'sin teléfono'}
+                    </span>
+                  </div>
+
+                  {/* Stats del mes */}
+                  {hasContent ? (
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 18, fontWeight: 700, color: INK }}>{stats.total}</div>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>total</div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 18, fontWeight: 700, color: '#16A34A' }}>{stats.aprobados}</div>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>aprobados</div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 18, fontWeight: 700, color: stats.pendientes > 0 ? '#D97706' : MUTED }}>{stats.pendientes}</div>
+                        <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>pendientes</div>
+                      </div>
+                      {stats.con_cambios > 0 && (
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 18, fontWeight: 700, color: '#DC2626' }}>{stats.con_cambios}</div>
+                          <div style={{ fontFamily: 'var(--f-mono)', fontSize: 8, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>con cambios</div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: MUTED }}>
+                      Sin contenido este mes
+                    </div>
+                  )}
+
+                  {/* Acciones */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {result && (
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: result.startsWith('✓') ? '#16A34A' : '#DC2626' }}>
+                        {result}
+                      </span>
+                    )}
+                    {hasContent && (
+                      <a href={`/contenido/${client.id}`} target="_blank" style={{
+                        padding: '7px 14px', borderRadius: 8, border: `1px solid ${LINE}`,
+                        fontFamily: 'var(--f-mono)', fontSize: 9, textDecoration: 'none', color: INK,
+                      }}>
+                        Ver panel cliente ↗
+                      </a>
+                    )}
+                    <button
+                      onClick={() => generarMes(client)}
+                      disabled={isGen}
+                      style={{
+                        padding: '7px 16px', borderRadius: 8, cursor: isGen ? 'wait' : 'pointer',
+                        background: isGen ? LINE : LIME, color: INK, border: 'none',
+                        fontFamily: 'var(--f-mono)', fontSize: 9, fontWeight: 700,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        opacity: isGen ? 0.6 : 1,
+                      }}
+                    >
+                      {isGen ? 'Generando…' : hasContent ? 'Regenerar mes' : 'Generar mes'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Instrucción SQL si la tabla no existe */}
+          <div style={{ marginTop: 32, background: '#F8F7F4', borderRadius: 12, border: `1px solid ${LINE}`, padding: '18px 22px' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, marginBottom: 8 }}>
+              Setup inicial — correr en Supabase SQL Editor si es la primera vez
+            </p>
+            <code style={{ fontFamily: 'var(--f-mono)', fontSize: 10, color: '#52525B', display: 'block', whiteSpace: 'pre-wrap' }}>
+              {`-- Ejecutar: C:/divinia/supabase-content-factory.sql`}
+            </code>
+          </div>
+        </div>
+      )}
 
       {/* ── Tab 1: Estrategia ─────────────────────────────────────────── */}
       {tab === 'estrategia' && (
