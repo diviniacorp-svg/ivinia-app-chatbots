@@ -6,12 +6,24 @@ export const dynamic = 'force-dynamic'
 
 async function getClientBySlug(slug: string) {
   const db = createAdminClient()
-  const { data } = await db
+
+  // Try chatbot_id first (exact match)
+  const { data: byId } = await db
     .from('clients')
     .select('id, company_name, custom_config, chatbot_id')
-    .or(`chatbot_id.eq.${slug},custom_config->>nucleus_slug.eq.${slug}`)
-    .single()
-  return data
+    .eq('chatbot_id', slug)
+    .maybeSingle()
+
+  if (byId) return byId
+
+  // Fallback: match nucleus_slug inside custom_config JSONB
+  const { data: bySlug } = await db
+    .from('clients')
+    .select('id, company_name, custom_config, chatbot_id')
+    .filter('custom_config->>nucleus_slug', 'eq', slug)
+    .maybeSingle()
+
+  return bySlug
 }
 
 export default async function NucleusAdminPage({ params }: { params: { slug: string } }) {

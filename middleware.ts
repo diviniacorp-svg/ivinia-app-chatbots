@@ -48,6 +48,14 @@ const PUBLIC_API_EXCEPTIONS = [
   '/api/cron',               // cron jobs — auth via CRON_SECRET interno
   '/api/content/publish-all', // publish manual — auth via CRON_SECRET interno
   '/api/seed/demo-rufina',   // seed del turnero demo — upsert idempotente, sin datos sensibles
+  '/api/seed/demo-celulab', // seed CeluLab — upsert idempotente, sin datos sensibles
+  '/api/celulab',            // panel privado CeluLab — auth via PIN propio
+]
+
+// Rutas dentro de /market/ que son públicas (no requieren login de DIVINIA)
+const PUBLIC_MARKET_ROUTES = [
+  '/market/celulab',    // landing pública de precios CeluLab
+  '/market/nucleus/',   // paneles privados NUCLEUS (tienen su propio PIN)
 ]
 
 // Para proposals: el GET de una propuesta específica es público (link compartido)
@@ -94,9 +102,11 @@ export async function middleware(request: NextRequest) {
   const secret = validSecret || 'DiViNiA2050'
   const token = await sessionToken(secret)
 
-  const isAdminRoute =
+  const isPublicMarketRoute = PUBLIC_MARKET_ROUTES.some(r => pathname === r || pathname.startsWith(r))
+  const isAdminRoute = !isPublicMarketRoute && (
     ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/')) ||
     ADMIN_EXACT_ROUTES.some(r => pathname === r)
+  )
 
   if (isAdminRoute) {
     const session = request.cookies.get('divinia_session')?.value
@@ -215,5 +225,7 @@ export const config = {
     '/api/nucleo/:path*',
     '/api/social',
     '/api/social/:path*',
+    '/api/celulab',
+    '/api/celulab/:path*',
   ],
 }
