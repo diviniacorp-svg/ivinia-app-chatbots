@@ -291,7 +291,7 @@ export default function FabricaPage() {
   const animRef = useRef<number>(0)
   const agentsRef = useRef<AgentSprite[]>([])
 
-  const [zoom, setZoom] = useState(0.65)
+  const [zoom, setZoom] = useState(0.48)
   const [selected, setSelected] = useState<DepartmentId | null>(null)
   const [statuses, setStatuses] = useState<Record<DepartmentId, Status>>(
     () => Object.fromEntries(Object.keys(DEPARTMENTS).map(id => [id, 'idle' as Status])) as Record<DepartmentId, Status>
@@ -365,15 +365,24 @@ export default function FabricaPage() {
     ctx.fillStyle = '#070707'
     ctx.fillRect(0, 0, MAP_W * T, MAP_H * T)
 
-    // Draw outer building shadow
-    ctx.fillStyle = '#0d0d0d'
-    ctx.fillRect(T, T, 48*T, 50*T)
+    // Outer building footprint (everything inside the outer wall)
+    ctx.fillStyle = '#111109'
+    ctx.fillRect(T, T, 48*T, 51*T)
 
     // Draw rooms (floors + walls)
     ROOMS.forEach(room => {
-      if (room.id === 'corridor' && room.tw === 0) return // vertical wall marker
+      if (room.id === 'corridor' && room.tw === 0) return
       drawFloor(ctx, room)
     })
+
+    // Outer building wall (drawn over everything, gives unified building shell)
+    ctx.strokeStyle = '#3a3228'
+    ctx.lineWidth = 4
+    ctx.strokeRect(T + 2, T + 2, 48*T - 4, 51*T - 4)
+    // Inner accent line
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'
+    ctx.lineWidth = 1
+    ctx.strokeRect(T + 6, T + 6, 48*T - 12, 51*T - 12)
 
     // Draw door openings (where rooms connect to corridors)
     // Doors between Cerebro and corridor below
