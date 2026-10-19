@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
-import Anthropic from '@anthropic-ai/sdk'
 
 export const dynamic = 'force-dynamic'
 // Playwright scraping puede tardar
@@ -116,12 +115,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function scrapeWithClaude(url: string, _selector: string): Promise<PriceItem[]> {
-  const client = new Anthropic()
-
-  // Claude usa computer use / tool use para navegar con Playwright
-  // Por ahora retorna vacío — el scraping interactivo se hace desde el dashboard con el MCP
-  // Esta función se puede extender cuando se configura un MCP server en el backend
-  void client
   void url
-  return []
+  throw new Error('Actualización automática no configurada. Los precios anteriores siguen guardados; usá la carga manual hasta conectar el importador del proveedor.')
 }
