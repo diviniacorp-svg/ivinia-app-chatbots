@@ -154,6 +154,8 @@ function AdminPanel({ clientId, companyName, color }: { clientId: string; compan
   const [parts, setParts] = useState<Part[]>([])
   const [margins, setMargins] = useState<MarginRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [providerUpdating, setProviderUpdating] = useState<string | null>(null)
+  const [providerFeedback, setProviderFeedback] = useState<Record<string,string>>({})
 
   // Forms
   const [showProvForm, setShowProvForm] = useState(false)
@@ -186,6 +188,25 @@ function AdminPanel({ clientId, companyName, color }: { clientId: string; compan
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  async function refreshProvider(id: string) {
+    setProviderUpdating(id)
+    setProviderFeedback(old => ({ ...old, [id]: '' }))
+    try {
+      const response = await fetch('/api/celulab/scrape', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider_id: id }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'No se pudo actualizar')
+      setProviderFeedback(old => ({ ...old, [id]: `Actualizados ${result.items_saved} precios` }))
+      await fetchAll()
+    } catch (e) {
+      setProviderFeedback(old => ({ ...old, [id]: e instanceof Error ? e.message : 'No se pudo actualizar' }))
+    } finally {
+      setProviderUpdating(null)
+    }
+  }
 
   // Save provider
   async function saveProvider() {
@@ -276,7 +297,7 @@ function AdminPanel({ clientId, companyName, color }: { clientId: string; compan
       </div>
 
       {/* Tabs */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 24px', display: 'flex', gap: 2 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 12px', display: 'flex', gap: 2, overflowX: 'auto' }}>
         {(['margenes', 'proveedores', 'repuestos'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '12px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
@@ -288,7 +309,7 @@ function AdminPanel({ clientId, companyName, color }: { clientId: string; compan
         ))}
       </div>
 
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 24px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 12px' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: '#9ca3af', padding: 64 }}>Cargando...</div>
         ) : (
@@ -377,7 +398,7 @@ function AdminPanel({ clientId, companyName, color }: { clientId: string; compan
                   : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {providers.map(p => (
-                        <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 12px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
                             <a href={p.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: color, wordBreak: 'break-all' }}>{p.url}</a>
@@ -387,6 +408,8 @@ function AdminPanel({ clientId, companyName, color }: { clientId: string; compan
                             <div style={{ color: '#9ca3af' }}>Último scraping</div>
                             <div style={{ fontWeight: 600, color: '#374151' }}>{ago(p.last_scraped_at)}</div>
                           </div>
+                          {p.scrape_type === 'playwright' && <button disabled={providerUpdating === p.id} onClick={() => refreshProvider(p.id)} style={{ background: color, border: 'none', color: 'white', borderRadius: 8, padding: '9px 12px', cursor: 'pointer' }}>{providerUpdating === p.id ? 'Actualizando…' : '↻ Actualizar lista'}</button>}
+                          {providerFeedback[p.id] && <div role="status" style={{ width: '100%', fontSize: 12 }}>{providerFeedback[p.id]}</div>}
                           <BtnSec onClick={() => deleteProvider(p.id)} style={{ color: '#ef4444', borderColor: '#fecaca', fontSize: 12 }}>Eliminar</BtnSec>
                         </div>
                       ))}
