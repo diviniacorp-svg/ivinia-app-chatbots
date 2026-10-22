@@ -95,11 +95,9 @@ export async function middleware(request: NextRequest) {
 
   const validSecret = process.env.ADMIN_SECRET
   if (!validSecret) {
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Servidor mal configurado' }, { status: 503 })
-    }
+    return NextResponse.json({ error: 'Servidor mal configurado' }, { status: 503 })
   }
-  const secret = validSecret || 'DiViNiA2050'
+  const secret = validSecret
   const token = await sessionToken(secret)
 
   const isPublicMarketRoute = PUBLIC_MARKET_ROUTES.some(r => pathname === r || pathname.startsWith(r))
