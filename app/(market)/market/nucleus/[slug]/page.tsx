@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import NucleusAdminClient from './_components/NucleusAdminClient'
+import BuggiNucleusClient from './_components/BuggiNucleusClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,12 +34,27 @@ export default async function NucleusAdminPage({ params }: { params: { slug: str
   const cfg = client.custom_config as Record<string, string> ?? {}
   const pin = cfg.nucleus_panel_pin || '0000'
 
+  const publicUrl = `https://divinia.vercel.app/market/${params.slug}`
+
+  if (client.chatbot_id === 'buggi-viajes') {
+    return (
+      <BuggiNucleusClient
+        clientId={client.id}
+        companyName={client.company_name}
+        pin={pin}
+        color={cfg.color || '#1d4ed8'}
+        publicUrl={publicUrl}
+      />
+    )
+  }
+
   return (
     <NucleusAdminClient
       clientId={client.id}
       companyName={client.company_name}
       pin={pin}
       color={cfg.color || '#2563eb'}
+      publicUrl={publicUrl}
     />
   )
 }
