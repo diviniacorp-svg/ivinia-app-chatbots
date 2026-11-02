@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
+import { economicPatch } from '@/lib/celulab/economic-patch'
 import {
   sendWhatsAppMessage,
   normalizeArgPhone,
@@ -23,33 +24,48 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const body = await req.json()
+  let body: Record<string, unknown>
+  try {
+    const input: unknown = await req.json()
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Objeto requerido')
+    body = input as Record<string, unknown>
+  } catch {
+    return NextResponse.json({ error: 'Solicitud inválida' }, { status: 400 })
+  }
   const db = createAdminClient()
+
+  const { data: previous, error: readError } = await db.from('cl_orders')
+    .select('status, total_ars, part_cost_ars, commission_pct, commission_ars, updated_at')
+    .eq('id', params.id).maybeSingle()
+  if (readError) return NextResponse.json({ error: 'No se pudo leer la orden' }, { status: 500 })
+  if (!previous) return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
 
   const updates: Record<string, unknown> = { ...body, updated_at: new Date().toISOString() }
 
-  // Auto-compute commission when economic fields are present
-  if (updates.total_ars != null && updates.part_cost_ars != null) {
-    const labor = Number(updates.total_ars) - Number(updates.part_cost_ars)
-    const pct = Number(updates.commission_pct ?? 33)
-    updates.commission_ars = Math.round(labor * pct / 100)
+  // Commission amounts are derived by the server, not accepted from the client.
+  delete updates.commission_ars
+  try {
+    Object.assign(updates, economicPatch(previous, body))
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Importes inválidos' }, { status: 400 })
   }
 
   // Read previous status before update (only if status is changing to a notifiable state)
-  let prevStatus: string | null = null
-  if (typeof body.status === 'string' && NOTIFY_STATUSES.has(body.status)) {
-    const { data: prev } = await db.from('cl_orders').select('status').eq('id', params.id).single()
-    prevStatus = prev?.status ?? null
-  }
+  const prevStatus: string | null = previous.status
 
-  const { data, error } = await db
+  let updateQuery = db
     .from('cl_orders')
     .update(updates)
     .eq('id', params.id)
+  updateQuery = previous.updated_at === null
+    ? updateQuery.is('updated_at', null)
+    : updateQuery.eq('updated_at', previous.updated_at)
+  const { data, error } = await updateQuery
     .select('*, cl_partners(name, phone, address)')
-    .single()
+    .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!data) return NextResponse.json({ error: 'La orden cambió mientras la editabas. Actualizá e intentá nuevamente.' }, { status: 409 })
 
   // Disparar WA si el status cambió a un estado notificable
   if (
