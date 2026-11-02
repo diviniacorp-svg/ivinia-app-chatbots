@@ -21,7 +21,7 @@ export function argentinaDate(value: string) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
 }
 
-export function summarizeEarnings(orders: EarningsOrder[], from = '', to = '') {
+export function summarizeEarnings<T extends EarningsOrder>(orders: T[], from = '', to = '') {
   const selected = orders.filter(order => {
     if (!from && !to) return true
     const day = argentinaDate(order.created_at)
