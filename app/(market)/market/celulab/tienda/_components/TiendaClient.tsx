@@ -500,25 +500,31 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
   const [err, setErr] = useState('')
 
   async function confirmar() {
+    if (saving) return
     if (!form.name.trim()) { setErr('Ingresá tu nombre'); return }
     setSaving(true)
     setErr('')
-    const res = await fetch('/api/celulab/tienda-orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items: cart.map(i => ({ id: i.id, name: i.name, price_ars: i.price_ars, qty: i.qty })),
-        total_ars: cartTotal,
-        client_name: form.name.trim(),
-        client_phone: form.phone.trim() || null,
-        metodo_pago: form.metodo,
-        notas: form.notas.trim() || null,
-      }),
-    })
-    const data = await res.json()
-    setSaving(false)
-    if (!res.ok) { setErr(data.error ?? 'Error al confirmar'); return }
-    onConfirmed({ order_number: data.order_number, total: cartTotal, client_name: form.name, metodo_pago: form.metodo })
+    try {
+      const res = await fetch('/api/celulab/tienda-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map(i => ({ id: i.id, name: i.name, price_ars: i.price_ars, qty: i.qty })),
+          total_ars: cartTotal,
+          client_name: form.name.trim(),
+          client_phone: form.phone.trim() || null,
+          metodo_pago: form.metodo,
+          notas: form.notas.trim() || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error ?? 'Error al confirmar'); return }
+      onConfirmed({ order_number: data.order_number, total: cartTotal, client_name: form.name, metodo_pago: form.metodo })
+    } catch {
+      setErr('No pudimos confirmar el pedido. Puede haberse registrado: consultanos antes de volver a enviarlo.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
