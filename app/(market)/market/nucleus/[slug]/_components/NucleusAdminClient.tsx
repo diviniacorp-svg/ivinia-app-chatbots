@@ -287,15 +287,17 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
   }
 
   async function triggerSyncTienda() {
+    if (syncTiendaLoading) return
     setSyncTiendaLoading(true); setSyncTiendaResult(null)
-    const res = await fetch('/api/celulab/sync/tienda').then(r => r.json())
-    setSyncTiendaLoading(false)
-    if (res.ok) {
+    try {
+      const response = await fetch('/api/celulab/sync/tienda', { method: 'POST' })
+      const res = await response.json()
+      if (!response.ok || !res.ok) throw new Error(res.error || 'No se pudo actualizar el catálogo')
       const cats = Object.keys(res.categories || {}).length
-      setSyncTiendaResult(`✓ ${res.upserted} productos en ${cats} categorías (${res.synced_at?.slice(11,16)})`)
-    } else {
-      setSyncTiendaResult(`Error: ${res.error || 'desconocido'}`)
-    }
+      setSyncTiendaResult(`✓ ${res.upserted} productos actualizados en ${cats} categorías`)
+    } catch (error) {
+      setSyncTiendaResult(`Error: ${error instanceof Error ? error.message : 'No se pudo conectar con el proveedor'}`)
+    } finally { setSyncTiendaLoading(false) }
   }
 
   useEffect(() => { fetchAll() }, [fetchAll])
@@ -648,7 +650,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                   : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {providers.map(p => (
-                        <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
                             <a href={p.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: color, wordBreak: 'break-all' }}>{p.url}</a>
@@ -658,6 +660,15 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                             <div style={{ color: '#9ca3af' }}>Último scraping</div>
                             <div style={{ fontWeight: 600, color: '#374151' }}>{ago(p.last_scraped_at)}</div>
                           </div>
+                          {/onlysanluis|only san luis|^only$/i.test(`${p.name} ${p.url}`) && (
+                            <div style={{ maxWidth: 260 }}>
+                              <button onClick={triggerSyncTienda} disabled={syncTiendaLoading || !p.is_active}
+                                style={{ minHeight: 44, padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer' }}>
+                                {syncTiendaLoading ? 'Actualizando…' : '↻ Actualizar catálogo de tienda'}
+                              </button>
+                              {syncTiendaResult && <div role="status" style={{ fontSize: 12, marginTop: 6 }}>{syncTiendaResult}</div>}
+                            </div>
+                          )}
                           <BtnSec onClick={() => deleteProvider(p.id)} style={{ color: '#ef4444', borderColor: '#fecaca', fontSize: 12 }}>Eliminar</BtnSec>
                         </div>
                       ))}
