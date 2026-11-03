@@ -39,6 +39,9 @@ export default function TiendaClient() {
   const [items, setItems] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<string[]>([])
+  const [section, setSection] = useState<'accessories' | 'technical'>('accessories')
+  const [loadError, setLoadError] = useState('')
+  const requestSequence = useRef(0)
   const [category, setCategory] = useState('')
   const [brand, setBrand] = useState('')
   const [q, setQ] = useState('')
@@ -110,40 +113,46 @@ export default function TiendaClient() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0)
 
   const fetchItems = useCallback(async (cat: string, br: string, search: string, off: number, offers = false) => {
+    const sequence = ++requestSequence.current
     setLoading(true)
-    const params = new URLSearchParams({ limit: String(LIMIT), offset: String(off) })
+    setLoadError('')
+    const params = new URLSearchParams({ limit: String(LIMIT), offset: String(off), section })
     if (cat) params.set('category', cat)
     if (br) params.set('brand', br)
     if (search) params.set('q', search)
     if (offers) params.set('offers', '1')
-    const res = await fetch(`/api/celulab/products?${params}`).then(r => r.json())
-    setItems(res.items ?? [])
-    setTotal(res.total ?? 0)
-    setCategories(res.categories ?? [])
-    setBrands(res.brands ?? [])
-    setLoading(false)
-    setLastSync(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }))
-  }, [])
+    try {
+      const response = await fetch(`/api/celulab/storefront?${params}`)
+      if (!response.ok) throw new Error('catalogue')
+      const res = await response.json()
+      if (sequence !== requestSequence.current) return
+      setItems(res.items ?? [])
+      setTotal(res.total ?? 0)
+      setCategories(res.categories ?? [])
+      setBrands(res.brands ?? [])
+      setLastSync(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }))
+    } catch {
+      if (sequence === requestSequence.current) { setItems([]); setLoadError('No pudimos cargar los productos. Volvé a intentar.') }
+    } finally { if (sequence === requestSequence.current) setLoading(false) }
+  }, [section])
 
   // Load initial offers banner separately
   useEffect(() => {
-    fetch('/api/celulab/products?offers=1&limit=20').then(r => r.json())
+    fetch(`/api/celulab/storefront?offers=1&limit=20&section=${section}`).then(r => r.json())
       .then(d => setOfferItems(d.items ?? []))
       .catch(() => {})
-  }, [])
-
-  useEffect(() => { fetchItems('', '', '', 0) }, [fetchItems])
+  }, [section])
 
   useEffect(() => {
     setOffset(0); setBrand('')
     fetchItems(category, '', q, 0, offersOnly)
-  }, [category, offersOnly]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category, offersOnly, fetchItems]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchRef = useRef<ReturnType<typeof setTimeout>>(null)
   function handleSearch(val: string) {
     setQ(val)
     if (searchRef.current) clearTimeout(searchRef.current)
-    searchRef.current = setTimeout(() => { setOffset(0); fetchItems(category, brand, val, 0) }, 350)
+    searchRef.current = setTimeout(() => { setOffset(0); fetchItems(category, brand, val, 0, offersOnly) }, 350)
   }
 
   const isEmpty = !loading && items.length === 0
@@ -169,19 +178,16 @@ export default function TiendaClient() {
           <span style={{ fontSize: 10, background: '#ea580c', color: '#fff', borderRadius: 8, padding: '2px 6px', fontWeight: 800 }}>{offerItems.length}</span>
         </button>
       )}
-      {categories.find(c => c.name === 'Herramientas') && (
-        <button onClick={() => { setOffersOnly(false); setCategory('Herramientas'); setBrand(''); setOffset(0); closeSidebar() }}
-          style={{ width: '100%', textAlign: 'left', padding: '11px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, background: !offersOnly && category === 'Herramientas' ? '#f0fdf4' : '#f9fffe', color: !offersOnly && category === 'Herramientas' ? '#166534' : '#16a34a', borderBottom: '2px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>🔧 Herramientas</span>
-          <span style={{ fontSize: 10, background: '#16a34a', color: '#fff', borderRadius: 8, padding: '2px 6px', fontWeight: 800 }}>{categories.find(c => c.name === 'Herramientas')!.count}</span>
-        </button>
-      )}
+      <button onClick={() => { setSection(section === 'accessories' ? 'technical' : 'accessories'); setCategory(''); setBrand(''); setQ(''); setOffersOnly(false); closeSidebar() }}
+        style={{ width: '100%', padding: 14, border: 0, background: '#ecfdf5', color: '#065f46', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}>
+        {section === 'accessories' ? '🔧 Solo para técnicos →' : '← Volver a accesorios'}
+      </button>
       <div style={{ background: '#0f172a', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#93c5fd', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Categorías</div>
       <button onClick={() => { setOffersOnly(false); setCategory(''); setBrand(''); setOffset(0); fetchItems('', '', q, 0); closeSidebar() }}
         style={{ width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: !offersOnly && category === '' ? '#eff6ff' : '#fff', color: !offersOnly && category === '' ? '#1d4ed8' : '#374151', borderBottom: '1px solid #f3f4f6' }}>
-        🛒 Todo ({categories.reduce((s, c) => s + c.count, 0)})
+        {section === 'technical' ? '🔧 Todo para técnicos' : '🛒 Todos los accesorios'} ({categories.reduce((s, c) => s + c.count, 0)})
       </button>
-      {categories.filter(cat => cat.name !== 'Herramientas').map(cat => (
+      {categories.map(cat => (
         <button key={cat.name} onClick={() => { setOffersOnly(false); setCategory(cat.name); setBrand(''); setOffset(0); closeSidebar() }}
           style={{ width: '100%', textAlign: 'left', padding: '9px 16px', border: 'none', cursor: 'pointer', fontSize: 13, background: !offersOnly && category === cat.name ? '#eff6ff' : '#fff', color: !offersOnly && category === cat.name ? '#1d4ed8' : '#6b7280', borderBottom: '1px solid #f3f4f6', fontWeight: !offersOnly && category === cat.name ? 700 : 400, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{CAT_ICONS[cat.name] || '📦'} {cat.name}</span>
@@ -200,7 +206,7 @@ export default function TiendaClient() {
           .cl-t-grid { grid-template-columns: 1fr !important; padding: 12px 8px !important; gap: 0 !important; }
           .cl-t-sidebar-desk { display: none !important; }
           .cl-t-filter-btn { display: flex !important; }
-          .cl-t-products { grid-template-columns: repeat(2,1fr) !important; gap: 8px !important; }
+          .cl-t-products { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 10px !important; }
           .cl-t-hback { display: none !important; }
           .cl-t-hsync { display: none !important; }
           .cl-t-hcart-label { display: none !important; }
@@ -212,6 +218,9 @@ export default function TiendaClient() {
           .cl-t-mobile-drawer { display: none !important; }
           .cl-t-filter-btn { display: none !important; }
         }
+        button, input { touch-action: manipulation; }
+        button:focus-visible, input:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+        .cl-t-products button { min-height: 44px; }
         .cl-t-brands::-webkit-scrollbar { display: none; }
         .cl-t-brands { scrollbar-width: none; }
       `}</style>
@@ -262,7 +271,13 @@ export default function TiendaClient() {
         </div>
 
         {/* Main */}
-        <div>
+        <div style={{ minWidth: 0 }}>
+          <section style={{ background: 'linear-gradient(120deg,#e0f2fe,#ecfdf5)', borderRadius: 20, padding: '24px 20px', marginBottom: 16 }}>
+            <p style={{ color: '#047857', fontWeight: 700, fontSize: 12, margin: '0 0 8px' }}>CELULAB · TIENDA</p>
+            <h1 style={{ fontSize: 'clamp(24px,4vw,36px)', margin: '0 0 8px', color: '#0f172a', letterSpacing: '-.04em' }}>{section === 'technical' ? 'Solo para técnicos' : 'Accesorios para tu día a día'}</h1>
+            <p style={{ margin: 0, color: '#475569', lineHeight: 1.5 }}>{section === 'technical' ? 'Herramientas y repuestos para reparaciones.' : 'Encontrá lo que necesitás, armá tu carrito y enviá tu pedido.'}</p>
+          </section>
+          {loadError && <div role="alert" style={{ padding: 16, background: '#fff1f2', marginBottom: 12 }}>{loadError} <button onClick={() => fetchItems(category, brand, q, offset, offersOnly)}>Reintentar</button></div>}
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: brands.length > 0 ? 10 : 0 }}>
               <input
@@ -277,10 +292,10 @@ export default function TiendaClient() {
             </div>
             {brands.length > 0 && (
               <div className="cl-t-brands" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: 2 }}>
-                <button onClick={() => { setBrand(''); setOffset(0); fetchItems(category, '', q, 0) }}
+                <button onClick={() => { setBrand(''); setOffset(0); fetchItems(category, '', q, 0, offersOnly) }}
                   style={{ padding: '4px 12px', borderRadius: 16, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: brand === '' ? '1.5px solid #1e3a5f' : '1.5px solid #e5e7eb', background: brand === '' ? '#1e3a5f' : '#f9fafb', color: brand === '' ? '#fff' : '#374151', whiteSpace: 'nowrap', flexShrink: 0 }}>Todas</button>
                 {brands.map(b => (
-                  <button key={b} onClick={() => { const nb = brand === b ? '' : b; setBrand(nb); setOffset(0); fetchItems(category, nb, q, 0) }}
+                  <button key={b} onClick={() => { const nb = brand === b ? '' : b; setBrand(nb); setOffset(0); fetchItems(category, nb, q, 0, offersOnly) }}
                     style={{ padding: '4px 12px', borderRadius: 16, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: brand === b ? '1.5px solid #1e3a5f' : '1.5px solid #e5e7eb', background: brand === b ? '#1e3a5f' : '#f9fafb', color: brand === b ? '#fff' : '#374151', whiteSpace: 'nowrap', flexShrink: 0 }}>{b}</button>
                 ))}
               </div>
@@ -294,11 +309,11 @@ export default function TiendaClient() {
             </span>
           </div>
 
-          {isEmpty ? (
+          {isEmpty && !loadError ? (
             <div style={{ textAlign: 'center', padding: '80px 24px', color: '#9ca3af' }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
               <div style={{ fontWeight: 700, fontSize: 18, color: '#6b7280', marginBottom: 8 }}>{total === 0 && !loading ? 'Catálogo en preparación' : 'Sin resultados'}</div>
-              <div style={{ fontSize: 14 }}>{total === 0 && !loading ? 'El catálogo se actualiza diariamente.' : 'Probá con otro término o categoría.'}</div>
+              <div style={{ fontSize: 14 }}>{total === 0 && !loading ? 'Consultá disponibilidad con CeluLab.' : 'Probá con otro término o categoría.'}</div>
             </div>
           ) : (
             <>
@@ -309,10 +324,10 @@ export default function TiendaClient() {
               </div>
               {total > LIMIT && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24, flexWrap: 'wrap' }}>
-                  <button onClick={() => { const o = Math.max(0, offset - LIMIT); setOffset(o); fetchItems(category, brand, q, o) }} disabled={offset === 0}
+                  <button onClick={() => { const o = Math.max(0, offset - LIMIT); setOffset(o); fetchItems(category, brand, q, o, offersOnly) }} disabled={offset === 0}
                     style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: offset === 0 ? 'not-allowed' : 'pointer', opacity: offset === 0 ? 0.4 : 1 }}>← Anterior</button>
                   <span style={{ padding: '8px 12px', fontSize: 13, color: '#6b7280' }}>{offset + 1}–{Math.min(offset + LIMIT, total)} de {total}</span>
-                  <button onClick={() => { const o = offset + LIMIT; if (o < total) { setOffset(o); fetchItems(category, brand, q, o) } }} disabled={offset + LIMIT >= total}
+                  <button onClick={() => { const o = offset + LIMIT; if (o < total) { setOffset(o); fetchItems(category, brand, q, o, offersOnly) } }} disabled={offset + LIMIT >= total}
                     style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', cursor: offset + LIMIT >= total ? 'not-allowed' : 'pointer', opacity: offset + LIMIT >= total ? 0.4 : 1 }}>Siguiente →</button>
                 </div>
               )}
@@ -323,7 +338,7 @@ export default function TiendaClient() {
 
       {/* Footer */}
       <div style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', padding: '12px 16px', textAlign: 'center', marginTop: 24 }}>
-        <div style={{ fontSize: 12, color: '#9ca3af' }}>Precios en ARS · Stock actualizado diariamente</div>
+        <div style={{ fontSize: 12, color: '#9ca3af' }}>Precios en ARS · Disponibilidad sujeta a confirmación</div>
       </div>
 
       {cartOpen && (
@@ -365,7 +380,7 @@ function ProductCard({ item, onAdd, cartQty, isMobile }: { item: Product; onAdd:
         </div>
       )}
 
-      <div style={{ height: isMobile ? 110 : 140, background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: isMobile ? 150 : 190, background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {item.image_url
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? 4 : 8 }} />
@@ -378,12 +393,12 @@ function ProductCard({ item, onAdd, cartQty, isMobile }: { item: Product; onAdd:
           {!item.in_stock && <span style={{ fontSize: 9, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase' }}>Sin stock</span>}
           {item.is_offer && <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: '#ea580c', borderRadius: 4, padding: '1px 4px' }}>{item.offer_label || '🔥 OFERTA'}</span>}
         </div>
-        <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, color: '#111', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: isMobile ? 3 : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#111', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: isMobile ? 3 : 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {item.name}
         </div>
         {item.brand && !isMobile && <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.brand}</div>}
         <div style={{ marginTop: 'auto', paddingTop: isMobile ? 4 : 8 }}>
-          <div style={{ fontSize: isMobile ? 14 : 17, fontWeight: 800, color: '#0f172a' }}>
+          <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 800, color: '#0f172a' }}>
             {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(item.final_price ?? item.price_ars)}
           </div>
         </div>
