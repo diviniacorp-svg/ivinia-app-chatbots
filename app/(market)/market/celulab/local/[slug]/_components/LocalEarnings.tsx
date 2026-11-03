@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { orderEarnings, summarizeEarnings, type EarningsOrder } from '@/lib/celulab/earnings'
+import { argentinaDate, orderEarnings, summarizeEarnings, type EarningsOrder } from '@/lib/celulab/earnings'
 
 const money = (amount: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(amount)
 const percent = (amount: number | null) => amount === null ? '—' : `${amount.toLocaleString('es-AR', { maximumFractionDigits: 2 })}%`
@@ -18,6 +18,13 @@ export function OrderEarnings({ order, unlocked }: { order: EarningsOrder; unloc
 export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrder & { order_number: string }>; unlocked: boolean }) {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  function choosePeriod(period: 'week' | 'month') {
+    const today = argentinaDate(new Date().toISOString())!
+    const day = new Date(`${today}T12:00:00Z`)
+    if (period === 'week') day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7))
+    else day.setUTCDate(1)
+    setFrom(day.toISOString().slice(0, 10)); setTo(today)
+  }
   const invalidRange = Boolean(from && to && from > to)
   const summary = summarizeEarnings(orders, from, to)
   if (!unlocked) return <p role="status">Las ganancias están protegidas. Desbloquealas desde la búsqueda de repuestos en una nueva orden.</p>
@@ -26,6 +33,9 @@ export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrde
     <p style={{ fontSize: 13, color: '#64748b' }}>Órdenes entregadas, agrupadas por fecha de ingreso. Los importes corresponden a la comisión guardada en cada orden; no indican que se haya cobrado o liquidado.</p>
     <p style={{ fontSize: 12, color: '#64748b' }}>Este resumen usa las {orders.length} órdenes cargadas en el panel (máximo 200).</p>
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+      <button onClick={() => choosePeriod('week')}>Esta semana</button>
+      <button onClick={() => choosePeriod('month')}>Este mes</button>
+      <button onClick={() => { setFrom(''); setTo('') }}>Todo lo cargado</button>
       <label>Desde <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
       <label>Hasta <input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
     </div>
