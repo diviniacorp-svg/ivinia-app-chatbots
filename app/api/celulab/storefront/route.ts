@@ -4,13 +4,23 @@ import { isTechnicalCategory } from '@/lib/celulab/catalog'
 
 export const dynamic = 'force-dynamic'
 
+function searchable(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
+function isRepairBattery(category: string, name: string) {
+  const label = searchable(category + ' ' + name)
+  if (/\b(power ?banks?|portatil|extern[ao]s?|recargables? aa)\b/.test(label)) return false
+  return /\bbaterias?\b/.test(label) && (/^baterias?( |$)/.test(searchable(category)) || /\b(iphone|samsung|motorola|moto|xiaomi|redmi|galaxy|interna|repuesto)\b/.test(label))
+}
+
 export async function GET(req: NextRequest) {
   const db = createAdminClient()
   const params = req.nextUrl.searchParams
   const technical = params.get('section') === 'technical'
   const category = params.get('category') || ''
   const brand = params.get('brand') || ''
-  const search = (params.get('q') || '').trim().toLocaleLowerCase('es')
+  const search = searchable(params.get('q') || '').split(' ').filter(Boolean)
   const limit = Math.min(200, Math.max(1, Number(params.get('limit')) || 80))
   const offset = Math.max(0, Number(params.get('offset')) || 0)
   const products = []
@@ -26,12 +36,12 @@ export async function GET(req: NextRequest) {
   const { data: markups, error } = await db.from('cl_product_markups').select('category,markup_pct')
   if (error) return NextResponse.json({ error: 'No pudimos consultar los precios.' }, { status: 503 })
   const rates = new Map((markups || []).map(row => [row.category, Number(row.markup_pct)]))
-  const catalogue = products.filter(row => isTechnicalCategory(row.category) === technical)
+  const catalogue = products.filter(row => (isTechnicalCategory(row.category) || isRepairBattery(row.category || '', row.name || '')) === technical)
   const counts = new Map<string, number>()
   catalogue.forEach(row => counts.set(row.category, (counts.get(row.category) || 0) + 1))
   const filtered = catalogue.filter(row => (!category || row.category === category)
     && (!brand || row.brand === brand)
-    && (!search || row.name.toLocaleLowerCase('es').includes(search))
+    && search.every(term => searchable([row.name, row.brand, row.category].join(' ')).includes(term))
     && (params.get('offers') !== '1' || row.is_offer))
     .sort((a, b) => a.name.localeCompare(b.name, 'es'))
   return NextResponse.json({
