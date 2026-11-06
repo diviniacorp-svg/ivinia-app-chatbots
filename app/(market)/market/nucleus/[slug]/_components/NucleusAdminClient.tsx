@@ -286,6 +286,13 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
     setSyncResult(res.ok ? `✓ ${res.mapped} repuestos sincronizados (${res.synced_at?.slice(11,16)})` : `Error: ${res.error}`)
   }
 
+  function supportsCatalogue(url: string) {
+    try {
+      const source = new URL(url)
+      return source.hostname === 'mayori.store' && /^\/onlysanluis(?:\/|$)/i.test(source.pathname)
+    } catch { return false }
+  }
+
   async function triggerSyncTienda() {
     if (syncTiendaLoading) return
     setSyncTiendaLoading(true); setSyncTiendaResult(null)
@@ -625,7 +632,10 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {/* ══ PROVEEDORES ══ */}
             {tab === 'proveedores' && (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end', marginBottom: 16 }}>
+                  <Btn onClick={triggerSyncTienda} color={color} disabled={syncTiendaLoading || !providers.some(p => p.is_active && supportsCatalogue(p.url))}>
+                    {syncTiendaLoading ? 'Actualizando…' : 'Actualizar proveedores conectados'}
+                  </Btn>
                   <Btn onClick={() => setShowProvForm(true)} color={color}>+ Nuevo proveedor</Btn>
                 </div>
 
@@ -660,7 +670,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                             <div style={{ color: '#9ca3af' }}>Último scraping</div>
                             <div style={{ fontWeight: 600, color: '#374151' }}>{ago(p.last_scraped_at)}</div>
                           </div>
-                          {/onlysanluis|only san luis|^only$/i.test(`${p.name} ${p.url}`) && (
+                          {supportsCatalogue(p.url) ? (
                             <div style={{ maxWidth: 260 }}>
                               <button onClick={triggerSyncTienda} disabled={syncTiendaLoading || !p.is_active}
                                 style={{ minHeight: 44, padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer' }}>
@@ -668,7 +678,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                               </button>
                               {syncTiendaResult && <div role="status" style={{ fontSize: 12, marginTop: 6 }}>{syncTiendaResult}</div>}
                             </div>
-                          )}
+                          ) : <span style={{ fontSize: 12 }}>Sin conexión automática</span>}
                           <BtnSec onClick={() => deleteProvider(p.id)} style={{ color: '#ef4444', borderColor: '#fecaca', fontSize: 12 }}>Eliminar</BtnSec>
                         </div>
                       ))}
