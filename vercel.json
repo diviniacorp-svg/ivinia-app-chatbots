@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/heartbeat",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron/social-publish",
-      "schedule": "0 12,15,22 * * *"
-    }
-  ]
+  "crons": []
 }
