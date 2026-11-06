@@ -138,9 +138,13 @@ export default function TiendaClient() {
 
   // Load initial offers banner separately
   useEffect(() => {
-    fetch(`/api/celulab/storefront?offers=1&limit=20&section=${section}`).then(r => r.json())
-      .then(d => setOfferItems(d.items ?? []))
+    const controller = new AbortController()
+    setOfferItems([])
+    fetch(`/api/celulab/storefront?offers=1&limit=20&section=${section}`, { signal: controller.signal })
+      .then(response => response.ok ? response.json() : { items: [] })
+      .then(data => { if (!controller.signal.aborted) setOfferItems(data.items ?? []) })
       .catch(() => {})
+    return () => controller.abort()
   }, [section])
 
   useEffect(() => {
@@ -149,6 +153,10 @@ export default function TiendaClient() {
   }, [category, offersOnly, fetchItems]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchRef = useRef<ReturnType<typeof setTimeout>>(null)
+  useEffect(() => () => {
+    if (searchRef.current) clearTimeout(searchRef.current)
+  }, [section, category, brand, offersOnly])
+
   function handleSearch(val: string) {
     setQ(val)
     if (searchRef.current) clearTimeout(searchRef.current)
