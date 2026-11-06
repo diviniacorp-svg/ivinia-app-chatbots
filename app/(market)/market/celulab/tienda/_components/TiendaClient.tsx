@@ -203,7 +203,13 @@ export default function TiendaClient() {
       {/* CSS responsive — media queries sin depender de JS/isMobile para layout */}
       <style>{`
         @media (max-width: 767px) {
-          .cl-t-grid { grid-template-columns: 1fr !important; padding: 12px 8px !important; gap: 0 !important; }
+          .cl-t-grid { width: 100%; box-sizing: border-box; grid-template-columns: 1fr !important; padding: 12px 8px !important; gap: 0 !important; }
+          .cl-t-mobile-select { display: block !important; }
+          .cl-t-grid > * { min-width: 0; max-width: 100%; }
+          .cl-t-products > * { min-width: 0; }
+          .cl-t-brands { max-width: 100%; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+          .cl-t-search { flex-wrap: wrap; }
+          .cl-t-search input { flex-basis: 100% !important; font-size: 16px !important; }
           .cl-t-sidebar-desk { display: none !important; }
           .cl-t-filter-btn { display: flex !important; }
           .cl-t-products { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 10px !important; }
@@ -279,7 +285,7 @@ export default function TiendaClient() {
           </section>
           {loadError && <div role="alert" style={{ padding: 16, background: '#fff1f2', marginBottom: 12 }}>{loadError} <button onClick={() => fetchItems(category, brand, q, offset, offersOnly)}>Reintentar</button></div>}
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: brands.length > 0 ? 10 : 0 }}>
+            <div className="cl-t-search" style={{ display: 'flex', gap: 8, marginBottom: brands.length > 0 ? 10 : 0 }}>
               <input
                 style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box', minWidth: 0 }}
                 placeholder="🔍 Buscar producto..."
@@ -290,6 +296,15 @@ export default function TiendaClient() {
                 {(category || offersOnly) ? `${CAT_ICONS[category] || (offersOnly ? '🔥' : '📦')} Filtro` : '☰ Categorías'}
               </button>
             </div>
+            <label className="cl-t-mobile-select" style={{ display: 'none', margin: '8px 0 12px', fontSize: 13, fontWeight: 700 }}>
+              Categoría
+              <select aria-label="Categoría de productos" value={category}
+                onChange={e => { setCategory(e.target.value); setBrand(''); setOffset(0); setOffersOnly(false) }}
+                style={{ display: 'block', width: '100%', minHeight: 44, marginTop: 5, borderRadius: 8, border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: 16, background: '#fff' }}>
+                <option value="">Todos los accesorios</option>
+                {categories.map(c => <option key={c.name} value={c.name}>{c.name} ({c.count})</option>)}
+              </select>
+            </label>
             {brands.length > 0 && (
               <div className="cl-t-brands" style={{ display: 'flex', gap: 6, flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: 2 }}>
                 <button onClick={() => { setBrand(''); setOffset(0); fetchItems(category, '', q, 0, offersOnly) }}
