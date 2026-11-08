@@ -516,6 +516,7 @@ type RendPartner = {
 
 function RendimientosView({ color, periodo, customDesde, customHasta }: { color: string; periodo: string; customDesde: string; customHasta: string }) {
   const [data, setData] = useState<RendPartner[]>([])
+  const [reportError,setReportError]=useState(false)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [rendering, setRendering] = useState<string | null>(null)
@@ -544,9 +545,13 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
       if (customDesde) params.set('desde', new Date(customDesde).toISOString())
       if (customHasta) { const h = new Date(customHasta); h.setHours(23, 59, 59, 999); params.set('hasta', h.toISOString()) }
     }
-    const res = await fetch(`/api/celulab/caja/rendimientos?${params}`, { cache: 'no-store' }).then(r => r.json())
-    setData(Array.isArray(res) ? res : [])
-    setLoading(false)
+    try {
+      const response=await fetch(`/api/celulab/caja/rendimientos?${params}`,{cache:'no-store'})
+      if (!response.ok) throw new Error()
+      setData(await response.json())
+      setReportError(false)
+    } catch { setReportError(true) }
+    finally { setLoading(false) }
   }, [periodo, customDesde, customHasta])
 
   useEffect(() => { fetch_() }, [fetch_])
@@ -566,6 +571,7 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
     fetch_()
   }
 
+  if (reportError && !loading) return <p role="alert">Rendiciones no disponibles. <button onClick={fetch_}>Reintentar</button></p>
   if (loading) return <div style={{ textAlign: 'center', padding: 48, color: '#9ca3af' }}>Cargando...</div>
 
   if (data.length === 0) return (

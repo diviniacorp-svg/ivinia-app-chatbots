@@ -81,7 +81,7 @@ function marginColor(pct: number | null) {
 export default function NucleusAdminClient({
   clientId, companyName, pin, color, publicUrl,
 }: {
-  clientId: string; companyName: string; pin: string; color: string; publicUrl: string
+  clientId: string; companyName: string; pin?: string; color: string; publicUrl: string
 }) {
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -89,13 +89,20 @@ export default function NucleusAdminClient({
 
   // Persist unlock in sessionStorage so no re-login on refresh
   useEffect(() => {
+    if (pin === undefined) {
+      fetch('/api/celulab/nucleus-session', {cache:'no-store'}).then(r => setUnlocked(r.ok)).catch(() => {})
+      return
+    }
     if (sessionStorage.getItem(`nucleus-${clientId}`) === 'ok') setUnlocked(true)
-  }, [clientId])
+  }, [clientId, pin])
 
-  function tryPin() {
-    if (pinInput === pin) {
+  async function tryPin() {
+    const valid = pin === undefined
+      ? await fetch('/api/celulab/nucleus-session', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pinInput})}).then(r=>r.ok).catch(()=>false)
+      : pinInput === pin
+    if (valid) {
       setUnlocked(true)
-      sessionStorage.setItem(`nucleus-${clientId}`, 'ok')
+      if (pin !== undefined) sessionStorage.setItem(`nucleus-${clientId}`, 'ok')
     } else {
       setPinErr(true)
       setPinInput('')

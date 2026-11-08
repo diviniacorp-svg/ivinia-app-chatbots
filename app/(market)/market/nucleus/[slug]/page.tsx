@@ -52,7 +52,7 @@ export default async function NucleusAdminPage({ params }: { params: { slug: str
     <NucleusAdminClient
       clientId={client.id}
       companyName={client.company_name}
-      pin={pin}
+      pin={params.slug === 'celulab' ? undefined : pin}
       color={cfg.color || '#2563eb'}
       publicUrl={publicUrl}
     />
