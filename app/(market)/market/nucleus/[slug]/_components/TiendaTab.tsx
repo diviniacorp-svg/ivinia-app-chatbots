@@ -1,4 +1,5 @@
 'use client'
+import TechnicianPin from '../../../celulab/tienda/_components/TechnicianPin'
 import { useState, useEffect } from 'react'
 
 type Markup = { category: string; markup_pct: number }
@@ -93,6 +94,7 @@ export function TiendaTab({ color }: { color: string }) {
 
   return (
     <div>
+      <details><summary>Acceso de técnicos</summary><TechnicianPin manage /></details>
       {/* Sub-tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', marginBottom: 24 }}>
         {([['markup', '💲 Markup por categoría'], ['ofertas', '🔥 Ofertas']] as const).map(([t, label]) => (

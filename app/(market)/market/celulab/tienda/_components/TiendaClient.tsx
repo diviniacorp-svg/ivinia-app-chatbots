@@ -1,4 +1,5 @@
 'use client'
+import TechnicianPin from './TechnicianPin'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ const CART_KEY = 'celulab-cart'
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function TiendaClient() {
+  const [showPin, setShowPin] = useState(false)
   const [items, setItems] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<string[]>([])
@@ -186,10 +188,11 @@ export default function TiendaClient() {
           <span style={{ fontSize: 10, background: '#ea580c', color: '#fff', borderRadius: 8, padding: '2px 6px', fontWeight: 800 }}>{offerItems.length}</span>
         </button>
       )}
-      <button onClick={() => { setSection(section === 'accessories' ? 'technical' : 'accessories'); setCategory(''); setBrand(''); setQ(''); setOffersOnly(false); closeSidebar() }}
+      <button onClick={() => { if (section === 'accessories') { setShowPin(!showPin); return }; setSection(section === 'accessories' ? 'technical' : 'accessories'); setCategory(''); setBrand(''); setQ(''); setOffersOnly(false); closeSidebar() }}
         style={{ width: '100%', padding: 14, border: 0, background: '#ecfdf5', color: '#065f46', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}>
         {section === 'accessories' ? '🔧 Solo para técnicos →' : '← Volver a accesorios'}
       </button>
+      {showPin && <TechnicianPin onSuccess={() => { setShowPin(false); setSection(section === 'accessories' ? 'technical' : 'accessories'); setCategory(''); setBrand(''); setQ(''); setOffersOnly(false); closeSidebar() }} />}
       <div style={{ background: '#0f172a', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#93c5fd', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Categorías</div>
       <button onClick={() => { setOffersOnly(false); setCategory(''); setBrand(''); setOffset(0); fetchItems('', '', q, 0); closeSidebar() }}
         style={{ width: '100%', textAlign: 'left', padding: '10px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: !offersOnly && category === '' ? '#eff6ff' : '#fff', color: !offersOnly && category === '' ? '#1d4ed8' : '#374151', borderBottom: '1px solid #f3f4f6' }}>

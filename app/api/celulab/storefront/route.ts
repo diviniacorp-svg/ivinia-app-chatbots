@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 import { isTechnicalCategory } from '@/lib/celulab/catalog'
@@ -18,6 +19,14 @@ export async function GET(req: NextRequest) {
   const db = createAdminClient()
   const params = req.nextUrl.searchParams
   const technical = params.get('section') === 'technical'
+  if (technical) {
+    const token = req.cookies.get('cl_tech')?.value || ''
+    if (!/^[a-f0-9]{64}$/.test(token)) return NextResponse.json({ error: 'PIN requerido' }, { status: 401 })
+    const digest = createHash('sha256').update(token).digest('hex')
+    const { data } = await db.from('cl_technician_access').select('username')
+      .eq('token_digest', digest).gt('expires_at', new Date().toISOString()).maybeSingle()
+    if (!data) return NextResponse.json({ error: 'Ingresá nuevamente con tu PIN.' }, { status: 401 })
+  }
   const category = params.get('category') || ''
   const brand = params.get('brand') || ''
   const search = searchable(params.get('q') || '').split(' ').filter(Boolean)
