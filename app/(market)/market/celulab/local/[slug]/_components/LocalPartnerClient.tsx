@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
 import { LocalEarnings, OrderEarnings } from './LocalEarnings'
 import { PatternLock } from '../../../_components/PatternLock'
@@ -828,7 +829,7 @@ function LocalNewOrder({
   }
 
   if (savedOrder) {
-    return <OrderTicket order={savedOrder} partnerName={partnerName} partnerAddress={partnerAddress} logoUrl={logoUrl} stockWarning={false} onDone={onSaved} />
+    return <OrderTicket pin={pin} order={savedOrder} partnerName={partnerName} partnerAddress={partnerAddress} logoUrl={logoUrl} stockWarning={false} onDone={onSaved} />
   }
 
   const color = '#6366f1'
@@ -1072,10 +1073,10 @@ function LocalNewOrder({
 // ─── Order Ticket (post-save) ─────────────────────────────────────────────────
 
 function OrderTicket({
-  order, partnerName, partnerAddress, logoUrl, stockWarning, onDone,
+  order, partnerName, partnerAddress, logoUrl, stockWarning, onDone, pin,
 }: {
   order: Order; partnerName: string; partnerAddress: string
-  logoUrl: string; stockWarning: boolean; onDone: () => void
+  pin:string; logoUrl: string; stockWarning: boolean; onDone: () => void
 }) {
   const acc = [
     order.has_battery && 'Batería', order.has_chip && 'Chip',
@@ -1167,7 +1168,7 @@ function OrderTicket({
 
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <ShareOrder number={order.order_number} phone={order.client_phone} />
+          <ShareOrder pin={pin} id={order.id} number={order.order_number} phone={order.client_phone} />
           <a href={waLink} target="_blank" rel="noreferrer" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '13px', borderRadius: 12, background: '#25d366',
@@ -1360,6 +1361,7 @@ function LocalOrderDetail({
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || '—'}</div>
         </Card>
 
+        <ExtraJobs id={order.id} pin={pin}/>
         <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin pin={pin} onUnlock={unlockCommission} />}</Card>
 
         {order.budget_ars > 0 && (
@@ -1370,7 +1372,7 @@ function LocalOrderDetail({
           </Card>
         )}
 
-        <ShareOrder number={order.order_number} phone={order.client_phone} />
+        <ShareOrder pin={pin} id={order.id} number={order.order_number} phone={order.client_phone} />
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button onClick={handlePrint} style={{
             flex: 1, padding: '12px', borderRadius: 10, border: '1px solid #e5e7eb',
