@@ -44,6 +44,12 @@ const CAT_LABELS: Record<string, string> = {
   placa_carga: 'Placa de carga',
 }
 
+async function readPanelJson(url: string) {
+  const response = await fetch(url, { cache: 'no-store' })
+  if (!response.ok) throw new Error('Error al cargar ' + url)
+  return response.json()
+}
+
 function calcFinal(category: string, cost: number, configs: RepairConfig[]): number {
   const cfg = configs.find(c => c.category === category)
   if (cfg) return cost + cfg.markup_ars + cfg.labor_ars
@@ -237,33 +243,33 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
   // Suppress unused warning
   void clientId
 
+  const [loadError, setLoadError] = useState('')
   const fetchParts = useCallback(async (q: string, cat: string, offset: number) => {
     setPartsLoading(true)
-    const params = new URLSearchParams({ limit: String(PARTS_LIMIT), offset: String(offset) })
-    if (q) params.set('q', q)
-    if (cat) params.set('category', cat)
-    const res = await fetch(`/api/celulab/parts?${params}`).then(r => r.json())
-    setParts(res.items ?? [])
-    setPartsTotal(res.total ?? 0)
-    setPartsLoading(false)
+    try {
+      const rows: Part[] = await readPanelJson('/api/celulab/parts')
+      const filtered = rows.filter(row => (!cat || row.category === cat) && row.name.toLowerCase().includes(q.toLowerCase()))
+      setParts(filtered.slice(offset, offset + PARTS_LIMIT))
+      setPartsTotal(filtered.length)
+    } catch { setLoadError('No pudimos cargar los repuestos.') }
+    finally { setPartsLoading(false) }
   }, [])
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [p, m, c] = await Promise.all([
-      fetch('/api/celulab/providers').then(r => r.json()),
-      fetch('/api/celulab/margins').then(r => r.json()),
-      fetch('/api/celulab/configs').then(r => r.json()),
+    setLoadError('')
+    const results = await Promise.allSettled([
+      readPanelJson('/api/celulab/providers').then(setProviders),
+      readPanelJson('/api/celulab/margins').then(setMargins),
+      readPanelJson('/api/celulab/configs').then((configs: RepairConfig[]) => {
+        setRepairConfigs(configs)
+        const edits: Record<string, { markup: string; labor: string }> = {}
+        configs.forEach(cfg => { edits[cfg.id] = { markup: String(cfg.markup_ars), labor: String(cfg.labor_ars) } })
+        setConfigEditing(edits)
+      }),
+      fetchParts('', '', 0),
     ])
-    setProviders(Array.isArray(p) ? p : [])
-    setMargins(Array.isArray(m) ? m : [])
-    if (Array.isArray(c)) {
-      setRepairConfigs(c)
-      const initEdit: Record<string, { markup: string; labor: string }> = {}
-      c.forEach((cfg: RepairConfig) => { initEdit[cfg.id] = { markup: String(cfg.markup_ars), labor: String(cfg.labor_ars) } })
-      setConfigEditing(initEdit)
-    }
-    await fetchParts('', '', 0)
+    if (results.some(result => result.status === 'rejected')) setLoadError('No pudimos cargar todos los datos del panel.')
     setLoading(false)
   }, [fetchParts])
 
@@ -271,11 +277,12 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
     const edit = configEditing[cfg.id]
     if (!edit) return
     setConfigSaving(cfg.id)
-    await fetch('/api/celulab/configs', {
+    const response = await fetch('/api/celulab/configs', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: cfg.id, markup_ars: Number(edit.markup), labor_ars: Number(edit.labor) }),
     })
     setConfigSaving(null)
+    if (!response.ok) { setLoadError('No se pudo guardar el precio. Revisá la sesión administradora.'); return }
     fetchAll()
   }
 
@@ -463,7 +470,8 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
       </div>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: isMobile ? '16px 8px' : '28px 24px' }}>
-        {loading ? (
+        {loadError && <p role="alert">{loadError} <button onClick={fetchAll}>Reintentar</button></p>}
+        {loading && ['proveedores','margenes','repuestos','precios'].includes(tab) ? (
           <div style={{ textAlign: 'center', color: '#9ca3af', padding: 64 }}>Cargando...</div>
         ) : (
           <>
@@ -481,7 +489,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {tab === 'caja' && <CajaTab color={color} />}
 
             {/* ══ LISTA ══ */}
-            {tab === 'lista' && <AdminListaTab color={color} />}
+            {tab === 'lista' && <AdminListaTab color={color} configs={repairConfigs} />}
 
             {/* ══ TIENDA ══ */}
             {tab === 'tienda' && <TiendaTab color={color} />}
@@ -1115,7 +1123,7 @@ const LISTA_CAT_COLOR: Record<string, string> = {
   WUZIP: '#0891b2', T20: '#be185d', AMM: '#dc2626', COPY: '#6b7280',
 }
 
-function AdminListaTab({ color }: { color: string }) {
+function AdminListaTab({ color, configs }: { color: string; configs: RepairConfig[] }) {
   const [activeTab, setActiveTab] = useState('modulos')
   const [items, setItems] = useState<AdminItem[]>([])
   const [brands, setBrands] = useState<string[]>([])
@@ -1127,6 +1135,7 @@ function AdminListaTab({ color }: { color: string }) {
   const [loading, setLoading] = useState(false)
   const [lastSync, setLastSync] = useState('')
   const [isMobile, setIsMobile] = useState(false)
+  const [listError, setListError] = useState('')
   const LIMIT = 120
 
   useEffect(() => {
@@ -1138,16 +1147,24 @@ function AdminListaTab({ color }: { color: string }) {
 
   const fetchItems = useCallback(async (t: string, b: string, search: string, off: number) => {
     setLoading(true)
-    const params = new URLSearchParams({ tab: t, limit: String(LIMIT), offset: String(off) })
-    if (b) params.set('brand', b)
-    if (search) params.set('q', search)
-    const res = await fetch(`/api/celulab/lista?${params}`).then(r => r.json())
-    setItems(res.items ?? [])
-    setTotal(res.total ?? 0)
-    setBrands(res.brands ?? [])
-    setLoading(false)
-    setLastSync(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }))
-  }, [])
+    try {
+      const rows: (Part & { tab_key: string; stock_qty: number; brand: string; quality: string })[] = await readPanelJson('/api/celulab/parts')
+      const tabRows = rows.filter(row => row.tab_key === t)
+      setBrands(Array.from(new Set(tabRows.map(row => row.brand).filter(Boolean))).sort())
+      const filtered = tabRows.filter(row => (!b || row.brand === b) && row.name.toLowerCase().includes(search.toLowerCase()))
+      setItems(filtered.slice(off, off + LIMIT).map(row => {
+        const providers = (row.cl_provider_prices || []).map(p => ({ name: p.cl_providers?.name || '', cost: p.cost_ars })).sort((a,b) => a.cost - b.cost)
+        const cfg = configs.find(c => c.category === row.category)
+        return { ...row, stock: row.stock_qty > 0, best_cost: providers[0]?.cost ?? null, best_provider: providers[0]?.name ?? null,
+          all_providers: providers, final_price: providers.length ? calcFinal(row.category,providers[0].cost,configs) : null,
+          markup_ars: cfg?.markup_ars ?? 5000, labor_ars: cfg?.labor_ars ?? 15000 }
+      }))
+      setTotal(filtered.length)
+      setLastSync(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }))
+      setListError('')
+    } catch { setListError('No pudimos cargar la lista. Tocá Actualizar para reintentar.') }
+    finally { setLoading(false) }
+  }, [configs])
 
   useEffect(() => {
     setOffset(0); setBrand(''); setQ('')
@@ -1189,6 +1206,7 @@ function AdminListaTab({ color }: { color: string }) {
         </div>
       </div>
 
+      {listError && <p role="alert">{listError}</p>}
       {/* Sub-tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 14, flexWrap: 'wrap' }}>
         {LISTA_TABS.map(t => (
