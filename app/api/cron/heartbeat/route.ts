@@ -15,8 +15,6 @@ import Anthropic from '@anthropic-ai/sdk'
 import { Resend } from 'resend'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-const resend = new Resend(process.env.RESEND_API_KEY!)
 
 // ─── 1. Estado completo de DIVINIA ────────────────────────────────────────────
 
@@ -95,7 +93,7 @@ async function getDIVINIAState() {
 // ─── 2. CEO decide el plan del día ────────────────────────────────────────────
 
 async function runCEO(state: Awaited<ReturnType<typeof getDIVINIAState>>) {
-  const msg = await anthropic.messages.create({
+  const msg = await new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }).messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1000,
     system: `Sos el CEO autónomo de DIVINIA — empresa de IA para PYMEs argentinas.
@@ -293,7 +291,7 @@ async function enviarEmailJoaco(plan: Record<string, unknown>, state: Awaited<Re
 </html>`
 
   try {
-    await resend.emails.send({
+    await new Resend(process.env.RESEND_API_KEY!).emails.send({
       from: 'DIVINIA CEO <onboarding@resend.dev>',
       to: ['diviniacorp@gmail.com'],
       subject: `${plan.estado_emoji || '🧠'} DIVINIA ${state.fecha} — ${String(plan.prioridad_joaco || 'Plan del día listo').slice(0, 50)}`,

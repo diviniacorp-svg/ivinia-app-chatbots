@@ -7,6 +7,9 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+// Database-dependent routes must run on request, never during static generation.
+export const dynamic = 'force-dynamic'
+
 const DEMO_RUNS = [
   { agent: 'luna',   department: 'clientes',  status: 'running',   action: 'Calificando 3 leads nuevos de San Luis' },
   { agent: 'nico',   department: 'clientes',  status: 'running',   action: 'Enviando propuesta a peluquería El Estilo' },
