@@ -68,7 +68,7 @@ export default function TiendaClient() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [confirmedOrder, setConfirmedOrder] = useState<{ order_number: string; total: number; client_name: string; metodo_pago: string } | null>(null)
+  const [confirmedOrder, setConfirmedOrder] = useState<{ order_number: string; total: number; client_name: string; metodo_pago: string; tracking?:string } | null>(null)
 
   // Load cart from localStorage
   useEffect(() => {
@@ -534,13 +534,19 @@ function CartDrawer({ cart, cartTotal, onClose, onUpdateQty, onRemove, onCheckou
 function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
   cart: CartItem[]; cartTotal: number
   onClose: () => void
-  onConfirmed: (order: { order_number: string; total: number; client_name: string; metodo_pago: string }) => void
+  onConfirmed: (order: { order_number: string; total: number; client_name: string; metodo_pago: string; tracking?:string }) => void
 }) {
-  const [form, setForm] = useState({ name: '', phone: '', metodo: 'efectivo' as 'efectivo' | 'digital', notas: '' })
+  const [form, setForm] = useState({ name: '', phone: '', metodo: 'digital' as 'efectivo' | 'digital', notas: '' })
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
 
+  const [fulfillment,setFulfillment]=useState('retiro')
+  const [destination,setDestination]=useState('')
+  const [carrier,setCarrier]=useState('Uber Envíos')
+  const requestId=useRef('')
+  useEffect(()=>{fetch('/api/celulab/fulfillment').then(r=>r.json()).then(d=>setCarrier(d.carrier||'Uber Envíos')).catch(()=>{})},[])
   async function confirmar() {
+    if(!requestId.current)requestId.current=crypto.randomUUID()
     if (saving) return
     if (!form.name.trim()) { setErr('Ingresá tu nombre'); return }
     setSaving(true)
@@ -550,6 +556,7 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          request_id:requestId.current,fulfillment,destination,
           items: cart.map(i => ({ id: i.id, name: i.name, price_ars: i.price_ars, qty: i.qty })),
           total_ars: cartTotal,
           client_name: form.name.trim(),
@@ -560,7 +567,7 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
       })
       const data = await res.json()
       if (!res.ok) { setErr(data.error ?? 'Error al confirmar'); return }
-      onConfirmed({ order_number: data.order_number, total: cartTotal, client_name: form.name, metodo_pago: form.metodo })
+      onConfirmed({ order_number: data.order_number, tracking:data.tracking_token,total: data.total_ars, client_name: form.name, metodo_pago: form.metodo })
     } catch {
       setErr('No pudimos confirmar el pedido. Puede haberse registrado: consultanos antes de volver a enviarlo.')
     } finally {
@@ -643,7 +650,9 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
         {err && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#dc2626', marginBottom: 14 }}>{err}</div>}
 
         <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#92400e' }}>
-          📍 <strong>Retiro en local:</strong> te avisamos por WhatsApp cuando esté listo.
+          <label>Entrega <select value={fulfillment} onChange={e=>setFulfillment(e.target.value)}><option value="retiro">Retiro sin cargo · Junín 584</option><option value="envio">Envío con {carrier}</option></select></label>
+          {fulfillment==='envio'&&<label style={{display:'block'}}>Dirección y barrio <input value={destination} onChange={e=>setDestination(e.target.value)}/></label>}
+          <p>Te confirmamos disponibilidad, horario y total por WhatsApp antes de cobrar la seña. El envío se cotiza según el destino.</p>
         </div>
 
         <button onClick={confirmar} disabled={saving}
@@ -658,7 +667,7 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
 // ─── Order Confirmation ───────────────────────────────────────────────────────
 
 function OrderConfirmation({ order, onDone }: {
-  order: { order_number: string; total: number; client_name: string; metodo_pago: string }
+  order: { order_number: string; total: number; client_name: string; metodo_pago: string; tracking?:string }
   onDone: () => void
 }) {
   const waMsg = encodeURIComponent(
@@ -676,7 +685,7 @@ function OrderConfirmation({ order, onDone }: {
         <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
         <div style={{ fontWeight: 900, fontSize: 22, color: '#111', marginBottom: 6 }}>¡Pedido confirmado!</div>
         <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 24 }}>
-          Te avisamos por WhatsApp cuando esté listo para retirar.
+          Te confirmamos el pedido por WhatsApp. {order.tracking&&<a href={'/market/celulab/pedido/'+order.tracking}>Ver seguimiento</a>}
         </div>
 
         <div style={{ background: '#f1f5f9', borderRadius: 12, padding: '16px 20px', marginBottom: 24 }}>
