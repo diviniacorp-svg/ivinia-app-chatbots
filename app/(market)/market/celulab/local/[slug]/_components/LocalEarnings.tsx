@@ -33,6 +33,7 @@ export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrde
     <p style={{ fontSize: 13, color: '#64748b' }}>Órdenes entregadas, agrupadas por fecha de ingreso. Los importes corresponden a la comisión guardada en cada orden; no indican que se haya cobrado o liquidado.</p>
     <p style={{ fontSize: 12, color: '#64748b' }}>Este resumen usa las {orders.length} órdenes cargadas en el panel (máximo 200).</p>
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+      <label>Elegir mes <input type="month" onChange={e=>{const m=e.target.value;if(!m)return;const [year,month]=m.split('-').map(Number);setFrom(m+'-01');setTo(new Date(Date.UTC(year,month,0)).toISOString().slice(0,10))}} /></label>
       <button onClick={() => choosePeriod('week')}>Esta semana</button>
       <button onClick={() => choosePeriod('month')}>Este mes</button>
       <button onClick={() => { setFrom(''); setTo('') }}>Todo lo cargado</button>

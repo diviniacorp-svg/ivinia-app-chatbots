@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import ShareOrder from '../../../_components/ShareOrder'
 import { LocalEarnings, OrderEarnings } from './LocalEarnings'
 import { PatternLock } from '../../../_components/PatternLock'
 import CeluLabPriceList, { type PriceListItem } from '../../../_components/CeluLabPriceList'
@@ -196,6 +197,16 @@ function PinScreen({ partnerName, logoUrl, pinInput, pinErr, onInput, onSubmit }
 
 // ─── Local Dashboard ──────────────────────────────────────────────────────────
 
+function EarningsPin({pin,onUnlock}:{pin:string;onUnlock:()=>void}) {
+  const [value,setValue]=useState('')
+  const [error,setError]=useState(false)
+  return <details><summary style={{cursor:'pointer'}}>🔒 Ver ganancias con PIN</summary>
+    <form onSubmit={event=>{event.preventDefault();if(value && value===pin){onUnlock()}else{setError(true)}setValue('')}}>
+      <label>PIN del local <input type="password" inputMode="numeric" maxLength={8} value={value} onChange={e=>setValue(e.target.value)} /></label>
+      <button>Desbloquear</button>{error && <span role="alert"> PIN incorrecto</span>}
+    </form></details>
+}
+
 function LocalDashboard({
   partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, commissionPct, pin,
 }: {
@@ -259,6 +270,7 @@ function LocalDashboard({
     return (
       <LocalOrderDetail
         order={selectedOrder}
+        pin={pin} unlockCommission={unlockCommission}
         commissionUnlocked={commissionUnlocked}
         partnerName={partnerName}
         partnerAddress={partnerAddress}
@@ -348,7 +360,9 @@ function LocalDashboard({
           ))}
         </div>
 
-        {activeTab === 'ganancias' && <LocalEarnings orders={orders} unlocked={commissionUnlocked} />}
+        {(activeTab === 'ganancias' || activeTab === 'historial') && <details open={activeTab === 'ganancias' || undefined} key={activeTab}><summary>Ganancias por mes</summary>
+          {commissionUnlocked ? <LocalEarnings orders={orders} unlocked /> : <EarningsPin pin={pin} onUnlock={unlockCommission} />}
+        </details>}
 
         {/* ── Tab: Órdenes ── */}
         {activeTab === 'ordenes' && (() => {
@@ -1153,24 +1167,7 @@ function OrderTicket({
 
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {order.client_phone && (
-            <a
-              href={`https://wa.me/${order.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                `¡Hola ${order.client_name.split(' ')[0]}! 📱 Tu equipo fue ingresado en *CeluLab*.\n` +
-                `Número de orden: *${order.order_number}*\n` +
-                `Seguí el estado en tiempo real acá:\n` +
-                `https://divinia.vercel.app/seguimiento/${order.order_number}`
-              )}`}
-              target="_blank" rel="noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '14px', borderRadius: 12, background: '#22c55e',
-                color: '#fff', fontWeight: 700, fontSize: 15, textDecoration: 'none',
-              }}
-            >
-              📲 Enviar seguimiento al cliente
-            </a>
-          )}
+          <ShareOrder number={order.order_number} phone={order.client_phone} />
           <a href={waLink} target="_blank" rel="noreferrer" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '13px', borderRadius: 12, background: '#25d366',
@@ -1209,9 +1206,9 @@ function TicketRow({ icon, label, value }: { icon: string; label: string; value:
 // ─── Order Detail (read-only for local) ──────────────────────────────────────
 
 function LocalOrderDetail({
-  order, partnerName, partnerAddress, logoUrl, onBack, onStatusChange, commissionUnlocked,
+  order, partnerName, partnerAddress, logoUrl, onBack, onStatusChange, commissionUnlocked, pin, unlockCommission,
 }: {
-  order: Order; partnerName: string; partnerAddress: string; logoUrl: string; commissionUnlocked: boolean
+  order: Order; partnerName: string; partnerAddress: string; logoUrl: string; commissionUnlocked: boolean; pin:string; unlockCommission:()=>void
   onBack: () => void; onStatusChange: (orderId: string, newStatus: string) => void
 }) {
   const [advancing, setAdvancing] = useState(false)
@@ -1363,7 +1360,7 @@ function LocalOrderDetail({
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || '—'}</div>
         </Card>
 
-        <Card title="Ganancia del local" style={{ marginTop: 12 }}><OrderEarnings order={order} unlocked={commissionUnlocked} /></Card>
+        <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin pin={pin} onUnlock={unlockCommission} />}</Card>
 
         {order.budget_ars > 0 && (
           <Card title="💰 Presupuesto" style={{ marginTop: 12 }}>
@@ -1373,6 +1370,7 @@ function LocalOrderDetail({
           </Card>
         )}
 
+        <ShareOrder number={order.order_number} phone={order.client_phone} />
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button onClick={handlePrint} style={{
             flex: 1, padding: '12px', borderRadius: 10, border: '1px solid #e5e7eb',

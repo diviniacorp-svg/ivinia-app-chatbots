@@ -322,7 +322,7 @@ export default function CeluLabPriceList({
         <div style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #2563eb 100%)', padding: '0 20px' }}>
           <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.03em' }}>📱 CeluLab</span>
+              <span style={{ fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.03em' }}><img src="/celulab-logo.png" alt="CeluLab" width={68} height={42} style={{objectFit:'contain',background:'#fff',borderRadius:8,verticalAlign:'middle'}} /></span>
               <span style={{ fontSize: 11, color: '#93c5fd', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Lista de precios</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

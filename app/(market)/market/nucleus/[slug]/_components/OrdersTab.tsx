@@ -1,4 +1,5 @@
 'use client'
+import ShareOrder from '../../../celulab/_components/ShareOrder'
 import { useState, useEffect, useCallback } from 'react'
 import { PatternLock } from '../../../celulab/_components/PatternLock'
 
@@ -373,6 +374,7 @@ function OrderDetail({
             <span style={{ padding: '6px 14px', borderRadius: 10, fontWeight: 700, fontSize: 13, background: sc + '18', color: sc }}>
               {STATUS_LABELS[order.status]}
             </span>
+            <ShareOrder number={order.order_number} phone={order.client_phone} />
             <button onClick={handlePrint} style={{ padding: '8px 16px', borderRadius: 9, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
               🖨 Imprimir
             </button>

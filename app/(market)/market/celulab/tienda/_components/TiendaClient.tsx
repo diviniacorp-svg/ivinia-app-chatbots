@@ -251,7 +251,7 @@ export default function TiendaClient() {
               <span style={{ color: '#334155', fontSize: 18, margin: '0 2px' }}>|</span>
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-              <span style={{ fontSize: 20, flexShrink: 0 }}>🛒</span>
+              <img src="/celulab-logo.png" alt="CeluLab" width={68} height={42} style={{objectFit:'contain',background:'white',borderRadius:8}} />
               <span className="cl-t-htitle" style={{ fontWeight: 900, color: '#fff', fontSize: 18, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>Tienda CeluLab</span>
             </div>
           </div>
