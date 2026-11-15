@@ -25,14 +25,14 @@ export async function POST(req:NextRequest) {
   if(prev.data)return NextResponse.json(prev.data)
   const ids=b.items.map((i:{id:string})=>i?.id)
   if(new Set(ids).size!==ids.length) return bad('Hay productos repetidos.')
-  const [products,rates,setting]=await Promise.all([
-    db.from('cl_products').select('id,name,category,price_ars').in('id',ids).eq('is_latest',true).eq('in_stock',true),
+  const [matches,rates,setting]=await Promise.all([
+    Promise.all(ids.map((id:string)=>db.from('cl_products').select('id,name,category,price_ars').eq('id',id).eq('is_latest',true).eq('in_stock',true).maybeSingle())),
     db.from('cl_product_markups').select('category,markup_pct'),b.fulfillment === 'envio' ? db.from('cl_delivery_settings').select('carrier').maybeSingle() : Promise.resolve({data:null})])
-  if(products.error)return NextResponse.json({error:'No se pudo consultar el catálogo. Volvé a intentar.'},{status:503})
+  if(matches.some(row=>row.error))return NextResponse.json({error:'No se pudo consultar el catálogo. Volvé a intentar.'},{status:503})
   if(rates.error)return NextResponse.json({error:'No se pudo verificar el precio final. Volvé a intentar.'},{status:503})
   const items=[]
   for(const line of b.items){
-    const product=products.data.find(p=>p.id===line.id)
+    const product=matches.find(row=>row.data?.id===line.id)?.data
     if(!product||!Number.isInteger(line.qty)||line.qty<1||line.qty>99)return bad('Revisá la disponibilidad y cantidad.')
     const pct=Number(rates.data.find(r=>r.category===product.category)?.markup_pct||0)
     const price=Math.round(product.price_ars*(1+pct/100))
