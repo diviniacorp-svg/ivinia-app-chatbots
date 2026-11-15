@@ -73,10 +73,14 @@ function mapCategory(onlyCat: string, productName = ''): string {
   return 'Otros'
 }
 
-function parsePrice(str: string): number {
-  // ARS format: "$ 22.326,92" → 22327
-  const clean = (str || '').replace(/[^0-9,]/g, '').replace(',', '.')
-  return Math.round(parseFloat(clean) || 0)
+function parsePrice(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : 0
+  if (typeof value !== 'string') return 0
+  const amount = value.trim().replace(/^(?:ARS\s*)?\$\s*/i, '').trim()
+  if (/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/.test(amount)) {
+    return Number(amount.replace(/\./g, '').replace(',', '.'))
+  }
+  return /^\d+(?:[.,]\d{1,2})?$/.test(amount) ? Number(amount.replace(',', '.')) : 0
 }
 
 type OnlyRaw = {
@@ -174,7 +178,7 @@ export async function POST(req: NextRequest) {
     if (REPAIR_CATS.has(r.categoria)) continue
 
     const price = parsePrice(r.precio_final)
-    if (price <= 0) continue
+    if (price <= 0) return NextResponse.json({ error: 'ONLY envió un precio inválido. Se conservó el catálogo anterior.' }, { status: 422 })
 
     const name = (r.producto || '').trim()
     if (!name) continue
