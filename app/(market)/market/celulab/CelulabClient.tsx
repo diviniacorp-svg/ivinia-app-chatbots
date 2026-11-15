@@ -16,6 +16,44 @@ interface Props {
   partners?: Partner[]
 }
 
+function Portada() {
+  const slides = [
+    { label:'Servicio técnico', title:'¿Pantalla rota?', copy:'Mandanos el modelo y una foto. Te ayudamos a elegir la reparación y acordamos el presupuesto antes de empezar.', action:'Consultar por WhatsApp', href:CELULAB_WA+'?text=Hola%2C%20quiero%20consultar%20por%20una%20reparación', accent:'#95f2c9', motif:'screen' },
+    { label:'Accesorios', title:'Todo para tu celu.', copy:'Explorá cables, cargadores y auriculares. Elegí retiro o consultá por envío en San Luis.', action:'Explorar accesorios', href:'/market/celulab/tienda', accent:'#94ccff', motif:'audio' },
+    { label:'San Luis Capital', title:'Dejalo en el centro.', copy:'Recibimos equipos en Melmac, Belgrano 952, y en Celulandia, Rivadavia 673. Escribinos para coordinar.', action:'Coordinar recepción', href:CELULAB_WA+'?text=Hola%2C%20quiero%20coordinar%20la%20recepción%20de%20mi%20celular', accent:'#ffd897', motif:'pin' },
+  ]
+  const [index,setIndex]=useState(0)
+  const [paused,setPaused]=useState(true)
+  const [hover,setHover]=useState(false)
+  useEffect(()=>{setPaused(window.matchMedia('(prefers-reduced-motion: reduce)').matches)},[])
+  useEffect(()=>{
+    if(paused || hover) return
+    const timer=window.setInterval(()=>setIndex(i=>(i+1)%3),8000)
+    return ()=>window.clearInterval(timer)
+  },[paused,hover])
+  const slide=slides[index]
+  function choose(i:number){setIndex(i);setPaused(true)}
+  return <section aria-label="Destacados de CeluLab" onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onFocusCapture={()=>setPaused(true)} style={{background:'radial-gradient(ellipse at 92% 10%, '+slide.accent+'38, transparent 60%), #0b1929',border:'1px solid '+slide.accent+'55',borderRadius:24,margin:'24px 0',padding:'clamp(20px,5vw,56px)',color:'white',position:'relative',overflow:'hidden'}}>
+    <div aria-hidden="true" className={'cl-art '+slide.motif}/>
+    <style>{`
+      .cl-art{pointer-events:none;position:absolute;right:9%;top:10%;width:clamp(100px,13vw,175px);height:68%;color:inherit;opacity:.85;transform:rotate(13deg)}
+      .cl-art.screen{border:5px solid #96efca;border-radius:26px;background:linear-gradient(130deg,#0e2935 30%,#26796e 52%,#113146 53%);box-shadow:10px 12px 0 #163749,inset 0 0 0 5px #08131f}
+      .cl-art.screen:after{content:'';position:absolute;top:5%;left:36%;width:28%;height:5px;border-radius:9px;background:#071724}
+      .cl-art.audio{height:45%;border:12px solid #92c9ff;border-bottom:0;border-radius:90px 90px 0 0;top:17%}
+      .cl-art.audio:after{content:'';position:absolute;bottom:-18%;left:-14%;width:24%;height:50%;border-radius:12px;background:#92c9ff;box-shadow:clamp(82px,11vw,150px) 0 #92c9ff}
+      .cl-art.pin{width:clamp(95px,12vw,160px);height:auto;aspect-ratio:1;border:16px solid #ffda97;border-radius:50% 50% 50% 6%;transform:rotate(-45deg);top:22%}
+      @media(max-width:720px){.cl-art{opacity:.13;right:-10px}.cl-banner-text{max-width:100%!important}}
+    `}</style>
+    <div className="cl-banner-text" style={{position:'relative',maxWidth:'67%',minHeight:208}}>
+      <strong style={{color:slide.accent}}>{slide.label}</strong>
+      <h1 style={{fontSize:'clamp(36px,5.8vw,76px)',letterSpacing:'-.055em',lineHeight:1.05,margin:'12px 0'}}>{slide.title}</h1>
+      <p style={{maxWidth:490,lineHeight:1.55,color:'#d9e5ec'}}>{slide.copy}</p>
+      <a href={slide.href} style={{display:'inline-block',padding:'13px 19px',borderRadius:12,fontWeight:750,background:slide.accent,color:'#102030',textDecoration:'none'}}>{slide.action} →</a>
+    </div>
+    <div style={{position:'relative',display:'flex',flexWrap:'wrap',gap:6,marginTop:20}}>{slides.map((s,i)=><button key={s.label} aria-pressed={i===index} onClick={()=>choose(i)} style={{minHeight:44,borderRadius:12,border:'1px solid #638092',background:i===index?'#e9f2f4':'#132536',color:i===index?'#122535':'white',padding:'0 10px'}}>{s.label}</button>)}<button aria-label={paused?'Reproducir portada':'Pausar portada'} onMouseDown={e=>e.preventDefault()} onClick={()=>setPaused(!paused)} style={{minWidth:44,minHeight:44,borderRadius:12,color:'white',background:'#132536',border:'1px solid #638092'}}>{paused?'▶':'Ⅱ'}</button></div>
+  </section>
+}
+
 export default function CelulabClient({ partners = [] }: Props) {
   const [pinOpen, setPinOpen] = useState(false)
   const [payConfig, setPayConfig] = useState<{ alias?: string; nombre?: string; mp_link?: string } | null>(null)
@@ -283,75 +321,7 @@ export default function CelulabClient({ partners = [] }: Props) {
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px 100px' }}>
 
-        {/* ── Hero ── */}
-        <div className="cl-hero" style={{ padding: '52px 0 44px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'center' }}>
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${BLUE}22`, border: `1px solid ${BLUE}55`, borderRadius: 20, padding: '5px 14px', fontSize: 12, color: '#5EB8FF', marginBottom: 20, fontWeight: 600 }}>
-              Servicio técnico · San Luis Capital
-            </div>
-            <h1 style={{ fontSize: 'clamp(28px,5.5vw,52px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 16px', lineHeight: 1.05, fontFamily: "'Poppins', sans-serif" }}>
-              ¿Se rompió la pantalla<br />
-              <span style={{ background: `linear-gradient(135deg, ${BLUE}, #5EB8FF)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                o dejó de cargar?
-              </span>
-            </h1>
-            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.42)', margin: '0 0 28px', lineHeight: 1.7 }}>
-              Contanos qué modelo tenés y qué le pasó. Coordinamos la revisión y te pasamos el presupuesto antes de reparar.<br />
-              Recibimos equipos en Melmac (Belgrano 952) y Celulandia (Rivadavia 673).
-            </p>
-            <a href={CELULAB_WA + '?text=' + encodeURIComponent('Hola, quiero consultar por una reparación. Mi celular es un…')} style={{display:'inline-block',background:'#8ef0c0',color:'#09251c',borderRadius:12,padding:'14px 20px',fontWeight:750,textDecoration:'none'}}>Consultar reparación por WhatsApp</a>
-          </div>
-
-          {/* Animated phone — brand 3D style */}
-          <div className="cl-phone-hero" style={{ position: 'relative', width: 210, height: 310, flexShrink: 0 }}>
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 50%,${BLUE}38,transparent 68%)`, animation: 'celuPulse 4s ease-in-out infinite' }} />
-            <svg viewBox="0 0 80 146" width="90" height="164" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', filter: `drop-shadow(0 6px 22px ${BLUE}55) drop-shadow(0 2px 6px rgba(0,0,0,.5))` }}>
-              <defs>
-                <linearGradient id="phonebody" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1E2833"/>
-                  <stop offset="100%" stopColor="#0D1B2A"/>
-                </linearGradient>
-                <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#2D7DFF" stopOpacity=".9"/>
-                  <stop offset="100%" stopColor="#0D40A0" stopOpacity=".8"/>
-                </linearGradient>
-                <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(255,255,255,.18)"/>
-                  <stop offset="60%" stopColor="rgba(255,255,255,0)"/>
-                </linearGradient>
-              </defs>
-              {/* Body */}
-              <rect x="2" y="2" width="76" height="142" rx="16" fill="url(#phonebody)" stroke="rgba(255,255,255,.18)" strokeWidth="1.2"/>
-              {/* Screen */}
-              <rect x="8" y="14" width="64" height="108" rx="8" fill="url(#screen)"/>
-              {/* Screen gloss */}
-              <rect x="8" y="14" width="64" height="54" rx="8" fill="url(#gloss)"/>
-              {/* Notch/pill */}
-              <rect x="28" y="8" width="24" height="4" rx="2" fill="rgba(255,255,255,.15)"/>
-              {/* Home indicator */}
-              <rect x="28" y="130" width="24" height="4" rx="2" fill="rgba(255,255,255,.15)"/>
-              {/* Check icon center */}
-              <circle cx="40" cy="68" r="18" fill="rgba(255,255,255,.12)"/>
-              <path d="M31 68 l7 7 l11-12" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              {/* Brand text on screen */}
-              <text x="40" y="95" textAnchor="middle" fill="rgba(255,255,255,.7)" fontSize="5.5" fontWeight="700" letterSpacing="1" fontFamily="system-ui">celuLAB</text>
-            </svg>
-            <div style={{ position: 'absolute', top: 14, left: 4, animation: 'celuFloat1 3.2s ease-in-out infinite', fontSize: 24 }}>🔋</div>
-            <div style={{ position: 'absolute', top: 6, right: 8, animation: 'celuFloat2 4s ease-in-out infinite .5s', fontSize: 22 }}>⚙️</div>
-            <div style={{ position: 'absolute', top: 126, right: 2, animation: 'celuFloat3 3.6s ease-in-out infinite 1s', fontSize: 20 }}>🛡️</div>
-            <div style={{ position: 'absolute', bottom: 48, left: 2, animation: 'celuFloat4 3s ease-in-out infinite 1.5s', fontSize: 20 }}>⚡</div>
-            <div style={{ position: 'absolute', bottom: 16, right: 16, animation: 'celuFloat5 2.8s ease-in-out infinite .8s', fontSize: 18 }}>🔧</div>
-          </div>
-        </div>
-
-        {/* ── Video Hero placeholder (reemplazar con <video> cuando esté listo) ── */}
-        {/*
-        <div style={{ marginBottom: 40, borderRadius: 20, overflow: 'hidden', aspectRatio: '16/9', background: '#0D1B2A', border: '1px solid rgba(45,125,255,0.2)' }}>
-          <video autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}>
-            <source src="/videos/celulab-hero.mp4" type="video/mp4" />
-          </video>
-        </div>
-        */}
+        <Portada />
 
         {/* ── Bloques: Lista + Tienda ── */}
         <div className="cl-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 16, marginBottom: 40 }}>
