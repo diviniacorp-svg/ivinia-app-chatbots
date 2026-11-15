@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 const BLUE = '#2D7DFF'
 const INK = '#0D1B2A'
 const PAPER = '#F2F4F7'
-const CELULAB_WA = 'https://wa.me/5492664501140'
+const CELULAB_WA = 'https://wa.me/5492664866560'
 
 interface Partner {
   id: string
@@ -166,7 +166,7 @@ export default function CelulabClient({ partners = [] }: Props) {
                     Revisamos tu solicitud y te mandamos el PIN de acceso a la brevedad.
                   </div>
                   <a
-                    href={`https://wa.me/5492664501140?text=${encodeURIComponent(`Hola! Acabo de solicitar acceso como local en CeluLab.\nLocal: ${regForm.nombre_local} · Tel: ${regForm.telefono}`)}`}
+                    href={`https://wa.me/5492664866560?text=${encodeURIComponent(`Hola! Acabo de solicitar acceso como local en CeluLab.\nLocal: ${regForm.nombre_local} · Tel: ${regForm.telefono}`)}`}
                     target="_blank" rel="noreferrer"
                     style={{ display: 'block', padding: '12px', borderRadius: 10, background: '#25d366', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', marginBottom: 10 }}
                   >
@@ -287,30 +287,19 @@ export default function CelulabClient({ partners = [] }: Props) {
         <div className="cl-hero" style={{ padding: '52px 0 44px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'center' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${BLUE}22`, border: `1px solid ${BLUE}55`, borderRadius: 20, padding: '5px 14px', fontSize: 12, color: '#5EB8FF', marginBottom: 20, fontWeight: 600 }}>
-              ⚡ San Luis Capital · Técnico certificado
+              Servicio técnico · San Luis Capital
             </div>
             <h1 style={{ fontSize: 'clamp(28px,5.5vw,52px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 16px', lineHeight: 1.05, fontFamily: "'Poppins', sans-serif" }}>
-              TU CELULAR EN<br />
+              ¿Se rompió la pantalla<br />
               <span style={{ background: `linear-gradient(135deg, ${BLUE}, #5EB8FF)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                BUENAS MANOS.
+                o dejó de cargar?
               </span>
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.42)', margin: '0 0 28px', lineHeight: 1.7 }}>
-              Revisión diagnóstica, precio fijo antes de empezar.<br />
-              Pantallas · Baterías · Conectores · Software
+              Contanos qué modelo tenés y qué le pasó. Coordinamos la revisión y te pasamos el presupuesto antes de reparar.<br />
+              Recibimos equipos en Melmac (Belgrano 952) y Celulandia (Rivadavia 673).
             </p>
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
-              {[
-                { n: '$15.000', label: 'revisión diagnóstica' },
-                { n: 'En el día', label: 'o al día siguiente' },
-                { n: '100%', label: 'piezas verificadas' },
-              ].map(s => (
-                <div key={s.label}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{s.n}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
+            <a href={CELULAB_WA + '?text=' + encodeURIComponent('Hola, quiero consultar por una reparación. Mi celular es un…')} style={{display:'inline-block',background:'#8ef0c0',color:'#09251c',borderRadius:12,padding:'14px 20px',fontWeight:750,textDecoration:'none'}}>Consultar reparación por WhatsApp</a>
           </div>
 
           {/* Animated phone — brand 3D style */}
@@ -373,7 +362,7 @@ export default function CelulabClient({ partners = [] }: Props) {
               <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Lista de precios</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.42)', margin: 0, lineHeight: 1.6 }}>
                 Módulos, baterías, conectores, cámaras y más.<br />
-                Precios actualizados con stock real.
+                Consultá disponibilidad para tu modelo.
               </p>
             </div>
             <a href="/market/celulab/lista" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: 10, padding: '11px 22px', fontWeight: 700, fontSize: 13, textDecoration: 'none', width: 'fit-content' }}>
