@@ -541,14 +541,22 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
   const [err, setErr] = useState('')
 
   const [fulfillment,setFulfillment]=useState('retiro')
+  const [ownCourier,setOwnCourier]=useState(false)
   const [deliveryMode,setDeliveryMode]=useState('ahora')
   const [slot,setSlot]=useState('')
   const [destination,setDestination]=useState('')
   const [carrier,setCarrier]=useState('Uber Envíos')
   const requestId=useRef('')
   useEffect(()=>{fetch('/api/celulab/fulfillment').then(r=>r.json()).then(d=>setCarrier(d.carrier||'Uber Envíos')).catch(()=>{})},[])
+function canBuyNow(now = Date.now()) {
+  const local = new Date(now - 3 * 60 * 60 * 1000)
+  const day = local.getUTCDay()
+  const minute = local.getUTCHours() * 60 + local.getUTCMinutes()
+  if (day === 6) return minute >= 600 && minute <= 735
+  return day >= 1 && day <= 5 && minute >= 620 && minute <= 1055
+}
 function deliveryTiming(mode: string, slot: string, now = Date.now()) {
-  if (mode === 'ahora') return 'Lo antes posible'
+  if (mode === 'ahora') return canBuyNow(now) ? 'Lo antes posible, sujeto a disponibilidad' : 'Coordinar próximo horario de compra'
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slot)) return null
   const timestamp = Date.parse(slot + ':00-03:00')
   if (!(timestamp >= now + 15 * 60000)) return null
@@ -574,7 +582,7 @@ function deliveryTiming(mode: string, slot: string, now = Date.now()) {
           client_name: form.name.trim(),
           client_phone: form.phone.trim() || null,
           metodo_pago: form.metodo,
-          notas: [timing, form.notas.trim()].filter(Boolean).join("\n") || null,
+          notas: [fulfillment === "envio" ? (ownCourier ? "Cadete solicitado y pagado por el cliente" : "CeluLab cotiza y coordina el viaje") : null, timing, form.notas.trim()].filter(Boolean).join("\n") || null,
         }),
       })
       const data = await res.json()
@@ -662,16 +670,20 @@ function deliveryTiming(mode: string, slot: string, now = Date.now()) {
         {err && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#dc2626', marginBottom: 14 }}>{err}</div>}
 
         <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#92400e' }}>
-          <label>Entrega <select value={fulfillment} onChange={e=>setFulfillment(e.target.value)}><option value="retiro">Retiro sin cargo · Junín 584</option><option value="envio">Envío con {carrier}</option></select></label>
+          <label>Entrega <select value={fulfillment} onChange={e=>setFulfillment(e.target.value)}><option value="retiro">Retiro sin cargo · Junín 584</option><option value="envio">Envío a domicilio</option></select></label>
           {fulfillment==='envio'&&<label style={{display:'block'}}>Dirección y barrio <input value={destination} onChange={e=>setDestination(e.target.value)}/></label>}
           {fulfillment === 'envio' && <div>
+            <label>¿Quién coordina el viaje? <select value={ownCourier ? 'cliente' : 'local'} onChange={e=>setOwnCourier(e.target.value === 'cliente')}>
+              <option value="local">Que CeluLab cotice el envío</option><option value="cliente">Pido y pago mi cadete</option>
+            </select></label>
+            <p>{ownCourier ? 'Esperá la confirmación de paquete listo antes de pedir el retiro en Junín 584.' : 'Cotizamos el viaje con ' + carrier + ' a tu dirección y te consultamos antes de pedirlo.'}</p>
             <label>¿Cuándo querés recibirlo? <select value={deliveryMode} onChange={e=>setDeliveryMode(e.target.value)}>
-              <option value="ahora">Lo antes posible</option><option value="programar">Solicitar fecha y hora</option>
+              <option value="ahora">{canBuyNow() ? "Lo antes posible" : "Coordinar próximo horario"}</option><option value="programar">Solicitar fecha y hora</option>
             </select></label>
             {deliveryMode === 'programar' && <label> Fecha y hora en San Luis <input type="datetime-local" value={slot} onChange={e=>setSlot(e.target.value)} /></label>}
             <p>Preparar el producto lleva unos 10 a 15 minutos. Después se suma el viaje. El horario queda sujeto a confirmación.</p>
           </div>}
-          <p>Te confirmamos disponibilidad, horario y total por WhatsApp antes de cobrar la seña. El envío se cotiza según el destino.</p>
+          <p>Confirmamos stock, horario y precio por WhatsApp. Para reservar, acordamos una seña del 50% o un anticipo según el costo del encargo. Te enviamos el alias o QR después de tu aceptación. El saldo se abona antes del despacho.</p>
         </div>
 
         <button onClick={confirmar} disabled={saving}
