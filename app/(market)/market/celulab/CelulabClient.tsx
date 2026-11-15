@@ -23,6 +23,8 @@ function Portada() {
     { label:'San Luis Capital', title:'Dejalo en el centro.', copy:'Recibimos equipos en Melmac, Belgrano 952, y en Celulandia, Rivadavia 673. Escribinos para coordinar.', action:'Coordinar recepción', href:CELULAB_WA+'?text=Hola%2C%20quiero%20coordinar%20la%20recepción%20de%20mi%20celular', accent:'#ffd897', motif:'pin' },
   ]
   const [index,setIndex]=useState(0)
+  const drag = useRef<{x:number,y:number}|null>(null)
+  const suppressClick = useRef(false)
   const [paused,setPaused]=useState(true)
   const [hover,setHover]=useState(false)
   useEffect(()=>{setPaused(window.matchMedia('(prefers-reduced-motion: reduce)').matches)},[])
@@ -33,9 +35,17 @@ function Portada() {
   },[paused,hover])
   const slide=slides[index]
   function choose(i:number){setIndex(i);setPaused(true)}
-  return <section aria-label="Destacados de CeluLab" onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onFocusCapture={()=>setPaused(true)} style={{background:'radial-gradient(ellipse at 92% 10%, '+slide.accent+'38, transparent 60%), #0b1929',border:'1px solid '+slide.accent+'55',borderRadius:24,margin:'24px 0',padding:'clamp(20px,5vw,56px)',color:'white',position:'relative',overflow:'hidden'}}>
-    <div aria-hidden="true" className={'cl-art '+slide.motif}/>
+  return <section onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY};suppressClick.current=false}} onPointerCancel={()=>{drag.current=null}} onPointerUp={e=>{
+    const start=drag.current
+    drag.current=null
+    if(!start)return
+    const dx=e.clientX-start.x
+    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(e.clientY-start.y)*1.4){suppressClick.current=true;choose((index+(dx<0?1:2))%3)}
+  }} onClickCapture={e=>{if(suppressClick.current){e.preventDefault();e.stopPropagation();suppressClick.current=false}}} aria-label="Destacados de CeluLab" onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)} onFocusCapture={()=>setPaused(true)} style={{touchAction:'pan-y',background:'radial-gradient(ellipse at 92% 10%, '+slide.accent+'38, transparent 60%), #0b1929',border:'1px solid '+slide.accent+'55',borderRadius:24,margin:'24px 0',padding:'clamp(20px,5vw,56px)',color:'white',position:'relative',overflow:'hidden'}}>
+    {slide.motif==='pin' ? <div aria-hidden="true" className="cl-art pin"/> : <img draggable={false} alt="" className="cl-banner-photo" src={slide.motif==='screen' ? 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1000&q=85' : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1000&q=85'}/>} 
     <style>{`
+      .cl-banner-photo{position:absolute;inset:0 0 0 auto;height:100%;width:49%;object-fit:cover;mask-image:linear-gradient(to right,transparent,#000 35%);pointer-events:none}
+      @media(max-width:720px){.cl-banner-photo{width:100%;opacity:.18}}
       .cl-art{pointer-events:none;position:absolute;right:9%;top:10%;width:clamp(100px,13vw,175px);height:68%;color:inherit;opacity:.85;transform:rotate(13deg)}
       .cl-art.screen{border:5px solid #96efca;border-radius:26px;background:linear-gradient(130deg,#0e2935 30%,#26796e 52%,#113146 53%);box-shadow:10px 12px 0 #163749,inset 0 0 0 5px #08131f}
       .cl-art.screen:after{content:'';position:absolute;top:5%;left:36%;width:28%;height:5px;border-radius:9px;background:#071724}
