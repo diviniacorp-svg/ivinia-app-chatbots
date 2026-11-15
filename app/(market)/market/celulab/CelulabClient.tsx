@@ -46,9 +46,9 @@ function Portada() {
     `}</style>
     <div className="cl-banner-text" style={{position:'relative',maxWidth:'67%',minHeight:208}}>
       <strong style={{color:slide.accent}}>{slide.label}</strong>
-      <h1 style={{fontSize:'clamp(36px,5.8vw,76px)',letterSpacing:'-.055em',lineHeight:1.05,margin:'12px 0'}}>{slide.title}</h1>
+      <h1 style={{fontSize:'clamp(36px,5.8vw,76px)',letterSpacing:'-.025em',lineHeight:1.05,margin:'12px 0'}}>{slide.title}</h1>
       <p style={{maxWidth:490,lineHeight:1.55,color:'#d9e5ec'}}>{slide.copy}</p>
-      <a href={slide.href} style={{display:'inline-block',padding:'13px 19px',borderRadius:12,fontWeight:750,background:slide.accent,color:'#102030',textDecoration:'none'}}>{slide.action} →</a>
+      <a href={slide.href} style={{display:'inline-block',padding:'13px 19px',borderRadius:12,fontWeight:600,background:slide.accent,color:'#102030',textDecoration:'none'}}>{slide.action} →</a>
     </div>
     <div style={{position:'relative',display:'flex',flexWrap:'wrap',gap:6,marginTop:20}}>{slides.map((s,i)=><button key={s.label} aria-pressed={i===index} onClick={()=>choose(i)} style={{minHeight:44,borderRadius:12,border:'1px solid #638092',background:i===index?'#e9f2f4':'#132536',color:i===index?'#122535':'white',padding:'0 10px'}}>{s.label}</button>)}<button aria-label={paused?'Reproducir portada':'Pausar portada'} onMouseDown={e=>e.preventDefault()} onClick={()=>setPaused(!paused)} style={{minWidth:44,minHeight:44,borderRadius:12,color:'white',background:'#132536',border:'1px solid #638092'}}>{paused?'▶':'Ⅱ'}</button></div>
   </section>
@@ -149,7 +149,7 @@ export default function CelulabClient({ partners = [] }: Props) {
   }
 
   return (
-    <div style={{ background: INK, color: PAPER, minHeight: '100vh', fontFamily: "'Poppins', system-ui, sans-serif" }}>
+    <div className="cl-landing" style={{ background: INK, color: PAPER, minHeight: '100vh', fontFamily: 'var(--f-display)' }}>
 
       {/* Header */}
       <header style={{
@@ -294,7 +294,10 @@ export default function CelulabClient({ partners = [] }: Props) {
       {requestModal && <RequestModal prefill={requestModal} onClose={() => setRequestModal(null)} />}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+        .cl-landing :where(button,input,select,textarea){font-family:inherit}
+        .cl-banner-text strong{font-family:var(--f-mono);font-size:12px;font-weight:500;letter-spacing:.05em}
+        .cl-banner-text h1{font-family:var(--f-serif);font-weight:400}
+        .cl-landing h2{line-height:1.2}
         @keyframes celuFloat1{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-11px) rotate(4deg)}}
         @keyframes celuFloat2{0%,100%{transform:translateY(0) rotate(3deg)}50%{transform:translateY(-15px) rotate(-4deg)}}
         @keyframes celuFloat3{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-9px) scale(1.08)}}
@@ -329,7 +332,7 @@ export default function CelulabClient({ partners = [] }: Props) {
           <div style={{ background: 'linear-gradient(135deg,rgba(13,27,42,0.95),rgba(30,64,115,0.55))', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 20 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>🔧 Servicio técnico</div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Lista de precios</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Lista de precios</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.42)', margin: 0, lineHeight: 1.6 }}>
                 Módulos, baterías, conectores, cámaras y más.<br />
                 Consultá disponibilidad para tu modelo.
@@ -343,7 +346,7 @@ export default function CelulabClient({ partners = [] }: Props) {
           <div style={{ background: 'linear-gradient(135deg,rgba(45,125,255,0.22),rgba(13,27,42,0.6))', border: `1px solid ${BLUE}55`, borderRadius: 20, padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 20 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>🛒 Accesorios</div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Tienda CeluLab</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, color: '#fff', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Tienda CeluLab</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.42)', margin: 0, lineHeight: 1.6 }}>
                 Auriculares, cargadores, cables, smartwatches, power banks y más.
               </p>
@@ -356,7 +359,7 @@ export default function CelulabClient({ partners = [] }: Props) {
 
         {/* ── Cómo trabajamos ── */}
         <div style={{ marginBottom: 44 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: "'Poppins', sans-serif" }}>¿Cómo funciona?</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: 'var(--f-display)' }}>¿Cómo funciona?</h2>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.32)', margin: '0 0 20px' }}>Rápido, transparente y sin sorpresas.</p>
           <div className="cl-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12 }}>
             {[
@@ -429,7 +432,7 @@ export default function CelulabClient({ partners = [] }: Props) {
           @media(min-width:540px){.cl-quality-grid{grid-template-columns:1fr 1fr}}
         `}</style>
         <div style={{ marginTop: 48, marginBottom: 16 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: "'Poppins', sans-serif" }}>¿Qué calidad de repuesto usamos?</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: 'var(--f-display)' }}>¿Qué calidad de repuesto usamos?</h2>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.32)', margin: '0 0 20px' }}>No todos los repuestos son iguales. Te explicamos cada tipo para que elijas con información.</p>
 
           <div className="cl-quality-grid" style={{ marginBottom: 16 }}>
@@ -444,7 +447,7 @@ export default function CelulabClient({ partners = [] }: Props) {
                   { badge: 'EQUIP', color: '#d97706', desc: 'Pantalla original desmontada de equipos sin uso. 100% original.' },
                 ].map(q => (
                   <div key={q.badge} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: q.color, background: q.color + '22', border: `1px solid ${q.color}44`, borderRadius: 5, padding: '3px 0', width: 52, textAlign: 'center', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2 }}>{q.badge}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: q.color, background: q.color + '22', border: `1px solid ${q.color}44`, borderRadius: 5, padding: '3px 0', width: 52, textAlign: 'center', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2 }}>{q.badge}</span>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55 }}>{q.desc}</span>
                   </div>
                 ))}
@@ -462,7 +465,7 @@ export default function CelulabClient({ partners = [] }: Props) {
                   { badge: 'AMPS', color: '#d97706', desc: 'Marca AMPSENTRIX importada de USA. Ideal para iPhones.' },
                 ].map(q => (
                   <div key={q.badge} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: q.color, background: q.color + '22', border: `1px solid ${q.color}44`, borderRadius: 5, padding: '3px 0', width: 68, textAlign: 'center', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2 }}>{q.badge}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: q.color, background: q.color + '22', border: `1px solid ${q.color}44`, borderRadius: 5, padding: '3px 0', width: 68, textAlign: 'center', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2 }}>{q.badge}</span>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55 }}>{q.desc}</span>
                   </div>
                 ))}
@@ -505,7 +508,7 @@ export default function CelulabClient({ partners = [] }: Props) {
         {/* ── Locales asociados ── */}
         {partners.length > 0 && (
           <div style={{ marginTop: 56, marginBottom: 16 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: "'Poppins', sans-serif" }}>Locales asociados</h2>
+            <h2 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: 'var(--f-display)' }}>Locales asociados</h2>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.32)', margin: '0 0 24px' }}>
               Podés dejar tu celular en estos locales. Ellos lo envían al taller y te lo devuelven reparado.
             </p>
@@ -526,7 +529,7 @@ export default function CelulabClient({ partners = [] }: Props) {
 
         {/* ── FAQ ── */}
         <div style={{ marginTop: 56, marginBottom: 16 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: "'Poppins', sans-serif" }}>Preguntas frecuentes</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 6px', fontFamily: 'var(--f-display)' }}>Preguntas frecuentes</h2>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.32)', margin: '0 0 24px' }}>Todo lo que necesitás saber antes de traer el equipo.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
@@ -927,7 +930,7 @@ function Cotizador({ onRequest }: { onRequest: (p: RequestPrefill) => void }) {
             </div>
             )
           })}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 10, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 10, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: 16 }}>
             <span style={{ color: 'rgba(255,255,255,0.6)' }}>Total estimado</span>
             <span style={{ color: '#fff' }}>{arsF(cartTotal)}</span>
           </div>
@@ -943,7 +946,7 @@ function Cotizador({ onRequest }: { onRequest: (p: RequestPrefill) => void }) {
         <div>
           {!brand && (
             <>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 4px', letterSpacing: '-0.02em' }}>¿Cuánto sale reparar mi celular?</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: '0 0 4px', letterSpacing: '-0.02em' }}>¿Cuánto sale reparar mi celular?</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: '0 0 16px', lineHeight: 1.5 }}>Precio estimado al instante. Sujeto a stock y confirmación.</p>
             </>
           )}
@@ -1063,7 +1066,7 @@ function Cotizador({ onRequest }: { onRequest: (p: RequestPrefill) => void }) {
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                  <span style={{ fontWeight: 800, fontSize: 17, color: '#fff' }}>{it.final_price ? arsF(it.final_price) : '—'}</span>
+                  <span style={{ fontWeight: 600, fontSize: 17, color: '#fff' }}>{it.final_price ? arsF(it.final_price) : '—'}</span>
                   <button onClick={() => addToCart(it)}
                     style={{ background: BLUE, color: '#fff', borderRadius: 8, padding: '8px 14px', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     + Agregar
