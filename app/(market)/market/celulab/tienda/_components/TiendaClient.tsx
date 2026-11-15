@@ -541,13 +541,25 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
   const [err, setErr] = useState('')
 
   const [fulfillment,setFulfillment]=useState('retiro')
+  const [deliveryMode,setDeliveryMode]=useState('ahora')
+  const [slot,setSlot]=useState('')
   const [destination,setDestination]=useState('')
   const [carrier,setCarrier]=useState('Uber Envíos')
   const requestId=useRef('')
   useEffect(()=>{fetch('/api/celulab/fulfillment').then(r=>r.json()).then(d=>setCarrier(d.carrier||'Uber Envíos')).catch(()=>{})},[])
+function deliveryTiming(mode: string, slot: string, now = Date.now()) {
+  if (mode === 'ahora') return 'Lo antes posible'
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slot)) return null
+  const timestamp = Date.parse(slot + ':00-03:00')
+  if (!(timestamp >= now + 15 * 60000)) return null
+  return 'Horario solicitado en San Luis: ' + slot.replace('T', ' ')
+}
   async function confirmar() {
     if(!requestId.current)requestId.current=crypto.randomUUID()
     if (saving) return
+    const timing = fulfillment === 'envio' ? deliveryTiming(deliveryMode, slot) : null
+    if (fulfillment === 'envio' && (!destination.trim() || !form.phone.trim())) { setErr('Ingresá dirección, barrio y teléfono para coordinar el envío'); return }
+    if (fulfillment === 'envio' && !timing) { setErr('Elegí un horario de San Luis con al menos 15 minutos de anticipación'); return }
     if (!form.name.trim()) { setErr('Ingresá tu nombre'); return }
     setSaving(true)
     setErr('')
@@ -562,7 +574,7 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
           client_name: form.name.trim(),
           client_phone: form.phone.trim() || null,
           metodo_pago: form.metodo,
-          notas: form.notas.trim() || null,
+          notas: [timing, form.notas.trim()].filter(Boolean).join("\n") || null,
         }),
       })
       const data = await res.json()
@@ -652,6 +664,13 @@ function CheckoutModal({ cart, cartTotal, onClose, onConfirmed }: {
         <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#92400e' }}>
           <label>Entrega <select value={fulfillment} onChange={e=>setFulfillment(e.target.value)}><option value="retiro">Retiro sin cargo · Junín 584</option><option value="envio">Envío con {carrier}</option></select></label>
           {fulfillment==='envio'&&<label style={{display:'block'}}>Dirección y barrio <input value={destination} onChange={e=>setDestination(e.target.value)}/></label>}
+          {fulfillment === 'envio' && <div>
+            <label>¿Cuándo querés recibirlo? <select value={deliveryMode} onChange={e=>setDeliveryMode(e.target.value)}>
+              <option value="ahora">Lo antes posible</option><option value="programar">Solicitar fecha y hora</option>
+            </select></label>
+            {deliveryMode === 'programar' && <label> Fecha y hora en San Luis <input type="datetime-local" value={slot} onChange={e=>setSlot(e.target.value)} /></label>}
+            <p>Preparar el producto lleva unos 10 a 15 minutos. Después se suma el viaje. El horario queda sujeto a confirmación.</p>
+          </div>}
           <p>Te confirmamos disponibilidad, horario y total por WhatsApp antes de cobrar la seña. El envío se cotiza según el destino.</p>
         </div>
 
