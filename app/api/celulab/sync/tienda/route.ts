@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
     code: string; price_ars: number; in_stock: boolean; image_url: string | null
   }
 
+  let skippedWithoutPrice = 0
   const products: Mapped[] = []
   const seenKeys = new Set<string>()
 
@@ -178,7 +179,10 @@ export async function POST(req: NextRequest) {
     if (REPAIR_CATS.has(r.categoria)) continue
 
     const price = parsePrice(r.precio_final)
-    if (price <= 0) return NextResponse.json({ error: 'ONLY envió un precio inválido. Se conservó el catálogo anterior.' }, { status: 422 })
+    if (!Number.isFinite(price) || price <= 0) {
+      skippedWithoutPrice++
+      continue
+    }
 
     const name = (r.producto || '').trim()
     if (!name) continue
@@ -236,6 +240,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     raw_fetched: rawItems.length,
     accessories_mapped: products.length,
+    skipped_without_price: skippedWithoutPrice,
     upserted,
     categories: Object.fromEntries(Array.from(catMap.entries()).sort((a, b) => b[1] - a[1])),
     synced_at: new Date().toISOString(),
