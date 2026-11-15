@@ -27,8 +27,9 @@ export async function POST(req:NextRequest) {
   if(new Set(ids).size!==ids.length) return bad('Hay productos repetidos.')
   const [products,rates,setting]=await Promise.all([
     db.from('cl_products').select('id,name,category,price_ars').in('id',ids).eq('is_latest',true).eq('in_stock',true),
-    db.from('cl_product_markups').select('category,markup_pct'),db.from('cl_delivery_settings').select('carrier').single()])
-  if(products.error||rates.error||setting.error)return NextResponse.json({error:'No pudimos verificar la disponibilidad.'},{status:503})
+    db.from('cl_product_markups').select('category,markup_pct'),b.fulfillment === 'envio' ? db.from('cl_delivery_settings').select('carrier').maybeSingle() : Promise.resolve({data:null})])
+  if(products.error)return NextResponse.json({error:'No se pudo consultar el catálogo. Volvé a intentar.'},{status:503})
+  if(rates.error)return NextResponse.json({error:'No se pudo verificar el precio final. Volvé a intentar.'},{status:503})
   const items=[]
   for(const line of b.items){
     const product=products.data.find(p=>p.id===line.id)
@@ -38,7 +39,7 @@ export async function POST(req:NextRequest) {
     if(line.price_ars!==price)return bad('El precio cambió. Actualizá el carrito.')
     items.push({id:product.id,name:product.name,qty:line.qty,price_ars:price})
   }
-  const {data,error}=await db.from('cl_tienda_orders').insert({request_id:b.request_id,items,total_ars:items.reduce((n,i)=>n+i.price_ars*i.qty,0),client_name:String(b.client_name).slice(0,150),client_phone:String(b.client_phone).slice(0,40),metodo_pago:b.metodo_pago,notas:String(b.notas||'').slice(0,500),fulfillment:b.fulfillment,destination:b.fulfillment==='envio'?String(b.destination).slice(0,400):null,carrier:b.fulfillment==='envio'?setting.data.carrier:null}).select(cols).single()
+  const {data,error}=await db.from('cl_tienda_orders').insert({request_id:b.request_id,items,total_ars:items.reduce((n,i)=>n+i.price_ars*i.qty,0),client_name:String(b.client_name).slice(0,150),client_phone:String(b.client_phone).slice(0,40),metodo_pago:b.metodo_pago,notas:String(b.notas||'').slice(0,500),fulfillment:b.fulfillment,destination:b.fulfillment==='envio'?String(b.destination).slice(0,400):null,carrier:b.fulfillment==='envio'?(setting.data?.carrier || 'Uber Envíos'):null}).select(cols).single()
   if(error?.code==='23505'){const again=await existing();if(again.data)return NextResponse.json(again.data)}
   return error?NextResponse.json({error:'No pudimos guardar el pedido.'},{status:503}):NextResponse.json(data)
 }
