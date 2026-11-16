@@ -170,6 +170,7 @@ export function OrdersTab({ color }: { color: string }) {
   if (showNewForm) {
     return (
       <NewOrderForm
+        previousOrders={orders}
         color={color}
         partners={partners}
         onClose={() => setShowNewForm(false)}
@@ -375,7 +376,7 @@ function OrderDetail({
             <span style={{ padding: '6px 14px', borderRadius: 10, fontWeight: 700, fontSize: 13, background: sc + '18', color: sc }}>
               {STATUS_LABELS[order.status]}
             </span>
-            <ExtraJobs id={order.id}/><ShareOrder id={order.id} number={order.order_number} phone={order.client_phone} />
+            <ShareOrder id={order.id} number={order.order_number} phone={order.client_phone} />
             <button onClick={handlePrint} style={{ padding: '8px 16px', borderRadius: 9, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
               🖨 Imprimir
             </button>
@@ -418,6 +419,7 @@ function OrderDetail({
         </div>
       )}
 
+      <div style={{ marginBottom: 16 }}><ExtraJobs id={order.id} /></div>
       {/* Info grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <InfoCard title="👤 Cliente">
@@ -840,10 +842,13 @@ const BLANK_FORM = {
 }
 
 function NewOrderForm({
-  color, partners, onClose, onSaved,
+  previousOrders, color, partners, onClose, onSaved,
 }: {
-  color: string; partners: Partner[]; onClose: () => void; onSaved: () => void
+  previousOrders: Order[]; color: string; partners: Partner[]; onClose: () => void; onSaved: () => void
 }) {
+  const [searchCustomer,setSearchCustomer] = useState('')
+  const query = searchCustomer.trim().toLowerCase()
+  const matches = query.length >= 2 ? previousOrders.filter(order => [order.client_name, order.client_phone, order.client_dni].some(field => field?.toLowerCase().includes(query))).slice(0,8) : []
   const [form, setForm] = useState(BLANK_FORM)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -890,6 +895,14 @@ function NewOrderForm({
         {/* Columna izquierda: datos + equipo + acceso */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Section title="👤 Datos del cliente">
+            <FormField label="Buscar en órdenes anteriores">
+              <input style={inp} value={searchCustomer} onChange={e=>setSearchCustomer(e.target.value)} placeholder="Nombre, DNI o teléfono" />
+              {matches.map(order=><button key={order.id} type="button" style={{...inp,textAlign:'left',marginTop:4,cursor:'pointer'}} onClick={()=>{
+                setForm(current=>({...current,client_name:order.client_name,client_dni:order.client_dni||'',client_phone:order.client_phone||''}))
+                setSearchCustomer('')
+              }}>{order.client_name} · {order.client_dni || order.client_phone} · {order.order_number}</button>)}
+              {query.length>=2 && !matches.length && <small>Sin coincidencias en las órdenes cargadas.</small>}
+            </FormField>
             <FormField label="Nombre *">
               <input style={inp} value={form.client_name} onChange={e => set('client_name', e.target.value)} placeholder="Nombre completo" />
             </FormField>
