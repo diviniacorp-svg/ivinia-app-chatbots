@@ -10,7 +10,7 @@ export const maxDuration = 60
 const ONLY_COOKIE = process.env.ONLY_COOKIE || ''
 const ONLY_BASE = 'https://mayori.store/onlysanluis'
 
-// Categorías de repuestos — se excluyen de la tienda
+// Categorías técnicas de ONLY que también deben importarse.
 const REPAIR_CATS = new Set([
   'Repuestos_Modulos', 'Repuestos_LCD', 'Repuestos_Touch',
   'Repuestos_Baterías', 'Bateria_Bateria Celular',
@@ -34,6 +34,9 @@ function getCredentials(): { uid: string; apiKey: string; cookieStr: string } {
 }
 
 function mapCategory(onlyCat: string, productName = ''): string {
+  if (REPAIR_CATS.has(onlyCat) || /^repuestos?[ _-]/i.test(onlyCat)) {
+    return 'Repuestos · ' + onlyCat.replace(/^repuestos?[ _-]/i, '').replace(/[_-]+/g, ' ')
+  }
   const c = onlyCat.toLowerCase()
   const n = productName.toLowerCase()
 
@@ -157,7 +160,6 @@ export async function POST(req: NextRequest) {
   if (discoverOnly) {
     const cats = new Map<string, number>()
     for (const r of rawItems) {
-      if (REPAIR_CATS.has(r.categoria)) continue
       cats.set(r.categoria, (cats.get(r.categoria) || 0) + 1)
     }
     return NextResponse.json({
@@ -176,7 +178,6 @@ export async function POST(req: NextRequest) {
   const seenKeys = new Set<string>()
 
   for (const r of rawItems) {
-    if (REPAIR_CATS.has(r.categoria)) continue
 
     const price = parsePrice(r.precio_final)
     if (!Number.isFinite(price) || price <= 0) {
@@ -187,6 +188,7 @@ export async function POST(req: NextRequest) {
     const name = (r.producto || '').trim()
     if (!name) continue
 
+    if (!Number.isSafeInteger(Number(r.id)) || Number(r.id) <= 0) continue
     const only_id = String(r.id)
     if (seenKeys.has(only_id)) continue
     seenKeys.add(only_id)
@@ -194,7 +196,7 @@ export async function POST(req: NextRequest) {
     products.push({
       only_id,
       name,
-      category: mapCategory(r.categoria, name),
+      category: mapCategory(r.categoria || '', name),
       brand: r.marca || '',
       code: r.codigo_interno || r.codigo_barras || '',
       price_ars: price,
@@ -239,7 +241,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     raw_fetched: rawItems.length,
-    accessories_mapped: products.length,
+    products_mapped: products.length,
+    accessories_mapped: products.filter(p => !/^(Repuestos|Herramientas)/.test(p.category)).length,
     skipped_without_price: skippedWithoutPrice,
     upserted,
     categories: Object.fromEntries(Array.from(catMap.entries()).sort((a, b) => b[1] - a[1])),
