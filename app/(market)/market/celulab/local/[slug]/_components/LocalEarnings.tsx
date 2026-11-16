@@ -18,7 +18,9 @@ export function OrderEarnings({ order, unlocked }: { order: EarningsOrder; unloc
 export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrder & { order_number: string }>; unlocked: boolean }) {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [month, setMonth] = useState('')
   function choosePeriod(period: 'week' | 'month') {
+    setMonth('')
     const today = argentinaDate(new Date().toISOString())!
     const day = new Date(`${today}T12:00:00Z`)
     if (period === 'week') day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7))
@@ -32,14 +34,25 @@ export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrde
     <h2 style={{ marginTop: 0, fontSize: 18 }}>Ganancias del local</h2>
     <p style={{ fontSize: 13, color: '#64748b' }}>Órdenes entregadas, agrupadas por fecha de ingreso. Los importes corresponden a la comisión guardada en cada orden; no indican que se haya cobrado o liquidado.</p>
     <p style={{ fontSize: 12, color: '#64748b' }}>Este resumen usa las {orders.length} órdenes cargadas en el panel (máximo 200).</p>
-    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-      <label>Elegir mes <input type="month" onChange={e=>{const m=e.target.value;if(!m)return;const [year,month]=m.split('-').map(Number);setFrom(m+'-01');setTo(new Date(Date.UTC(year,month,0)).toISOString().slice(0,10))}} /></label>
+    <fieldset className="earn-period"><legend>Período del resumen</legend><div className="earn-controls">
+      <label>Elegir mes <input type="month" value={month} onChange={e=>{const m=e.target.value;setMonth(m);if(!m){setFrom('');setTo('');return;}const [year,month]=m.split('-').map(Number);setFrom(m+'-01');setTo(new Date(Date.UTC(year,month,0)).toISOString().slice(0,10))}} /></label>
       <button onClick={() => choosePeriod('week')}>Esta semana</button>
       <button onClick={() => choosePeriod('month')}>Este mes</button>
-      <button onClick={() => { setFrom(''); setTo('') }}>Todo lo cargado</button>
-      <label>Desde <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
-      <label>Hasta <input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
-    </div>
+      <button onClick={() => { setMonth(''); setFrom(''); setTo('') }}>Todo lo cargado</button>
+      <label>Desde <input type="date" value={from} onChange={e => {setMonth(''); setFrom(e.target.value)}} /></label>
+      <label>Hasta <input type="date" value={to} onChange={e => {setMonth(''); setTo(e.target.value)}} /></label>
+    </div></fieldset>
+    <style jsx>{`
+      .earn-period { margin: 16px 0; padding: 14px; min-width: 0; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; }
+      legend, label { font-weight: 600; color: #334155; font-size: 13px; }
+      .earn-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; }
+      label { display: grid; gap: 6px; }
+      input, button { background: white; color: #1e293b; min-height: 44px; border: 1px solid #94a3b8; border-radius: 8px; padding: 8px 12px; }
+      button { cursor: pointer; font-weight: 600; }
+      button:hover { background: #eef2ff; }
+      input:focus-visible, button:focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+      @media(max-width: 600px) { .earn-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } label:first-child {grid-column: 1/-1;} input {width: 100%; min-width: 0;} }
+    `}</style>
     {invalidRange ? <p role="alert">La fecha inicial debe ser anterior o igual a la final.</p> : <>
       <dl style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
@@ -47,7 +60,7 @@ export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrde
           ['Total de trabajos con datos completos', money(summary.total)],
           ['Ganancia del local', money(summary.gain)],
           ['Margen sobre total', percent(summary.margin)],
-        ].map(([label, value]) => <div key={label}><dt style={{ fontSize: 12, color: '#64748b' }}>{label}</dt><dd style={{ margin: '4px 0', fontSize: 20, fontWeight: 700 }}>{value}</dd></div>)}
+        ].map(([label, value]) => <div key={label} style={{padding:12, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:10}}><dt style={{ fontSize: 12, color: '#64748b' }}>{label}</dt><dd style={{ margin: '4px 0', fontSize: 20, fontWeight: 700 }}>{value}</dd></div>)}
       </dl>
       {summary.incomplete > 0 && <p role="status">{summary.incomplete} órdenes entregadas tienen importes pendientes y no se suman a los totales.</p>}
       <div style={{ display: 'grid', gap: 10 }}>
