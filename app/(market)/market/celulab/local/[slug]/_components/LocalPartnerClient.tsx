@@ -198,14 +198,20 @@ function PinScreen({ partnerName, logoUrl, pinInput, pinErr, onInput, onSubmit }
 
 // ─── Local Dashboard ──────────────────────────────────────────────────────────
 
-function EarningsPin({pin,onUnlock}:{pin:string;onUnlock:()=>void}) {
+function EarningsPin({onUnlock}:{onUnlock:(value:string)=>Promise<boolean>}) {
   const [value,setValue]=useState('')
+  const [visible,setVisible]=useState(false)
   const [error,setError]=useState(false)
-  return <details><summary style={{cursor:'pointer'}}>🔒 Ver ganancias con PIN</summary>
-    <form onSubmit={event=>{event.preventDefault();if(value && value===pin){onUnlock()}else{setError(true)}setValue('')}}>
-      <label>PIN del local <input type="password" inputMode="numeric" maxLength={8} value={value} onChange={e=>setValue(e.target.value)} /></label>
-      <button>Desbloquear</button>{error && <span role="alert"> PIN incorrecto</span>}
-    </form></details>
+  return <form style={{background:'white',padding:16,border:'1px solid #dbe1ea',borderRadius:14}} onSubmit={async e=>{
+    e.preventDefault();setError(!await onUnlock(value));setValue('')
+  }}>
+    <label style={{display:'block',fontWeight:600}}>PIN del dueño o encargado
+      <input type={visible?'text':'password'} inputMode="numeric" maxLength={4} required pattern="[0-9]{4}" placeholder="••••" value={value} onChange={e=>setValue(e.target.value.replace(/\D/g,''))} style={{display:'block',background:'#f1f5f9',border:'1px solid #cbd5e1',borderRadius:9,width:108,minHeight:46,textAlign:'center',letterSpacing:5,margin:'8px 0'}} />
+    </label>
+    <button type="button" aria-label="Mostrar u ocultar PIN" onClick={()=>setVisible(!visible)}>👁</button>
+    <button style={{background:'#2563eb',color:'white',borderRadius:9,padding:'10px 16px',marginLeft:10}}>Ver ganancias</button>
+    {error && <p role="alert">No se pudo desbloquear. Verificá el PIN o volvé a intentar más tarde.</p>}
+  </form>
 }
 
 function LocalDashboard({
@@ -225,15 +231,16 @@ function LocalDashboard({
   const [showHelp, setShowHelp] = useState(false)
   const [prefilledRepair, setPrefilledRepair] = useState<RepairLineItem | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('todas')
-  const [commissionUnlocked, setCommissionUnlocked] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return sessionStorage.getItem(`local-commission-${partnerId}`) === 'ok'
-  })
-  function unlockCommission() {
-    setCommissionUnlocked(true)
-    sessionStorage.setItem(`local-commission-${partnerId}`, 'ok')
+  const [commissionUnlocked,setCommissionUnlocked]=useState(false)
+  async function unlockCommission(value:string) {
+    try {
+      const res=await fetch('/api/celulab/partners/'+partnerId+'/owner-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:value})})
+      if(!res.ok)return false
+      await fetchOrders()
+      setCommissionUnlocked(true)
+      return true
+    } catch { return false }
   }
-
   const fetchOrders = useCallback(async () => {
     const data = await fetch(`/api/celulab/orders?partner_id=${partnerId}`).then(r => r.json())
     setOrders(Array.isArray(data) ? data : [])
@@ -362,7 +369,7 @@ function LocalDashboard({
         </div>
 
         {(activeTab === 'ganancias' || activeTab === 'historial') && <details open={activeTab === 'ganancias' || undefined} key={activeTab}><summary>Ganancias por mes</summary>
-          {commissionUnlocked ? <LocalEarnings orders={orders} unlocked /> : <EarningsPin pin={pin} onUnlock={unlockCommission} />}
+          {commissionUnlocked ? <LocalEarnings orders={orders} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}
         </details>}
 
         {/* ── Tab: Órdenes ── */}
@@ -575,7 +582,7 @@ function LocalDashboard({
 // ─── Part Search ─────────────────────────────────────────────────────────────
 
 function PartSearch({ commissionPct, pin, commissionUnlocked, unlockCommission, onAdd }: {
-  commissionPct: number; pin: string; commissionUnlocked: boolean; unlockCommission: () => void
+  commissionPct: number; pin: string; commissionUnlocked: boolean; unlockCommission: (value:string) => Promise<boolean>
   onAdd: (r: RepairLineItem) => void
 }) {
   const [q, setQ] = useState('')
@@ -617,10 +624,8 @@ function PartSearch({ commissionPct, pin, commissionUnlocked, unlockCommission, 
     setQ(''); setResults([]); setOpen(false)
   }
 
-  function tryUnlockPin() {
-    const reversed = pin.split('').reverse().join('')
-    if (unlockPin === reversed) {
-      unlockCommission()
+  async function tryUnlockPin() {
+    if (await unlockCommission(unlockPin)) {
       setUnlockPin('')
     } else {
       setUnlockErr(true)
@@ -757,7 +762,7 @@ function LocalNewOrder({
 }: {
   partnerId: string; partnerName: string; partnerAddress: string
   partnerPhone: string; logoUrl: string; commissionPct: number
-  pin: string; commissionUnlocked: boolean; unlockCommission: () => void
+  pin: string; commissionUnlocked: boolean; unlockCommission: (value:string) => Promise<boolean>
   prefilledRepair?: RepairLineItem | null
   onBack: () => void; onSaved: () => void
 }) {
@@ -1209,7 +1214,7 @@ function TicketRow({ icon, label, value }: { icon: string; label: string; value:
 function LocalOrderDetail({
   order, partnerName, partnerAddress, logoUrl, onBack, onStatusChange, commissionUnlocked, pin, unlockCommission,
 }: {
-  order: Order; partnerName: string; partnerAddress: string; logoUrl: string; commissionUnlocked: boolean; pin:string; unlockCommission:()=>void
+  order: Order; partnerName: string; partnerAddress: string; logoUrl: string; commissionUnlocked: boolean; pin:string; unlockCommission:(value:string)=>Promise<boolean>
   onBack: () => void; onStatusChange: (orderId: string, newStatus: string) => void
 }) {
   const [advancing, setAdvancing] = useState(false)
@@ -1362,7 +1367,7 @@ function LocalOrderDetail({
         </Card>
 
         <ExtraJobs id={order.id} pin={pin}/>
-        <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin pin={pin} onUnlock={unlockCommission} />}</Card>
+        <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}</Card>
 
         {order.budget_ars > 0 && (
           <Card title="💰 Presupuesto" style={{ marginTop: 12 }}>
