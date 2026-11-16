@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic'
 
 // Use the immutable deployment that serves the historical price list.
 export async function GET(req: NextRequest) {
-  const url = new URL('https://divinia-o7hyhosov-joacos-projects-9c3dbc62.vercel.app/api/celulab/lista')
+  const origin = process.env.VERCEL_ENV === 'preview' ? 'https://divinia.vercel.app' : 'https://divinia-o7hyhosov-joacos-projects-9c3dbc62.vercel.app'
+  const url = new URL('/api/celulab/lista', origin)
   for (const key of ['tab', 'brand', 'q', 'limit', 'offset']) {
     const value = req.nextUrl.searchParams.get(key)
     if (value) url.searchParams.set(key, value)
