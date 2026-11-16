@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// Read the historical public list while validating the replacement in preview.
+// Use the immutable deployment that serves the historical price list.
 export async function GET(req: NextRequest) {
-  if (process.env.VERCEL_ENV !== 'preview') {
-    return NextResponse.json({ error: 'Lista en configuración' }, { status: 503 })
-  }
-  const url = new URL('https://divinia.vercel.app/api/celulab/lista')
+  const url = new URL('https://divinia-o7hyhosov-joacos-projects-9c3dbc62.vercel.app/api/celulab/lista')
   for (const key of ['tab', 'brand', 'q', 'limit', 'offset']) {
     const value = req.nextUrl.searchParams.get(key)
     if (value) url.searchParams.set(key, value)
