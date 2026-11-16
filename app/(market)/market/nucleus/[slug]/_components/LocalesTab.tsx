@@ -202,6 +202,34 @@ export function LocalesTab({ color }: { color: string }) {
 
 // ─── Partner Card ─────────────────────────────────────────────────────────────
 
+function OwnerPinControl({id}:{id:string}) {
+  const [value,setValue]=useState('')
+  const [editing,setEditing]=useState(false)
+  const [error,setError]=useState('')
+  async function toggle(){
+    setError('')
+    if(value){setValue('');return}
+    try {
+      const r=await fetch('/api/celulab/partners/'+id+'/owner-pin',{cache:'no-store'})
+      if(!r.ok)throw Error()
+      setValue((await r.json()).pin)
+    }catch{setError('Ingresá a Nucleus para ver el PIN.')}
+  }
+  async function save(){
+    try {
+      const r=await fetch('/api/celulab/partners/'+id+'/owner-pin',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:value})})
+      if(!r.ok)throw Error()
+      setEditing(false);setValue('');setError('')
+    }catch{setError('Elegí cuatro dígitos distintos del PIN del local.')}
+  }
+  return <div style={{padding:'8px 12px',marginTop:8,background:'#f8fafc',borderRadius:10}}>
+    <strong style={{fontSize:12}}>PIN del dueño o encargado</strong>{' '}
+    {editing?<input aria-label="Nuevo PIN del dueño" inputMode="numeric" maxLength={4} value={value} onChange={e=>setValue(e.target.value.replace(/\D/g,''))} style={{width:76,border:'1px solid #94a3b8',padding:8,borderRadius:8}}/>:<span style={{display:'inline-block',borderRadius:8,background:'#e2e8f0',padding:'8px 12px',letterSpacing:3}}>{value||'••••'}</span>}
+    <button type="button" onClick={editing?save:toggle} style={{padding:10}} aria-label={editing?'Guardar nuevo PIN':'Mostrar u ocultar PIN del dueño'}>{editing?'Guardar':'👁'}</button>
+    <button type="button" style={{padding:8}} onClick={()=>{setEditing(!editing);setValue('');setError('')}}>{editing?'Cancelar':'Cambiar'}</button>
+    {error&&<p role="alert">{error}</p>}
+  </div>
+}
 function PartnerCard({
   partner, color, onToggle, onEdit, onRegenPin,
 }: {
@@ -262,6 +290,7 @@ function PartnerCard({
           </div>
         </div>
       </div>
+      <OwnerPinControl id={partner.id}/>
 
       {/* Actions row */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
