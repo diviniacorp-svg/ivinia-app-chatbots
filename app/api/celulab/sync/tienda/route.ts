@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
+import { hasNucleusSession } from '@/lib/celulab/nucleus-session'
 import { canSyncCatalogue } from '@/lib/celulab/admin-auth'
 
 export const dynamic = 'force-dynamic'
@@ -140,7 +141,8 @@ function extractImage(r: OnlyRaw): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  if (!canSyncCatalogue(req)) return NextResponse.json({ error: 'Iniciá sesión como administrador para actualizar.' }, { status: 401 })
+  const panelRequest = req.method === 'POST' && req.headers.get('origin') === new URL(req.url).origin
+  if (!canSyncCatalogue(req) && !(panelRequest && await hasNucleusSession(req))) return NextResponse.json({ error: 'Iniciá sesión como administrador para actualizar.' }, { status: 401 })
 
   let creds: { uid: string; apiKey: string; cookieStr: string }
   try {
