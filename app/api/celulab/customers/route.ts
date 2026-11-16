@@ -26,25 +26,27 @@ export async function GET(req:NextRequest){
       readRows('cl_tienda_orders','id,order_number,client_name,client_phone,items,metodo_pago,total_ars,estado,created_at','id'),
       readRows('cl_customer_profiles','history_key,name,dni,phone','history_key')
     ])
-    const contact=(name:string,phone:string)=>digits(phone).length>=8&&name.trim()?name.trim().toLowerCase()+'|'+digits(phone):''
+    const contact=(name:string,phone:string)=>digits(phone).length>=8&&name?.trim()?name.trim().toLowerCase()+'|'+digits(phone):''
     const aliases=new Map<string,Set<string>>()
-    function alias(value:string,id:string){if(value){const ids=aliases.get(value)||new Set<string>();ids.add(id);aliases.set(value,ids)}}
+    const alias=(value:string,id:string)=>{if(value){const ids=aliases.get(value)||new Set<string>();ids.add(id);aliases.set(value,ids)}}
     const doc=(dni:string)=>digits(dni).length>=7?'dni:'+digits(dni):''
     for(const p of profiles){alias(doc(p.dni),p.history_key);alias(contact(p.name,p.phone),p.history_key)}
-    function unique(value:string){const ids=aliases.get(value);return ids?.size===1?Array.from(ids)[0]:undefined}
+    const unique=(value:string)=>{const ids=aliases.get(value);return ids?.size===1?Array.from(ids)[0]:undefined}
     for(const r of repairs){const d=doc(r.client_dni||'');if(d)alias(contact(r.client_name,r.client_phone),unique(d)||key(d))}
     const edits=new Map<string,Profile>(profiles.map(p=>[p.history_key,p]))
     const customers=new Map<string,{key:string;name:string;phone:string;dni:string;repairs:Row[];purchases:Row[]}>()
-    function add(r:Row,kind:'repairs'|'purchases'){
+    const add=(r:Row,kind:'repairs'|'purchases')=>{
       const d=doc(r.client_dni||''),pair=contact(r.client_name||'',r.client_phone)
       const id=d?(unique(d)||key(d)):unique(pair)||key(pair&&!aliases.has(pair)?pair:kind+':'+r.id)
       let c=customers.get(id)
-      if(!c){const p=edits.get(id);c={key:id,name:p?.name??r.client_name,dni:p?.dni??r.client_dni??'',phone:p?.phone??r.client_phone,repairs:[],purchases:[]};customers.set(id,c)}
+      if(!c){const p=edits.get(id);c={key:id,name:p?.name??r.client_name??'Sin nombre',dni:p?.dni??r.client_dni??'',phone:p?.phone??r.client_phone,repairs:[],purchases:[]};customers.set(id,c)}
       c[kind].push(r)
     }
+    repairs.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))
+    purchases.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))
     for(const r of repairs)add(r,'repairs')
     for(const r of purchases)add(r,'purchases')
-    return reply([...customers.values()].sort((a,b)=>a.name.localeCompare(b.name,'es')))
+    return reply(Array.from(customers.values()).sort((a,b)=>a.name.localeCompare(b.name,'es')))
   }catch{return reply({error:'No se pudo cargar el historial.'},503)}
 }
 export async function PATCH(req:NextRequest){
