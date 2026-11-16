@@ -8,11 +8,13 @@ import {
   buildCelulabOrdenDiagnosticada,
 } from '@/lib/twilio'
 
+import {canReadEarnings,hideCommission} from '@/lib/celulab/owner-session'
+
 export const dynamic = 'force-dynamic'
 
 const NOTIFY_STATUSES = new Set(['listo', 'diagnosticado'])
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const db = createAdminClient()
   const { data, error } = await db
     .from('cl_orders')
@@ -20,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     .eq('id', params.id)
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
-  return NextResponse.json(data)
+  return NextResponse.json(await canReadEarnings(req,data.partner_id) ? data : hideCommission(data))
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -92,7 +94,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(await canReadEarnings(req,data.partner_id) ? data : hideCommission(data))
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
