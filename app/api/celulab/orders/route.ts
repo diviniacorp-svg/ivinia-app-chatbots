@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+import {canReadEarnings,hideCommission} from '@/lib/celulab/owner-session'
+
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
@@ -20,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json(await canReadEarnings(req,partner_id || undefined) ? data : data.map(hideCommission))
 }
 
 export async function POST(req: NextRequest) {
