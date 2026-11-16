@@ -28,7 +28,12 @@ export async function POST(req:NextRequest) {
   const [matches,rates,setting]=await Promise.all([
     Promise.all(ids.map((id:string)=>db.from('cl_products').select('id,name,category,price_ars').eq('id',id).eq('is_latest',true).eq('in_stock',true).maybeSingle())),
     db.from('cl_product_markups').select('category,markup_pct'),b.fulfillment === 'envio' ? db.from('cl_delivery_settings').select('carrier').maybeSingle() : Promise.resolve({data:null})])
-  if(matches.some(row=>row.error))return NextResponse.json({error:'No se pudo consultar el catálogo. Volvé a intentar.'},{status:503})
+  const catalogueFailure = matches.find(row => row.error)?.error
+  if (catalogueFailure) {
+    const code = /^[A-Z0-9]{3,16}$/.test(catalogueFailure.code || '') ? catalogueFailure.code : 'CONEXION'
+    console.error('celulab.checkout.catalogue', { code })
+    return NextResponse.json({error: 'No se pudo consultar el catálogo. Referencia: ' + code},{status:503})
+  }
   if(rates.error)return NextResponse.json({error:'No se pudo verificar el precio final. Volvé a intentar.'},{status:503})
   const items=[]
   for(const line of b.items){
