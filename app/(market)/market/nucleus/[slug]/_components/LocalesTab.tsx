@@ -222,13 +222,17 @@ function OwnerPinControl({id}:{id:string}) {
       setEditing(false);setValue('');setError('')
     }catch{setError('Elegí cuatro dígitos distintos del PIN del local.')}
   }
-  return <div style={{padding:'8px 12px',marginTop:8,background:'#f8fafc',borderRadius:10}}>
-    <strong style={{fontSize:12}}>PIN del dueño o encargado</strong>{' '}
-    {editing?<input aria-label="Nuevo PIN del dueño" inputMode="numeric" maxLength={4} value={value} onChange={e=>setValue(e.target.value.replace(/\D/g,''))} style={{width:76,border:'1px solid #94a3b8',padding:8,borderRadius:8}}/>:<span style={{display:'inline-block',borderRadius:8,background:'#e2e8f0',padding:'8px 12px',letterSpacing:3}}>{value||'••••'}</span>}
-    <button type="button" onClick={editing?save:toggle} style={{padding:10}} aria-label={editing?'Guardar nuevo PIN':'Mostrar u ocultar PIN del dueño'}>{editing?'Guardar':'👁'}</button>
-    <button type="button" style={{padding:8}} onClick={()=>{setEditing(!editing);setValue('');setError('')}}>{editing?'Cancelar':'Cambiar'}</button>
-    {error&&<p role="alert">{error}</p>}
-  </div>
+  const buttonStyle = { padding: '6px 12px', borderRadius: 7, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }
+  return <>
+    {editing ? <>
+      <input autoFocus aria-label="Nuevo PIN del dueño" placeholder="4 dígitos" inputMode="numeric" maxLength={4}
+        value={value} onChange={e=>setValue(e.target.value.replace(/\D/g,''))}
+        style={{...buttonStyle,width:76,cursor:'text'}} />
+      <button type="button" style={buttonStyle} disabled={value.length!==4} onClick={save}>Guardar PIN</button>
+    </> : <button type="button" style={buttonStyle} onClick={toggle} aria-pressed={Boolean(value)}>👁 PIN dueño{value ? ' · '+value : ''}</button>}
+    <button type="button" style={buttonStyle} onClick={()=>{setEditing(!editing);setValue('');setError('')}}>{editing?'Cancelar':'Cambiar PIN dueño'}</button>
+    {error && <span role="alert" style={{flexBasis:'100%',fontSize:12,color:'#b91c1c'}}>{error}</span>}
+  </>
 }
 function PartnerCard({
   partner, color, onToggle, onEdit, onRegenPin,
@@ -290,7 +294,6 @@ function PartnerCard({
           </div>
         </div>
       </div>
-      <OwnerPinControl id={partner.id}/>
 
       {/* Actions row */}
       <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
@@ -309,6 +312,7 @@ function PartnerCard({
         <button onClick={onRegenPin} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #f59e0b', color: '#b45309', background: '#fff', fontSize: 12, cursor: 'pointer' }}>
           ↻ Nuevo PIN
         </button>
+        <OwnerPinControl id={partner.id}/>
         <button onClick={onEdit} style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}>
           ✏️ Editar
         </button>
