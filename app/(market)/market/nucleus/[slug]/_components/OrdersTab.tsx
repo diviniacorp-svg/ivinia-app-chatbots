@@ -1,4 +1,5 @@
 'use client'
+import {useCustomers} from './CustomersTab'
 import ExtraJobs from '../../../celulab/_components/ExtraJobs'
 import ShareOrder from '../../../celulab/_components/ShareOrder'
 import { useState, useEffect, useCallback } from 'react'
@@ -170,7 +171,6 @@ export function OrdersTab({ color }: { color: string }) {
   if (showNewForm) {
     return (
       <NewOrderForm
-        previousOrders={orders}
         color={color}
         partners={partners}
         onClose={() => setShowNewForm(false)}
@@ -842,13 +842,17 @@ const BLANK_FORM = {
 }
 
 function NewOrderForm({
-  previousOrders, color, partners, onClose, onSaved,
+  color, partners, onClose, onSaved,
 }: {
-  previousOrders: Order[]; color: string; partners: Partner[]; onClose: () => void; onSaved: () => void
+  color: string; partners: Partner[]; onClose: () => void; onSaved: () => void
 }) {
   const [searchCustomer,setSearchCustomer] = useState('')
   const query = searchCustomer.trim().toLowerCase()
-  const matches = query.length >= 2 ? previousOrders.filter(order => [order.client_name, order.client_phone, order.client_dni].some(field => field?.toLowerCase().includes(query))).slice(0,8) : []
+  const {rows,status}=useCustomers()
+  const [existing,setExisting]=useState(false)
+  const [selected,select]=useState('')
+  const customer=rows.find(r=>r.key===selected)
+  const matches=query.length>=2?rows.filter(r=>[r.name,r.dni,r.phone,...r.repairs.map(o=>o.order_number)].some(v=>v?.toLowerCase().includes(query))).slice(0,12):[]
   const [form, setForm] = useState(BLANK_FORM)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -895,14 +899,11 @@ function NewOrderForm({
         {/* Columna izquierda: datos + equipo + acceso */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Section title="👤 Datos del cliente">
-            <FormField label="Buscar en órdenes anteriores">
-              <input style={inp} value={searchCustomer} onChange={e=>setSearchCustomer(e.target.value)} placeholder="Nombre, DNI o teléfono" />
-              {matches.map(order=><button key={order.id} type="button" style={{...inp,textAlign:'left',marginTop:4,cursor:'pointer'}} onClick={()=>{
-                setForm(current=>({...current,client_name:order.client_name,client_dni:order.client_dni||'',client_phone:order.client_phone||''}))
-                setSearchCustomer('')
-              }}>{order.client_name} · {order.client_dni || order.client_phone} · {order.order_number}</button>)}
-              {query.length>=2 && !matches.length && <small>Sin coincidencias en las órdenes cargadas.</small>}
-            </FormField>
+            <div style={{borderBottom:'1px solid #e2e8f0',paddingBottom:16,marginBottom:16}}>
+              <label><input type="checkbox" checked={existing} onChange={e=>{setExisting(e.target.checked);select('');setSearchCustomer('');if(!e.target.checked)setForm(f=>({...f,client_name:'',client_dni:'',client_phone:'',device_brand:'',device_model:''}))}}/> Cliente ya existente</label>
+              {existing&&<FormField label="Buscar cliente u orden anterior"><input style={inp} value={searchCustomer} onChange={e=>setSearchCustomer(e.target.value)} placeholder="Nombre, teléfono, DNI o número de orden"/>{status&&<small>{status}</small>}{matches.map(r=><button key={r.key} type="button" style={{...inp,textAlign:'left',cursor:'pointer'}} onClick={()=>{select(r.key);setSearchCustomer('');setForm(f=>({...f,client_name:r.name,client_phone:r.phone||'',client_dni:r.dni||'',device_model:'',device_brand:''}))}}>{r.name} · {r.dni||r.phone}</button>)}{query.length>=2&&!matches.length&&!status&&<small>Sin coincidencias</small>}</FormField>}
+              {existing&&customer&&<FormField label="¿Es el mismo equipo o trae uno nuevo?"><select key={customer.key} defaultValue="" style={inp} onChange={e=>{const r=customer.repairs.find(o=>String(o.id)===e.target.value);setForm(f=>({...f,device_brand:r?.device_brand||'',device_model:r?.device_model||''}))}}><option value="" disabled>Elegí el equipo</option><option value="nuevo">Equipo nuevo</option>{customer.repairs.map(o=><option key={o.id} value={o.id}>Mismo equipo · {o.device_brand} {o.device_model} · {o.order_number}</option>)}</select></FormField>}
+            </div><strong>{existing?'Datos del cliente seleccionado':'Cliente nuevo'}</strong>
             <FormField label="Nombre *">
               <input style={inp} value={form.client_name} onChange={e => set('client_name', e.target.value)} placeholder="Nombre completo" />
             </FormField>
