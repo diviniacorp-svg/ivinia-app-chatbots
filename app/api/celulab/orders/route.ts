@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
       damage_diagram: damage_diagram ?? {},
+      quote_draft_lines: Array.isArray(body.quote_draft_lines) ? body.quote_draft_lines.slice(0,100).filter((l:{device:string;job:string;part:number;labor:number})=>l && typeof l.device==='string' && typeof l.job==='string' && Number.isSafeInteger(l.part) && l.part>=0 && Number.isSafeInteger(l.labor) && l.labor>=0).map((l:{device:string;job:string;part:number;labor:number})=>({device:l.device.slice(0,200),job:l.job.slice(0,200),part:l.part,labor:l.labor})) : [],
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',
       deposit_ars: deposit_ars ?? 0,
