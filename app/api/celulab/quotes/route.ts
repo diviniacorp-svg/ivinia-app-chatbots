@@ -27,7 +27,7 @@ export async function POST(req:NextRequest){
   if(rates.error)return reply({},503)
   return reply((rates.data||[]).map(r=>{
    const amounts=(cfg.data||[]).filter(c=>c.category&&repairForCategory(c.category)===r.job&&typeof c.labor_ars==='number').map(c=>Number(c.labor_ars))
-   return {...r,labor_options:[...new Set(amounts.length?amounts:r.labor_ars==null?[]:[r.labor_ars])].sort((a,b)=>a-b)}
+   return {...r,labor_options:Array.from(new Set(amounts.length?amounts:r.labor_ars==null?[]:[r.labor_ars])).sort((a,b)=>a-b)}
   }))
  }
  if(b.action==='rate'&&admin){if(typeof b.job!=='string'||(b.amount!==null&&(!Number.isSafeInteger(b.amount)||b.amount<0||b.amount>2147483647)))return reply({},400);const {error}=await db.from('cl_labor_rates').update({labor_ars:b.amount}).eq('job',b.job).select('job').single();return error?reply({},400):reply({ok:true})}

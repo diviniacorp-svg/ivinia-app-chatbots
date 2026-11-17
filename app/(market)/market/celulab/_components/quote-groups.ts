@@ -6,13 +6,13 @@ export const publicJob=(line:QuoteLine)=>isChargeJob(line.job)?chargeLabel(line.
 export const linePrice=(line:QuoteLine)=>line.pending?'A confirmar':pesos(line.part+line.labor)
 export function quoteGroups(lines:QuoteLine[]){
  const devices=new Map<string,Map<string,QuoteLine[]>>()
- for(const [i,l] of lines.entries()){
+ for(const [i,l] of Array.from(lines.entries())){
   const device=l.equipment||l.device, task=l.task||String(i), tasks=devices.get(device)||new Map<string,QuoteLine[]>()
   tasks.set(task,[...(tasks.get(task)||[]),l]);devices.set(device,tasks)
  }
  return Array.from(devices.values()).map((tasks,index)=>{
   let variants:{lines:QuoteLine[];total:number;pending:boolean}[]=[{lines:[],total:0,pending:false}]
-  for(const options of tasks.values()){
+  for(const options of Array.from(tasks.values())){
    if(variants.length*options.length>128)throw Error('Reducí las alternativas por equipo antes de emitir.')
    variants=variants.flatMap(v=>options.map(l=>({lines:[...v.lines,l],total:v.total+l.part+l.labor,pending:v.pending||!!l.pending})))
   }
