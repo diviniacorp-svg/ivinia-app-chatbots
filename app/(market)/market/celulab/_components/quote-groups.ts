@@ -1,3 +1,4 @@
+import {chargeLabel,isChargeJob} from './charge-quote'
 export type QuoteLine = {device:string; job:string; part:number; labor:number; pending?:boolean; equipment?:string; task?:string; option?:string}
 export const pesos = (n:number)=>n.toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0})
 export function quoteSummary(lines:QuoteLine[]){
@@ -14,7 +15,7 @@ export function quoteSummary(lines:QuoteLine[]){
     for(const options of Array.from(tasks.values())){
       if(variants.length*options.length>128)throw Error('Elegí hasta 128 combinaciones por equipo.')
       variants=variants.flatMap(v=>options.map(l=>({
-        items:[...v.items,[l.job,l.option,l.pending?'A confirmar':pesos(l.part+l.labor)].filter(Boolean).join(' · ')],
+        items:[...v.items,[isChargeJob(l.job)?chargeLabel(l.device):l.job,isChargeJob(l.job)&&!l.option?.startsWith('Calidad ')?undefined:l.option,l.pending?'A confirmar':pesos(l.part+l.labor)].filter(Boolean).join(' · ')],
         total:v.total+l.part+l.labor,pending:v.pending||!!l.pending
       })))
     }
