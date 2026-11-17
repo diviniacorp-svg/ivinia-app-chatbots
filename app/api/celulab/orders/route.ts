@@ -113,8 +113,7 @@ export async function POST(req: NextRequest) {
       const {data:local}=await db.from('cl_partners').select('name').eq('id',partner_id).eq('pin',body.partner_pin).eq('is_active',true).maybeSingle()
       if(local){
         const sourcing=await orderSourcing(db,draft).catch(()=>[])
-        const info=sourcing.map(r=>r.caption+(r.supplier?' · '+r.supplier+' · costo 
-}+r.cost.toLocaleString('es-AR'):' · proveedor por confirmar'))
+        const info=sourcing.map(r=>r.caption+(r.supplier?' · '+r.supplier+' · costo ARS '+r.cost.toLocaleString('es-AR'):' · proveedor por confirmar'))
         await sendWhatsAppMessage(ownerPhone,[
           'CeluLab · Nuevo ingreso '+data.order_number,
           'Local: '+local.name,
