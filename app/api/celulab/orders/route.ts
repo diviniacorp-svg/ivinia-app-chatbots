@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
-import {canReadEarnings,hideCommission} from '@/lib/celulab/owner-session'
+import {canReadEarnings,hideCommission,hidePurchaseDetails} from '@/lib/celulab/owner-session'
+import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
 
 import {sendWhatsAppMessage} from '@/lib/twilio'
 import {orderSourcing,parseOrderDraft} from '@/lib/celulab/order-sourcing'
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(await canReadEarnings(req,partner_id || undefined) ? data : data.map(hideCommission))
+  if(await hasNucleusSession(req))return NextResponse.json(data)
+  const publicOrders=data.map(hidePurchaseDetails)
+  return NextResponse.json(await canReadEarnings(req,partner_id || undefined)?publicOrders:publicOrders.map(hideCommission))
 }
 
 export async function POST(req: NextRequest) {
@@ -125,5 +128,5 @@ export async function POST(req: NextRequest) {
     }catch{console.warn('[CeluLab] No se pudo procesar el aviso de nuevo ingreso.')}
   }
 
-  return NextResponse.json(data, { status: 201 })
+  return NextResponse.json(await hasNucleusSession(req)?data:hidePurchaseDetails(data), { status: 201 })
 }

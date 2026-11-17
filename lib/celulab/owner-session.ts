@@ -13,3 +13,7 @@ export function hideCommission<T extends Record<string,unknown>>(order:T) {
   const {commission_ars,commission_pct,...rest}=order
   return rest
 }
+export function hidePurchaseDetails<T extends Record<string,unknown>>(order:T){
+  const {part_cost_ars,...rest}=order
+  return rest
+}

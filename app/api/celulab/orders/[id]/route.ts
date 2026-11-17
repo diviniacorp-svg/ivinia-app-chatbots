@@ -8,7 +8,8 @@ import {
   buildCelulabOrdenDiagnosticada,
 } from '@/lib/twilio'
 
-import {canReadEarnings,hideCommission} from '@/lib/celulab/owner-session'
+import {canReadEarnings,hideCommission,hidePurchaseDetails} from '@/lib/celulab/owner-session'
+import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     .eq('id', params.id)
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
-  return NextResponse.json(await canReadEarnings(req,data.partner_id) ? data : hideCommission(data))
+  if(await hasNucleusSession(req))return NextResponse.json(data)
+  const publicOrder=hidePurchaseDetails(data)
+  return NextResponse.json(await canReadEarnings(req,data.partner_id)?publicOrder:hideCommission(publicOrder))
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -94,7 +97,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  return NextResponse.json(await canReadEarnings(req,data.partner_id) ? data : hideCommission(data))
+  if(await hasNucleusSession(req))return NextResponse.json(data)
+  const publicOrder=hidePurchaseDetails(data)
+  return NextResponse.json(await canReadEarnings(req,data.partner_id)?publicOrder:hideCommission(publicOrder))
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
