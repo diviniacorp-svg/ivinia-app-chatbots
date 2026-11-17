@@ -18,5 +18,16 @@ export async function GET(req: NextRequest) {
     p_offset: offset,
   })
   if (error) return NextResponse.json({ error: 'No se pudo cargar la lista de repuestos.' }, { status: 503 })
+  if (params.get('offers') === '1' && data?.items?.length) {
+    const ids = data.items.map((item:{id:string}) => item.id)
+    const {data:prices,error:offerError} = await createAdminClient().from('cl_provider_prices')
+      .select('*,cl_providers(name,is_active)').in('part_id',ids).eq('is_latest',true)
+    if (offerError) return NextResponse.json({error:'No se pudo comprobar la disponibilidad.'},{status:503})
+    for (const item of data.items) {
+      item.all_providers = (prices || []).filter(price => price.part_id === item.id && price.cl_providers?.is_active && price.cost_ars > 0 && price.supplier_in_stock !== false)
+        .map(price => ({name:price.cl_providers.name,cost:price.cost_ars,available:price.supplier_in_stock===true,updated:price.scraped_at}))
+    }
+  }
   return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } })
 }
+

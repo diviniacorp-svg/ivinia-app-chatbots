@@ -326,17 +326,18 @@ function LocalDashboard({
               flexShrink: 0,
             }}
           >?</button>
-          <QuoteEditor partner={partnerId} pin={pin}/>
+
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap',marginBottom:16}}><strong>Órdenes de servicio</strong><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>          <QuoteEditor partner={partnerId} pin={pin}/>
           <button onClick={() => setView('new')} style={{
             padding: '8px 16px', borderRadius: 9, border: 'none',
             background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
           }}>
             + Nueva orden
-          </button>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
+          </button></div></div>
         {/* Stats row — clickeable */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
           {[

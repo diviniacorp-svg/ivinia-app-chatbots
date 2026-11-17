@@ -189,6 +189,7 @@ function PinScreen({ companyName, color, pinInput, pinErr, onInput, onSubmit }: 
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
 
 function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: string; companyName: string; color: string; publicUrl: string }) {
+  const [customerView,setCustomerView]=useState<'clientes'|'archivo'>('clientes')
   const [tab, setTab] = useState<'ordenes' | 'presupuestos' | 'clientes' | 'locales' | 'ventas' | 'caja' | 'margenes' | 'proveedores' | 'repuestos' | 'precios' | 'lista' | 'tienda' | 'qr'>('ordenes')
   const [repairConfigs, setRepairConfigs] = useState<RepairConfig[]>([])
   const [configEditing, setConfigEditing] = useState<Record<string, { markup: string; labor: string }>>({})
@@ -451,8 +452,8 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
       {/* Tabs */}
       <style>{`.cl-nucleus-tabs::-webkit-scrollbar{display:none}.cl-nucleus-tabs{scrollbar-width:none}`}</style>
       <div className="cl-nucleus-tabs" style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 8px', display: 'flex', gap: 0, overflowX: 'auto' }}>
-        {(['ordenes', 'presupuestos', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
-          const label = t === 'ordenes' ? '📋 Órdenes' : t === 'presupuestos' ? '📄 Presupuestos' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
+        {(['ordenes', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
+          const label = t === 'ordenes' ? '📋 Órdenes' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
           return (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '12px 14px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
@@ -487,8 +488,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
 
             {/* ══ ÓRDENES ══ */}
             {tab === 'ordenes' && <OrdersTab color={color} />}
-            {tab === 'presupuestos' && <QuotesTab />}
-            {tab === 'clientes' && <CustomersTab />}
+            {tab === 'clientes' && <><div style={{display:'flex',gap:8,marginBottom:16}}>{(['clientes','archivo'] as const).map(view=><button key={view} onClick={()=>setCustomerView(view)} style={{padding:'8px 14px',border:'1px solid #dbe3ef',borderRadius:20,background:customerView===view?color:'white',color:customerView===view?'white':'#31415b'}}>{view==='clientes'?'Clientes':'Presupuestos'}</button>)}</div>{customerView==='clientes'?<CustomersTab/>:<QuotesTab/>}</>}
 
             {/* ══ LOCALES ══ */}
             {tab === 'locales' && <LocalesTab color={color} />}
@@ -512,7 +512,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
 
             {/* ══ MÁRGENES ══ */}
             {tab === 'margenes' && (
-              <div>
+              <div><details><summary style={{cursor:'pointer',fontWeight:700}}>Mano de obra por reparación</summary><QuotesTab ratesOnly/></details>
                 <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 20 }}>
                   Editá el precio de venta haciendo click en ✏️ · Ingresá el markup del repuesto para ver la ganancia real.
                 </div>
