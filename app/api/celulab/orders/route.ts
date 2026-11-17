@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     notes,
   } = body
 
-  if (!client_name || !device_brand || !device_model) {
+  if (![client_name,device_brand,device_model].every(s=>typeof s==='string'&&s.trim()&&s.length<=150)) {
     return NextResponse.json({ error: 'cliente, marca y modelo son obligatorios' }, { status: 400 })
   }
 
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
   const draft=parseOrderDraft(body.quote_draft_lines)
   const accessUnknown=body.unknown_access===true&&unlock_type==='none'
   const diagram=damage_diagram&&typeof damage_diagram==='object'&&!Array.isArray(damage_diagram)?damage_diagram:{}
+  if(typeof turns_on!=='boolean'||!['pin','patron','none'].includes(unlock_type)||((unlock_type==='pin'||unlock_type==='patron')&&(typeof unlock_code!=='string'||!unlock_code.trim()||unlock_code.length>40)))return NextResponse.json({error:'Confirmá el encendido y el acceso del equipo.'},{status:400})
   // Sequential order number — count existing + 1
   const { count } = await db.from('cl_orders').select('id', { count: 'exact', head: true })
   const n = String((count ?? 0) + 1).padStart(6, '0')
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
       water_damage: water_damage ?? false,
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
-      damage_diagram: {...diagram,accessUnknown,depositMethod:deposit>0?method:null,depositAlias:paymentAlias||null},
+      damage_diagram: {markers:Array.isArray(diagram.markers)?diagram.markers.slice(0,50):[],possibleRepair:['battery','charge','board','water'].includes(diagram.possibleRepair)?diagram.possibleRepair:null,accessUnknown,depositMethod:deposit>0?method:null,depositAlias:paymentAlias||null},
       quote_draft_lines: draft,
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',

@@ -45,7 +45,7 @@ type Order = {
   turns_on: boolean; water_damage: boolean; revision_required: boolean
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
-  damage_diagram: { markers?: DamageMarker[]; accessUnknown?:boolean; possibleRepair?:string; completedAt?:string }
+  damage_diagram: { markers?: DamageMarker[]; accessUnknown?:boolean; possibleRepair?:string; completedAt?:string; depositMethod?:string; depositAlias?:string }
   quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
@@ -285,6 +285,7 @@ function LocalDashboard({
         onStatusChange={(id, newStatus) => {
           setSelectedOrder(prev => prev?.id === id ? { ...prev, status: newStatus } : prev)
           setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o))
+          void fetchOrders()
         }}
       />
     )
@@ -648,6 +649,8 @@ export function OrderIntake({
   onBack: () => void; onSaved: () => void
 }) {
   const [form, setForm] = useState(BLANK)
+  const [deviceText,setDeviceText]=useState('')
+  function setDevice(value:string){setDeviceText(value);const combined=value.trim().replace(/^Apple\s+iPhone\s+/i,'iPhone ');const [raw,...rest]=combined.split(/\s+/);const brand=/^moto$/i.test(raw)?'Motorola':raw;setForm(f=>({...f,device_brand:brand,device_model:rest.join(' ')}));setRepairs(prev=>prev.filter(r=>prefilledRepair?.partId===r.partId))}
   const [origin,setOrigin]=useState(''),[depositMethod,setDepositMethod]=useState<DepositMethod>('efectivo'),[account,setAccount]=useState('')
   const selectedOrigin=origins?.find(o=>o.id===origin)
   const orderPartner=origins?selectedOrigin?.id||null:partnerId
@@ -829,17 +832,7 @@ export function OrderIntake({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             <Card title="📱 Equipo, reparaciones y seña">
-              <ScriptTip text="Confirmá marca y modelo del equipo." />
-              <div style={{ height: 8 }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                <FField label="Marca *">
-                  <input style={inp} value={form.device_brand} onChange={e => {set('device_brand',e.target.value);setRepairs(prev=>prev.filter(r=>prefilledRepair?.partId===r.partId))}} placeholder="Samsung, iPhone..." />
-                </FField>
-                <FField label="Modelo *">
-                  <input style={inp} value={form.device_model} onChange={e => {set('device_model',e.target.value);setRepairs([])}} placeholder="A54, 14 Pro..." />
-                </FField>
-              </div>
-
+              <FField label="Marca y modelo *"><input style={inp} value={deviceText} onChange={e=>setDevice(e.target.value)} placeholder="Ej. Motorola G22, Samsung A54 o iPhone 14"/></FField>
               {form.turns_on===false ? (
                 <ScriptTip text="El diagnóstico es $15.000, se descuenta si aprobás la reparación. ¿Dejás la seña ahora?" />
               ) : (
@@ -1065,7 +1058,7 @@ function OrderTicket({
             <TicketRow icon="⚡" label="Estado" value={order.turns_on ? 'Enciende' : 'NO enciende'} />
             {order.water_damage && <TicketRow icon="💧" label="Humedad" value="Sí ⚠️" />}
             <TicketRow icon="🔧" label="Trabajo" value={order.requested_work || '—'} />
-            {order.deposit_ars > 0 && <TicketRow icon="💰" label="Seña" value={ars(order.deposit_ars)} />}
+            {order.deposit_ars > 0 && <TicketRow icon="💰" label="Seña" value={ars(order.deposit_ars)+(order.damage_diagram?.depositMethod?' · '+order.damage_diagram.depositMethod:'')} />}
             {order.damage_diagram?.accessUnknown&&<div style={{marginTop:6,color:'#991b1b',fontWeight:700}}>{UNKNOWN_ACCESS}</div>}
             {order.revision_required && (
               <div style={{ marginTop: 10, padding: '8px 12px', background: '#fef3c7', borderRadius: 8, fontSize: 12, color: '#92400e', fontWeight: 600 }}>

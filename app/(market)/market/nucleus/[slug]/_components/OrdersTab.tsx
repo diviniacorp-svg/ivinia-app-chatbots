@@ -137,11 +137,12 @@ export function OrdersTab({ color }: { color: string }) {
   }, [fetchData])
 
   async function changeStatus(order: Order, newStatus: string) {
-    await fetch(`/api/celulab/orders/${order.id}`, {
+    const response=await fetch(`/api/celulab/orders/${order.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
+    if(!response.ok){window.alert('No se pudo guardar el estado.');return}
     fetchData()
     setSelectedOrder(prev => prev?.id === order.id ? { ...prev, status: newStatus } : prev)
   }
@@ -153,6 +154,7 @@ export function OrdersTab({ color }: { color: string }) {
       body: JSON.stringify(updates),
     })
     const updated = await res.json()
+    if(!res.ok){window.alert(updated.error||'No se pudieron guardar los importes.');return}
     setSelectedOrder(updated)
     fetchData()
   }
@@ -832,53 +834,7 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
   )
 }
 
-function PhoneSVG({
-  side, markers, globalIdxs, onClick, onRemoveLocal,
-}: {
-  side: 'front' | 'back'
-  markers: DamageMarker[]
-  globalIdxs: number[]
-  onClick: (e: React.MouseEvent<SVGSVGElement>) => void
-  onRemoveLocal: (i: number) => void
-}) {
-  return (
-    <svg viewBox={`0 0 ${PW} ${PH}`} width={PW} height={PH} onClick={onClick}
-      style={{ cursor: 'crosshair', flexShrink: 0, background: '#fafafa', borderRadius: 8, border: '1px solid #e5e7eb' }}>
-      {/* Body */}
-      <rect x={10} y={8} width={PW - 20} height={PH - 16} rx={18} ry={18} fill="#f8fafc" stroke="#cbd5e1" strokeWidth={2} />
-
-      {side === 'front' ? (
-        <>
-          <rect x={PW / 2 - 20} y={22} width={40} height={5} rx={2.5} fill="#cbd5e1" />
-          <circle cx={PW / 2 + 26} cy={24.5} r={4} fill="#e2e8f0" stroke="#cbd5e1" strokeWidth={1} />
-          <rect x={16} y={42} width={PW - 32} height={PH - 100} rx={4} fill="#e8f0fe" stroke="#bfcbf9" strokeWidth={1} />
-          <rect x={PW / 2 - 22} y={PH - 30} width={44} height={4} rx={2} fill="#cbd5e1" />
-        </>
-      ) : (
-        <>
-          <rect x={20} y={28} width={48} height={42} rx={10} fill="#e2e8f0" stroke="#cbd5e1" strokeWidth={1.5} />
-          <circle cx={44} cy={49} r={14} fill="#cbd5e1" stroke="#94a3b8" strokeWidth={1.5} />
-          <circle cx={44} cy={49} r={9} fill="#f1f5f9" stroke="#94a3b8" strokeWidth={1} />
-          <circle cx={44} cy={49} r={4} fill="#1e293b" />
-          <circle cx={63} cy={33} r={5} fill="#fde68a" stroke="#f59e0b" strokeWidth={1} />
-          {[0, 4, 8, 12, 16].map(i => (
-            <rect key={i} x={PW / 2 - 20 + i * 5} y={PH - 36} width={2} height={12} rx={1} fill="#cbd5e1" />
-          ))}
-        </>
-      )}
-
-      {/* Damage markers */}
-      {markers.map((m, i) => (
-        <g key={i} style={{ cursor: 'pointer' }} onClick={e => { e.stopPropagation(); onRemoveLocal(i) }}>
-          <circle cx={m.x * PW / 100} cy={m.y * PH / 100} r={10} fill="#ef444428" stroke="#ef4444" strokeWidth={1.5} />
-          <text x={m.x * PW / 100} y={m.y * PH / 100 + 4} textAnchor="middle" fontSize={9} fontWeight="bold" fill="#ef4444">
-            {globalIdxs[i] + 1}
-          </text>
-        </g>
-      ))}
-    </svg>
-  )
-}
+const PW=160,PH=300
 
 function PhoneDiagramReadonly({ markers }: { markers: DamageMarker[] }) {
   const front = markers.filter(m => m.side === 'front')
