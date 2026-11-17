@@ -8,7 +8,7 @@ export default async function LocalPartnerPage({ params }: { params: { slug: str
   const db = createAdminClient()
   const { data: partner } = await db
     .from('cl_partners')
-    .select('id, name, address, phone, logo_url, pin, is_active, commission_pct')
+    .select('id, name, address, phone, logo_url, is_active, commission_pct')
     .eq('slug', params.slug)
     .single()
 
@@ -21,7 +21,6 @@ export default async function LocalPartnerPage({ params }: { params: { slug: str
       partnerAddress={partner.address ?? ''}
       partnerPhone={partner.phone ?? ''}
       logoUrl={partner.logo_url ?? ''}
-      pin={partner.pin}
       isActive={partner.is_active ?? true}
       commissionPct={partner.commission_pct ?? 33}
     />

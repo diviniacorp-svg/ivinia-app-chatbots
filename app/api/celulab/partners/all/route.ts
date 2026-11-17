@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
+
+import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
+import {sameOrigin} from '@/lib/celulab/partner-session'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/celulab/partners/all — todos los partners (incluyendo inactivos)
 // Solo llamado desde el panel NUCLEUS privado
-export async function GET() {
+export async function GET(req:NextRequest) {
+  if(!await hasNucleusSession(req))return NextResponse.json({}, {status:401})
   const db = createAdminClient()
   const { data, error } = await db
     .from('cl_partners')

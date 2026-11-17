@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
-import {canReadEarnings,hideCommission,hidePurchaseDetails} from '@/lib/celulab/owner-session'
-import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
+import {canReadEarnings} from '@/lib/celulab/owner-session'
+import {orderActor,sameOrigin,validPartnerId} from '@/lib/celulab/partner-session'
+import {partnerOrder} from '@/lib/celulab/public-order'
+import {readPaymentAccounts} from '@/lib/celulab/payment-accounts'
 
 import {sendWhatsAppMessage} from '@/lib/twilio'
 import {orderSourcing,parseOrderDraft} from '@/lib/celulab/order-sourcing'
@@ -11,28 +13,36 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const status = searchParams.get('status')
+  const status = searchParams.get('status'), partner_id=searchParams.get('partner_id')
+  const actor=await orderActor(req,partner_id)
+  if(!actor.allowed)return NextResponse.json({}, {status:401})
+  const offset=Number(searchParams.get('offset')||0)
+  if(!Number.isSafeInteger(offset)||offset<0||offset>1000000)return NextResponse.json({}, {status:400})
   const db = createAdminClient()
 
   let q = db
     .from('cl_orders')
     .select('*, cl_partners(name)')
-    .order('created_at', { ascending: false })
-    .limit(200)
+    .order('created_at', { ascending: false }).order('id')
+    .range(offset,offset+199)
 
   if (status) q = q.eq('status', status)
-  const partner_id = searchParams.get('partner_id')
   if (partner_id) q = q.eq('partner_id', partner_id)
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if(await hasNucleusSession(req))return NextResponse.json(data)
-  const publicOrders=data.map(hidePurchaseDetails)
-  return NextResponse.json(await canReadEarnings(req,partner_id || undefined)?publicOrders:publicOrders.map(hideCommission))
+  if(actor.admin&&!partner_id)return NextResponse.json(data)
+  const earnings=await canReadEarnings(req,partner_id||undefined)
+  return NextResponse.json(data.map(order=>partnerOrder(order,earnings)))
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
+  if(!sameOrigin(req))return NextResponse.json({}, {status:403})
+  const body = await req.json().catch(()=>null)
+  if(!body)return NextResponse.json({}, {status:400})
+  const actor=await orderActor(req,body.partner_id)
+  if(!actor.allowed)return NextResponse.json({}, {status:403})
+  if(body.partner_id!=null&&!validPartnerId(body.partner_id))return NextResponse.json({}, {status:400})
   const {
     partner_id,
     client_name, client_dni, client_phone,
@@ -44,7 +54,6 @@ export async function POST(req: NextRequest) {
     requested_work,
     deposit_ars,
     notes,
-    commission_pct,
   } = body
 
   if (!client_name || !device_brand || !device_model) {
@@ -53,6 +62,15 @@ export async function POST(req: NextRequest) {
 
   const db = createAdminClient()
 
+  const {data:local,error:partnerError}=partner_id?await db.from('cl_partners').select('name,commission_pct').eq('id',partner_id).eq('is_active',true).maybeSingle():{data:null,error:null}
+  if(partner_id&&(!local||partnerError))return NextResponse.json({}, {status:403})
+  const deposit=Number(deposit_ars??0),method=body.deposit_method
+  if(!Number.isSafeInteger(deposit)||deposit<0||deposit>2147483647||(deposit>0&&!['efectivo','transferencia','mercadopago'].includes(method)))return NextResponse.json({error:'Revisá monto y método de seña.'}, {status:400})
+  let paymentAlias=''
+  if(deposit>0&&method==='transferencia'){
+    try{paymentAlias=(await readPaymentAccounts()).find(a=>a.id===body.deposit_account)?.alias||''}catch{return NextResponse.json({error:'No se pudieron verificar los alias de pago.'},{status:503})}
+    if(!paymentAlias)return NextResponse.json({error:'Elegí una cuenta de transferencia configurada.'},{status:400})
+  }
   const draft=parseOrderDraft(body.quote_draft_lines)
   const accessUnknown=body.unknown_access===true&&unlock_type==='none'
   const diagram=damage_diagram&&typeof damage_diagram==='object'&&!Array.isArray(damage_diagram)?damage_diagram:{}
@@ -79,13 +97,13 @@ export async function POST(req: NextRequest) {
       water_damage: water_damage ?? false,
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
-      damage_diagram: {...diagram,accessUnknown},
+      damage_diagram: {...diagram,accessUnknown,depositMethod:deposit>0?method:null,depositAlias:paymentAlias||null},
       quote_draft_lines: draft,
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',
-      deposit_ars: deposit_ars ?? 0,
+      deposit_ars: deposit,
       notes: notes ?? '',
-      commission_pct: commission_pct ?? 33,
+      commission_pct: local?.commission_pct ?? (partner_id?33:0),
       status: 'ingresado',
       revision_required: turns_on === false,
     })
@@ -95,17 +113,17 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Auto-registro de seña en caja si deposit > 0
-  if ((deposit_ars ?? 0) > 0 && data) {
+  if (deposit > 0 && data) {
     await db.from('cl_caja_movimientos').insert({
       tipo: 'ingreso',
       concepto: `Seña ${data.order_number} — ${device_brand} ${device_model}`,
       categoria: null,
-      metodo_pago: 'efectivo',
-      monto_ars: Number(deposit_ars),
+      metodo_pago: method==='mercadopago'?'mercadopago':method,
+      monto_ars: deposit,
       equipo_modelo: `${device_brand} ${device_model}`,
       orden_id: data.id,
       partner_id: partner_id ?? null,
-      notas: `Ingreso automático al crear orden`,
+      notas: 'Ingreso automático al crear orden'+(paymentAlias?' · Alias '+paymentAlias:''),
       fecha: new Date().toISOString(),
     }).select().single()
     // fire-and-forget: no bloqueamos si falla
@@ -113,9 +131,8 @@ export async function POST(req: NextRequest) {
 
   // Notifications are only sent to the owner configured on the server, never to a client-supplied number.
   const ownerPhone=process.env.CELULAB_OWNER_WHATSAPP
-  if(ownerPhone&&partner_id&&typeof body.partner_pin==='string'&&body.partner_pin&&req.headers.get('origin')===req.nextUrl.origin){
+  if(ownerPhone&&local){
     try{
-      const {data:local}=await db.from('cl_partners').select('name').eq('id',partner_id).eq('pin',body.partner_pin).eq('is_active',true).maybeSingle()
       if(local){
         const sourcing=await orderSourcing(db,draft).catch(()=>[])
         const info=sourcing.map(r=>r.caption+(r.supplier?' · '+r.supplier+' · costo ARS '+r.cost.toLocaleString('es-AR'):' · proveedor por confirmar'))
@@ -130,5 +147,5 @@ export async function POST(req: NextRequest) {
     }catch{console.warn('[CeluLab] No se pudo procesar el aviso de nuevo ingreso.')}
   }
 
-  return NextResponse.json(await hasNucleusSession(req)?data:hidePurchaseDetails(data), { status: 201 })
+  return NextResponse.json(actor.admin?data:partnerOrder(data), { status: 201 })
 }

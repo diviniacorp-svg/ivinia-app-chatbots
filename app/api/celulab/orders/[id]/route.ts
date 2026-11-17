@@ -8,8 +8,11 @@ import {
   buildCelulabOrdenDiagnosticada,
 } from '@/lib/twilio'
 
-import {canReadEarnings,hideCommission,hidePurchaseDetails} from '@/lib/celulab/owner-session'
+import {canReadEarnings} from '@/lib/celulab/owner-session'
 import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
+
+import {orderActor,sameOrigin} from '@/lib/celulab/partner-session'
+import {partnerOrder} from '@/lib/celulab/public-order'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,12 +26,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     .eq('id', params.id)
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
-  if(await hasNucleusSession(req))return NextResponse.json(data)
-  const publicOrder=hidePurchaseDetails(data)
-  return NextResponse.json(await canReadEarnings(req,data.partner_id)?publicOrder:hideCommission(publicOrder))
+  const actor=await orderActor(req,data.partner_id)
+  if(!actor.allowed)return NextResponse.json({}, {status:403})
+  return NextResponse.json(actor.admin?data:partnerOrder(data,await canReadEarnings(req,data.partner_id)))
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  if(!sameOrigin(req))return NextResponse.json({}, {status:403})
   let body: Record<string, unknown>
   try {
     const input: unknown = await req.json()
@@ -40,12 +44,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const db = createAdminClient()
 
   const { data: previous, error: readError } = await db.from('cl_orders')
-    .select('status, total_ars, part_cost_ars, commission_pct, commission_ars, updated_at')
+    .select('status, total_ars, part_cost_ars, commission_pct, commission_ars, updated_at, partner_id, damage_diagram')
     .eq('id', params.id).maybeSingle()
   if (readError) return NextResponse.json({ error: 'No se pudo leer la orden' }, { status: 500 })
   if (!previous) return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
 
+  const actor=await orderActor(req,previous.partner_id)
+  if(!actor.allowed)return NextResponse.json({}, {status:403})
+  const localStatuses=['retirado_por_local','entregado_al_cliente','entregado']
+  if(!actor.admin&&(Object.keys(body).some(k=>k!=='status')||typeof body.status!=='string'||!localStatuses.includes(body.status)||!['listo','retirado_por_local','entregado_al_cliente'].includes(previous.status)))return NextResponse.json({}, {status:403})
   const updates: Record<string, unknown> = { ...body, updated_at: new Date().toISOString() }
+  delete updates.partner_id
+  delete updates.id
+  if(typeof body.status==='string'&&['entregado_al_cliente','entregado','rechazado'].includes(body.status)&&!previous.damage_diagram?.completedAt){updates.damage_diagram={...(previous.damage_diagram||{}),completedAt:new Date().toISOString()}}
 
   // Commission amounts are derived by the server, not accepted from the client.
   delete updates.commission_ars
@@ -97,13 +108,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  if(await hasNucleusSession(req))return NextResponse.json(data)
-  const publicOrder=hidePurchaseDetails(data)
-  return NextResponse.json(await canReadEarnings(req,data.partner_id)?publicOrder:hideCommission(publicOrder))
+  return NextResponse.json(actor.admin?data:partnerOrder(data,await canReadEarnings(req,data.partner_id)))
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const db = createAdminClient()
+  if(!sameOrigin(req)||!await hasNucleusSession(req))return NextResponse.json({}, {status:403})
   const { error } = await db.from('cl_orders').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

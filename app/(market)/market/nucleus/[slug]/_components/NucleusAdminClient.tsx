@@ -1,4 +1,5 @@
 'use client'
+import PaymentAccounts from '../../../celulab/_components/PaymentAccounts'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import QuotesTab from './QuotesTab'
 import CustomersTab from './CustomersTab'
@@ -425,6 +426,13 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
     return acc
   }, {})
 
+  const menuGroups=[
+    {name:'Atención',links:['ordenes','clientes','locales']},
+    {name:'Catálogo',links:['lista','repuestos','proveedores','precios','margenes']},
+    {name:'Caja y ventas',links:['caja','ventas','tienda']},
+    {name:'Difusión',links:['qr']}
+  ] as const
+  const menuGroup=menuGroups.find(group=>(group.links as readonly string[]).includes(tab))||menuGroups[0]
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui' }}>
 
@@ -449,10 +457,14 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
         </button>
       </div>
 
+      {/* Áreas del taller */}
+      <nav aria-label="Áreas del Nucleus" style={{background:'#fff',borderBottom:'1px solid #e2e8f0',display:'flex',gap:6,padding:'8px 12px',flexWrap:'wrap'}}>
+        {menuGroups.map(group=><button type="button" key={group.name} aria-pressed={menuGroup.name===group.name} onClick={()=>setTab(group.links[0])} style={{border:'1px solid #e2e8f0',background:menuGroup.name===group.name?color:'white',color:menuGroup.name===group.name?'white':'#334155',borderRadius:14,padding:'6px 12px',fontSize:13,fontWeight:700,cursor:'pointer'}}>{group.name}</button>)}
+      </nav>
       {/* Tabs */}
       <style>{`.cl-nucleus-tabs::-webkit-scrollbar{display:none}.cl-nucleus-tabs{scrollbar-width:none}`}</style>
       <div className="cl-nucleus-tabs" style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 8px', display: 'flex', gap: 0, overflowX: 'auto' }}>
-        {(['ordenes', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
+        {menuGroup.links.map(t => {
           const label = t === 'ordenes' ? '📋 Órdenes' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
           return (
             <button key={t} onClick={() => setTab(t)} style={{
@@ -497,7 +509,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {tab === 'ventas' && <VentasTab color={color} />}
 
             {/* ══ CAJA ══ */}
-            {tab === 'caja' && <CajaTab color={color} />}
+            {tab === 'caja' && <><PaymentAccounts/><CajaTab color={color} /></>}
 
             {/* ══ LISTA ══ */}
             {tab === 'lista' && <AdminListaTab color={color} configs={repairConfigs} />}
@@ -993,32 +1005,6 @@ function QRTab({ publicUrl, companyName, color }: { publicUrl: string; companyNa
   const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicUrl)}&bgcolor=ffffff&color=000000&margin=16`
   const qrDownload = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(publicUrl)}&bgcolor=ffffff&color=000000&margin=40`
 
-  // Payment config
-  const [pay, setPay] = useState({ alias: '', nombre: '', mp_link: '' })
-  const [paySaving, setPaySaving] = useState(false)
-  const [paySaved, setPaySaved] = useState(false)
-
-  useEffect(() => {
-    fetch('/api/celulab/payment-config').then(r => r.json()).then(d => {
-      if (d) setPay({ alias: d.alias ?? '', nombre: d.nombre ?? '', mp_link: d.mp_link ?? '' })
-    }).catch(() => {})
-  }, [])
-
-  async function savePay() {
-    setPaySaving(true)
-    await fetch('/api/celulab/payment-config', {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pay),
-    })
-    setPaySaving(false)
-    setPaySaved(true)
-    setTimeout(() => setPaySaved(false), 2500)
-  }
-
-  const mpQrUrl = pay.mp_link
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pay.mp_link)}&bgcolor=ffffff&color=009ee3&margin=16`
-    : null
-
   function handlePrint() {
     const win = window.open('', '_blank')
     if (!win) return
@@ -1067,47 +1053,6 @@ function QRTab({ publicUrl, companyName, color }: { publicUrl: string; companyNa
         </div>
       </div>
 
-      {/* Configuración de pago */}
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 24 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>💳 Método de pago (seña)</div>
-        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-          Configurá el alias o link de MP que va a ver el cliente en la landing para dejar la seña.
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[
-            { key: 'nombre', label: 'Nombre de la cuenta', placeholder: 'Ej: CeluLab / Joaquín García' },
-            { key: 'alias', label: 'Alias (CBU/CVU)', placeholder: 'Ej: celulab.mp · MODO · etc.' },
-            { key: 'mp_link', label: 'Link de Mercado Pago (genera QR automático)', placeholder: 'https://link.mercadopago.com.ar/...' },
-          ].map(f => (
-            <div key={f.key}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>{f.label}</div>
-              <input
-                value={(pay as Record<string, string>)[f.key]}
-                onChange={e => setPay(p => ({ ...p, [f.key]: e.target.value }))}
-                placeholder={f.placeholder}
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13, boxSizing: 'border-box' }}
-              />
-            </div>
-          ))}
-        </div>
-
-        {mpQrUrl && (
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', background: '#f0f9ff', borderRadius: 10, border: '1px solid #7dd3fc' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={mpQrUrl} alt="QR MP" width={80} height={80} style={{ borderRadius: 8 }} />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: '#0369a1' }}>QR de Mercado Pago listo</div>
-              <div style={{ fontSize: 12, color: '#0ea5e9', marginTop: 2 }}>Se muestra en la landing para que los clientes escaneen y paguen la seña</div>
-            </div>
-          </div>
-        )}
-
-        <button onClick={savePay} disabled={paySaving}
-          style={{ marginTop: 16, padding: '10px 24px', borderRadius: 9, border: 'none', background: paySaved ? '#16a34a' : color, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: paySaving ? 0.7 : 1 }}>
-          {paySaving ? 'Guardando...' : paySaved ? '✓ Guardado' : 'Guardar configuración'}
-        </button>
-      </div>
 
     </div>
   )

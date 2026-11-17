@@ -5,6 +5,9 @@ import {ChargeOptions,RepairPicker,standardRepairRates,type RepairRate} from '..
 import QuoteParts,{catalogGroup} from '../../../_components/QuoteParts'
 import {isChargeJob} from '../../../_components/charge-quote'
 import {chargeCaution,chargeProfile,chargeTierOptions,intakeChoices,suggestIntake,REVIEW_PRICE,UNKNOWN_ACCESS} from '../../../_components/repair-guidance'
+import CustomersTab,{useCustomers} from '../../../../nucleus/[slug]/_components/CustomersTab'
+import {usePaymentAccounts,type DepositMethod} from '../../../_components/PaymentAccounts'
+import {fetchOrderPages,finalOrderStatus,groupOrderMonths} from '../../../_components/order-lists'
 import QuoteEditor from '../../../_components/QuoteEditor'
 import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
@@ -42,7 +45,7 @@ type Order = {
   turns_on: boolean; water_damage: boolean; revision_required: boolean
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
-  damage_diagram: { markers?: DamageMarker[]; accessUnknown?:boolean; possibleRepair?:string }
+  damage_diagram: { markers?: DamageMarker[]; accessUnknown?:boolean; possibleRepair?:string; completedAt?:string }
   quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
@@ -97,28 +100,25 @@ function fmtDate(iso: string) {
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function LocalPartnerClient({
-  partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, pin, isActive, commissionPct,
+  partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, isActive, commissionPct,
 }: {
   partnerId: string; partnerName: string; partnerAddress: string; partnerPhone: string
-  logoUrl: string; pin: string; isActive: boolean; commissionPct: number
+  logoUrl: string; isActive: boolean; commissionPct: number
 }) {
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinErr, setPinErr] = useState(false)
 
-  useEffect(() => {
-    if (sessionStorage.getItem(`local-${partnerId}`) === 'ok') setUnlocked(true)
-  }, [partnerId])
-
-  function tryPin() {
-    if (pinInput === pin) {
-      setUnlocked(true)
-      sessionStorage.setItem(`local-${partnerId}`, 'ok')
-    } else {
-      setPinErr(true)
-      setPinInput('')
-      setTimeout(() => setPinErr(false), 2000)
-    }
+  useEffect(()=>{
+    const controller=new AbortController()
+    fetch('/api/celulab/partner-session?partner='+encodeURIComponent(partnerId),{signal:controller.signal}).then(r=>{if(!controller.signal.aborted)setUnlocked(r.ok)}).catch(()=>{})
+    return ()=>controller.abort()
+  },[partnerId])
+  async function tryPin(){
+    const ok=await fetch('/api/celulab/partner-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({partner:partnerId,pin:pinInput})}).then(r=>r.ok).catch(()=>false)
+    setPinInput('')
+    setUnlocked(ok)
+    if(!ok){setPinErr(true);setTimeout(()=>setPinErr(false),2000)}
   }
 
   if (!isActive) return (
@@ -147,7 +147,7 @@ export default function LocalPartnerClient({
       partnerPhone={partnerPhone}
       logoUrl={logoUrl}
       commissionPct={commissionPct}
-      pin={pin}
+      pin=""
     />
   )
 }
@@ -227,7 +227,7 @@ function LocalDashboard({
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [activeTab, setActiveTab] = useState<'ordenes' | 'historial' | 'precios' | 'ganancias'>('ordenes')
+  const [activeTab, setActiveTab] = useState<'ordenes' | 'historial' | 'precios' | 'ganancias' | 'clientes'>('ordenes')
   const [historialView, setHistorialView] = useState<'ordenes' | 'clientes'>('ordenes')
   const [clientFilter, setClientFilter] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
@@ -244,22 +244,19 @@ function LocalDashboard({
     } catch { return false }
   }
   const fetchOrders = useCallback(async () => {
-    const data = await fetch(`/api/celulab/orders?partner_id=${partnerId}`).then(r => r.json())
-    setOrders(Array.isArray(data) ? data : [])
-    setLastUpdated(new Date())
-    setLoading(false)
+    try{setOrders(await fetchOrderPages<Order>(partnerId));setLastUpdated(new Date())}catch{}finally{setLoading(false)}
   }, [partnerId])
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
 
   useEffect(() => {
-    const interval = setInterval(() => fetchOrders(), 30000)
+    const interval = setInterval(() => fetchOrders(), 120000)
     return () => clearInterval(interval)
   }, [fetchOrders])
 
   if (view === 'new') {
     return (
-      <LocalNewOrder
+      <OrderIntake
         partnerId={partnerId}
         partnerName={partnerName}
         partnerAddress={partnerAddress}
@@ -268,7 +265,6 @@ function LocalDashboard({
         commissionPct={commissionPct}
         pin={pin}
         commissionUnlocked={commissionUnlocked}
-        unlockCommission={unlockCommission}
         prefilledRepair={prefilledRepair}
         onBack={() => { setView('list'); setPrefilledRepair(null) }}
         onSaved={() => { setView('list'); setPrefilledRepair(null); fetchOrders() }}
@@ -330,13 +326,6 @@ function LocalDashboard({
       </div>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap',marginBottom:16}}><strong>Órdenes de servicio</strong><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>          <QuoteEditor partner={partnerId} pin={pin}/>
-          <button onClick={() => setView('new')} style={{
-            padding: '8px 16px', borderRadius: 9, border: 'none',
-            background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-          }}>
-            + Nueva orden
-          </button></div></div>
         {/* Stats row — clickeable */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
           {[
@@ -344,7 +333,7 @@ function LocalDashboard({
             { label: 'Listas', val: orders.filter(o => o.status === 'listo').length, icon: '✅', tab: 'ordenes' as const },
             { label: 'Completadas', val: orders.filter(o => ['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status)).length, icon: '🏁', tab: 'historial' as const },
           ].map(s => (
-            <button key={s.label} onClick={() => setActiveTab(s.tab)} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }}>
+            <button key={s.label} onClick={() => {setActiveTab(s.tab);setStatusFilter(s.label==='Listas'?'listo':s.label==='Activas'?'activas':'todas');if(s.tab==='historial'){setHistorialView('ordenes');setClientFilter(null)}}} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }}>
               <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{s.val}</div>
               <div style={{ fontSize: 11, color: '#9ca3af' }}>{s.label}</div>
@@ -352,6 +341,13 @@ function LocalDashboard({
           ))}
         </div>
 
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap',marginBottom:16}}><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>          <QuoteEditor partner={partnerId} pin={pin}/>
+          <button onClick={() => setView('new')} style={{
+            padding: '8px 16px', borderRadius: 9, border: 'none',
+            background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+          }}>
+            + Nueva orden
+          </button></div></div>
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto', paddingBottom: 2 }}>
           {[
@@ -359,6 +355,7 @@ function LocalDashboard({
             { key: 'ordenes', label: '📋 Órdenes activas' },
             { key: 'historial', label: '🕐 Historial' },
             { key: 'ganancias', label: '📊 Ganancias' },
+            { key: 'clientes', label: '👤 Clientes' },
           ].map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
               padding: '7px 14px', borderRadius: 20, whiteSpace: 'nowrap',
@@ -379,7 +376,7 @@ function LocalDashboard({
         {/* ── Tab: Órdenes ── */}
         {activeTab === 'ordenes' && (() => {
           const STATUS_FLOW = ['ingresado','en_revision','presupuesto_enviado','aprobado','rechazado','en_reparacion','listo','retirado_por_local','entregado_al_cliente','entregado']
-          const visibleOrders = statusFilter === 'todas' ? orders : orders.filter(o => o.status === statusFilter)
+          const visibleOrders = statusFilter === 'todas' ? orders : statusFilter==='activas'?orders.filter(o=>!finalOrderStatus(o.status)):orders.filter(o => o.status === statusFilter)
           return loading ? (
             <div style={{ textAlign: 'center', padding: 48, color: '#9ca3af' }}>Cargando...</div>
           ) : (
@@ -481,7 +478,7 @@ function LocalDashboard({
                         ← Todos los clientes
                       </button>
                     )}
-                    {visibleOrders.map(order => {
+                    {groupOrderMonths(visibleOrders).map((period,index,all)=><section key={period.key}>{(index===0||all[index-1].year!==period.year)&&<h3 style={{margin:'14px 0 6px'}}>{period.year}</h3>}<details style={{marginBottom:10}} open={index===0||undefined}><summary style={{cursor:'pointer',fontWeight:700,textTransform:'capitalize',marginBottom:8}}>{period.month} · {period.rows.length}</summary><div style={{display:'grid',gap:8}}>{period.rows.map(order => {
                       const sc = STATUS_COLORS[order.status] ?? '#9ca3af'
                       return (
                         <div key={order.id} onClick={() => setSelectedOrder(order)} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, opacity: 0.85 }}>
@@ -496,7 +493,7 @@ function LocalDashboard({
                           <div style={{ color: '#d1d5db' }}>›</div>
                         </div>
                       )
-                    })}
+                    })}</div></details></section>)}
                   </div>
                 ) : (
                   // Vista por cliente
@@ -544,6 +541,7 @@ function LocalDashboard({
           })()
         )}
 
+        {activeTab==='clientes'&&<CustomersTab partner={partnerId}/>}
         {/* ── Tab: Lista de precios ── */}
         {activeTab === 'precios' && (
           <div>
@@ -581,7 +579,7 @@ function LocalDashboard({
 
 // ─── Part Search ─────────────────────────────────────────────────────────────
 
-function OrderRepairPicker({device,partnerId,pin,commissionPct,onAdd,job,setJob}:{device:string;partnerId:string;pin:string;commissionPct:number;onAdd:(r:RepairLineItem)=>void;job:string;setJob:(j:string)=>void}){
+function OrderRepairPicker({device,partnerId,pin,commissionPct,onAdd,job,setJob}:{device:string;partnerId:string|null;pin?:string;commissionPct:number;onAdd:(r:RepairLineItem)=>void;job:string;setJob:(j:string)=>void}){
  const [rates,setRates]=useState<RepairRate[]>(standardRepairRates),[tier,setTier]=useState(''),[custom,setCustom]=useState('')
  const normalizedTier=tier||chargeProfile(device).tier||''
  useEffect(()=>{
@@ -639,16 +637,24 @@ function CheckItem({ label, done, onToggle }: { label: string; done: boolean; on
   )
 }
 
-function LocalNewOrder({
-  partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, commissionPct, pin, commissionUnlocked, unlockCommission, prefilledRepair, onBack, onSaved,
+export function OrderIntake({
+  partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, commissionPct, pin, commissionUnlocked, prefilledRepair, origins, onBack, onSaved,
 }: {
-  partnerId: string; partnerName: string; partnerAddress: string
+  partnerId: string|null; partnerName: string; partnerAddress: string
   partnerPhone: string; logoUrl: string; commissionPct: number
-  pin: string; commissionUnlocked: boolean; unlockCommission: (value:string) => Promise<boolean>
+  pin?: string; commissionUnlocked: boolean
+  origins?:{id:string;name:string;commission_pct:number}[]
   prefilledRepair?: RepairLineItem | null
   onBack: () => void; onSaved: () => void
 }) {
   const [form, setForm] = useState(BLANK)
+  const [origin,setOrigin]=useState(''),[depositMethod,setDepositMethod]=useState<DepositMethod>('efectivo'),[account,setAccount]=useState('')
+  const selectedOrigin=origins?.find(o=>o.id===origin)
+  const orderPartner=origins?selectedOrigin?.id||null:partnerId
+  const rate=origins?selectedOrigin?.commission_pct||0:commissionPct
+  const contacts=useCustomers(origins?null:partnerId),[clientKey,setClientKey]=useState('')
+  const payments=usePaymentAccounts(orderPartner,depositMethod==='transferencia')
+  const transfer=payments.items.find(a=>a.id===account)
   const [job,setJob]=useState(''),[possible,setPossible]=useState('')
   const suggested=suggestIntake(form.reported_fault)
   const choosePossible=(value:string)=>{setPossible(value);setJob(intakeChoices.find(c=>c.value===value)?.job||'')}
@@ -704,8 +710,9 @@ function LocalNewOrder({
       setErr('Ingresá el trabajo a realizar o buscá un repuesto.')
       return
     }
+    if(Number(form.deposit_ars)>0&&depositMethod==='transferencia'&&!transfer){setErr('Elegí una cuenta para registrar la transferencia.');return}
     setSaving(true)
-
+    try{
     const res = await fetch('/api/celulab/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -716,20 +723,20 @@ function LocalNewOrder({
         damage_diagram:{...form.damage_diagram,possibleRepair:form.turns_on===false?possible:undefined},
         requested_work: finalRequestedWork,
         quote_draft_lines: repairs.map(r=>({device,job:r.job,partId:r.partId,option:r.partId?'Repuesto: '+repairCaption(r):undefined,part:r.final_price-r.labor_ars,labor:r.labor_ars})),
-        partner_pin: pin,
         deposit_ars: Number(form.deposit_ars) || 0,
-        partner_id: partnerId,
-        commission_pct: commissionPct,
+        deposit_method: depositMethod,
+        deposit_account: account,
+        partner_id: orderPartner,
       }),
     })
 
     if (!res.ok) { setErr((await res.json()).error ?? 'Error al guardar'); setSaving(false); return }
     setSavedOrder(await res.json())
-    setSaving(false)
+    }catch{setErr('No se pudo enviar la orden. Revisá el listado antes de reintentar.')}finally{setSaving(false)}
   }
 
   if (savedOrder) {
-    return <OrderTicket pin={pin} order={savedOrder} partnerName={partnerName} partnerAddress={partnerAddress} logoUrl={logoUrl} stockWarning={false} onDone={onSaved} />
+    return <OrderTicket pin={pin||''} order={savedOrder} partnerName={selectedOrigin?.name||partnerName} partnerAddress={partnerAddress} logoUrl={logoUrl} stockWarning={false} onDone={onSaved} />
   }
 
   const color = '#6366f1'
@@ -749,12 +756,14 @@ function LocalNewOrder({
 
 
         {/* 2-column grid on wide screens */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 14 }}>
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             <Card title="👤 Cliente">
+              {origins&&<FField label="Origen de la orden"><select style={inp} value={origin} onChange={e=>{setOrigin(e.target.value);setAccount('')}}><option value="">Directo · CeluLab</option>{origins.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></FField>}
+              {contacts.rows.length>0&&<FField label="Usar cliente guardado"><select style={inp} value={clientKey} onChange={e=>{setClientKey(e.target.value);const c=contacts.rows.find(r=>r.key===e.target.value);if(c)setForm(f=>({...f,client_name:c.name,client_dni:c.dni,client_phone:c.phone}))}}><option value="">Ingresar datos nuevos</option>{contacts.rows.filter(c=>!form.client_name.trim()||c.key===clientKey||c.name.toLowerCase().includes(form.client_name.trim().toLowerCase())).map(c=><option key={c.key} value={c.key}>{c.name}{c.dni?' · '+c.dni:''}</option>)}</select></FField>}
               <ScriptTip text="¿Me das tu nombre completo y WhatsApp para avisarte cuando esté listo?" />
               <div style={{ height: 8 }} />
               <FField label="Nombre completo *">
@@ -768,17 +777,7 @@ function LocalNewOrder({
               </FField>
             </Card>
 
-            <Card title="📱 Equipo">
-              <ScriptTip text="Confirmá marca y modelo del equipo." />
-              <div style={{ height: 8 }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                <FField label="Marca *">
-                  <input style={inp} value={form.device_brand} onChange={e => {set('device_brand',e.target.value);setRepairs(prev=>prev.filter(r=>prefilledRepair?.partId===r.partId))}} placeholder="Samsung, iPhone..." />
-                </FField>
-                <FField label="Modelo *">
-                  <input style={inp} value={form.device_model} onChange={e => {set('device_model',e.target.value);setRepairs([])}} placeholder="A54, 14 Pro..." />
-                </FField>
-              </div>
+            <Card title="⚡ Estado de encendido">
               <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>¿Enciende?</div>
               <div style={{fontSize:12,color:'#475569',marginBottom:8}}>Verificá vos si enciende. No completes este campo a partir de lo que diga el cliente.</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -802,8 +801,8 @@ function LocalNewOrder({
               <ScriptTip text="Registrá cómo se accede al equipo." />
               <div style={{ height: 8 }} />
               <div style={{ display: 'flex', flexWrap:'wrap', gap: 8, marginBottom: 12 }}>
-                {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: 'Sin contraseña' }, { v: 'unknown', l: 'No recuerda la contraseña' }].map(opt => (
-                  <button key={opt.v} onClick={() => { set('unlock_type', opt.v); setPatternDots([]); set('unlock_code', '') }} style={{ flex: 1, padding: '9px 4px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `2px solid ${form.unlock_type === opt.v ? color : '#e5e7eb'}`, background: form.unlock_type === opt.v ? color + '12' : '#fff', color: form.unlock_type === opt.v ? color : '#6b7280' }}>
+                {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: 'Sin contraseña' }, { v: 'unknown', l: 'No sabe la clave' }].map(opt => (
+                  <button key={opt.v} onClick={() => { set('unlock_type', opt.v); setPatternDots([]); set('unlock_code', '') }} style={{ flex: 1, padding: '9px 4px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `2px solid ${opt.v==='unknown'?'#fca5a5':form.unlock_type===opt.v?color:'#e5e7eb'}`, background: opt.v==='unknown'?(form.unlock_type===opt.v?'#fee2e2':'#fff7f7'):form.unlock_type===opt.v?color+'12':'#fff', color: opt.v==='unknown'?'#991b1b':form.unlock_type===opt.v?color:'#6b7280' }}>
                     {opt.l}
                   </button>
                 ))}
@@ -829,6 +828,105 @@ function LocalNewOrder({
           {/* RIGHT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
+            <Card title="📱 Equipo, reparaciones y seña">
+              <ScriptTip text="Confirmá marca y modelo del equipo." />
+              <div style={{ height: 8 }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                <FField label="Marca *">
+                  <input style={inp} value={form.device_brand} onChange={e => {set('device_brand',e.target.value);setRepairs(prev=>prev.filter(r=>prefilledRepair?.partId===r.partId))}} placeholder="Samsung, iPhone..." />
+                </FField>
+                <FField label="Modelo *">
+                  <input style={inp} value={form.device_model} onChange={e => {set('device_model',e.target.value);setRepairs([])}} placeholder="A54, 14 Pro..." />
+                </FField>
+              </div>
+
+              {form.turns_on===false ? (
+                <ScriptTip text="El diagnóstico es $15.000, se descuenta si aprobás la reparación. ¿Dejás la seña ahora?" />
+              ) : (
+                <ScriptTip text="Buscá el repuesto para ver el precio final y cotizar la seña." />
+              )}
+              <div style={{ height: 6 }} />
+
+              <FField label="¿Qué le pasó? · Según el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="Ej. Se hinchó la batería"/></FField>
+              {form.turns_on===false&&<FField label="Posible trabajo (opcional)">
+                <select style={inp} value={possible} onChange={e=>choosePossible(e.target.value)}><option value="">No sabe / sólo revisión</option>{intakeChoices.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select>
+                {!possible&&suggested&&<button type="button" onClick={()=>choosePossible(suggested)} style={{...inp,width:'auto',marginTop:6,cursor:'pointer'}}>Sugerencia: {intakeChoices.find(c=>c.value===suggested)?.label}</button>}
+              </FField>}
+              <OrderRepairPicker key={form.device_brand+' '+form.device_model+' '+possible} device={form.device_brand+' '+form.device_model} partnerId={orderPartner} pin={pin} commissionPct={rate} job={job} setJob={setJob}
+                onAdd={r=>setRepairs(prev=>prev.some(x=>x.job===r.job&&x.partId===r.partId)?prev:[...prev,r])} />
+
+              {/* Selected repairs list */}
+              {repairs.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Reparaciones seleccionadas</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {repairs.map((r, i) => (
+                      <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{repairCaption(r)}</div>
+                          <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
+                            {origins&&r.partId&&<span style={{fontSize:11,color:'#64748b'}}>Detalle de compra y margen en la orden guardada</span>}
+                          </div>
+                        </div>
+                        <button onClick={() => setRepairs(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', fontSize: 16, padding: 0, flexShrink: 0, marginTop: 2 }} aria-label="Quitar reparación">✕</button><strong style={{whiteSpace:'nowrap',color:'#1d4ed8'}}>{ars(r.final_price)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 9, padding: '10px 14px', marginTop: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                      <span style={{ color: '#6b7280' }}>Presupuesto estimado</span>
+                      <span style={{ fontWeight: 700, color: '#1d4ed8' }}>{ars(totalFinalPrice)}</span>
+                    </div>
+
+                    {form.turns_on===false && <div style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>* Más $15.000 de revisión diagnóstica</div>}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ height: 10 }} />
+              <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado (opcional si ingresa para revisión)'}>
+                <textarea style={{ ...inp, minHeight: 56, resize: 'vertical' }} value={form.requested_work} onChange={e => set('requested_work', e.target.value)} placeholder={repairs.length > 0 ? 'Algún trabajo extra o nota adicional...' : 'Pantalla rota, no carga, no enciende, cambio de batería...'} />
+              </FField>
+              <FField label="Observaciones internas">
+                <textarea style={{ ...inp, minHeight: 48, resize: 'vertical' }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notas para el técnico..." />
+              </FField>
+              <FField label="Seña recibida ($)">
+               <input type="number" min="0" step="1" style={inp} value={form.deposit_ars} onChange={e=>{set('deposit_ars',e.target.value);setMpLink(null)}} placeholder={form.turns_on===false?'15000':'0'}/>
+               <div role="group" aria-label="Método de seña" style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
+                {(['efectivo','transferencia','mercadopago'] as const).map((m,i)=><button type="button" key={m} aria-pressed={depositMethod===m} onClick={()=>{setDepositMethod(m);setAccount('');setMpLink(null)}} style={{...inp,width:'auto',cursor:'pointer',background:depositMethod===m?'#eff6ff':'white'}}>{['Efectivo','Transferencia','Mercado Pago'][i]}</button>)}
+               </div>
+               {depositMethod==='transferencia'&&<div style={{marginTop:10,background:'#eff6ff',borderRadius:9,padding:10}}>
+                <label>Cuenta de transferencia<select style={inp} value={account} onChange={e=>setAccount(e.target.value)}><option value="">Elegí un alias</option>{payments.items.map(a=><option key={a.id} value={a.id}>{a.name} · {a.alias}</option>)}</select></label>
+                {payments.error&&<p role="status">{payments.error}</p>}{payments.loading&&<p role="status">Cargando alias…</p>}
+                {!payments.loading&&!payments.error&&!payments.items.length&&<p>Todavía no hay alias configurados en el Nucleus.</p>}
+                {transfer&&<div><strong>{transfer.alias}</strong> <button type="button" onClick={()=>navigator.clipboard?.writeText(transfer.alias)}>Copiar alias</button>{transfer.qr&&<div><img src={transfer.qr} alt={'QR de '+transfer.name} style={{width:155,height:155,objectFit:'contain'}}/></div>}</div>}
+                <p style={{color:'#1e40af'}}>Pedile al cliente que envíe el comprobante de transferencia. Registrá la seña al verificar el ingreso.</p>
+               </div>}
+               {depositMethod==='mercadopago'&&<div style={{marginTop:8}}><button type="button" onClick={generateMpLink} disabled={mpLoading}>{mpLoading?'Generando…':'Generar link de pago'}</button>{mpErr&&<p>{mpErr}</p>}</div>}
+              </FField>
+
+              {/* MP payment overlay */}
+              {mpLink && (
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '14px', marginTop: 2 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1e40af', marginBottom: 8 }}>📲 Link de pago generado</div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>Mostrá este QR al cliente o envialo por WhatsApp:</div>
+                  {/* QR de la URL */}
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mpLink)}`} alt="QR pago" width={180} height={180} style={{ borderRadius: 8, border: '2px solid #bfdbfe' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <a href={`https://wa.me/${form.client_phone?.replace(/\D/g, '') || JOACO_WA}?text=${encodeURIComponent(`Hola! Acá está el link para pagar la seña de la reparación: ${mpLink}`)}`} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 8, background: '#22c55e', color: '#fff', fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
+                      🟢 Enviar por WA
+                    </a>
+                    <button onClick={() => { navigator.clipboard?.writeText(mpLink); }} style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1.5px solid #bfdbfe', background: '#fff', color: '#1d4ed8', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                      📋 Copiar link
+                    </button>
+                    <button onClick={() => setMpLink(null)} style={{ padding: '9px 12px', borderRadius: 8, border: '1.5px solid #e5e7eb', background: '#fff', color: '#9ca3af', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                  </div>
+                </div>
+              )}
+            </Card>
             <Card title="🔍 Revisión al ingreso">
               <ScriptTip text="Revisamos el equipo juntos. ¿Podés retirar el chip y la memoria?" />
               <div style={{ height: 8 }} />
@@ -867,92 +965,6 @@ function LocalNewOrder({
               </div>
             </Card>
 
-            <Card title="🔧 Reparaciones y seña">
-              {form.turns_on===false ? (
-                <ScriptTip text="El diagnóstico es $15.000, se descuenta si aprobás la reparación. ¿Dejás la seña ahora?" />
-              ) : (
-                <ScriptTip text="Buscá el repuesto para ver el precio final y cotizar la seña." />
-              )}
-              <div style={{ height: 6 }} />
-
-              <FField label="¿Qué le pasó? · Según el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="Ej. Se hinchó la batería"/></FField>
-              {form.turns_on===false&&<FField label="Posible trabajo (opcional)">
-                <select style={inp} value={possible} onChange={e=>choosePossible(e.target.value)}><option value="">No sabe / sólo revisión</option>{intakeChoices.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select>
-                {!possible&&suggested&&<button type="button" onClick={()=>choosePossible(suggested)} style={{...inp,width:'auto',marginTop:6,cursor:'pointer'}}>Sugerencia: {intakeChoices.find(c=>c.value===suggested)?.label}</button>}
-              </FField>}
-              <OrderRepairPicker key={form.device_brand+' '+form.device_model+' '+possible} device={form.device_brand+' '+form.device_model} partnerId={partnerId} pin={pin} commissionPct={commissionPct} job={job} setJob={setJob}
-                onAdd={r=>setRepairs(prev=>prev.some(x=>x.job===r.job&&x.partId===r.partId)?prev:[...prev,r])} />
-
-              {/* Selected repairs list */}
-              {repairs.length > 0 && (
-                <div style={{ marginTop: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Reparaciones seleccionadas</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {repairs.map((r, i) => (
-                      <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{repairCaption(r)}</div>
-                          <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 11, color: '#16a34a' }}>Tu comisión: <strong>{commissionUnlocked ? ars(r.commission) : '🔒 ••••'}</strong></span>
-                          </div>
-                        </div>
-                        <button onClick={() => setRepairs(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', fontSize: 16, padding: 0, flexShrink: 0, marginTop: 2 }} aria-label="Quitar reparación">✕</button><strong style={{whiteSpace:'nowrap',color:'#1d4ed8'}}>{ars(r.final_price)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 9, padding: '10px 14px', marginTop: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                      <span style={{ color: '#6b7280' }}>Presupuesto estimado</span>
-                      <span style={{ fontWeight: 700, color: '#1d4ed8' }}>{ars(totalFinalPrice)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span style={{ color: '#9ca3af' }}>Tu comisión total</span>
-                      <span style={{ fontWeight: 600, color: '#16a34a' }}>{commissionUnlocked ? ars(totalCommission) : '🔒 ••••'}</span>
-                    </div>
-                    {form.turns_on===false && <div style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>* Más $15.000 de revisión diagnóstica</div>}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ height: 10 }} />
-              <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado (opcional si ingresa para revisión)'}>
-                <textarea style={{ ...inp, minHeight: 56, resize: 'vertical' }} value={form.requested_work} onChange={e => set('requested_work', e.target.value)} placeholder={repairs.length > 0 ? 'Algún trabajo extra o nota adicional...' : 'Pantalla rota, no carga, no enciende, cambio de batería...'} />
-              </FField>
-              <FField label="Observaciones internas">
-                <textarea style={{ ...inp, minHeight: 48, resize: 'vertical' }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notas para el técnico..." />
-              </FField>
-              <FField label={`Seña cobrada${form.turns_on===false ? ' (sugerido $15.000)' : repairs.length > 0 ? ` (sugerido ${ars(Math.round(totalFinalPrice * 0.5))})` : ''}`}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input type="number" style={{ ...inp, flex: 1 }} value={form.deposit_ars} onChange={e => { set('deposit_ars', e.target.value); setMpLink(null) }} placeholder={form.turns_on===false ? '15000' : repairs.length > 0 ? String(Math.round(totalFinalPrice * 0.5)) : '0'} />
-                  <button type="button" onClick={generateMpLink} disabled={mpLoading} style={{ padding: '9px 12px', borderRadius: 8, border: 'none', background: mpLoading ? '#e0e7ff' : '#3b82f6', color: '#fff', fontWeight: 700, fontSize: 12, cursor: mpLoading ? 'default' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {mpLoading ? '...' : '📲 Cobrar MP'}
-                  </button>
-                </div>
-                {mpErr && <div style={{ fontSize: 11, color: '#dc2626', marginTop: 4 }}>{mpErr}</div>}
-              </FField>
-
-              {/* MP payment overlay */}
-              {mpLink && (
-                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '14px', marginTop: 2 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1e40af', marginBottom: 8 }}>📲 Link de pago generado</div>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 10 }}>Mostrá este QR al cliente o envialo por WhatsApp:</div>
-                  {/* QR de la URL */}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mpLink)}`} alt="QR pago" width={180} height={180} style={{ borderRadius: 8, border: '2px solid #bfdbfe' }} />
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <a href={`https://wa.me/${form.client_phone?.replace(/\D/g, '') || JOACO_WA}?text=${encodeURIComponent(`Hola! Acá está el link para pagar la seña de la reparación: ${mpLink}`)}`} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 8, background: '#22c55e', color: '#fff', fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>
-                      🟢 Enviar por WA
-                    </a>
-                    <button onClick={() => { navigator.clipboard?.writeText(mpLink); }} style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1.5px solid #bfdbfe', background: '#fff', color: '#1d4ed8', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
-                      📋 Copiar link
-                    </button>
-                    <button onClick={() => setMpLink(null)} style={{ padding: '9px 12px', borderRadius: 8, border: '1.5px solid #e5e7eb', background: '#fff', color: '#9ca3af', fontSize: 12, cursor: 'pointer' }}>✕</button>
-                  </div>
-                </div>
-              )}
-            </Card>
 
           </div>
         </div>
@@ -1120,6 +1132,7 @@ function LocalOrderDetail({
   const sc = STATUS_COLORS[order.status] ?? '#9ca3af'
   const acc = [order.has_battery && 'Batería', order.has_chip && 'Chip', order.has_cover && 'Tapa', order.has_memory && 'Memoria'].filter(Boolean).join(', ') || 'Ninguno'
 
+  const [updatedDraft,setUpdatedDraft]=useState<Order['quote_draft_lines']>(undefined)
   async function advanceStatus(newStatus: string) {
     setAdvancing(true)
     try {
@@ -1267,8 +1280,8 @@ function LocalOrderDetail({
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || '—'}</div>
         </Card>
 
-        <QuoteEditor initialLines={order.quote_draft_lines} order={order.id} partner={order.partner_id} pin={pin} name={order.client_name} device={order.device_brand+' '+order.device_model}/>
-        <ExtraJobs id={order.id} pin={pin}/>
+        <QuoteEditor key={updatedDraft?.length??'original'} initialLines={updatedDraft??order.quote_draft_lines} order={order.id} partner={order.partner_id} pin={pin} name={order.client_name} device={order.device_brand+' '+order.device_model}/>
+        <ExtraJobs id={order.id} local device={order.device_brand+' '+order.device_model} pin={pin} onDraftChanged={setUpdatedDraft}/>
         <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}</Card>
 
         {order.budget_ars > 0 && (

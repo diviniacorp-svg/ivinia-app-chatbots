@@ -1,10 +1,10 @@
 'use client'
-import {useCustomers} from './CustomersTab'
+import {OrderIntake} from '../../../celulab/local/[slug]/_components/LocalPartnerClient'
+import {fetchOrderPages,finalOrderStatus,groupOrderMonths,period} from '../../../celulab/_components/order-lists'
 import QuoteEditor from '../../../celulab/_components/QuoteEditor'
 import ExtraJobs from '../../../celulab/_components/ExtraJobs'
 import ShareOrder from '../../../celulab/_components/ShareOrder'
 import { useState, useEffect, useCallback } from 'react'
-import { PatternLock } from '../../../celulab/_components/PatternLock'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ type Order = {
   revision_required: boolean
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
-  damage_diagram: { markers?: DamageMarker[] }
+  damage_diagram: { markers?: DamageMarker[]; completedAt?:string; accessUnknown?:boolean }
   quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
@@ -118,22 +118,21 @@ export function OrdersTab({ color }: { color: string }) {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
   const fetchData = useCallback(async () => {
-    const url = statusFilter === 'all' ? '/api/celulab/orders' : `/api/celulab/orders?status=${statusFilter}`
     const [ord, part] = await Promise.all([
-      fetch(url).then(r => r.json()),
+      fetchOrderPages<Order>().catch(()=>[]),
       fetch('/api/celulab/partners').then(r => r.json()),
     ])
     setOrders(Array.isArray(ord) ? ord : [])
     setPartners(Array.isArray(part) ? part : [])
     setLastUpdated(new Date())
     setLoading(false)
-  }, [statusFilter])
+  }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
 
   // Auto-refresh cada 30 segundos
   useEffect(() => {
-    const interval = setInterval(() => fetchData(), 30000)
+    const interval = setInterval(() => fetchData(), 120000)
     return () => clearInterval(interval)
   }, [fetchData])
 
@@ -173,20 +172,21 @@ export function OrdersTab({ color }: { color: string }) {
 
   if (showNewForm) {
     return (
-      <NewOrderForm
-        color={color}
-        partners={partners}
-        onClose={() => setShowNewForm(false)}
+      <OrderIntake
+        origins={partners} partnerId={null} partnerName="CeluLab · Taller" partnerAddress="" partnerPhone="" logoUrl="" commissionPct={0} commissionUnlocked={true}
+        onBack={() => setShowNewForm(false)}
         onSaved={() => { setShowNewForm(false); fetchData() }}
       />
     )
   }
 
-  const visibleOrders = partnerFilter === 'all'
+  const scopedOrders = partnerFilter === 'all'
     ? orders
     : partnerFilter === '__direct__'
       ? orders.filter(o => !o.partner_id)
       : orders.filter(o => o.partner_id === partnerFilter)
+  const currentMonth=period(new Date().toISOString())
+  const visibleOrders=scopedOrders.filter(o=>statusFilter==='all'||(statusFilter==='active'?!finalOrderStatus(o.status):statusFilter==='completed'?finalOrderStatus(o.status):statusFilter==='month'?period(o.created_at)===currentMonth:statusFilter==='budgetMonth'?period(o.created_at)===currentMonth&&o.status!=='rechazado'&&o.budget_ars>0:o.status===statusFilter))
 
   function secsAgo() {
     const d = Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
@@ -196,14 +196,12 @@ export function OrdersTab({ color }: { color: string }) {
   }
 
   // Stats del mes
-  const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const thisMonthOrders = orders.filter(o => new Date(o.created_at) >= startOfMonth)
+  const thisMonthOrders = scopedOrders.filter(o => period(o.created_at)===currentMonth)
   const facturadoMes = thisMonthOrders
     .filter(o => !['rechazado'].includes(o.status) && o.budget_ars > 0)
     .reduce((sum, o) => sum + (o.budget_ars ?? 0), 0)
-  const activasCount = orders.filter(o => !['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status)).length
-  const listaCount = orders.filter(o => o.status === 'listo').length
+  const activasCount = scopedOrders.filter(o => !['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status)).length
+  const listaCount = scopedOrders.filter(o => o.status === 'listo').length
 
   return (
     <div>
@@ -226,18 +224,19 @@ export function OrdersTab({ color }: { color: string }) {
       </div>
 
       {/* Stats strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(124px,1fr))', gap: 10, marginBottom: 20 }}>
         {[
-          { label: 'Activas', val: activasCount, icon: '⚙️', color: '#6366f1' },
-          { label: 'Listas en taller', val: listaCount, icon: '✅', color: '#059669' },
-          { label: 'Ingresadas este mes', val: thisMonthOrders.length, icon: '📋', color: '#f59e0b' },
-          { label: 'Facturado este mes', val: facturadoMes > 0 ? ars(facturadoMes) : '—', icon: '💰', color: '#0ea5e9', isText: true },
+          { filter:'active', label: 'Activas', val: activasCount, icon: '⚙️', color: '#6366f1' },
+          { filter:'listo', label: 'Listas en taller', val: listaCount, icon: '✅', color: '#059669' },
+          { filter:'completed',label:'Completadas',val:scopedOrders.filter(o=>finalOrderStatus(o.status)).length,icon:'🏁',color:'#4f46e5' },
+          { filter:'month', label: 'Ingresadas este mes', val: thisMonthOrders.length, icon: '📋', color: '#f59e0b' },
+          { filter:'budgetMonth', label: 'Presupuestado este mes', val: facturadoMes > 0 ? ars(facturadoMes) : '—', icon: '💰', color: '#0ea5e9', isText: true },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', textAlign: 'center' }}>
+          <button type="button" key={s.label} aria-pressed={statusFilter===s.filter} onClick={()=>setStatusFilter(statusFilter===s.filter?'all':s.filter)} style={{ background: '#fff', border: '1px solid '+(statusFilter===s.filter?s.color:'#e5e7eb'), borderRadius: 12, padding: '14px 16px', textAlign: 'center',cursor:'pointer' }}>
             <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
             <div style={{ fontSize: s.isText ? 14 : 24, fontWeight: 800, color: s.color, letterSpacing: s.isText ? '-0.02em' : 0 }}>{s.val}</div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{s.label}</div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -294,7 +293,7 @@ export function OrdersTab({ color }: { color: string }) {
         <div style={{ textAlign: 'center', padding: 64, color: '#9ca3af' }}>Cargando...</div>
       ) : visibleOrders.length === 0 ? (
         <EmptyOrders onNew={() => setShowNewForm(true)} />
-      ) : (
+      ) : statusFilter==='completed'?(<div>{groupOrderMonths(visibleOrders).map((g,i,all)=><section key={g.key}>{(i===0||all[i-1].year!==g.year)&&<h3>{g.year}</h3>}<details open={i===0||undefined}><summary style={{cursor:'pointer',textTransform:'capitalize'}}>{g.month} · {g.rows.length}</summary><div style={{display:'grid',gap:8,margin:'10px 0'}}>{g.rows.map(order=><OrderRow key={order.id} order={order} color={color} onClick={()=>setSelectedOrder(order)}/>)}</div></details></section>)}</div>):(
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {visibleOrders.map(order => (
             <OrderRow key={order.id} order={order} color={color} onClick={() => setSelectedOrder(order)} />
@@ -355,6 +354,7 @@ function OrderDetail({
   const nextStatuses = NEXT_STATUS[order.status] ?? []
   const partner = partners.find(p => p.id === order.partner_id) ?? null
 
+  const [updatedDraft,setUpdatedDraft]=useState<Order['quote_draft_lines']>(undefined)
   function handlePrint() {
     const win = window.open('', '_blank')
     if (!win) return
@@ -423,7 +423,7 @@ function OrderDetail({
         </div>
       )}
 
-      <div style={{ marginBottom: 16 }}><QuoteEditor initialLines={order.quote_draft_lines} order={order.id} name={order.client_name} device={order.device_brand+' '+order.device_model}/><ExtraJobs id={order.id} /></div>
+      <div style={{ marginBottom: 16 }}><QuoteEditor key={updatedDraft?.length??'original'} initialLines={updatedDraft??order.quote_draft_lines} order={order.id} name={order.client_name} device={order.device_brand+' '+order.device_model}/><ExtraJobs id={order.id} device={order.device_brand+' '+order.device_model} onDraftChanged={setUpdatedDraft} /></div>
       <PrivateSourcing orderId={order.id}/>
       {/* Info grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -828,293 +828,6 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5, gap: 8 }}>
       <span style={{ color: '#9ca3af', flexShrink: 0 }}>{label}</span>
       <span style={{ fontWeight: 500, textAlign: 'right', fontFamily: mono ? 'monospace' : 'inherit' }}>{value}</span>
-    </div>
-  )
-}
-
-// ─── New Order Form ────────────────────────────────────────────────────────────
-
-const BLANK_FORM = {
-  partner_id: '',
-  client_name: '', client_dni: '', client_phone: '',
-  device_brand: '', device_model: '',
-  has_battery: false, has_chip: false, has_cover: false, has_memory: false,
-  turns_on: true, water_damage: false,
-  unlock_type: 'none' as 'pin' | 'patron' | 'none',
-  unlock_code: '',
-  damage_diagram: { markers: [] as DamageMarker[] },
-  reported_fault: '', requested_work: '', notes: '',
-  deposit_ars: '',
-}
-
-function NewOrderForm({
-  color, partners, onClose, onSaved,
-}: {
-  color: string; partners: Partner[]; onClose: () => void; onSaved: () => void
-}) {
-  const [searchCustomer,setSearchCustomer] = useState('')
-  const query = searchCustomer.trim().toLowerCase()
-  const {rows,status}=useCustomers()
-  const [existing,setExisting]=useState(false)
-  const [selected,select]=useState('')
-  const customer=rows.find(r=>r.key===selected)
-  const matches=query.length>=2?rows.filter(r=>[r.name,r.dni,r.phone,...r.repairs.map(o=>o.order_number)].some(v=>v?.toLowerCase().includes(query))).slice(0,12):[]
-  const [form, setForm] = useState(BLANK_FORM)
-  const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState('')
-  const [patternDots, setPatternDots] = useState<number[]>([])
-
-  function set(field: string, value: unknown) {
-    setForm(f => ({ ...f, [field]: value }))
-  }
-
-  async function handleSubmit() {
-    if (!form.client_name || !form.device_brand || !form.device_model) {
-      setErr('Nombre del cliente, marca y modelo son obligatorios.')
-      return
-    }
-    setSaving(true)
-    const res = await fetch('/api/celulab/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, deposit_ars: Number(form.deposit_ars) || 0, partner_id: form.partner_id || null }),
-    })
-    if (!res.ok) {
-      const e = await res.json()
-      setErr(e.error ?? 'Error al guardar')
-      setSaving(false)
-      return
-    }
-    onSaved()
-  }
-
-  return (
-    <div>
-      <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 13, marginBottom: 16, padding: 0 }}>
-        ← Cancelar
-      </button>
-      <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 20 }}>Nueva Orden de Servicio</div>
-
-      {!form.turns_on && (
-        <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13 }}>
-          ⚠️ <strong>Equipo apagado</strong> — revisión diagnóstica obligatoria ($15.000). Sin revisión diagnóstica no hay garantía.
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-        {/* Columna izquierda: datos + equipo + acceso */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Section title="👤 Datos del cliente">
-            <div style={{borderBottom:'1px solid #e2e8f0',paddingBottom:16,marginBottom:16}}>
-              <label><input type="checkbox" checked={existing} onChange={e=>{setExisting(e.target.checked);select('');setSearchCustomer('');if(!e.target.checked)setForm(f=>({...f,client_name:'',client_dni:'',client_phone:'',device_brand:'',device_model:''}))}}/> Cliente ya existente</label>
-              {existing&&<FormField label="Buscar cliente u orden anterior"><input style={inp} value={searchCustomer} onChange={e=>setSearchCustomer(e.target.value)} placeholder="Nombre, teléfono, DNI o número de orden"/>{status&&<small>{status}</small>}{matches.map(r=><button key={r.key} type="button" style={{...inp,textAlign:'left',cursor:'pointer'}} onClick={()=>{select(r.key);setSearchCustomer('');setForm(f=>({...f,client_name:r.name,client_phone:r.phone||'',client_dni:r.dni||'',device_model:'',device_brand:''}))}}>{r.name} · {r.dni||r.phone}</button>)}{query.length>=2&&!matches.length&&!status&&<small>Sin coincidencias</small>}</FormField>}
-              {existing&&customer&&<FormField label="¿Es el mismo equipo o trae uno nuevo?"><select key={customer.key} defaultValue="" style={inp} onChange={e=>{const r=customer.repairs.find(o=>String(o.id)===e.target.value);setForm(f=>({...f,device_brand:r?.device_brand||'',device_model:r?.device_model||''}))}}><option value="" disabled>Elegí el equipo</option><option value="nuevo">Equipo nuevo</option>{customer.repairs.map(o=><option key={o.id} value={o.id}>Mismo equipo · {o.device_brand} {o.device_model} · {o.order_number}</option>)}</select></FormField>}
-            </div><strong>{existing?'Datos del cliente seleccionado':'Cliente nuevo'}</strong>
-            <FormField label="Nombre *">
-              <input style={inp} value={form.client_name} onChange={e => set('client_name', e.target.value)} placeholder="Nombre completo" />
-            </FormField>
-            <FormField label="DNI">
-              <input style={inp} value={form.client_dni} onChange={e => set('client_dni', e.target.value)} placeholder="Sin puntos" />
-            </FormField>
-            <FormField label="Teléfono WhatsApp">
-              <input style={inp} value={form.client_phone} onChange={e => set('client_phone', e.target.value)} placeholder="+54 9 266 XXXXXXX" />
-            </FormField>
-            {partners.length > 0 && (
-              <FormField label="Local origen">
-                <select style={inp} value={form.partner_id} onChange={e => set('partner_id', e.target.value)}>
-                  <option value="">Directo (sin local)</option>
-                  {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </FormField>
-            )}
-          </Section>
-
-          <Section title="📱 Datos del equipo">
-            <FormField label="Marca *">
-              <input style={inp} value={form.device_brand} onChange={e => set('device_brand', e.target.value)} placeholder="Samsung, iPhone, Motorola..." />
-            </FormField>
-            <FormField label="Modelo *">
-              <input style={inp} value={form.device_model} onChange={e => set('device_model', e.target.value)} placeholder="S21, iPhone 14, G54..." />
-            </FormField>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Accesorios</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
-              {[
-                { k: 'has_battery', l: '🔋 Batería' }, { k: 'has_chip', l: '📡 Chip' },
-                { k: 'has_cover', l: '📦 Tapa' }, { k: 'has_memory', l: '💾 Memoria' },
-              ].map(({ k, l }) => (
-                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                  <input type="checkbox" checked={(form as Record<string, unknown>)[k] as boolean} onChange={e => set(k, e.target.checked)} style={{ accentColor: color, width: 14, height: 14 }} />
-                  {l}
-                </label>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                <input type="checkbox" checked={form.turns_on} onChange={e => set('turns_on', e.target.checked)} style={{ accentColor: color, width: 14, height: 14 }} />
-                Enciende ✅
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-                <input type="checkbox" checked={form.water_damage} onChange={e => set('water_damage', e.target.checked)} style={{ accentColor: '#ef4444', width: 14, height: 14 }} />
-                Humedad 💧
-              </label>
-            </div>
-          </Section>
-
-          <Section title="🔒 Acceso">
-            <FormField label="Tipo de bloqueo">
-              <div style={{ display: 'flex', gap: 14 }}>
-                {[{ v: 'pin', l: 'PIN' }, { v: 'patron', l: 'Patrón' }, { v: 'none', l: 'Sin código de acceso' }].map(opt => (
-                  <label key={opt.v} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
-                    <input type="radio" name="unlock_type" value={opt.v} checked={form.unlock_type === opt.v}
-                      onChange={() => { set('unlock_type', opt.v); if (opt.v !== 'patron') { setPatternDots([]); set('unlock_code', '') } }}
-                      style={{ accentColor: color }} />
-                    {opt.l}
-                  </label>
-                ))}
-              </div>
-            </FormField>
-            {form.unlock_type === 'pin' && (
-              <FormField label="PIN">
-                <input style={inp} value={form.unlock_code} onChange={e => set('unlock_code', e.target.value)}
-                  placeholder="Ej: 1234" maxLength={20} />
-              </FormField>
-            )}
-            {form.unlock_type === 'patron' && (
-              <FormField label="Patrón">
-                <PatternLock
-                  value={patternDots}
-                  onChange={dots => { setPatternDots(dots); set('unlock_code', dots.join('-')) }}
-                  color={color}
-                />
-              </FormField>
-            )}
-            {form.unlock_type === 'none' && (
-              <div style={{ fontSize: 12, color: '#f59e0b', marginTop: 4 }}>⚠️ Sin código — no aplica garantía</div>
-            )}
-          </Section>
-        </div>
-
-        {/* Columna derecha: diagrama + trabajo */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Section title="📍 Marcar daños existentes">
-            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>
-              Clickeá sobre el teléfono para marcar rayaduras o daños preexistentes.
-            </div>
-            <PhoneDiagramEditor
-              markers={form.damage_diagram.markers}
-              onAdd={m => set('damage_diagram', { markers: [...form.damage_diagram.markers, m] })}
-              onRemove={i => set('damage_diagram', { markers: form.damage_diagram.markers.filter((_, idx) => idx !== i) })}
-              color={color}
-            />
-          </Section>
-
-          <Section title="🔧 Trabajo solicitado">
-            <FormField label="Falla reportada por el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="¿Por qué deja el equipo?"/></FormField>
-            <FormField label="Trabajo solicitado">
-              <textarea style={{ ...inp, minHeight: 80, resize: 'vertical' }}
-                value={form.requested_work} onChange={e => set('requested_work', e.target.value)}
-                placeholder="Pantalla rota, no carga, no enciende, cambio de batería..." />
-            </FormField>
-            <FormField label="Observaciones internas">
-              <textarea style={{ ...inp, minHeight: 50, resize: 'vertical' }}
-                value={form.notes} onChange={e => set('notes', e.target.value)}
-                placeholder="Notas adicionales para el técnico..." />
-            </FormField>
-            <FormField label="Seña recibida ($)">
-              <input type="number" style={inp} value={form.deposit_ars} onChange={e => set('deposit_ars', e.target.value)} placeholder="0" />
-            </FormField>
-          </Section>
-        </div>
-      </div>
-
-      {err && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#dc2626', marginBottom: 16 }}>
-          {err}
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button onClick={handleSubmit} disabled={saving} style={{
-          padding: '12px 28px', borderRadius: 10, border: 'none', background: color,
-          color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1,
-        }}>
-          {saving ? 'Guardando...' : '✓ Crear Orden'}
-        </button>
-        <button onClick={onClose} style={{
-          padding: '12px 20px', borderRadius: 10, border: '1px solid #e5e7eb',
-          background: '#fff', color: '#374151', fontSize: 14, cursor: 'pointer',
-        }}>
-          Cancelar
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ─── Phone Diagram ─────────────────────────────────────────────────────────────
-
-const PW = 160
-const PH = 300
-
-function PhoneDiagramEditor({
-  markers, onAdd, onRemove, color,
-}: {
-  markers: DamageMarker[]; onAdd: (m: DamageMarker) => void; onRemove: (i: number) => void; color: string
-}) {
-  const [side, setSide] = useState<'front' | 'back'>('front')
-  const sideMarkers = markers.filter(m => m.side === side)
-  const sideIdxs = markers.reduce<number[]>((acc, m, i) => { if (m.side === side) acc.push(i); return acc }, [])
-
-  function handleClick(e: React.MouseEvent<SVGSVGElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
-    onAdd({ x, y, side })
-  }
-
-  return (
-    <div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 12, background: '#f1f5f9', borderRadius: 8, padding: 3, width: 'fit-content' }}>
-        {(['front', 'back'] as const).map(s => (
-          <button key={s} onClick={() => setSide(s)} style={{
-            padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: side === s ? '#fff' : 'transparent',
-            color: side === s ? color : '#9ca3af',
-            boxShadow: side === s ? '0 1px 3px rgba(0,0,0,.1)' : 'none',
-          }}>
-            {s === 'front' ? '🖥 Frente' : '🔄 Trasera'}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', gap: 16 }}>
-        <PhoneSVG
-          side={side}
-          markers={sideMarkers}
-          globalIdxs={sideIdxs}
-          onClick={handleClick}
-          onRemoveLocal={localIdx => onRemove(sideIdxs[localIdx])}
-        />
-
-        {markers.length > 0 && (
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', marginBottom: 6 }}>MARCADORES</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {markers.map((m, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                  <span style={{
-                    width: 18, height: 18, borderRadius: '50%', background: '#ef4444',
-                    color: '#fff', fontSize: 10, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>{i + 1}</span>
-                  <span style={{ color: '#6b7280', flex: 1 }}>{m.side === 'front' ? 'Frente' : 'Trasera'}</span>
-                  <button onClick={() => onRemove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', fontSize: 14, padding: 0 }}>✕</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
