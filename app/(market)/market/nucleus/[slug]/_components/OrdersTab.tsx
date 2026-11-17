@@ -1,5 +1,6 @@
 'use client'
 import {useCustomers} from './CustomersTab'
+import QuoteEditor from '../../../celulab/_components/QuoteEditor'
 import ExtraJobs from '../../../celulab/_components/ExtraJobs'
 import ShareOrder from '../../../celulab/_components/ShareOrder'
 import { useState, useEffect, useCallback } from 'react'
@@ -35,6 +36,7 @@ type Order = {
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
   damage_diagram: { markers?: DamageMarker[] }
+  reported_fault?: string
   requested_work: string
   notes: string
   deposit_ars: number
@@ -213,6 +215,7 @@ export function OrdersTab({ color }: { color: string }) {
             <span style={{ fontSize: 11, color: '#d1d5db', marginLeft: 8 }}>· actualizado {secsAgo()}</span>
           </div>
         </div>
+        <QuoteEditor/>
         <button onClick={() => setShowNewForm(true)} style={{
           padding: '10px 20px', borderRadius: 10, border: 'none',
           background: color, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
@@ -419,7 +422,7 @@ function OrderDetail({
         </div>
       )}
 
-      <div style={{ marginBottom: 16 }}><ExtraJobs id={order.id} /></div>
+      <div style={{ marginBottom: 16 }}><QuoteEditor order={order.id} name={order.client_name} device={order.device_brand+' '+order.device_model}/><ExtraJobs id={order.id} /></div>
       {/* Info grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <InfoCard title="👤 Cliente">
@@ -452,6 +455,7 @@ function OrderDetail({
             : <div style={{ fontSize: 12, color: '#f59e0b', marginTop: 4 }}>⚠️ Sin código — no aplica garantía</div>}
         </InfoCard>
 
+        <InfoCard title="Falla reportada por el cliente"><div style={{borderLeft:'4px solid #cc6673',paddingLeft:10}}>{order.reported_fault||'Sin registrar'}</div></InfoCard>
         <InfoCard title="🔧 Trabajo pedido">
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || <em style={{ color: '#d1d5db' }}>Sin especificar</em>}</div>
           {order.notes && <div style={{ marginTop: 8, fontSize: 12, color: '#9ca3af', borderTop: '1px solid #f3f4f6', paddingTop: 8 }}>{order.notes}</div>}
@@ -837,7 +841,7 @@ const BLANK_FORM = {
   unlock_type: 'none' as 'pin' | 'patron' | 'none',
   unlock_code: '',
   damage_diagram: { markers: [] as DamageMarker[] },
-  requested_work: '', notes: '',
+  reported_fault: '', requested_work: '', notes: '',
   deposit_ars: '',
 }
 
@@ -957,7 +961,7 @@ function NewOrderForm({
           <Section title="🔒 Acceso">
             <FormField label="Tipo de bloqueo">
               <div style={{ display: 'flex', gap: 14 }}>
-                {[{ v: 'pin', l: 'PIN' }, { v: 'patron', l: 'Patrón' }, { v: 'none', l: 'Sin acceso' }].map(opt => (
+                {[{ v: 'pin', l: 'PIN' }, { v: 'patron', l: 'Patrón' }, { v: 'none', l: 'Sin código de acceso' }].map(opt => (
                   <label key={opt.v} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: 13 }}>
                     <input type="radio" name="unlock_type" value={opt.v} checked={form.unlock_type === opt.v}
                       onChange={() => { set('unlock_type', opt.v); if (opt.v !== 'patron') { setPatternDots([]); set('unlock_code', '') } }}
@@ -1003,7 +1007,8 @@ function NewOrderForm({
           </Section>
 
           <Section title="🔧 Trabajo solicitado">
-            <FormField label="Fallas / trabajo pedido *">
+            <FormField label="Falla reportada por el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="¿Por qué deja el equipo?"/></FormField>
+            <FormField label="Trabajo solicitado">
               <textarea style={{ ...inp, minHeight: 80, resize: 'vertical' }}
                 value={form.requested_work} onChange={e => set('requested_work', e.target.value)}
                 placeholder="Pantalla rota, no carga, no enciende, cambio de batería..." />
