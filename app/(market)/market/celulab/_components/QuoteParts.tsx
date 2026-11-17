@@ -27,15 +27,19 @@ export default function QuoteParts({device,job,onPick}:{device:string;job:string
    setStatus('Consultando Lista…')
    const timer=setTimeout(async()=>{
     try{
-      let offset=0;const matches:Part[]=[]
+      const matches:Part[]=[]
+      const tabs=/carga/i.test(job)?['partes','placas']:/vidrio/i.test(job)?['glass','partes','camaras']:[group[0]]
+      for(const tab of tabs){
+      let offset=0
       while(true){
-        const query=new URLSearchParams({q:model,tab:group[0],offset:String(offset),limit:'100',offers:'1'})
+        const query=new URLSearchParams({q:model,tab,offset:String(offset),limit:'100',offers:'1'})
         const response=await fetch('/api/celulab/lista?'+query,{signal:ctrl.signal})
         if(!response.ok)throw Error()
         const data=await response.json() as {items:Part[];total:number}
         matches.push(...data.items.filter(p=>!group[1]||group[1].test((p.name+' '+p.category).normalize('NFD').replace(/[\u0300-\u036f]/g,''))))
         offset+=data.items.length
         if(!data.items.length||offset>=data.total)break
+      }
       }
       if(!ctrl.signal.aborted){setRows(matches);setStatus(matches.length?'':'Sin coincidencias en Lista para este equipo y trabajo.')}
     }catch{if(!ctrl.signal.aborted)setStatus('No se pudo consultar Lista.')}

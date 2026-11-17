@@ -512,7 +512,63 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
 
             {/* ══ MÁRGENES ══ */}
             {tab === 'margenes' && (
-              <div><details><summary style={{cursor:'pointer',fontWeight:700}}>Mano de obra por reparación</summary><QuotesTab ratesOnly/></details>
+              <div>                {/* Repair configs */}
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>🔧 Ganancia y mano de obra por categoría</div>
+                {repairConfigs.length === 0 ? (
+                  <div style={{ color: '#9ca3af', fontSize: 13 }}>Cargando configuraciones...</div>
+                ) : (
+                  <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', minWidth: 580, borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                          {['Categoría', 'Tab', '+ Ganancia repuesto', '+ Mano de obra', '= Precio final (ej. $15k costo)', ''].map(h => (
+                            <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6b7280' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {repairConfigs.map((cfg, i) => {
+                          const edit = configEditing[cfg.id] || { markup: String(cfg.markup_ars), labor: String(cfg.labor_ars) }
+                          const exampleFinal = 15000 + Number(edit.markup || 0) + Number(edit.labor || 0)
+                          const isSaving = configSaving === cfg.id
+                          return (
+                            <tr key={cfg.id} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                              <td style={{ padding: '10px 14px', fontWeight: 600 }}>{cfg.label}</td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: 10, background: '#f3f4f6', borderRadius: 4, padding: '2px 6px', color: '#374151' }}>{cfg.tab_key}</span>
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ color: '#9ca3af', fontSize: 12 }}>+$</span>
+                                  <input type="number" value={edit.markup} onChange={e => setConfigEditing(prev => ({ ...prev, [cfg.id]: { ...edit, markup: e.target.value } }))}
+                                    style={{ width: 90, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
+                                </div>
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ color: '#9ca3af', fontSize: 12 }}>+$</span>
+                                  <input type="number" value={edit.labor} onChange={e => setConfigEditing(prev => ({ ...prev, [cfg.id]: { ...edit, labor: e.target.value } }))}
+                                    style={{ width: 90, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
+                                </div>
+                              </td>
+                              <td style={{ padding: '10px 14px', color: '#2563eb', fontWeight: 700 }}>
+                                {ars(exampleFinal)}
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <button onClick={() => saveConfig(cfg)} disabled={isSaving}
+                                  style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: color, color: '#fff', fontWeight: 700, fontSize: 12, cursor: isSaving ? 'not-allowed' : 'pointer', opacity: isSaving ? 0.7 : 1 }}>
+                                  {isSaving ? '...' : 'Guardar'}
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                    </div>
+                  </div>
+                )}<details><summary style={{cursor:'pointer',fontWeight:700}}>Mano de obra por reparación</summary><QuotesTab ratesOnly catalogTabs={repairConfigs.map(c=>c.tab_key)}/></details>
                 <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 20 }}>
                   Editá el precio de venta haciendo click en ✏️ · Ingresá el markup del repuesto para ver la ganancia real.
                 </div>
@@ -769,63 +825,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                   </div>
                 </div>
 
-                {/* Repair configs */}
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>🔧 Ganancia y mano de obra por categoría</div>
-                {repairConfigs.length === 0 ? (
-                  <div style={{ color: '#9ca3af', fontSize: 13 }}>Cargando configuraciones...</div>
-                ) : (
-                  <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', minWidth: 580, borderCollapse: 'collapse', fontSize: 13 }}>
-                      <thead>
-                        <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                          {['Categoría', 'Tab', '+ Ganancia repuesto', '+ Mano de obra', '= Precio final (ej. $15k costo)', ''].map(h => (
-                            <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6b7280' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {repairConfigs.map((cfg, i) => {
-                          const edit = configEditing[cfg.id] || { markup: String(cfg.markup_ars), labor: String(cfg.labor_ars) }
-                          const exampleFinal = 15000 + Number(edit.markup || 0) + Number(edit.labor || 0)
-                          const isSaving = configSaving === cfg.id
-                          return (
-                            <tr key={cfg.id} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                              <td style={{ padding: '10px 14px', fontWeight: 600 }}>{cfg.label}</td>
-                              <td style={{ padding: '10px 14px' }}>
-                                <span style={{ fontSize: 10, background: '#f3f4f6', borderRadius: 4, padding: '2px 6px', color: '#374151' }}>{cfg.tab_key}</span>
-                              </td>
-                              <td style={{ padding: '10px 14px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <span style={{ color: '#9ca3af', fontSize: 12 }}>+$</span>
-                                  <input type="number" value={edit.markup} onChange={e => setConfigEditing(prev => ({ ...prev, [cfg.id]: { ...edit, markup: e.target.value } }))}
-                                    style={{ width: 90, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
-                                </div>
-                              </td>
-                              <td style={{ padding: '10px 14px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <span style={{ color: '#9ca3af', fontSize: 12 }}>+$</span>
-                                  <input type="number" value={edit.labor} onChange={e => setConfigEditing(prev => ({ ...prev, [cfg.id]: { ...edit, labor: e.target.value } }))}
-                                    style={{ width: 90, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }} />
-                                </div>
-                              </td>
-                              <td style={{ padding: '10px 14px', color: '#2563eb', fontWeight: 700 }}>
-                                {ars(exampleFinal)}
-                              </td>
-                              <td style={{ padding: '10px 14px' }}>
-                                <button onClick={() => saveConfig(cfg)} disabled={isSaving}
-                                  style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: color, color: '#fff', fontWeight: 700, fontSize: 12, cursor: isSaving ? 'not-allowed' : 'pointer', opacity: isSaving ? 0.7 : 1 }}>
-                                  {isSaving ? '...' : 'Guardar'}
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                    </div>
-                  </div>
-                )}
+                <button onClick={()=>setTab('margenes')}>Editar mano de obra en Márgenes →</button>
               </div>
             )}
 
