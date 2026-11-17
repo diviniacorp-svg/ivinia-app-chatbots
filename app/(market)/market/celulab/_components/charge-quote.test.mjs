@@ -3,11 +3,12 @@ import assert from 'node:assert/strict'
 import {chargeLabel,chargeLabor,chargePrice,chargeSupplier,isChargeJob,matchesChargePart} from './charge-quote.ts'
 import {registerHooks} from 'node:module'
 const hook=registerHooks({resolve(specifier,context,next){
-  return next(['./charge-quote','./quote-labels','./quote-groups','./quote-document'].includes(specifier)?specifier+'.ts':specifier,context)
+  return next(['./charge-quote','./quote-labels','./quote-groups','./quote-document','./repair-guidance'].includes(specifier)?specifier+'.ts':specifier,context)
 }})
 const {quoteSummary}=await import('./quote-groups.ts')
 const {partCaption,partQuality}=await import('./quote-labels.ts')
 const {quoteMessage,quotePdf,printableQuote}=await import('./quote-document.ts')
+const {chargeProfile,chargeTierOptions,chargeCaution,finalRepairPrice,suggestIntake}=await import('./repair-guidance.ts')
 hook.deregister()
 
 test('pin and puerto use the same quote flow',()=>{
@@ -55,4 +56,22 @@ test('shared part is presented under the requested model, with clean quality and
  assert.match(html,/Cliente &lt;Demo&gt;/)
  assert.doesNotMatch(html,/Mayorista/)
  return quotePdf(quote).text().then(pdf=>{assert.match(pdf,/^%PDF-1\.4/);assert.match(pdf,/xref/);assert.match(pdf,/%%EOF$/m)})
+})
+
+test('module floor preserves higher amounts and never modifies batteries',()=>{
+ assert.equal(finalRepairPrice('Cambio de módulo',35000),40000)
+ assert.equal(finalRepairPrice('Cambio de módulo',42500),42500)
+ assert.equal(finalRepairPrice('Cambio de batería',15000),15000)
+})
+test('charge tiers, variant caution and optional intake suggestion',()=>{
+ assert.equal(chargeProfile('Moto G22').tier,'media')
+ assert.equal(chargeProfile('Moto G22').connector,'Tipo C')
+ assert.equal(chargeProfile('Android no identificado').tier,null)
+ assert.deepEqual(chargeTierOptions('iPhone 15 Pro').map(a=>a.amount),[30000,40000,50000])
+ assert.match(chargeCaution('Samsung J7 Prime'),/Si se desarma por el frente/)
+ assert.match(chargeCaution('Moto G7'),/Verificar la variante/)
+ assert.equal(chargeCaution('Moto G22'),'')
+ assert.equal(suggestIntake('Se hinchó la batería'),'battery')
+ assert.equal(suggestIntake('No enciende'),'')
+ assert.match(quoteSummary([{device:'Samsung J5',job:'Cambio de puerto de carga',part:12000,labor:20000}]),/módulo debe estar sano/)
 })

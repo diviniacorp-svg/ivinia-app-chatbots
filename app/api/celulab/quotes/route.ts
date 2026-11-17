@@ -2,6 +2,7 @@ import {NextRequest,NextResponse} from 'next/server'
 import {createAdminClient} from '@/lib/supabase'
 import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
 import {repairForCategory,publicOption} from '@/app/(market)/market/celulab/_components/quote-labels'
+import {finalRepairPrice} from '@/app/(market)/market/celulab/_components/repair-guidance'
 const publicVersion=(v:{lines?:Record<string,unknown>[]})=>({...v,lines:(v.lines||[]).map(l=>({...l,option:typeof l.option==='string'&&publicOption(l.option)?l.option:undefined,partId:undefined}))})
 const reply=(value:unknown,status=200)=>NextResponse.json(value,{status,headers:{'Cache-Control':'no-store'}})
 export async function POST(req:NextRequest){
@@ -41,6 +42,6 @@ export async function POST(req:NextRequest){
  if(b.action!=='issue'||(typeof b.customer!=='string'||b.customer.length>150||typeof (b.phone??'')!=='string'||(b.phone??'').length>40)||!Array.isArray(b.lines)||!b.lines.length||b.lines.length>100||!b.lines.every((l:{device:string;job:string;part:number;labor:number;pending?:boolean;equipment?:string;task?:string;option?:string})=>l&&validText(l.device)&&validText(l.job)&&amount(l.part)&&amount(l.labor)&&[l.equipment,l.task,l.option].every(x=>x===undefined||(typeof x==='string'&&x.length<=500))))return reply({},400)
  const id=b.id||crypto.randomUUID()
  if(b.id){const {data}=await q.eq('quote_id',id).order('revision',{ascending:false}).limit(1).maybeSingle();if(!data||data.revision!==b.base||data.partner_id!==partner)return reply({},409)}
- const {data,error}=await db.from('cl_quote_versions').insert({quote_id:id,revision:b.id?b.base+1:1,partner_id:partner,order_id:b.order||null,issuer,customer:b.customer.trim(),customer_phone:(b.phone||'').trim(),lines:b.lines.map((l:{device:string;job:string;part:number;labor:number;pending?:boolean;equipment?:string;task?:string;option?:string})=>({device:l.device.trim(),job:l.job.trim(),part:l.part,labor:l.labor,pending:l.pending===true,equipment:l.equipment,task:l.task,option:publicOption(l.option)?l.option:undefined}))}).select().single()
+ const {data,error}=await db.from('cl_quote_versions').insert({quote_id:id,revision:b.id?b.base+1:1,partner_id:partner,order_id:b.order||null,issuer,customer:b.customer.trim(),customer_phone:(b.phone||'').trim(),lines:b.lines.map((l:{device:string;job:string;part:number;labor:number;pending?:boolean;equipment?:string;task?:string;option?:string})=>({device:l.device.trim(),job:l.job.trim(),part:l.pending===true?l.part:finalRepairPrice(l.job.trim(),l.part+l.labor)-l.labor,labor:l.labor,pending:l.pending===true,equipment:l.equipment,task:l.task,option:publicOption(l.option)?l.option:undefined}))}).select().single()
  return error?reply({},error.code==='23505'?409:503):reply(publicVersion(data))
 }

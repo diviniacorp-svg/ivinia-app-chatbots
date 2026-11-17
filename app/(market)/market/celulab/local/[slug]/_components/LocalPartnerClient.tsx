@@ -1,6 +1,10 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {partCaption,repairForCategory} from '../../../_components/quote-labels'
+import {ChargeOptions,RepairPicker,standardRepairRates,type RepairRate} from '../../../_components/RepairPicker'
+import QuoteParts,{catalogGroup} from '../../../_components/QuoteParts'
+import {isChargeJob} from '../../../_components/charge-quote'
+import {chargeCaution,chargeProfile,chargeTierOptions,intakeChoices,suggestIntake,REVIEW_PRICE,UNKNOWN_ACCESS} from '../../../_components/repair-guidance'
 import QuoteEditor from '../../../_components/QuoteEditor'
 import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
@@ -14,6 +18,7 @@ type DamageMarker = { x: number; y: number; side: 'front' | 'back' }
 
 type RepairLineItem = {
   partId: string
+  caption?: string
   job: string
   quality: string
   color: string
@@ -22,7 +27,6 @@ type RepairLineItem = {
   labor_ars: number
 }
 
-type SearchResult = PriceListItem
 
 type Order = {
   id: string
@@ -38,7 +42,7 @@ type Order = {
   turns_on: boolean; water_damage: boolean; revision_required: boolean
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
-  damage_diagram: { markers?: DamageMarker[] }
+  damage_diagram: { markers?: DamageMarker[]; accessUnknown?:boolean; possibleRepair?:string }
   quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
@@ -577,146 +581,35 @@ function LocalDashboard({
 
 // ─── Part Search ─────────────────────────────────────────────────────────────
 
-function PartSearch({ commissionPct, pin, commissionUnlocked, unlockCommission, onAdd }: {
-  commissionPct: number; pin: string; commissionUnlocked: boolean; unlockCommission: (value:string) => Promise<boolean>
-  onAdd: (r: RepairLineItem) => void
-}) {
-  const [q, setQ] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const [unlockPin, setUnlockPin] = useState('')
-  const [unlockErr, setUnlockErr] = useState(false)
-
-  function onInput(val: string) {
-    setQ(val)
-    clearTimeout(timer.current)
-    if (val.trim().length < 2) { setResults([]); setOpen(false); return }
-    timer.current = setTimeout(async () => {
-      setLoading(true)
-      const pages=await Promise.all(['modulos','baterias','partes','camaras','tapas','glass'].map(tab=>fetch('/api/celulab/lista?'+new URLSearchParams({q:val.trim(),tab,limit:'8'})).then(r=>r.json()).catch(()=>({items:[]}))))
-      const data:SearchResult[]=pages.flatMap(page=>Array.isArray(page.items)?page.items:[])
-      setResults(data.sort((a,b)=>Number(b.stock)-Number(a.stock)))
-      setOpen(true)
-      setLoading(false)
-    }, 300)
-  }
-
-  function select(item: SearchResult) {
-    if (!item.stock || item.final_price == null) return
-    const commission = Math.round(item.labor_ars * commissionPct / 100)
-    onAdd({
-      partId: item.id,
-      job: repairForCategory(item.category), quality:item.quality||'', color:item.color||'',
-              final_price: item.final_price,
-      commission,
-              labor_ars: item.labor_ars,
-    })
-    setQ(''); setResults([]); setOpen(false)
-  }
-
-  async function tryUnlockPin() {
-    if (await unlockCommission(unlockPin)) {
-      setUnlockPin('')
-    } else {
-      setUnlockErr(true)
-      setUnlockPin('')
-      setTimeout(() => setUnlockErr(false), 1800)
-    }
-  }
-
-  return (
-    <div style={{ position: 'relative', marginBottom: 4 }}>
-      <div style={{ position: 'relative' }}>
-        <input
-          style={{ ...inp, paddingRight: 36 }}
-          value={q}
-          onChange={e => onInput(e.target.value)}
-          onFocus={() => results.length > 0 && setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 180)}
-          placeholder="Samsung A54, iPhone 13, Moto G... (mín. 2 letras)"
-        />
-        <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: loading ? '#6366f1' : '#9ca3af', pointerEvents: 'none' }}>
-          {loading ? '⟳' : '🔍'}
-        </span>
-      </div>
-
-      {/* Commission lock banner — visible solo si está bloqueada */}
-      {!commissionUnlocked && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '6px 10px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-          <span style={{ fontSize: 11, color: '#9ca3af', flex: 1 }}>🔒 Comisión protegida</span>
-          <input
-            type="password"
-            inputMode="numeric"
-            maxLength={8}
-            value={unlockPin}
-            onChange={e => setUnlockPin(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && tryUnlockPin()}
-            placeholder="PIN dueño"
-            style={{ width: 80, padding: '4px 8px', borderRadius: 6, border: `1.5px solid ${unlockErr ? '#ef4444' : '#d1d5db'}`, fontSize: 12, textAlign: 'center', background: unlockErr ? '#fef2f2' : '#fff', outline: 'none' }}
-          />
-          <button onMouseDown={tryUnlockPin} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#6366f1', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Ver</button>
-        </div>
-      )}
-
-      {open && results.length > 0 && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-          background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
-          boxShadow: '0 8px 24px rgba(0,0,0,.12)', marginTop: 4, maxHeight: 340, overflowY: 'auto',
-        }}>
-          {results.map(item => {
-            const commission = Math.round(item.labor_ars * commissionPct / 100)
-            return (
-              <div
-                key={item.id}
-                onMouseDown={() => select(item)}
-                style={{ padding: '10px 14px', borderBottom: '1px solid #f3f4f6', cursor: item.stock?'pointer':'not-allowed' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#f5f3ff')}
-                onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
-              >
-                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>
-                  {item.name}
-                  {item.brand && <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: 5 }}>{item.brand}</span>}
-                  {item.quality && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, marginLeft: 5, background: '#f3f4f6', color: '#6b7280' }}>{item.quality}</span>}
-                  {!item.stock && <span style={{ fontSize: 9, color: '#ef4444', marginLeft: 5 }}>● sin stock</span>}
-                </div>
-                {item.final_price != null && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-                    <div style={{ background: '#eff6ff', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
-                      <div style={{ color: '#3b82f6' }}>Precio final</div>
-                      <div style={{ fontWeight: 700, color: '#1d4ed8' }}>{ars(item.final_price)}</div>
-                    </div>
-                    <div style={{ background: '#f0fdf4', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
-                      <div style={{ color: '#16a34a' }}>Tu comisión</div>
-                      <div style={{ fontWeight: 700, color: '#15803d' }}>{commissionUnlocked ? ars(commission) : '🔒 ••••'}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {open && results.length === 0 && !loading && q.length >= 2 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,.08)', padding: '14px', marginTop: 4, fontSize: 13, color: '#9ca3af', textAlign: 'center' }}>
-          Sin resultados para &ldquo;{q}&rdquo; — probá con marca + modelo
-        </div>
-      )}
-    </div>
-  )
+function OrderRepairPicker({device,partnerId,pin,commissionPct,onAdd,job,setJob}:{device:string;partnerId:string;pin:string;commissionPct:number;onAdd:(r:RepairLineItem)=>void;job:string;setJob:(j:string)=>void}){
+ const [rates,setRates]=useState<RepairRate[]>(standardRepairRates),[tier,setTier]=useState(''),[custom,setCustom]=useState('')
+ const normalizedTier=tier||chargeProfile(device).tier||''
+ useEffect(()=>{
+  const ctrl=new AbortController()
+  fetch('/api/celulab/quotes',{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body:JSON.stringify({action:'rates',partner:partnerId,pin})}).then(r=>r.ok?r.json():[]).then(data=>{
+   if(!ctrl.signal.aborted&&Array.isArray(data)&&data.length)setRates([...data,...standardRepairRates.filter(r=>!data.some((a:RepairRate)=>a.job===r.job))])
+  }).catch(()=>{})
+  return ()=>ctrl.abort()
+ },[partnerId,pin])
+ const fee=job==='Revisión'?REVIEW_PRICE:rates.find(r=>r.job===job)?.labor_ars
+ const add=(partId:string,caption:string,total:number,labor:number)=>{
+  onAdd({partId,caption,job:job==='Otro trabajo'?custom.trim():job,quality:'',color:'',final_price:total,labor_ars:labor,commission:Math.round(labor*commissionPct/100)})
+ }
+ return <div>
+  <RepairPicker device={device} rates={rates} value={job} onChange={v=>{setJob(v);setTier('');setCustom('')}} disabledJob={j=>/excepto iPhone/i.test(j)&&/iphone/i.test(device)}/>
+  {isChargeJob(job)&&<ChargeOptions device={device} value={normalizedTier} onChange={setTier}/>}
+  {job==='Otro trabajo'&&<FField label="Trabajo personalizado"><input style={inp} value={custom} onChange={e=>setCustom(e.target.value)}/></FField>}
+  {catalogGroup(job)?<QuoteParts device={device} job={job} chargeRate={chargeTierOptions(device).find(t=>t.tier===normalizedTier)?.amount||0} selected={[]} onPick={(id,label,total,labor)=>add(id,label.slice('Repuesto: '.length),total,labor)}/>:job&&fee!=null&&<button type="button" onClick={()=>add('','',fee,fee)} style={{...inp,width:'auto',marginTop:8,cursor:'pointer'}}>+ Agregar trabajo</button>}
+  {job&&!catalogGroup(job)&&fee==null&&<small style={{display:'block',color:'#64748b',marginTop:7}}>Sin tarifa cargada. Podés anotarlo en trabajo solicitado.</small>}
+ </div>
 }
-
-// ─── New Order Wizard ─────────────────────────────────────────────────────────
 
 const BLANK = {
   client_name: '', client_dni: '', client_phone: '',
   device_brand: '', device_model: '',
   has_battery: false, has_chip: false, has_cover: false, has_memory: false,
-  turns_on: true, water_damage: false,
-  unlock_type: 'none' as 'pin' | 'patron' | 'none',
+  turns_on: null as boolean | null, water_damage: false,
+  unlock_type: '' as '' | 'pin' | 'patron' | 'none' | 'unknown',
   unlock_code: '',
   damage_diagram: { markers: [] as DamageMarker[] },
   reported_fault: '', requested_work: '', notes: '', deposit_ars: '',
@@ -756,6 +649,10 @@ function LocalNewOrder({
   onBack: () => void; onSaved: () => void
 }) {
   const [form, setForm] = useState(BLANK)
+  const [job,setJob]=useState(''),[possible,setPossible]=useState('')
+  const suggested=suggestIntake(form.reported_fault)
+  const choosePossible=(value:string)=>{setPossible(value);setJob(intakeChoices.find(c=>c.value===value)?.job||'')}
+  const repairCaption=(r:RepairLineItem)=>r.caption||(r.partId?partCaption(r.job,form.device_brand+' '+form.device_model,r.quality,r.color):r.job)
   const [repairs, setRepairs] = useState<RepairLineItem[]>(prefilledRepair ? [prefilledRepair] : [])
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -790,16 +687,19 @@ function LocalNewOrder({
 
   async function handleSubmit() {
     const device=form.device_brand+' '+form.device_model
-    const repairText=repairs.map(r=>partCaption(r.job,device,r.quality,r.color)).join(' + ')
+    const possibleText=form.turns_on===false?intakeChoices.find(c=>c.value===possible)?.label||'':''
+    const repairText=repairs.map(repairCaption).join(' + ')
     const freeText = (form.requested_work ?? '').trim()
-    const finalRequestedWork = repairText && freeText
-      ? `${repairText} / ${freeText}`
-      : repairText || freeText || ''
+    const caution=repairs.some(r=>isChargeJob(r.job))||possible==='charge'?chargeCaution(device):''
+    const finalRequestedWork=[form.turns_on===false?'Ingresa para revisión — $15.000':null,possibleText,repairText?(form.turns_on===false?'Reparación estimada: ':'')+repairText:'',freeText,caution].filter(Boolean).join(' / ')
 
     if (!form.client_name.trim() || !form.device_brand.trim() || !form.device_model.trim()) {
       setErr('Nombre, marca y modelo son obligatorios.')
       return
     }
+    if(form.turns_on===null){setErr('Verificá si el equipo enciende antes de continuar.');return}
+    if(!form.unlock_type){setErr('Elegí cómo se accede al equipo.');return}
+    if ((form.unlock_type==='pin'||form.unlock_type==='patron')&&!form.unlock_code.trim()){setErr('Registrá el código de acceso o marcá que no lo recuerda.');return}
     if (!finalRequestedWork.trim() && !form.reported_fault.trim()) {
       setErr('Ingresá el trabajo a realizar o buscá un repuesto.')
       return
@@ -811,8 +711,11 @@ function LocalNewOrder({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
+        unlock_type: form.unlock_type==='unknown'?'none':form.unlock_type,
+        unknown_access: form.unlock_type==='unknown',
+        damage_diagram:{...form.damage_diagram,possibleRepair:form.turns_on===false?possible:undefined},
         requested_work: finalRequestedWork,
-        quote_draft_lines: repairs.map(r=>({device,job:r.job,partId:r.partId,option:'Repuesto: '+partCaption(r.job,device,r.quality,r.color),part:r.final_price-r.labor_ars,labor:r.labor_ars})),
+        quote_draft_lines: repairs.map(r=>({device,job:r.job,partId:r.partId,option:r.partId?'Repuesto: '+repairCaption(r):undefined,part:r.final_price-r.labor_ars,labor:r.labor_ars})),
         partner_pin: pin,
         deposit_ars: Number(form.deposit_ars) || 0,
         partner_id: partnerId,
@@ -866,40 +769,41 @@ function LocalNewOrder({
             </Card>
 
             <Card title="📱 Equipo">
-              <ScriptTip text="¿Qué equipo traés y el modelo? ¿Enciende?" />
+              <ScriptTip text="Confirmá marca y modelo del equipo." />
               <div style={{ height: 8 }} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
                 <FField label="Marca *">
-                  <input style={inp} value={form.device_brand} onChange={e => set('device_brand', e.target.value)} placeholder="Samsung, iPhone..." />
+                  <input style={inp} value={form.device_brand} onChange={e => {set('device_brand',e.target.value);setRepairs(prev=>prev.filter(r=>prefilledRepair?.partId===r.partId))}} placeholder="Samsung, iPhone..." />
                 </FField>
                 <FField label="Modelo *">
-                  <input style={inp} value={form.device_model} onChange={e => set('device_model', e.target.value)} placeholder="A54, 14 Pro..." />
+                  <input style={inp} value={form.device_model} onChange={e => {set('device_model',e.target.value);setRepairs([])}} placeholder="A54, 14 Pro..." />
                 </FField>
               </div>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>¿Enciende?</div>
+              <div style={{fontSize:12,color:'#475569',marginBottom:8}}>Verificá vos si enciende. No completes este campo a partir de lo que diga el cliente.</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <button onClick={() => set('turns_on', true)} style={{ padding: '12px 8px', borderRadius: 10, border: `2px solid ${form.turns_on ? '#16a34a' : '#e5e7eb'}`, background: form.turns_on ? '#f0fdf4' : '#fff', cursor: 'pointer', textAlign: 'center' }}>
                   <div style={{ fontSize: 20, marginBottom: 3 }}>✅</div>
                   <div style={{ fontWeight: 700, fontSize: 12, color: form.turns_on ? '#15803d' : '#6b7280' }}>Sí, enciende</div>
                 </button>
-                <button onClick={() => set('turns_on', false)} style={{ padding: '12px 8px', borderRadius: 10, border: `2px solid ${!form.turns_on ? '#f59e0b' : '#e5e7eb'}`, background: !form.turns_on ? '#fefce8' : '#fff', cursor: 'pointer', textAlign: 'center' }}>
+                <button onClick={() => set('turns_on', false)} style={{ padding: '12px 8px', borderRadius: 10, border: `2px solid ${form.turns_on===false ? '#f59e0b' : '#e5e7eb'}`, background: form.turns_on===false ? '#fefce8' : '#fff', cursor: 'pointer', textAlign: 'center' }}>
                   <div style={{ fontSize: 20, marginBottom: 3 }}>⚠️</div>
-                  <div style={{ fontWeight: 700, fontSize: 12, color: !form.turns_on ? '#92400e' : '#6b7280' }}>No enciende</div>
+                  <div style={{ fontWeight: 700, fontSize: 12, color: form.turns_on===false ? '#92400e' : '#6b7280' }}>No enciende</div>
                 </button>
               </div>
-              {!form.turns_on && (
+              {form.turns_on===false && (
                 <div style={{ marginTop: 10, padding: '10px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#92400e' }}>
-                  ⚠️ Diagnóstico obligatorio: $15.000. Cobrá la seña antes de que se vaya.
+                  ⚠️ Ingresa para revisión · $15.000
                 </div>
               )}
             </Card>
 
             <Card title="🔒 Acceso al equipo">
-              <ScriptTip text="¿Tenés el código o patrón? Sin acceso no podemos aplicar garantía." />
+              <ScriptTip text="Registrá cómo se accede al equipo." />
               <div style={{ height: 8 }} />
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: 'Sin código de acceso' }].map(opt => (
-                  <button key={opt.v} onClick={() => { set('unlock_type', opt.v); if (opt.v !== 'patron') { setPatternDots([]); set('unlock_code', '') } }} style={{ flex: 1, padding: '9px 4px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `2px solid ${form.unlock_type === opt.v ? color : '#e5e7eb'}`, background: form.unlock_type === opt.v ? color + '12' : '#fff', color: form.unlock_type === opt.v ? color : '#6b7280' }}>
+              <div style={{ display: 'flex', flexWrap:'wrap', gap: 8, marginBottom: 12 }}>
+                {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: 'Sin contraseña' }, { v: 'unknown', l: 'No recuerda la contraseña' }].map(opt => (
+                  <button key={opt.v} onClick={() => { set('unlock_type', opt.v); setPatternDots([]); set('unlock_code', '') }} style={{ flex: 1, padding: '9px 4px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `2px solid ${form.unlock_type === opt.v ? color : '#e5e7eb'}`, background: form.unlock_type === opt.v ? color + '12' : '#fff', color: form.unlock_type === opt.v ? color : '#6b7280' }}>
                     {opt.l}
                   </button>
                 ))}
@@ -914,9 +818,9 @@ function LocalNewOrder({
                   <PatternLock value={patternDots} onChange={dots => { setPatternDots(dots); set('unlock_code', dots.join('-')) }} />
                 </div>
               )}
-              {form.unlock_type === 'none' && (
-                <div style={{ padding: '9px 12px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 9, fontSize: 13, color: '#92400e', fontWeight: 600 }}>
-                  ⚠️ Sin código → sin garantía. Avisale al cliente.
+              {form.unlock_type === 'unknown' && (
+                <div role="alert" style={{ padding: '9px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 9, fontSize: 13, color: '#991b1b', fontWeight: 600 }}>
+                  {UNKNOWN_ACCESS} Avisale al cliente.
                 </div>
               )}
             </Card>
@@ -964,16 +868,20 @@ function LocalNewOrder({
             </Card>
 
             <Card title="🔧 Reparaciones y seña">
-              {!form.turns_on ? (
+              {form.turns_on===false ? (
                 <ScriptTip text="El diagnóstico es $15.000, se descuenta si aprobás la reparación. ¿Dejás la seña ahora?" />
               ) : (
                 <ScriptTip text="Buscá el repuesto para ver el precio final y cotizar la seña." />
               )}
               <div style={{ height: 6 }} />
 
-              {/* Part search */}
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>🔍 Buscar repuesto</div>
-              <PartSearch commissionPct={commissionPct} pin={pin} commissionUnlocked={commissionUnlocked} unlockCommission={unlockCommission} onAdd={r => setRepairs(prev => [...prev, r])} />
+              <FField label="¿Qué le pasó? · Según el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="Ej. Se hinchó la batería"/></FField>
+              {form.turns_on===false&&<FField label="Posible trabajo (opcional)">
+                <select style={inp} value={possible} onChange={e=>choosePossible(e.target.value)}><option value="">No sabe / sólo revisión</option>{intakeChoices.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select>
+                {!possible&&suggested&&<button type="button" onClick={()=>choosePossible(suggested)} style={{...inp,width:'auto',marginTop:6,cursor:'pointer'}}>Sugerencia: {intakeChoices.find(c=>c.value===suggested)?.label}</button>}
+              </FField>}
+              <OrderRepairPicker key={form.device_brand+' '+form.device_model+' '+possible} device={form.device_brand+' '+form.device_model} partnerId={partnerId} pin={pin} commissionPct={commissionPct} job={job} setJob={setJob}
+                onAdd={r=>setRepairs(prev=>prev.some(x=>x.job===r.job&&x.partId===r.partId)?prev:[...prev,r])} />
 
               {/* Selected repairs list */}
               {repairs.length > 0 && (
@@ -983,13 +891,12 @@ function LocalNewOrder({
                     {repairs.map((r, i) => (
                       <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{form.device_model.trim()?partCaption(r.job,form.device_brand+' '+form.device_model,r.quality,r.color):r.job}</div>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{repairCaption(r)}</div>
                           <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 11, color: '#1d4ed8' }}>Precio: <strong>{ars(r.final_price)}</strong></span>
                             <span style={{ fontSize: 11, color: '#16a34a' }}>Tu comisión: <strong>{commissionUnlocked ? ars(r.commission) : '🔒 ••••'}</strong></span>
                           </div>
                         </div>
-                        <button onClick={() => setRepairs(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', fontSize: 16, padding: 0, flexShrink: 0, marginTop: 2 }}>✕</button>
+                        <button onClick={() => setRepairs(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d1d5db', fontSize: 16, padding: 0, flexShrink: 0, marginTop: 2 }} aria-label="Quitar reparación">✕</button><strong style={{whiteSpace:'nowrap',color:'#1d4ed8'}}>{ars(r.final_price)}</strong>
                       </div>
                     ))}
                   </div>
@@ -1002,22 +909,21 @@ function LocalNewOrder({
                       <span style={{ color: '#9ca3af' }}>Tu comisión total</span>
                       <span style={{ fontWeight: 600, color: '#16a34a' }}>{commissionUnlocked ? ars(totalCommission) : '🔒 ••••'}</span>
                     </div>
-                    {!form.turns_on && <div style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>* Más $15.000 de revisión diagnóstica</div>}
+                    {form.turns_on===false && <div style={{ fontSize: 11, color: '#92400e', marginTop: 4 }}>* Más $15.000 de revisión diagnóstica</div>}
                   </div>
                 </div>
               )}
 
               <div style={{ height: 10 }} />
-              <FField label="Falla reportada por el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="¿Qué le pasa al equipo y desde cuándo?"/></FField>
-              <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado *'}>
+              <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado (opcional si ingresa para revisión)'}>
                 <textarea style={{ ...inp, minHeight: 56, resize: 'vertical' }} value={form.requested_work} onChange={e => set('requested_work', e.target.value)} placeholder={repairs.length > 0 ? 'Algún trabajo extra o nota adicional...' : 'Pantalla rota, no carga, no enciende, cambio de batería...'} />
               </FField>
               <FField label="Observaciones internas">
                 <textarea style={{ ...inp, minHeight: 48, resize: 'vertical' }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notas para el técnico..." />
               </FField>
-              <FField label={`Seña cobrada${!form.turns_on ? ' (sugerido $15.000)' : repairs.length > 0 ? ` (sugerido ${ars(Math.round(totalFinalPrice * 0.5))})` : ''}`}>
+              <FField label={`Seña cobrada${form.turns_on===false ? ' (sugerido $15.000)' : repairs.length > 0 ? ` (sugerido ${ars(Math.round(totalFinalPrice * 0.5))})` : ''}`}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input type="number" style={{ ...inp, flex: 1 }} value={form.deposit_ars} onChange={e => { set('deposit_ars', e.target.value); setMpLink(null) }} placeholder={!form.turns_on ? '15000' : repairs.length > 0 ? String(Math.round(totalFinalPrice * 0.5)) : '0'} />
+                  <input type="number" style={{ ...inp, flex: 1 }} value={form.deposit_ars} onChange={e => { set('deposit_ars', e.target.value); setMpLink(null) }} placeholder={form.turns_on===false ? '15000' : repairs.length > 0 ? String(Math.round(totalFinalPrice * 0.5)) : '0'} />
                   <button type="button" onClick={generateMpLink} disabled={mpLoading} style={{ padding: '9px 12px', borderRadius: 8, border: 'none', background: mpLoading ? '#e0e7ff' : '#3b82f6', color: '#fff', fontWeight: 700, fontSize: 12, cursor: mpLoading ? 'default' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {mpLoading ? '...' : '📲 Cobrar MP'}
                   </button>
@@ -1093,7 +999,7 @@ function OrderTicket({
     `${order.device_brand} ${order.device_model}\n` +
     `Enciende: ${order.turns_on ? 'SÍ' : 'NO'} | Humedad: ${order.water_damage ? 'SÍ ⚠️' : 'No'}\n` +
     `Accesorios: ${acc}\n` +
-    `Acceso: ${order.unlock_type === 'none' ? 'Sin acceso' : order.unlock_code || '—'}\n\n` +
+    `Acceso: ${order.damage_diagram?.accessUnknown ? 'No recuerda la contraseña · '+UNKNOWN_ACCESS : order.unlock_type === 'none' ? 'Sin contraseña' : 'Registrado'}\n\n` +
     `🔧 *Trabajo pedido*\n` +
     `${order.requested_work || '—'}\n\n` +
     `💰 Seña: $${order.deposit_ars ?? 0}\n` +
@@ -1148,6 +1054,7 @@ function OrderTicket({
             {order.water_damage && <TicketRow icon="💧" label="Humedad" value="Sí ⚠️" />}
             <TicketRow icon="🔧" label="Trabajo" value={order.requested_work || '—'} />
             {order.deposit_ars > 0 && <TicketRow icon="💰" label="Seña" value={ars(order.deposit_ars)} />}
+            {order.damage_diagram?.accessUnknown&&<div style={{marginTop:6,color:'#991b1b',fontWeight:700}}>{UNKNOWN_ACCESS}</div>}
             {order.revision_required && (
               <div style={{ marginTop: 10, padding: '8px 12px', background: '#fef3c7', borderRadius: 8, fontSize: 12, color: '#92400e', fontWeight: 600 }}>
                 ⚠️ Revisión diagnóstica requerida — $15.000
@@ -1559,8 +1466,8 @@ function buildTicketHTML(order: Order, partnerName: string, partnerAddress: stri
       <!-- Acceso — copias internas -->
       <div style="margin-top:4px;margin-bottom:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:8px 12px;">
         <div style="font-size:9px;text-transform:uppercase;color:#1d4ed8;font-weight:bold;margin-bottom:3px;">🔒 Acceso al equipo</div>
-        <div style="font-size:14px;font-weight:800;color:#1e3a8a;letter-spacing:0.05em;">${order.unlock_type === 'none' ? 'Sin acceso ⚠️' : order.unlock_type === 'pin' ? `PIN: ${order.unlock_code || '—'}` : `Patrón: ${order.unlock_code || '—'}`}</div>
-        ${order.unlock_type === 'none' ? '<div style="font-size:10px;color:#1d4ed8;margin-top:2px;">Sin código → no aplica garantía</div>' : ''}
+        <div style="font-size:14px;font-weight:800;color:#1e3a8a;letter-spacing:0.05em;">${order.unlock_type === 'none' ? (order.damage_diagram?.accessUnknown?'No recuerda la contraseña ⚠️':'Sin contraseña') : order.unlock_type === 'pin' ? `PIN: ${order.unlock_code || '—'}` : `Patrón: ${order.unlock_code || '—'}`}</div>
+        ${order.damage_diagram?.accessUnknown ? '<div style="font-size:10px;color:#991b1b;margin-top:2px;">'+UNKNOWN_ACCESS+'</div>' : ''}
       </div>` : ''}
 
       <!-- Trabajo -->

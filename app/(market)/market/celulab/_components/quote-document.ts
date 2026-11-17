@@ -1,4 +1,4 @@
-import {linePrice,pesos,publicJob,quoteGroups,quoteSummary,type QuoteLine} from './quote-groups'
+import {lineCaution,linePrice,pesos,publicJob,quoteGroups,quoteSummary,type QuoteLine} from './quote-groups'
 import {publicOption} from './quote-labels'
 
 export type Version={quote_id:string;revision:number;issued_at:string;issuer:string;customer:string;customer_phone?:string;lines:QuoteLine[]}
@@ -11,7 +11,7 @@ export function quoteMessage(v:Version){
 }
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>(({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'} as Record<string,string>)[c]||c))
 export function printableQuote(v:Version){
- const rows=quoteGroups(v.lines).map(g=>'<section><h2>'+esc(g.title)+'</h2>'+g.variants.map((a,i)=>(g.variants.length>1?'<h3>Alternativa '+(i+1)+'</h3>':'')+a.lines.map(l=>'<div class="row"><div><strong>'+esc(publicJob(l))+'</strong>'+(publicOption(l.option)?'<small>'+esc(publicOption(l.option)!)+'</small>':'')+'</div><b>'+esc(linePrice(l))+'</b></div>').join('')+'<div class="row total"><strong>Total del equipo</strong><b>'+esc(a.pending?'A confirmar':pesos(a.total))+'</b></div>').join('')+'</section>').join('')
+ const rows=quoteGroups(v.lines).map(g=>'<section><h2>'+esc(g.title)+'</h2>'+g.variants.map((a,i)=>(g.variants.length>1?'<h3>Alternativa '+(i+1)+'</h3>':'')+a.lines.map(l=>'<div class="row"><div><strong>'+esc(publicJob(l))+'</strong>'+(publicOption(l.option)?'<small>'+esc(publicOption(l.option)!)+'</small>':'')+(lineCaution(l)?'<small>'+esc(lineCaution(l))+'</small>':'')+'</div><b>'+esc(linePrice(l))+'</b></div>').join('')+'<div class="row total"><strong>Total del equipo</strong><b>'+esc(a.pending?'A confirmar':pesos(a.total))+'</b></div>').join('')+'</section>').join('')
  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Presupuesto CeluLab</title><style>@page{size:A4;margin:15mm}*{box-sizing:border-box}body{font:13px/1.45 Arial,sans-serif;color:#17243a;margin:0}main{border:1px solid #8493a7;border-radius:9px;padding:18px}header{display:flex;justify-content:space-between;border-bottom:2px solid #1c2e48;padding-bottom:10px;gap:18px}header b{font-size:20px}header small,.row small{display:block;color:#465671}h2{font-size:14px;margin:0;background:#edf2fa;padding:8px}h3{font-size:12px;margin:8px}section{border:1px solid #ccd5e2;border-radius:6px;margin-top:12px;overflow:hidden}.row{display:flex;justify-content:space-between;gap:18px;padding:7px 9px;border-bottom:1px solid #e4e9f0;break-inside:avoid}.row b{white-space:nowrap}.total{background:#f2f5fb}footer{font-size:10px;margin-top:13px;color:#465671}</style></head><body><main><header><div><b>CeluLab</b><small>TALLER DE REPARACIONES · SAN LUIS CAPITAL</small></div><div><strong>Presupuesto '+esc(quoteNumber(v))+'</strong><small>'+esc(quoteDate(v.issued_at))+'</small></div></header><p>'+[v.issuer,v.customer,v.customer_phone].filter(s=>!!s).map(s=>esc(s!)).join(' · ')+'</p>'+rows+'<footer>'+esc(quoteNote)+'</footer></main></body></html>'
 }
 const ascii=(s:string)=>Array.from(s.normalize('NFC')).map(c=>{
@@ -62,7 +62,7 @@ export function quotePdf(v:Version){
   label(g.title)
   for(const [i,a] of Array.from(g.variants.entries())){
    if(g.variants.length>1)label('Alternativa '+(i+1))
-   for(const l of a.lines)row(publicJob(l),publicOption(l.option),linePrice(l))
+   for(const l of a.lines)row(publicJob(l),[publicOption(l.option),lineCaution(l)].filter(Boolean).join(' · '),linePrice(l))
    row('Total del equipo',undefined,a.pending?'A confirmar':pesos(a.total),true)
   }
   y+=7

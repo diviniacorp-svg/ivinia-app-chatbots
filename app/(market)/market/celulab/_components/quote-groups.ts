@@ -1,8 +1,10 @@
 import {chargeLabel,isChargeJob} from './charge-quote'
+import {chargeCaution} from './repair-guidance'
 import {publicOption} from './quote-labels'
 export type QuoteLine={device:string;job:string;part:number;labor:number;pending?:boolean;equipment?:string;task?:string;option?:string;partId?:string}
 export const pesos=(n:number)=>n.toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0})
 export const publicJob=(line:QuoteLine)=>isChargeJob(line.job)?chargeLabel(line.device):line.job
+export const lineCaution=(line:QuoteLine)=>isChargeJob(line.job)?chargeCaution(line.device):''
 export const linePrice=(line:QuoteLine)=>line.pending?'A confirmar':pesos(line.part+line.labor)
 export function quoteGroups(lines:QuoteLine[]){
  const devices=new Map<string,Map<string,QuoteLine[]>>()
@@ -23,7 +25,7 @@ export type QuoteGroups=ReturnType<typeof quoteGroups>
 export function quoteSummary(lines:QuoteLine[]){
  return quoteGroups(lines).map(group=>[group.title,...group.variants.map((v,i)=>[
   group.variants.length>1?'Alternativa '+(i+1):'',
-  ...v.lines.map(l=>[publicJob(l),publicOption(l.option),linePrice(l)].filter(Boolean).join(' · ')),
+  ...v.lines.map(l=>[publicJob(l),publicOption(l.option),linePrice(l),lineCaution(l)].filter(Boolean).join(' · ')),
   'Total del equipo: '+(v.pending?'A confirmar':pesos(v.total))
  ].filter(Boolean).join('\n'))].join('\n\n')).join('\n\n')
 }

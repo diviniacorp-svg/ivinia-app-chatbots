@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 import {chargeLabor,chargeSupplier,isChargeJob,matchesChargePart,matchesDevice} from '@/app/(market)/market/celulab/_components/charge-quote'
-import {partCaption,partColor,partQuality} from '@/app/(market)/market/celulab/_components/quote-labels'
+import {finalRepairPrice} from '@/app/(market)/market/celulab/_components/repair-guidance'
+import {partCaption,partColor,partQuality,repairForCategory} from '@/app/(market)/market/celulab/_components/quote-labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     const stock=available.length>0, status=stock?'available':rows.some(row=>row.supplier_in_stock==null)?'unknown':'unavailable'
     const labor=charge?laborOverride:Number(item.labor_ars??0)
     const cost=stock?Math.min(...available.map(row=>row.cost_ars)):null
-    const final_price=cost!==null&&labor!==null?cost+Number(item.markup_ars??0)+labor:null
+    const final_price=cost!==null&&labor!==null?finalRepairPrice(job||(tab==='modulos'?'Cambio de módulo':repairForCategory(item.category)),cost+Number(item.markup_ars??0)+labor):null
     const quality=partQuality(item.quality||'',item.name)
     const color=partColor(job||(/tapa/i.test(item.category)?'tapa':''),item.name)
     return {id:item.id,name:job?partCaption(job,device,quality,color):item.name,brand:item.brand,category:item.category,quality,color,stock,status,final_price,labor_ars:labor}

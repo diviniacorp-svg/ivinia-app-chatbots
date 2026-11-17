@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
   const db = createAdminClient()
 
   const draft=parseOrderDraft(body.quote_draft_lines)
+  const accessUnknown=body.unknown_access===true&&unlock_type==='none'
+  const diagram=damage_diagram&&typeof damage_diagram==='object'&&!Array.isArray(damage_diagram)?damage_diagram:{}
   // Sequential order number — count existing + 1
   const { count } = await db.from('cl_orders').select('id', { count: 'exact', head: true })
   const n = String((count ?? 0) + 1).padStart(6, '0')
@@ -77,7 +79,8 @@ export async function POST(req: NextRequest) {
       water_damage: water_damage ?? false,
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
-      damage_diagram: damage_diagram ?? {},
+      damage_diagram: {...diagram,accessUnknown},
+      ...(accessUnknown?{warranty_days:0}:{}),
       quote_draft_lines: draft,
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',

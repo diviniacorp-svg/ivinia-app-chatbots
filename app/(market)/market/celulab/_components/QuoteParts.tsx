@@ -1,5 +1,5 @@
 'use client'
-import {useEffect,useState} from 'react'
+import {useEffect,useState,type CSSProperties} from 'react'
 import {pesos} from './quote-groups'
 import {chargeModel,isChargeJob} from './charge-quote'
 type Part={id:string;name:string;status:'available'|'unavailable'|'unknown';final_price:number|null;labor_ars:number|null}
@@ -54,9 +54,9 @@ export default function QuoteParts({device,job,chargeRate,selected,onPick}:{devi
  if(!catalogGroup(job)||!device.trim())return null
  return <section className="cl-parts"><strong>Repuestos para este trabajo</strong>{status&&<p role="status">{status}</p>}{rows.map(part=>{
   const available=part.status==='available', total=part.final_price, labor=part.labor_ars
-  return <button className="cl-part" type="button" key={part.id} aria-pressed={selected.includes(part.id)} disabled={!available||total===null||labor===null} onClick={()=>{if(available&&total!==null&&labor!==null)onPick(part.id,'Repuesto: '+part.name,total,labor)}}>
-   <span>{part.name}<small className={available?'cl-in-stock':'cl-no-stock'}>{available?'Disponible':part.status==='unknown'?'Stock sin confirmar':'Sin stock'}</small></span>
-   <strong>{total===null?(available&&charge?'Elegí mano de obra':'—'):pesos(total)}</strong>
+  return <button className="cl-part" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,width:'100%',textAlign:'left',margin:'5px 0',padding:'9px 11px',border:'1px solid #cbd5e1',borderRadius:8,background:selected.includes(part.id)?'#edf4ff':'white',color:'#243854',cursor:available?'pointer':'not-allowed'} satisfies CSSProperties} type="button" key={part.id} aria-pressed={selected.includes(part.id)} disabled={!available||total===null||labor===null} onClick={()=>{if(available&&total!==null&&labor!==null)onPick(part.id,'Repuesto: '+part.name,total,labor)}}>
+   <span>{part.name}<small style={{display:'block',color:available?'#067647':'#b42318',marginTop:3}} className={available?'cl-in-stock':'cl-no-stock'}>{available?'Disponible':part.status==='unknown'?'Stock sin confirmar':'Sin stock'}</small></span>
+   <strong style={{whiteSpace:'nowrap',textAlign:'right'}}>{total===null?(available&&charge?'Elegí la gama':'—'):pesos(total)}</strong>
   </button>
  })}</section>
 }
