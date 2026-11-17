@@ -55,6 +55,7 @@ type Order = {
   total_ars?: number | null
   commission_ars?: number | null
   commission_pct?: number | null
+  caja_warning?:string
   warranty_days: number
   partner_id: string | null
 }
@@ -1030,6 +1031,7 @@ function OrderTicket({
       </div>
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px' }}>
+        {order.caja_warning&&<p role="alert" style={{padding:12,background:'#fff4e5',color:'#92400e',borderRadius:8}}>{order.caja_warning}</p>}
         {stockWarning && (
           <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13 }}>
             ⚠️ <strong>Aviso de stock:</strong> hay repuestos con stock en cero. El técnico va a confirmar disponibilidad.

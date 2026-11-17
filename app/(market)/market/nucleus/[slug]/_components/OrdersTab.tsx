@@ -453,6 +453,7 @@ function OrderDetail({
         </InfoCard>
 
         <InfoCard title="🔒 Acceso">
+          {order.damage_diagram?.accessUnknown&&<p style={{color:'#991b1b',fontWeight:700}}>No sabe la clave. Sin acceso no se pueden verificar todas las funciones.</p>}
           <InfoRow label="Tipo" value={order.unlock_type === 'pin' ? 'PIN' : order.unlock_type === 'patron' ? 'Patrón' : 'Sin acceso'} />
           {order.unlock_code
             ? <InfoRow label="Código" value={order.unlock_code} mono />
@@ -1055,7 +1056,7 @@ const inp: React.CSSProperties = {
   fontSize: 13, background: '#fff', boxSizing: 'border-box',
 }
 function PrivateSourcing({orderId}:{orderId:string}){
- const [rows,setRows]=useState<{caption:string;supplier:string|null;cost:number}[]>([])
+ const [rows,setRows]=useState<{caption:string;supplier:string|null;cost:number;quotedTotal:number;estimatedMargin:number|null}[]>([])
  useEffect(()=>{
   const ctrl=new AbortController()
   setRows([])
@@ -1064,5 +1065,5 @@ function PrivateSourcing({orderId}:{orderId:string}){
   return ()=>ctrl.abort()
  },[orderId])
  if(!rows.length)return null
- return <section style={{background:'#f7f9fc',border:'1px solid #dce3ed',borderRadius:12,padding:14,marginBottom:14}}><strong>Compra de repuestos · Sólo taller</strong>{rows.map((row,i)=><p key={i} style={{fontSize:13,color:'#475569'}}><b>{row.caption}</b> · {row.supplier?row.supplier+' · costo '+ars(row.cost):'Proveedor por confirmar'}</p>)}</section>
+ return <section style={{background:'#f7f9fc',border:'1px solid #dce3ed',borderRadius:12,padding:14,marginBottom:14}}><strong>Compra de repuestos · Sólo taller</strong>{rows.map((row,i)=><p key={i} style={{fontSize:13,color:'#475569'}}><b>{row.caption}</b> · {row.supplier?row.supplier+' · costo '+ars(row.cost)+' · final '+ars(row.quotedTotal)+(row.estimatedMargin==null?'':' · margen estimado antes de comisión '+ars(row.estimatedMargin)):'Proveedor por confirmar'}</p>)}</section>
 }

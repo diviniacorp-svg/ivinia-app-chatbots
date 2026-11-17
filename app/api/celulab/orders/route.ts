@@ -113,21 +113,22 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  let cajaWarning=''
   // Auto-registro de seña en caja si deposit > 0
   if (deposit > 0 && data) {
-    await db.from('cl_caja_movimientos').insert({
+    const {error:cashError}=await db.from('cl_caja_movimientos').insert({
       tipo: 'ingreso',
       concepto: `Seña ${data.order_number} — ${device_brand} ${device_model}`,
       categoria: null,
-      metodo_pago: method==='mercadopago'?'mercadopago':method,
+      metodo_pago: method==='efectivo'?'efectivo':'digital',
       monto_ars: deposit,
       equipo_modelo: `${device_brand} ${device_model}`,
       orden_id: data.id,
       partner_id: partner_id ?? null,
-      notas: 'Ingreso automático al crear orden'+(paymentAlias?' · Alias '+paymentAlias:''),
+      notas: 'Seña · '+method+(paymentAlias?' · Alias '+paymentAlias:''),
       fecha: new Date().toISOString(),
     }).select().single()
-    // fire-and-forget: no bloqueamos si falla
+    if(cashError)cajaWarning='La orden quedó guardada, pero no se registró la seña en Caja. Revisá el movimiento antes de volver a cargarlo.'
   }
 
   // Notifications are only sent to the owner configured on the server, never to a client-supplied number.
@@ -148,5 +149,5 @@ export async function POST(req: NextRequest) {
     }catch{console.warn('[CeluLab] No se pudo procesar el aviso de nuevo ingreso.')}
   }
 
-  return NextResponse.json(actor.admin?data:partnerOrder(data), { status: 201 })
+  return NextResponse.json({...actor.admin?data:partnerOrder(data),caja_warning:cajaWarning||undefined}, { status: 201 })
 }

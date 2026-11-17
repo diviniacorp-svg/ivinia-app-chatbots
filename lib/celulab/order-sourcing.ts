@@ -26,6 +26,6 @@ export async function orderSourcing(db:ReturnType<typeof createAdminClient>,draf
    return provider?.is_active&&(!isChargeJob(l.job)||chargeSupplier(provider.name))
   })
   const provider=Array.isArray(row?.cl_providers)?row?.cl_providers[0]:row?.cl_providers
-  return {caption:publicOption(l.option)||l.job,supplier:provider?.name||null,cost:row?.cost_ars??0}
+  return {caption:publicOption(l.option)||l.job,supplier:provider?.name||null,cost:row?.cost_ars??0,quotedTotal:l.part+l.labor,estimatedMargin:row?l.part+l.labor-row.cost_ars:null}
  })
 }
