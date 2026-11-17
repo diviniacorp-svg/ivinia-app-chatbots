@@ -21,10 +21,11 @@ async function readRows(table:string,columns:string,sort:string){
 export async function GET(req:NextRequest){
   if(!await hasNucleusSession(req))return reply({},401)
   try{
-    const [repairs,purchases,profiles]=await Promise.all([
+    const [repairs,purchases,profiles,quotes]=await Promise.all([
       readRows('cl_orders','id,order_number,client_name,client_phone,client_dni,device_brand,device_model,requested_work,status,created_at,total_ars','id'),
       readRows('cl_tienda_orders','id,order_number,client_name,client_phone,items,metodo_pago,total_ars,estado,created_at','id'),
-      readRows('cl_customer_profiles','history_key,name,dni,phone','history_key')
+      readRows('cl_customer_profiles','history_key,name,dni,phone','history_key'),
+      readRows('cl_quote_versions','quote_id,revision,customer,customer_phone,issued_at','issued_at')
     ])
     const contact=(name:string,phone:string)=>digits(phone).length>=8&&name?.trim()?name.trim().toLowerCase()+'|'+digits(phone):''
     const aliases=new Map<string,Set<string>>()
@@ -34,18 +35,24 @@ export async function GET(req:NextRequest){
     const unique=(value:string)=>{const ids=aliases.get(value);return ids?.size===1?Array.from(ids)[0]:undefined}
     for(const r of repairs){const d=doc(r.client_dni||'');if(d)alias(contact(r.client_name,r.client_phone),unique(d)||key(d))}
     const edits=new Map<string,Profile>(profiles.map(p=>[p.history_key,p]))
-    const customers=new Map<string,{key:string;name:string;phone:string;dni:string;repairs:Row[];purchases:Row[]}>()
-    const add=(r:Row,kind:'repairs'|'purchases')=>{
+    const customers=new Map<string,{key:string;name:string;phone:string;dni:string;repairs:Row[];purchases:Row[];quotes:Row[]}>()
+    const add=(r:Row,kind:'repairs'|'purchases'|'quotes')=>{
       const d=doc(r.client_dni||''),pair=contact(r.client_name||'',r.client_phone)
       const id=d?(unique(d)||key(d)):unique(pair)||key(pair&&!aliases.has(pair)?pair:kind+':'+r.id)
       let c=customers.get(id)
-      if(!c){const p=edits.get(id);c={key:id,name:p?.name??r.client_name??'Sin nombre',dni:p?.dni??r.client_dni??'',phone:p?.phone??r.client_phone,repairs:[],purchases:[]};customers.set(id,c)}
+      if(!c){const p=edits.get(id);c={key:id,name:p?.name??r.client_name??'Sin nombre',dni:p?.dni??r.client_dni??'',phone:p?.phone??r.client_phone,repairs:[],purchases:[],quotes:[]};customers.set(id,c)}
       c[kind].push(r)
     }
     repairs.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))
     purchases.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))
     for(const r of repairs)add(r,'repairs')
     for(const r of purchases)add(r,'purchases')
+    const seen=new Set<string>()
+    for(const v of quotes.sort((a,b)=>b.revision-a.revision)){
+      if(seen.has(v.quote_id))continue
+      seen.add(v.quote_id)
+      if(v.customer||v.customer_phone)add({id:v.quote_id,client_name:v.customer||'Sin nombre',client_phone:v.customer_phone,created_at:v.issued_at},'quotes')
+    }
     return reply(Array.from(customers.values()).sort((a,b)=>a.name.localeCompare(b.name,'es')))
   }catch{return reply({error:'No se pudo cargar el historial.'},503)}
 }
