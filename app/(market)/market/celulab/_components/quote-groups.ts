@@ -2,7 +2,7 @@ export type QuoteLine = {device:string; job:string; part:number; labor:number; p
 export const pesos = (n:number)=>n.toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0})
 export function quoteSummary(lines:QuoteLine[]){
   const devices = new Map<string, Map<string,QuoteLine[]>>()
-  for(const [i,line] of lines.entries()){
+  for(const [i,line] of Array.from(lines.entries())){
     const key=line.equipment||line.device
     const tasks=devices.get(key)||new Map<string,QuoteLine[]>()
     const task=line.task||String(i)
@@ -11,7 +11,7 @@ export function quoteSummary(lines:QuoteLine[]){
   }
   return Array.from(devices.values()).map((tasks,index)=>{
     let variants:{items:string[];total:number;pending:boolean}[]=[{items:[],total:0,pending:false}]
-    for(const options of tasks.values()){
+    for(const options of Array.from(tasks.values())){
       if(variants.length*options.length>128)throw Error('Elegí hasta 128 combinaciones por equipo.')
       variants=variants.flatMap(v=>options.map(l=>({
         items:[...v.items,[l.job,l.option,l.pending?'A confirmar':pesos(l.part+l.labor)].filter(Boolean).join(' · ')],
