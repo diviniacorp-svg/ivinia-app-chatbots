@@ -36,6 +36,7 @@ type Order = {
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
   damage_diagram: { markers?: DamageMarker[] }
+  quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
   notes: string
@@ -422,7 +423,7 @@ function OrderDetail({
         </div>
       )}
 
-      <div style={{ marginBottom: 16 }}><QuoteEditor order={order.id} name={order.client_name} device={order.device_brand+' '+order.device_model}/><ExtraJobs id={order.id} /></div>
+      <div style={{ marginBottom: 16 }}><QuoteEditor initialLines={order.quote_draft_lines} order={order.id} name={order.client_name} device={order.device_brand+' '+order.device_model}/><ExtraJobs id={order.id} /></div>
       {/* Info grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <InfoCard title="👤 Cliente">
