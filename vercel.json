@@ -6,7 +6,11 @@
     },
     {
       "path": "/api/cron/social-publish",
-      "schedule": "0 12,15,22 * * *"
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/celulab/sync/tienda",
+      "schedule": "0 13 * * *"
     }
   ]
 }

@@ -1,0 +1,1 @@
+alter table public.cl_orders add column reported_fault text not null default '';

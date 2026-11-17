@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+import {hasNucleusSession} from '@/lib/celulab/nucleus-session'
+
 export const dynamic = 'force-dynamic'
 
 // GET /api/celulab/providers
-export async function GET() {
+export async function GET(req:NextRequest) {
+  if(!await hasNucleusSession(req))return NextResponse.json({error:'Sólo taller.'},{status:403})
   const db = createAdminClient()
   const { data, error } = await db
     .from('cl_providers')

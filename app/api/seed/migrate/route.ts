@@ -6,6 +6,9 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
+// Database-dependent routes must run on request, never during static generation.
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const db = createAdminClient()
 

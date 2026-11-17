@@ -1,0 +1,68 @@
+'use client'
+import {useState} from 'react'
+import {linePrice,publicJob,quoteGroups,type QuoteGroups,type QuoteLine as Line} from './quote-groups'
+import {publicOption} from './quote-labels'
+import {printableQuote,quoteDate,quoteFilename,quoteMessage,quoteNote,quoteNumber,quotePdf,type Version} from './quote-document'
+import QuoteParts,{catalogGroup} from './QuoteParts'
+import {isChargeJob} from './charge-quote'
+import {ChargeOptions,RepairPicker,standardRepairRates} from './RepairPicker'
+import {chargeCaution,chargeProfile,chargeTierOptions,REVIEW_PRICE} from './repair-guidance'
+const ars=(n:number)=>n.toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0})
+const unsupported=(l:Line)=>l.job==='Cambio de tapa trasera (excepto iPhone)'&&/iphone/i.test(l.device)
+const detail=(job:string)=>job==='Revisión'?'Revisamos el equipo completo y te comunicamos el presupuesto. Si aceptás, pagás únicamente los trabajos. Si lo retirás sin reparar, se cobra la revisión.':job==='Cuenta de Google'?'Evaluamos el binario y la actualización de software en el día. Valor orientativo de $25.000 a $90.000 o más. Confirmamos viabilidad y precio después de revisar.':''
+export default function QuoteEditor({partner,pin,order,name='',device='',initialLines}:{initialLines?:Line[];partner?:string|null;pin?:string;order?:string;name?:string;device?:string}){
+ const [phone,setPhone]=useState(''),[rates,setRates]=useState<{job:string;labor_ars:number|null;labor_options?:number[]}[]>([])
+ const blank=()=>({equipment:'equipo-inicial',device,job:'',part:0,labor:0})
+ const [open,show]=useState(false),[customer,customerSet]=useState(name),[lines,set]=useState<Line[]>(initialLines?.length?initialLines:[blank()]),[history,list]=useState<Version[]>([]),[base,select]=useState<Version|null>(null),[issued,publish]=useState<Version|null>(null),[message,msg]=useState(''),[busy,wait]=useState(false)
+ const menuRates=rates.length?[...rates,...standardRepairRates.filter(r=>!rates.some(a=>a.job===r.job))]:standardRepairRates
+ const [options,setOptions]=useState<(Line&{selection:string})[]>([])
+ const [chargeTier,setChargeTier]=useState(''),[pdf,setPdf]=useState<Blob|null>(null)
+ const [active,setActive]=useState(''),[draft,setDraft]=useState<Line|null>(null)
+ async function api(data:object){const r=await fetch('/api/celulab/quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,partner,pin,order})});if(!r.ok)throw Error(r.status===409?'Hay una versión más reciente. Volvé a abrir el historial.':'Revisá los datos y el acceso al panel.');return r.json()}
+ async function start(){show(true);msg('');try{const [h,r]=await Promise.all([api({action:'history'}),api({action:'rates'})]);list(h);setRates(r)}catch(e){msg(String(e))}}
+ async function issue(){wait(true);msg('');try{const v:Version=await api({action:'issue',customer,phone,lines,id:base?.quote_id,base:base?.revision});select(v);setPdf(quotePdf(v));publish(v);list(rows=>[v,...rows])}catch(e){msg(String(e))}finally{wait(false)}}
+ function restore(v:Version){setOptions([]);setChargeTier('');select(history.find(x=>x.quote_id===v.quote_id)||v);customerSet(v.customer);setPhone(v.customer_phone||'');set(v.lines);setDraft(null);setActive('');setPdf(quotePdf(v));publish(v)}
+ function print(){
+  if(!issued)return
+  const w=window.open('','_blank')
+  if(!w){msg('Habilitá la ventana de impresión.');return}
+  w.opener=null;w.document.open();w.document.write(printableQuote(issued));w.document.close();w.focus();w.print()
+ }
+ function download(){
+  if(!issued||!pdf)return
+  const url=URL.createObjectURL(pdf), a=document.createElement('a');a.href=url;a.download=quoteFilename(issued);a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)
+ }
+ async function sharePdf(){
+  if(!issued||!pdf)return
+  const file=new File([pdf],quoteFilename(issued),{type:'application/pdf'})
+  if(typeof navigator.share!=='function'||!navigator.canShare?.({files:[file]})){download();msg('PDF descargado. Adjuntalo en el chat de WhatsApp.');return}
+  try{await navigator.share({files:[file],text:quoteMessage(issued)})}catch(error){if(!(error instanceof DOMException&&error.name==='AbortError')){download();msg('PDF descargado. Adjuntalo en el chat de WhatsApp.')}}
+ }
+ let summary:QuoteGroups=[],tooMany=false
+ try{summary=quoteGroups(lines.filter(l=>l.job))}catch{tooMany=true}
+ return <><button type="button" className="cl-quote-open" onClick={start}>📄 Nuevo presupuesto</button>{open&&<dialog open aria-label="Presupuesto" className="cl-quote"><div><header><h2>Presupuesto</h2><button onClick={()=>show(false)}>Cerrar</button></header><label>Nombre y apellido (opcional)<small>¿A nombre de quién hacemos el presupuesto?</small><input value={customer} onChange={e=>{customerSet(e.target.value);publish(null)}}/></label>
+ <label>Teléfono (opcional)<small>¿A qué número te podemos enviar el presupuesto?</small><input type="tel" value={phone} onChange={e=>{setPhone(e.target.value);publish(null)}}/></label>
+ {Array.from(new Set(lines.map(l=>l.equipment||l.device))).map((key,index)=>{
+ const team=lines.filter(l=>(l.equipment||l.device)===key)
+ const current=active===key||(!active&&index===0)
+ return <fieldset key={key}><legend><button type="button" onClick={()=>{setActive(key);setDraft(null);setOptions([]);setChargeTier('')}}>Equipo {index+1} · {team[0].device||'Nuevo equipo'}</button></legend>
+ {current&&<>{!team.some(l=>l.job)&&lines.length>team.length&&<button onClick={()=>{set(lines.filter(l=>!team.includes(l)));setActive('');setDraft(null);publish(null)}}>Descartar equipo vacío</button>}<label>Marca y modelo<small>¿Qué equipo querés presupuestar?</small><input readOnly={team.some(l=>l.job && (l.option || (isChargeJob(l.job)&&!l.pending)))} value={team[0].device} onChange={e=>{const id=team[0].equipment||crypto.randomUUID();set(lines.map(l=>team.includes(l)?{...l,equipment:id,device:e.target.value}:l));setActive(id);setDraft(null);setOptions([]);setChargeTier('');publish(null)}}/></label>
+ <div style={{display:'flex',alignItems:'end',gap:8,flexWrap:'wrap'}}><RepairPicker device={team[0].device} rates={menuRates} value={draft?.equipment===key?(menuRates.some(r=>r.job===draft.job)?draft.job:'Otro trabajo'):''} disabledJob={job=>unsupported({...team[0],job})} onChange={job=>{
+  const rate=menuRates.find(r=>r.job===job)
+  const fee=job==='Revisión'?REVIEW_PRICE:rate?.labor_ars
+  setOptions([]);setChargeTier(isChargeJob(job)?chargeProfile(team[0].device).tier||'':'')
+  setDraft({equipment:key,device:team[0].device,task:crypto.randomUUID(),job,part:0,labor:catalogGroup(job)?0:fee??0,pending:!!catalogGroup(job)||fee==null})
+ }}/>
+ <button disabled={!draft||draft.equipment!==key||!team[0].device.trim()||!draft.job.trim()} onClick={()=>{if(draft){set([...lines.filter(l=>l.job||!team.includes(l)),...(options.length?options.map(({selection,...line})=>line):[draft])]);setOptions([]);setDraft(null);setChargeTier('');publish(null)}}}>+ Agregar trabajo</button></div>
+ {draft&&draft.equipment===key&&<>{(draft.job==='Otro trabajo'||!menuRates.some(r=>r.job===draft.job))&&<label>Trabajo personalizado<input value={draft.job} onChange={e=>setDraft({...draft,job:e.target.value})}/></label>}<p>{detail(draft.job)}</p>{isChargeJob(draft.job)&&<ChargeOptions device={team[0].device} value={chargeTier} onChange={value=>{setChargeTier(value);setOptions([]);publish(null)}}/>}<QuoteParts device={team[0].device} job={draft.job} chargeRate={chargeTierOptions(team[0].device).find(t=>t.tier===chargeTier)?.amount||0} selected={options.map(o=>o.selection)} onPick={(selection,option,total,labor)=>{setOptions(rows=>rows.some(l=>l.selection===selection)?rows.filter(l=>l.selection!==selection):[...rows,{...draft,selection,option,part:total-labor,labor,pending:false}]);publish(null)}}/>
+ <button onClick={()=>{setDraft(null);setOptions([]);setChargeTier('')}}>Cancelar trabajo</button></>}
+ {team.filter(l=>l.job).map((l,i)=><div className="cl-quote-row" key={i}><span><strong>{publicJob(l)}</strong>{publicOption(l.option)&&<small>{publicOption(l.option)}</small>}</span><button aria-label={'Quitar '+publicJob(l)} onClick={()=>{const rest=lines.filter(x=>x!==l);set(team.length===1?[...rest,{...blank(),equipment:key,device:l.device}]:rest);publish(null)}}>🗑</button><b>{linePrice(l)}</b></div>)}
+ </>}
+ </fieldset>})}
+ <button onClick={()=>{const equipment=crypto.randomUUID();set([...lines,{...blank(),device:'',equipment}]);setActive(equipment);setDraft(null);publish(null)}}>+ Agregar equipo</button>
+ {tooMany?<p role="alert">Reducí las alternativas por equipo antes de emitir.</p>:summary.length>0&&<section className="cl-quote-preview"><h3>Vista previa del presupuesto</h3>{summary.map(g=><article key={g.title}><h4>{g.title}</h4>{g.variants.map((a,i)=><div key={i}>{g.variants.length>1&&<h5>Alternativa {i+1}</h5>}{a.lines.map((line,j)=><div className="cl-quote-row" key={j}><span><strong>{publicJob(line)}</strong>{publicOption(line.option)&&<small>{publicOption(line.option)}</small>}{isChargeJob(line.job)&&chargeCaution(line.device)&&<small style={{color:'#8c4d11'}}>{chargeCaution(line.device)}</small>}</span><b>{linePrice(line)}</b></div>)}<div className="cl-quote-row cl-total"><strong>Total del equipo</strong><b>{a.pending?'A confirmar':ars(a.total)}</b></div></div>)}</article>)}</section>}
+ <small>{quoteNote}</small><footer><button className="cl-issue" disabled={busy||tooMany||!!draft||!!issued||!lines.length||lines.some(l=>unsupported(l)||!l.job.trim()||!l.device.trim()||l.part<0||l.labor<0)} onClick={issue}>{busy?'Emitiendo…':issued?'Presupuesto emitido':base?'Emitir nueva versión':'Emitir presupuesto'}</button><button type="button" onClick={print} disabled={!issued} title={issued?'Imprimir presupuesto':'Emití el presupuesto para imprimirlo'}>🖨 Imprimir</button>{issued&&<><button onClick={download}>Descargar PDF</button><a className="cl-whatsapp" href={'https://wa.me/?text='+encodeURIComponent(quoteMessage(issued))} target="_blank" rel="noreferrer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.7 12a8.7 8.7 0 0 1-12.9 7.6l-4.6 1.2 1.2-4.5A8.7 8.7 0 1 1 20.7 12Z" stroke="currentColor" strokeWidth="1.6"/><path d="M8.2 7.7h1.2l1.1 2.6-.8.9c.7 1.5 1.7 2.5 3.2 3.1l.9-1 2.7 1.3c.2 1.4-.7 2-2 2-3.5-.1-7.2-3.7-7.3-7.2 0-.7.4-1.4 1-1.7Z" fill="currentColor"/></svg> WhatsApp</a><button onClick={sharePdf}>Compartir PDF</button><small>Emitido · {quoteNumber(issued)}</small></>}</footer>
+ <details><summary>Historial de presupuestos</summary>{history.map(v=><button key={v.quote_id+v.revision} onClick={()=>restore(v)}>{v.customer} · {quoteDate(v.issued_at)} · v{v.revision}</button>)}</details><button onClick={()=>{select(null);publish(null);set([blank()]);setDraft(null);setActive('');customerSet(name);setPhone('');msg('')}}>Nuevo presupuesto</button><p role="status">{message}</p></div></dialog>}
+ <style>{`.cl-quote-open,.cl-quote button,.cl-quote a{font:600 13px system-ui;background:white;color:#245ccd;border:1px solid #ced9ec;border-radius:8px;padding:8px 12px;cursor:pointer}.cl-quote{position:fixed;inset:0;margin:auto;width:min(94vw,620px);height:fit-content;max-height:88vh;overflow:auto;padding:18px;border:1px solid #dbe3ef;border-radius:16px;box-shadow:0 0 0 100vmax #10182870;z-index:9999;color:#192438;background:white;font:14px system-ui}.cl-quote header,.cl-quote footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.cl-quote h2,.cl-quote h3{font-weight:700;margin:8px 0}.cl-quote label{display:block;font-size:12px;color:#475569}.cl-quote input,.cl-quote select{display:block;width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:8px;margin:4px 0 8px}.cl-quote fieldset{border:1px solid #dce6fa;border-left:4px solid #4273de;border-radius:10px;padding:10px;margin:12px 0}.cl-quote legend{color:#2852a1;font-weight:700}.cl-quote details,.cl-quote footer{margin:12px 0}.cl-quote summary{cursor:pointer;color:#2852a1;font-weight:600}.cl-quote .cl-issue{background:#245cda;color:white}.cl-quote .cl-whatsapp{display:inline-flex;align-items:center;gap:6px;background:#087640;color:white;border-color:#087640;text-decoration:none}.cl-quote .cl-quote-preview{background:#f7f9fc;border:1px solid #dce3ed;border-radius:12px;padding:12px;margin:14px 0}.cl-quote-preview article{background:#fff;border:1px solid #e1e6ee;border-radius:8px;padding:0 9px;margin:8px 0}.cl-quote-preview h4,.cl-quote-preview h5{margin:10px 0;font-size:13px}.cl-quote-preview h5{color:#475569}.cl-quote-row{display:flex;align-items:center;gap:10px;border-top:1px solid #e5eaf2;padding:9px 0}.cl-quote-row>span{flex:1;min-width:0}.cl-quote-row b{white-space:nowrap;margin-left:auto}.cl-quote-row small,.cl-part small{display:block;color:#53647d;font-size:11px;margin-top:3px}.cl-total{color:#234a90;background:#f7f9fd;padding-inline:6px}.cl-parts{padding:7px 0}.cl-quote .cl-part{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;margin:5px 0;color:#243854}.cl-part[aria-pressed=true]{background:#eaf2ff;border-color:#245cda}.cl-part .cl-no-stock{color:#b42318}.cl-part .cl-in-stock{color:#067647}.cl-quote button:disabled{opacity:.5}`}</style></>
+}
+

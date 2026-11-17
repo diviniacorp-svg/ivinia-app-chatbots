@@ -1,4 +1,7 @@
 import { createAdminClient } from '@/lib/supabase'
+
+// Database-dependent routes must run on request, never during static generation.
+export const dynamic = 'force-dynamic'
 import MarketClient from './MarketClient'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────

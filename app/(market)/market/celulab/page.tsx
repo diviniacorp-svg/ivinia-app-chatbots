@@ -3,39 +3,27 @@ import { createAdminClient } from '@/lib/supabase'
 import CelulabClient from './CelulabClient'
 
 export const metadata: Metadata = {
-  title: 'CeluLab — Lista de precios oficial',
+  title: { absolute: 'CeluLab' },
   description: 'Precios actualizados de módulos, baterías y reparaciones para celulares. Acceso público y mayorista. San Luis, Argentina.',
 }
 
 export const revalidate = 3600
 
-async function getPrices() {
+async function getActivePartners() {
   try {
     const db = createAdminClient()
-    const { data: client } = await db
-      .from('clients')
-      .select('id, custom_config')
-      .eq('chatbot_id', 'celulab-demo')
-      .single()
-
-    if (!client) return null
-
-    const { data: config } = await db
-      .from('booking_configs')
-      .select('services')
-      .eq('client_id', client.id)
-      .single()
-
-    return {
-      config: client.custom_config,
-      services: config?.services ?? [],
-    }
+    const { data } = await db
+      .from('cl_partners')
+      .select('id, name, address')
+      .eq('is_active', true)
+      .order('name')
+    return (data ?? []) as Array<{ id: string; name: string; address: string }>
   } catch {
-    return null
+    return []
   }
 }
 
 export default async function CelulabPage() {
-  const data = await getPrices()
-  return <CelulabClient data={data} />
+  const partners = await getActivePartners()
+  return <CelulabClient partners={partners} />
 }

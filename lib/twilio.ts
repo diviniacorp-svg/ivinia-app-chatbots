@@ -94,6 +94,49 @@ ${proposalUrl}
 Tiene precios, lo que incluye, y cómo funciona el setup. Cualquier duda me avisás.`
 }
 
+// Normaliza un número de teléfono argentino a E.164 (+549XXXXXXXXXX)
+export function normalizeArgPhone(raw: string): string | null {
+  if (!raw) return null
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('549') && digits.length === 13) return `+${digits}`
+  if (digits.startsWith('54') && digits.length === 12) return `+549${digits.slice(2)}`
+  if (digits.length === 10) return `+549${digits}`
+  if (digits.length === 11 && digits.startsWith('0')) return `+549${digits.slice(1)}`
+  return null
+}
+
+// Template: CeluLab — equipo listo para retirar
+export function buildCelulabOrdenLista(params: {
+  clientName: string
+  device: string
+  orderNumber: string
+  partnerName: string
+}): string {
+  return `¡Hola ${params.clientName}! 🎉
+
+Tu *${params.device}* (orden *${params.orderNumber}*) está *listo para retirar* en ${params.partnerName}.
+
+Rastreá tu orden en: https://divinia.vercel.app/seguimiento/${params.orderNumber}
+
+¡Gracias por confiar en CeluLab! 📱`
+}
+
+// Template: CeluLab — diagnóstico listo, presupuesto pendiente de aprobación
+export function buildCelulabOrdenDiagnosticada(params: {
+  clientName: string
+  device: string
+  orderNumber: string
+  partnerName: string
+}): string {
+  return `Hola ${params.clientName} 👋
+
+Ya revisamos tu *${params.device}* (orden *${params.orderNumber}*) en ${params.partnerName}.
+
+El diagnóstico está listo. Comunicate con nosotros para conocer el presupuesto y dar el OK para la reparación.
+
+Rastreá tu orden: https://divinia.vercel.app/seguimiento/${params.orderNumber}`
+}
+
 // Template: confirmación de turno (desde Turnero)
 export function buildTurneroConfirmation(params: {
   clientName: string
