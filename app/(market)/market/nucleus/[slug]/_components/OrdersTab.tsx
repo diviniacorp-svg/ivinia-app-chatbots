@@ -216,13 +216,13 @@ export function OrdersTab({ color }: { color: string }) {
             <span style={{ fontSize: 11, color: '#d1d5db', marginLeft: 8 }}>· actualizado {secsAgo()}</span>
           </div>
         </div>
-        <QuoteEditor/>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}><QuoteEditor/>
         <button onClick={() => setShowNewForm(true)} style={{
           padding: '10px 20px', borderRadius: 10, border: 'none',
           background: color, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
         }}>
           + Nueva orden
-        </button>
+        </button></div>
       </div>
 
       {/* Stats strip */}
