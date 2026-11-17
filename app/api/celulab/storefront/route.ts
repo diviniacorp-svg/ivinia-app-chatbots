@@ -1,19 +1,9 @@
 import { createHash } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
-import { isTechnicalCategory } from '@/lib/celulab/catalog'
+import { accessoryFinalPrice,isAccessoryProduct,searchable } from '@/lib/celulab/catalog'
 
 export const dynamic = 'force-dynamic'
-
-function searchable(value: string) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-}
-
-function isRepairBattery(category: string, name: string) {
-  const label = searchable(category + ' ' + name)
-  if (/\b(power ?banks?|portatil|extern[ao]s?|recargables? aa)\b/.test(label)) return false
-  return /\bbaterias?\b/.test(label) && (/^baterias?( |$)/.test(searchable(category)) || /\b(iphone|samsung|motorola|moto|xiaomi|redmi|galaxy|interna|repuesto)\b/.test(label))
-}
 
 export async function GET(req: NextRequest) {
   const db = createAdminClient()
@@ -45,7 +35,7 @@ export async function GET(req: NextRequest) {
   const { data: markups, error } = await db.from('cl_product_markups').select('category,markup_pct')
   if (error) return NextResponse.json({ error: 'No pudimos consultar los precios.' }, { status: 503 })
   const rates = new Map((markups || []).map(row => [row.category, Number(row.markup_pct)]))
-  const catalogue = products.filter(row => (isTechnicalCategory(row.category) || isRepairBattery(row.category || '', row.name || '')) === technical)
+  const catalogue = products.filter(row => isAccessoryProduct(row.category||'',row.name||'') !== technical)
   const counts = new Map<string, number>()
   catalogue.forEach(row => counts.set(row.category, (counts.get(row.category) || 0) + 1))
   const filtered = catalogue.filter(row => (!category || row.category === category)
@@ -56,7 +46,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     items: filtered.slice(offset, offset + limit).map(row => ({ ...row,
       markup_pct: rates.get(row.category) || 0,
-      final_price: Math.round(row.price_ars * (1 + (rates.get(row.category) || 0) / 100)),
+      final_price: accessoryFinalPrice(row.price_ars,rates.get(row.category)||0),
     })),
     total: filtered.length,
     categories: Array.from(counts).map(([name, count]) => ({ name, count })).sort((a,b) => a.name.localeCompare(b.name, 'es')),

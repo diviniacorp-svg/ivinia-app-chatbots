@@ -543,7 +543,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {tab === 'lista' && <AdminListaTab color={color} configs={repairConfigs} />}
 
             {/* ══ TIENDA ══ */}
-            {tab === 'tienda' && (isCeluLab?<><h2 style={{fontSize:17,marginBottom:4}}>Catálogo, stock y pedidos</h2><StoreOperations/></>:<TiendaTab color={color}/>)}
+            {tab === 'tienda' && (isCeluLab?<StoreOperations/>:<TiendaTab color={color}/>)}
             {tab === 'store-management' && <TiendaTab color={color} operations={false} />}
             {tab === 'store-providers' && <section aria-label="Proveedores de accesorios">
               <h2 style={{fontSize:17,margin:'0 0 8px'}}>Proveedores de accesorios</h2>

@@ -8,6 +8,7 @@ import {chargeCaution,chargeProfile,chargeTierOptions,intakeChoices,suggestIntak
 import CustomersTab,{useCustomers} from '../../../../nucleus/[slug]/_components/CustomersTab'
 import {usePaymentAccounts,type DepositMethod} from '../../../_components/PaymentAccounts'
 import {fetchOrderPages,finalOrderStatus,matchesOrderMetric,orderMetricWindow} from '../../../_components/order-lists'
+import OrderPanelHeader from '../../../_components/OrderPanelHeader'
 import OrderMetricCards from '../../../_components/OrderMetricCards'
 import OrderPeriods from '../../../_components/OrderPeriods'
 import QuotesTab from '../../../../nucleus/[slug]/_components/QuotesTab'
@@ -386,6 +387,8 @@ function LocalDashboard({
       </div>
 
       <div style={{ maxWidth: activeTab==='clientes'?1440:960, margin: '0 auto', padding: '20px 16px' }}>
+        <OrderPanelHeader title="Órdenes de Servicio" subtitle={partnerName+' · Panel del local'} detail={`${orders.length} ${orders.length===1?'orden':'órdenes'} de este local`}
+          color="#2563eb" partner={partnerId} pin={pin} onNew={()=>setView('new')} />
         <OrderMetricCards orders={orders} filter={activeTab==='historial'&&historyDelivered?'delivered':activeTab==='ordenes'?statusFilter:''}
           loading={loading} locked={monthlyBudget===null} budget={monthlyBudget} onSelect={key=>{
             if(key==='budgetMonth'&&monthlyBudget===null){setShowBudgetPin(value=>!value);setShowMetrics(false);return}
@@ -395,13 +398,6 @@ function LocalDashboard({
           }} />
         {showBudgetPin&&<div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}><MetricsPanel orders={orders} unlocked={false} budgetOnly onUnlock={unlockBudget} onClose={()=>setShowBudgetPin(false)} /></div>}
 
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap',marginBottom:16}}><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>          <QuoteEditor partner={partnerId} pin={pin}/>
-          <button onClick={() => setView('new')} style={{
-            padding: '8px 16px', borderRadius: 9, border: 'none',
-            background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-          }}>
-            + Nueva orden
-          </button></div></div>
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 18, overflowX: 'auto', paddingBottom: 2 }}>
           {[

@@ -1,4 +1,5 @@
 'use client'
+import OrderPanelHeader from '../../../celulab/_components/OrderPanelHeader'
 import OrderMetricCards from '../../../celulab/_components/OrderMetricCards'
 import OrderPeriods from '../../../celulab/_components/OrderPeriods'
 import type {QuoteOrderSeed} from '../../../celulab/_components/quote-order'
@@ -204,24 +205,8 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder, direct=false }: 
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 18 }}>{direct?'Órdenes de mi taller':'Órdenes de Servicio'}</div>
-          <div style={{fontSize:12,color:'#64748b',marginBottom:4}}>{direct?'Ingresos directos de tu taller':'Flujo general · tu taller y locales socios'}</div>
-          <div style={{ fontSize: 13, color: '#6b7280' }}>
-            {visibleOrders.length} orden{visibleOrders.length !== 1 ? 'es' : ''}
-            <span style={{ fontSize: 11, color: '#d1d5db', marginLeft: 8 }}>· actualizado {secsAgo()}</span>
-          </div>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}><QuoteEditor/>
-        <button onClick={() => setShowNewForm(true)} style={{
-          padding: '10px 20px', borderRadius: 10, border: 'none',
-          background: color, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
-        }}>
-          + Nueva orden
-        </button></div>
-      </div>
+      <OrderPanelHeader title={direct?'Órdenes de mi taller':'Órdenes de Servicio'} subtitle={direct?'Ingresos directos de tu taller':'Flujo general · tu taller y locales socios'}
+        detail={`${visibleOrders.length} ${visibleOrders.length===1?'orden':'órdenes'} · actualizado ${secsAgo()}`} color={color} onNew={()=>setShowNewForm(true)} />
 
       <OrderMetricCards orders={scopedOrders} filter={statusFilter} loading={loading} onSelect={filter=>setStatusFilter(statusFilter===filter?'all':filter)} />
 
