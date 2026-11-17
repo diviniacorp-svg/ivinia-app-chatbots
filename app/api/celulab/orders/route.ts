@@ -18,6 +18,24 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status'), partner_id=searchParams.get('partner_id')
   const actor=await orderActor(req,partner_id)
   if(!actor.allowed)return NextResponse.json({}, {status:401})
+  const direct=searchParams.get('scope')==='direct'
+  if(direct&&(!actor.admin||partner_id))return NextResponse.json({}, {status:403})
+  if(searchParams.get('summary')==='budget'){
+    if(!partner_id||!validPartnerId(partner_id)||!await canReadEarnings(req,partner_id))return NextResponse.json({}, {status:403,headers:{'Cache-Control':'no-store'}})
+    const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',year:'numeric',month:'2-digit'}).format(new Date())
+    const from=new Date(date+'-01T00:00:00-03:00')
+    const to=new Date(from);to.setUTCMonth(to.getUTCMonth()+1)
+    const db=createAdminClient()
+    let total=0
+    for(let start=0;;start+=500){
+      const {data,error}=await db.from('cl_orders').select('budget_ars').eq('partner_id',partner_id).neq('status','rechazado').gt('budget_ars',0)
+        .gte('created_at',from.toISOString()).lt('created_at',to.toISOString()).order('id').range(start,start+499)
+      if(error)return NextResponse.json({}, {status:503,headers:{'Cache-Control':'no-store'}})
+      for(const row of data||[])total+=Number(row.budget_ars)||0
+      if(!data||data.length<500)break
+    }
+    return NextResponse.json({total},{headers:{'Cache-Control':'no-store'}})
+  }
   const offset=Number(searchParams.get('offset')||0)
   if(!Number.isSafeInteger(offset)||offset<0||offset>1000000)return NextResponse.json({}, {status:400})
   const db = createAdminClient()
@@ -30,6 +48,7 @@ export async function GET(req: NextRequest) {
 
   if (status) q = q.eq('status', status)
   if (partner_id) q = q.eq('partner_id', partner_id)
+  if(direct)q=q.is('partner_id',null)
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

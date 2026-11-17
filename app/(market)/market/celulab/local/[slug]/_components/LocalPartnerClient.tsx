@@ -7,7 +7,8 @@ import {isChargeJob} from '../../../_components/charge-quote'
 import {chargeCaution,chargeProfile,chargeTierOptions,intakeChoices,suggestIntake,REVIEW_PRICE,UNKNOWN_ACCESS} from '../../../_components/repair-guidance'
 import CustomersTab,{useCustomers} from '../../../../nucleus/[slug]/_components/CustomersTab'
 import {usePaymentAccounts,type DepositMethod} from '../../../_components/PaymentAccounts'
-import {fetchOrderPages,finalOrderStatus} from '../../../_components/order-lists'
+import {fetchOrderPages,finalOrderStatus,matchesOrderMetric,orderMetricWindow} from '../../../_components/order-lists'
+import OrderMetricCards from '../../../_components/OrderMetricCards'
 import OrderPeriods from '../../../_components/OrderPeriods'
 import QuotesTab from '../../../../nucleus/[slug]/_components/QuotesTab'
 import {quoteJobsToReview,splitDevice,type QuoteOrderSeed} from '../../../_components/quote-order'
@@ -205,8 +206,8 @@ function PinScreen({ partnerName, logoUrl, pinInput, pinErr, onInput, onSubmit }
 
 // ─── Local Dashboard ──────────────────────────────────────────────────────────
 
-function MetricsPanel({orders, unlocked, onUnlock, onClose}: {
-  orders: Order[]; unlocked: boolean
+function MetricsPanel({orders, unlocked, onUnlock, onClose, budgetOnly=false}: {
+  orders: Order[]; unlocked: boolean; budgetOnly?:boolean
   onUnlock: (value: string) => Promise<boolean>; onClose: () => void
 }) {
   const titleId = useId()
@@ -218,7 +219,7 @@ function MetricsPanel({orders, unlocked, onUnlock, onClose}: {
   return (
     <section aria-labelledby={titleId} style={{ border: '1px solid #e5e7eb', background:'#fff', borderRadius: 16, padding: 14, width:'100%', maxWidth:unlocked?'100%':370, boxSizing: 'border-box', color: '#111827' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-        <h2 id={titleId} style={{ margin: 0, fontSize: 16 }}>📊 Métricas</h2>
+        <h2 id={titleId} style={{ margin: 0, fontSize: 16 }}>{budgetOnly?'🔒 Presupuestado este mes':'📊 Métricas'}</h2>
         <button type="button" onClick={onClose} aria-label="Cerrar métricas" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e5e7eb', background: '#f9fafb', color: '#475569', cursor: 'pointer', fontSize: 20 }}>×</button>
       </div>
       {unlocked ? <><div style={{borderBottom:'1px solid #e5e7eb',marginBottom:10}}><span style={{display:'inline-block',borderBottom:'2px solid #6366f1',padding:'8px 12px',fontSize:13,fontWeight:700,color:'#4f46e5'}}>Ganancias</span></div><LocalEarnings orders={orders} unlocked /></> : (
@@ -233,7 +234,7 @@ function MetricsPanel({orders, unlocked, onUnlock, onClose}: {
           setValue('')
           setVisible(false)
         }} style={{ display: 'grid', justifyItems: 'center', gap: 10, textAlign: 'center', padding: '4px 0 10px' }}>
-          <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Ingresá el PIN del dueño para ver las ganancias.</p>
+          <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{budgetOnly?'Ingresá el PIN del dueño para ver el monto del mes.':'Ingresá el PIN del dueño para ver las ganancias.'}</p>
           <label htmlFor={titleId + '-pin'} style={{ fontSize: 12, color: '#64748b' }}>PIN</label>
           <div style={{ position: 'relative' }}>
             <input id={titleId + '-pin'} autoFocus autoComplete="off" type={visible ? 'text' : 'password'} inputMode="numeric" maxLength={4} required pattern="[0-9]{4}" placeholder="••••" value={value} onChange={e => setValue(e.target.value.replace(/[^0-9]/g, ''))} style={{ background: '#eef2f7', border: '1px solid transparent', borderRadius: 12, width: 80, minHeight: 44, textAlign: 'center', letterSpacing: 4, color: '#334155' }} />
@@ -241,7 +242,7 @@ function MetricsPanel({orders, unlocked, onUnlock, onClose}: {
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>{visible && <path d="M3 3l18 18"/>}</svg>
             </button>
           </div>
-          <button disabled={busy || value.length !== 4} style={{ background: '#6366f1', color: '#fff', border: 0, borderRadius: 16, padding: '8px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: busy || value.length !== 4 ? .55 : 1 }}>{busy ? 'Verificando…' : 'Ver métricas'}</button>
+          <button disabled={busy || value.length !== 4} style={{ background: '#6366f1', color: '#fff', border: 0, borderRadius: 16, padding: '8px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: busy || value.length !== 4 ? .55 : 1 }}>{busy ? 'Verificando…' : budgetOnly?'Ver monto':'Ver métricas'}</button>
           {error && <p role="alert" style={{ color: '#b91c1c', fontSize: 12, margin: 0 }}>No se pudo desbloquear. Revisá el PIN o volvé a intentar.</p>}
         </form>
       )}
@@ -269,6 +270,28 @@ function LocalDashboard({
   const [statusFilter, setStatusFilter] = useState<string>('todas')
   const [commissionUnlocked,setCommissionUnlocked]=useState(false)
   const [showMetrics,setShowMetrics]=useState(false)
+  const [showBudgetPin,setShowBudgetPin]=useState(false)
+  const [monthlyBudget,setMonthlyBudget]=useState<number|null>(null)
+  const [historyDelivered,setHistoryDelivered]=useState(false)
+  useEffect(()=>{
+    if(monthlyBudget===null)return
+    const timer=setTimeout(()=>setMonthlyBudget(null),900000)
+    return ()=>clearTimeout(timer)
+  },[monthlyBudget])
+  async function unlockBudget(value:string){
+    if(!await unlockCommission(value))return false
+    try{
+      const response=await fetch('/api/celulab/orders?summary=budget&partner_id='+encodeURIComponent(partnerId),{cache:'no-store'})
+      if(!response.ok)return false
+      const {total}=await response.json()
+      if(typeof total!=='number')return false
+      setMonthlyBudget(total)
+      setShowBudgetPin(false)
+      setActiveTab('ordenes')
+      setStatusFilter('budgetMonth')
+      return true
+    }catch{return false}
+  }
   async function unlockCommission(value:string) {
     try {
       const res=await fetch('/api/celulab/partners/'+partnerId+'/owner-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:value})})
@@ -362,21 +385,15 @@ function LocalDashboard({
         </div>
       </div>
 
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
-        {/* Stats row — clickeable */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
-          {[
-            { label: 'Activas', val: orders.filter(o => !['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status)).length, icon: '⚙️', tab: 'ordenes' as const },
-            { label: 'Listas', val: orders.filter(o => o.status === 'listo').length, icon: '✅', tab: 'ordenes' as const },
-            { label: 'Completadas', val: orders.filter(o => ['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status)).length, icon: '🏁', tab: 'historial' as const },
-          ].map(s => (
-            <button key={s.label} onClick={() => {setActiveTab(s.tab);setStatusFilter(s.label==='Listas'?'listo':s.label==='Activas'?'activas':'todas');if(s.tab==='historial'){setHistorialView('ordenes');setClientFilter(null)}}} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 10px', textAlign: 'center', cursor: 'pointer' }}>
-              <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>{s.val}</div>
-              <div style={{ fontSize: 11, color: '#9ca3af' }}>{s.label}</div>
-            </button>
-          ))}
-        </div>
+      <div style={{ maxWidth: activeTab==='clientes'?1440:960, margin: '0 auto', padding: '20px 16px' }}>
+        <OrderMetricCards orders={orders} filter={activeTab==='historial'&&historyDelivered?'delivered':activeTab==='ordenes'?statusFilter:''}
+          loading={loading} locked={monthlyBudget===null} budget={monthlyBudget} onSelect={key=>{
+            if(key==='budgetMonth'&&monthlyBudget===null){setShowBudgetPin(value=>!value);setShowMetrics(false);return}
+            setShowBudgetPin(false)
+            if(key==='delivered'){setActiveTab('historial');setHistoryDelivered(true);setHistorialView('ordenes');setClientFilter(null)}
+            else {setActiveTab('ordenes');setStatusFilter(statusFilter===key?'todas':key)}
+          }} />
+        {showBudgetPin&&<div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}><MetricsPanel orders={orders} unlocked={false} budgetOnly onUnlock={unlockBudget} onClose={()=>setShowBudgetPin(false)} /></div>}
 
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap',marginBottom:16}}><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>          <QuoteEditor partner={partnerId} pin={pin}/>
           <button onClick={() => setView('new')} style={{
@@ -394,7 +411,7 @@ function LocalDashboard({
             { key: 'clientes', label: '👤 Clientes' },
             { key: 'presupuestos', label: '📄 Presupuestos' },
           ].map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
+            <button key={tab.key} onClick={() => {setActiveTab(tab.key as typeof activeTab);setHistoryDelivered(false);setShowBudgetPin(false)}} style={{
               padding: '7px 14px', borderRadius: 20, whiteSpace: 'nowrap',
               background: activeTab === tab.key ? '#6366f1' : '#fff',
               color: activeTab === tab.key ? '#fff' : '#6b7280',
@@ -409,7 +426,8 @@ function LocalDashboard({
         {/* ── Tab: Órdenes ── */}
         {activeTab === 'ordenes' && (() => {
           const STATUS_FLOW = ['ingresado','en_revision','presupuesto_enviado','aprobado','rechazado','en_reparacion','listo','retirado_por_local','entregado_al_cliente','entregado']
-          const visibleOrders = statusFilter === 'todas' ? orders : statusFilter==='activas'?orders.filter(o=>!finalOrderStatus(o.status)):orders.filter(o => o.status === statusFilter)
+          const dateWindow=orderMetricWindow()
+          const visibleOrders=orders.filter(o=>matchesOrderMetric(o,statusFilter,dateWindow))
           return loading ? (
             <div style={{ textAlign: 'center', padding: 48, color: '#9ca3af' }}>Cargando...</div>
           ) : (
@@ -482,7 +500,7 @@ function LocalDashboard({
         </div>}
         {activeTab === 'historial' && (
           (() => {
-            const closed = orders.filter(o => ['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status))
+            const closed = orders.filter(o=>historyDelivered?matchesOrderMetric(o,'delivered',orderMetricWindow()):finalOrderStatus(o.status))
             if (closed.length === 0) return (
               <div style={{ textAlign: 'center', padding: '48px 24px', color: '#9ca3af' }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🕐</div>
@@ -495,6 +513,7 @@ function LocalDashboard({
 
             return (
               <div>
+                {historyDelivered&&<p style={{fontSize:13,color:'#475569'}}>Mostrando entregadas · <button type="button" onClick={()=>setHistoryDelivered(false)} style={{...inp,width:'auto',padding:'5px 10px',cursor:'pointer'}}>Ver todo el historial</button></p>}
                 {/* Toggle */}
                 <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
                   {[{ v: 'ordenes', l: '📋 Por orden' }, { v: 'clientes', l: '👤 Por cliente' }].map(opt => (

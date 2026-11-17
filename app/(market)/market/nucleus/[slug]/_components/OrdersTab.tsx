@@ -1,8 +1,9 @@
 'use client'
+import OrderMetricCards from '../../../celulab/_components/OrderMetricCards'
 import OrderPeriods from '../../../celulab/_components/OrderPeriods'
 import type {QuoteOrderSeed} from '../../../celulab/_components/quote-order'
 import {OrderIntake} from '../../../celulab/local/[slug]/_components/LocalPartnerClient'
-import {fetchOrderPages,finalOrderStatus,period} from '../../../celulab/_components/order-lists'
+import {fetchOrderPages,matchesOrderMetric,orderMetricWindow} from '../../../celulab/_components/order-lists'
 import QuoteEditor from '../../../celulab/_components/QuoteEditor'
 import ExtraJobs from '../../../celulab/_components/ExtraJobs'
 import ShareOrder from '../../../celulab/_components/ShareOrder'
@@ -110,7 +111,7 @@ function fmtDate(iso: string) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: string; quoteOrder?: QuoteOrderSeed | null; clearQuoteOrder?: () => void }) {
+export function OrdersTab({ color, quoteOrder, clearQuoteOrder, direct=false }: { color: string; direct?:boolean; quoteOrder?: QuoteOrderSeed | null; clearQuoteOrder?: () => void }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,14 +123,14 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: strin
 
   const fetchData = useCallback(async () => {
     const [ord, part] = await Promise.all([
-      fetchOrderPages<Order>().catch(()=>[]),
+      fetchOrderPages<Order>(null,direct).catch(()=>[]),
       fetch('/api/celulab/partners').then(r => r.json()),
     ])
     setOrders(Array.isArray(ord) ? ord : [])
     setPartners(Array.isArray(part) ? part : [])
     setLastUpdated(new Date())
     setLoading(false)
-  }, [])
+  }, [direct])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -178,7 +179,7 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: strin
   if (showNewForm || quoteOrder) {
     return (
       <OrderIntake
-        origins={partners} partnerId={null} partnerName="CeluLab · Taller" partnerAddress="" partnerPhone="" logoUrl="" commissionPct={0} commissionUnlocked={true}
+        origins={direct?undefined:partners} partnerId={null} partnerName="CeluLab · Taller" partnerAddress="" partnerPhone="" logoUrl="" commissionPct={0} commissionUnlocked={true}
         quoteOrder={quoteOrder}
         onBack={() => { setShowNewForm(false); clearQuoteOrder?.() }}
         onSaved={() => { setShowNewForm(false); clearQuoteOrder?.(); fetchData() }}
@@ -191,8 +192,8 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: strin
     : partnerFilter === '__direct__'
       ? orders.filter(o => !o.partner_id)
       : orders.filter(o => o.partner_id === partnerFilter)
-  const currentMonth=period(new Date().toISOString())
-  const visibleOrders=scopedOrders.filter(o=>statusFilter==='all'||(statusFilter==='active'?!finalOrderStatus(o.status):statusFilter==='completed'?finalOrderStatus(o.status):statusFilter==='month'?period(o.created_at)===currentMonth:statusFilter==='budgetMonth'?period(o.created_at)===currentMonth&&o.status!=='rechazado'&&o.budget_ars>0:o.status===statusFilter))
+  const metricsWindow=orderMetricWindow()
+  const visibleOrders=scopedOrders.filter(o=>matchesOrderMetric(o,statusFilter,metricsWindow))
 
   function secsAgo() {
     const d = Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
@@ -201,20 +202,13 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: strin
     return `hace ${Math.floor(d / 60)}m`
   }
 
-  // Stats del mes
-  const thisMonthOrders = scopedOrders.filter(o => period(o.created_at)===currentMonth)
-  const facturadoMes = thisMonthOrders
-    .filter(o => !['rechazado'].includes(o.status) && o.budget_ars > 0)
-    .reduce((sum, o) => sum + (o.budget_ars ?? 0), 0)
-  const activasCount = scopedOrders.filter(o => !['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status)).length
-  const listaCount = scopedOrders.filter(o => o.status === 'listo').length
-
   return (
     <div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 18 }}>Órdenes de Servicio</div>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{direct?'Órdenes de mi taller':'Órdenes de Servicio'}</div>
+          <div style={{fontSize:12,color:'#64748b',marginBottom:4}}>{direct?'Ingresos directos de tu taller':'Flujo general · tu taller y locales socios'}</div>
           <div style={{ fontSize: 13, color: '#6b7280' }}>
             {visibleOrders.length} orden{visibleOrders.length !== 1 ? 'es' : ''}
             <span style={{ fontSize: 11, color: '#d1d5db', marginLeft: 8 }}>· actualizado {secsAgo()}</span>
@@ -229,28 +223,13 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: strin
         </button></div>
       </div>
 
-      {/* Stats strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(124px,1fr))', gap: 10, marginBottom: 20 }}>
-        {[
-          { filter:'active', label: 'Activas', val: activasCount, icon: '⚙️', color: '#6366f1' },
-          { filter:'listo', label: 'Listas en taller', val: listaCount, icon: '✅', color: '#059669' },
-          { filter:'completed',label:'Completadas',val:scopedOrders.filter(o=>finalOrderStatus(o.status)).length,icon:'🏁',color:'#4f46e5' },
-          { filter:'month', label: 'Ingresadas este mes', val: thisMonthOrders.length, icon: '📋', color: '#f59e0b' },
-          { filter:'budgetMonth', label: 'Presupuestado este mes', val: facturadoMes > 0 ? ars(facturadoMes) : '—', icon: '💰', color: '#0ea5e9', isText: true },
-        ].map(s => (
-          <button type="button" key={s.label} aria-pressed={statusFilter===s.filter} onClick={()=>setStatusFilter(statusFilter===s.filter?'all':s.filter)} style={{ background: '#fff', border: '1px solid '+(statusFilter===s.filter?s.color:'#e5e7eb'), borderRadius: 12, padding: '14px 16px', textAlign: 'center',cursor:'pointer' }}>
-            <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-            <div style={{ fontSize: s.isText ? 14 : 24, fontWeight: 800, color: s.color, letterSpacing: s.isText ? '-0.02em' : 0 }}>{s.val}</div>
-            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{s.label}</div>
-          </button>
-        ))}
-      </div>
+      <OrderMetricCards orders={scopedOrders} filter={statusFilter} loading={loading} onSelect={filter=>setStatusFilter(statusFilter===filter?'all':filter)} />
 
       {/* Partner filter */}
-      {partners.length > 0 && (
+      {!direct && partners.length > 0 && (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
           {[
-            { id: 'all', label: '🏠 Todos los locales' },
+            { id: 'all', label: '🏠 Todo el flujo' },
             { id: '__direct__', label: '⚡ Directo (sin local)' },
             ...partners.map(p => ({ id: p.id, label: `🏪 ${p.name}` })),
           ].map(opt => {
@@ -299,7 +278,7 @@ export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: strin
         <div style={{ textAlign: 'center', padding: 64, color: '#9ca3af' }}>Cargando...</div>
       ) : visibleOrders.length === 0 ? (
         <EmptyOrders onNew={() => setShowNewForm(true)} />
-      ) : statusFilter==='completed'?<OrderPeriods rows={visibleOrders}>{order=><OrderRow key={order.id} order={order} color={color} onClick={()=>setSelectedOrder(order)}/>}</OrderPeriods>:(
+      ) : statusFilter==='delivered'?<OrderPeriods rows={visibleOrders}>{order=><OrderRow key={order.id} order={order} color={color} onClick={()=>setSelectedOrder(order)}/>}</OrderPeriods>:(
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {visibleOrders.map(order => (
             <OrderRow key={order.id} order={order} color={color} onClick={() => setSelectedOrder(order)} />

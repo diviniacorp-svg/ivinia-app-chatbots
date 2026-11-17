@@ -194,22 +194,29 @@ function PinScreen({ companyName, color, pinInput, pinErr, onInput, onSubmit }: 
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
 
 const oldTabs = ['ordenes','clientes','locales','ventas','caja','lista','margenes','proveedores','repuestos','precios','tienda','qr'] as const
-type PanelTab = typeof oldTabs[number] | 'lista-publica' | 'store-providers' | 'store-cash' | 'store-management'
-const panelLabels: Record<PanelTab,string> = {ordenes:'📋 Órdenes',clientes:'👤 Clientes',locales:'🏪 Locales',ventas:'🛍 Ventas',caja:'💰 Caja ST',lista:'📊 Lista privada',margenes:'📈 Márgenes',proveedores:'🏷 Proveedores ST',repuestos:'🔩 Repuestos',precios:'💲 Precios ST',tienda:'🛒 Catálogo','store-management':'⚙️ Gestión y márgenes',qr:'📲 Difusión y QR','lista-publica':'📊 Lista de precios','store-providers':'🏷 Proveedores de accesorios','store-cash':'💰 Caja de tienda'}
+type PanelTab = typeof oldTabs[number] | 'lista-publica' | 'store-providers' | 'store-cash' | 'store-management' | 'taller-ordenes'
+const panelLabels: Record<PanelTab,string> = {ordenes:'📋 Órdenes','taller-ordenes':'📋 Mis órdenes',clientes:'👤 Clientes',locales:'🏪 Locales',ventas:'🛍 Ventas',caja:'💰 Caja ST',lista:'📊 Lista privada',margenes:'📈 Márgenes',proveedores:'🏷 Proveedores ST',repuestos:'🔩 Repuestos',precios:'💲 Precios ST',tienda:'🛒 Catálogo','store-management':'📈 Márgenes y ofertas',qr:'📲 Difusión y QR','lista-publica':'📊 Lista de precios','store-providers':'🏷 Proveedores de accesorios','store-cash':'💰 Caja de tienda'}
+
+function SectionPill({label,selected,color,onClick}:{label:string;selected:boolean;color:string;onClick:()=>void}){
+ return <button type="button" aria-pressed={selected} onClick={onClick} style={{border:'1px solid '+(selected?color:'#e5e7eb'),borderRadius:20,padding:'7px 14px',background:selected?color:'#fff',color:selected?'#fff':'#334155',fontSize:13,fontWeight:600,cursor:'pointer'}}>{label}</button>
+}
 
 function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: string; companyName: string; color: string; publicUrl: string }) {
   const [customerView,setCustomerView]=useState<'clientes'|'archivo'>('clientes')
   const [tab, setTab] = useState<PanelTab>('ordenes')
   const [quoteOrder, setQuoteOrder] = useState<QuoteOrderSeed | null>(null)
-  const workshop = ['lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'caja'] as const
-  const store = ['tienda', 'store-management', 'ventas', 'store-providers', 'store-cash', 'qr'] as const
-  const section = workshop.some(t => t === tab) ? 'taller' : store.some(t => t === tab) ? 'tienda' : tab
+  const workshop = ['taller-ordenes','lista','repuestos','caja'] as const
+  const workshopManagement = ['precios','margenes','proveedores'] as const
+  const storeManagement = ['store-management','store-providers','ventas','store-cash','qr'] as const
+  const store = ['tienda'] as const
+  const isWorkshopManagement = workshopManagement.some(t=>t===tab), isStoreManagement = storeManagement.some(t=>t===tab)
+  const section = isWorkshopManagement || workshop.some(t => t === tab) ? 'taller' : isStoreManagement || store.some(t => t === tab) ? 'tienda' : tab
   const isCeluLab = companyName.toLowerCase().includes('celulab')
   const mainTabs: {id: PanelTab; section: string; label: string}[] = isCeluLab ? [
-    {id:'ordenes',section:'ordenes',label:'📋 Órdenes'},
+    {id:'ordenes',section:'ordenes',label:'🏠 Inicio'},
     {id:'lista-publica',section:'lista-publica',label:'📊 Lista de precios'},
     {id:'clientes',section:'clientes',label:'👤 Clientes'},
-    {id:'lista',section:'taller',label:'🔧 Mi taller'},
+    {id:'taller-ordenes',section:'taller',label:'🔧 Mi taller'},
     {id:'tienda',section:'tienda',label:'🛒 Mi tienda'},
     {id:'locales',section:'locales',label:'🏪 Locales socios'},
   ] : oldTabs.map(id => ({id,section:id,label:panelLabels[id]}))
@@ -499,12 +506,18 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
         })}
       </div>
 
-      {isCeluLab && (section === 'taller' || section === 'tienda') && <nav aria-label={section === 'taller' ? 'Mi taller' : 'Mi tienda'} style={{display:'flex',gap:8,flexWrap:'wrap',maxWidth:1190,margin:'0 auto',padding:'14px 16px 0'}}>
-        {(section === 'taller' ? workshop : store).map(id => <button key={id} type="button" aria-pressed={tab===id} onClick={() => setTab(id)} style={{border:'1px solid '+(tab===id?color:'#e5e7eb'),borderRadius:20,padding:'7px 14px',background:tab===id?color:'#fff',color:tab===id?'#fff':'#334155',fontSize:13,fontWeight:600,cursor:'pointer'}}>{panelLabels[id]}</button>)}
-        {section === 'tienda' && <a href="/market/celulab/tienda" target="_blank" rel="noreferrer" style={{border:'1px solid #e5e7eb',borderRadius:20,padding:'7px 14px',background:'#fff',color,fontSize:13,fontWeight:600}}>↗ Mi página web</a>}
-      </nav>}
+      {isCeluLab && (section==='taller'||section==='tienda') && <>
+        <nav aria-label={section==='taller'?'Mi taller':'Mi tienda'} style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center',maxWidth:960,margin:'0 auto',padding:'14px 12px 0'}}>
+          {(section==='taller'?workshop:store).map(id=><SectionPill key={id} label={panelLabels[id]} selected={tab===id} color={color} onClick={()=>setTab(id)} />)}
+          {section==='tienda'&&<a href="/market/celulab/tienda" target="_blank" rel="noreferrer" style={{border:'1px solid #e5e7eb',borderRadius:20,padding:'7px 14px',background:'#fff',color,fontSize:13,fontWeight:600}}>↗ Mi página web</a>}
+          <SectionPill label="⚙️ Gestión" selected={isWorkshopManagement||isStoreManagement} color={color} onClick={()=>setTab(section==='taller'?'precios':'store-management')} />
+        </nav>
+        {(isWorkshopManagement||isStoreManagement)&&<nav aria-label="Gestión" style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center',maxWidth:960,margin:'10px auto 0',padding:'0 12px'}}>
+          {(isWorkshopManagement?workshopManagement:storeManagement).map(id=><SectionPill key={id} label={panelLabels[id]} selected={tab===id} color={color} onClick={()=>setTab(id)} />)}
+        </nav>}
+      </>}
       {tab === 'lista-publica' && <ListaClient />}
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: isMobile ? '16px 8px' : '28px 24px' }}>
+      <div style={{ maxWidth:tab==='clientes'?1500:960, margin: '0 auto', padding: isMobile ? '16px 8px' : '28px 24px' }}>
         {loadError && <p role="alert">{loadError} <button onClick={fetchAll}>Reintentar</button></p>}
         {loading && ['proveedores','margenes','repuestos','precios'].includes(tab) ? (
           <div style={{ textAlign: 'center', color: '#9ca3af', padding: 64 }}>Cargando...</div>
@@ -512,7 +525,8 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
           <>
 
             {/* ══ ÓRDENES ══ */}
-            {tab === 'ordenes' && <OrdersTab color={color} quoteOrder={quoteOrder} clearQuoteOrder={() => setQuoteOrder(null)} />}
+            {tab === 'ordenes' && <OrdersTab key="flujo" color={color} quoteOrder={quoteOrder} clearQuoteOrder={() => setQuoteOrder(null)} />}
+            {tab === 'taller-ordenes' && <OrdersTab key="directo" color={color} direct />}
             {tab === 'clientes' && <><div style={{display:'flex',gap:8,marginBottom:16}}>{(['clientes','archivo'] as const).map(view=><button key={view} onClick={()=>setCustomerView(view)} style={{padding:'8px 14px',border:'1px solid #dbe3ef',borderRadius:20,background:customerView===view?color:'white',color:customerView===view?'white':'#31415b'}}>{view==='clientes'?'Clientes':'Presupuestos'}</button>)}</div>{customerView==='clientes'?<CustomersTab/>:<QuotesTab onConvert={seed=>{setQuoteOrder(seed);setTab('ordenes')}}/>}</>}
 
             {/* ══ LOCALES ══ */}
@@ -531,11 +545,25 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {/* ══ TIENDA ══ */}
             {tab === 'tienda' && (isCeluLab?<><h2 style={{fontSize:17,marginBottom:4}}>Catálogo, stock y pedidos</h2><StoreOperations/></>:<TiendaTab color={color}/>)}
             {tab === 'store-management' && <TiendaTab color={color} operations={false} />}
-            {tab === 'store-providers' && <section style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:18}}>
+            {tab === 'store-providers' && <section aria-label="Proveedores de accesorios">
               <h2 style={{fontSize:17,margin:'0 0 8px'}}>Proveedores de accesorios</h2>
-              <p style={{fontSize:13,color:'#64748b'}}>La importación de accesorios mantiene su catálogo y sus márgenes separados de los repuestos del taller.</p>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}><strong>ONLY San Luis</strong><Btn onClick={triggerSyncTienda} color={color} disabled={syncTiendaLoading}>{syncTiendaLoading?'Actualizando…':'↻ Actualizar catálogo'}</Btn></div>
-              {syncTiendaResult && <p role="status">{syncTiendaResult}</p>}
+              <p style={{fontSize:13,color:'#64748b'}}>El catálogo de accesorios se actualiza por separado de los repuestos del taller.</p>
+
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>🛒 Sincronizar Tienda (accesorios)</div>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>Importa todos los accesorios de ONLY San Luis con precio, stock e imágenes a la tienda pública.</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <button onClick={triggerSyncTienda} disabled={syncTiendaLoading}
+                      style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', fontWeight: 700, fontSize: 13, cursor: syncTiendaLoading ? 'not-allowed' : 'pointer', opacity: syncTiendaLoading ? 0.7 : 1 }}>
+                      {syncTiendaLoading ? '⏳ Importando...' : '↻ Importar catálogo'}
+                    </button>
+                    <a href="/market/celulab/tienda" target="_blank" style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}>
+                      Ver tienda →
+                    </a>
+                    {syncTiendaResult && <span style={{ fontSize: 12, color: syncTiendaResult.startsWith('✓') ? '#16a34a' : '#ef4444' }}>{syncTiendaResult}</span>}
+                  </div>
+                </div>
+
             </section>}
 
             {/* ══ QR ══ */}
@@ -810,22 +838,6 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                       {syncLoading ? '⏳ Sincronizando...' : '↻ Sincronizar ahora'}
                     </button>
                     {syncResult && <span style={{ fontSize: 12, color: syncResult.startsWith('✓') ? '#16a34a' : '#ef4444' }}>{syncResult}</span>}
-                  </div>
-                </div>
-
-                {/* Sync Tienda */}
-                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>🛒 Sincronizar Tienda (accesorios)</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>Importa todos los accesorios de ONLY San Luis con precio, stock e imágenes a la tienda pública.</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <button onClick={triggerSyncTienda} disabled={syncTiendaLoading}
-                      style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', fontWeight: 700, fontSize: 13, cursor: syncTiendaLoading ? 'not-allowed' : 'pointer', opacity: syncTiendaLoading ? 0.7 : 1 }}>
-                      {syncTiendaLoading ? '⏳ Importando...' : '↻ Importar catálogo'}
-                    </button>
-                    <a href="/market/celulab/tienda" target="_blank" style={{ fontSize: 12, color: '#6b7280', textDecoration: 'none' }}>
-                      Ver tienda →
-                    </a>
-                    {syncTiendaResult && <span style={{ fontSize: 12, color: syncTiendaResult.startsWith('✓') ? '#16a34a' : '#ef4444' }}>{syncTiendaResult}</span>}
                   </div>
                 </div>
 
