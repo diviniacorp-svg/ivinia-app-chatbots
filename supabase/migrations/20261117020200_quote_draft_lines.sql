@@ -1,0 +1,1 @@
+alter table public.cl_orders add column quote_draft_lines jsonb not null default '[]'::jsonb;
