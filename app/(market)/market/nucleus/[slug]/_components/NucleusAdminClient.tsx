@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import QuotesTab from './QuotesTab'
 import CustomersTab from './CustomersTab'
 import { OrdersTab } from './OrdersTab'
 import { LocalesTab } from './LocalesTab'
@@ -188,7 +189,7 @@ function PinScreen({ companyName, color, pinInput, pinErr, onInput, onSubmit }: 
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
 
 function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: string; companyName: string; color: string; publicUrl: string }) {
-  const [tab, setTab] = useState<'ordenes' | 'clientes' | 'locales' | 'ventas' | 'caja' | 'margenes' | 'proveedores' | 'repuestos' | 'precios' | 'lista' | 'tienda' | 'qr'>('ordenes')
+  const [tab, setTab] = useState<'ordenes' | 'presupuestos' | 'clientes' | 'locales' | 'ventas' | 'caja' | 'margenes' | 'proveedores' | 'repuestos' | 'precios' | 'lista' | 'tienda' | 'qr'>('ordenes')
   const [repairConfigs, setRepairConfigs] = useState<RepairConfig[]>([])
   const [configEditing, setConfigEditing] = useState<Record<string, { markup: string; labor: string }>>({})
   const [configSaving, setConfigSaving] = useState<string | null>(null)
@@ -450,8 +451,8 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
       {/* Tabs */}
       <style>{`.cl-nucleus-tabs::-webkit-scrollbar{display:none}.cl-nucleus-tabs{scrollbar-width:none}`}</style>
       <div className="cl-nucleus-tabs" style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 8px', display: 'flex', gap: 0, overflowX: 'auto' }}>
-        {(['ordenes', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
-          const label = t === 'ordenes' ? '📋 Órdenes' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
+        {(['ordenes', 'presupuestos', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
+          const label = t === 'ordenes' ? '📋 Órdenes' : t === 'presupuestos' ? '📄 Presupuestos' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
           return (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '12px 14px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
@@ -486,6 +487,7 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
 
             {/* ══ ÓRDENES ══ */}
             {tab === 'ordenes' && <OrdersTab color={color} />}
+            {tab === 'presupuestos' && <QuotesTab />}
             {tab === 'clientes' && <CustomersTab />}
 
             {/* ══ LOCALES ══ */}
