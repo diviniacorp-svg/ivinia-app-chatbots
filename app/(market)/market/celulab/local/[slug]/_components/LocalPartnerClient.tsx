@@ -45,6 +45,7 @@ type Order = {
   unlock_code: string
   damage_diagram: { markers?: DamageMarker[] }
   partner_id?:string
+  quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
   notes: string
@@ -826,6 +827,7 @@ function LocalNewOrder({
       body: JSON.stringify({
         ...form,
         requested_work: finalRequestedWork,
+        quote_draft_lines: repairs.map(r=>({device:form.device_brand+' '+form.device_model,job:r.name,part:r.final_price-r.labor_ars,labor:r.labor_ars})),
         deposit_ars: Number(form.deposit_ars) || 0,
         partner_id: partnerId,
         commission_pct: commissionPct,
@@ -1372,7 +1374,7 @@ function LocalOrderDetail({
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || '—'}</div>
         </Card>
 
-        <QuoteEditor order={order.id} partner={order.partner_id} pin={pin} name={order.client_name} device={order.device_brand+' '+order.device_model}/>
+        <QuoteEditor initialLines={order.quote_draft_lines} order={order.id} partner={order.partner_id} pin={pin} name={order.client_name} device={order.device_brand+' '+order.device_model}/>
         <ExtraJobs id={order.id} pin={pin}/>
         <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}</Card>
 
