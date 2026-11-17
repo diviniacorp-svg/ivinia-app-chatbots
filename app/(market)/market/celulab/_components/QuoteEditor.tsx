@@ -40,13 +40,13 @@ export default function QuoteEditor({partner,pin,order,name='',device='',initial
  }
  let summary:QuoteGroups=[],tooMany=false
  try{summary=quoteGroups(lines.filter(l=>l.job))}catch{tooMany=true}
- return <><button type="button" className="cl-quote-open" onClick={start}>📄 Nuevo presupuesto</button>{open&&<dialog open aria-label="Presupuesto" className="cl-quote"><div><header><h2>Presupuesto</h2><button onClick={()=>show(false)}>Cerrar</button></header><label>Nombre del cliente (opcional)<input value={customer} onChange={e=>{customerSet(e.target.value);publish(null)}}/></label>
- <label>Teléfono (opcional)<input type="tel" value={phone} onChange={e=>{setPhone(e.target.value);publish(null)}}/></label>
+ return <><button type="button" className="cl-quote-open" onClick={start}>📄 Nuevo presupuesto</button>{open&&<dialog open aria-label="Presupuesto" className="cl-quote"><div><header><h2>Presupuesto</h2><button onClick={()=>show(false)}>Cerrar</button></header><label>Nombre y apellido (opcional)<small>¿A nombre de quién hacemos el presupuesto?</small><input value={customer} onChange={e=>{customerSet(e.target.value);publish(null)}}/></label>
+ <label>Teléfono (opcional)<small>¿A qué número te podemos enviar el presupuesto?</small><input type="tel" value={phone} onChange={e=>{setPhone(e.target.value);publish(null)}}/></label>
  {Array.from(new Set(lines.map(l=>l.equipment||l.device))).map((key,index)=>{
  const team=lines.filter(l=>(l.equipment||l.device)===key)
  const current=active===key||(!active&&index===0)
  return <fieldset key={key}><legend><button type="button" onClick={()=>{setActive(key);setDraft(null);setOptions([]);setChargeTier('')}}>Equipo {index+1} · {team[0].device||'Nuevo equipo'}</button></legend>
- {current&&<>{!team.some(l=>l.job)&&lines.length>team.length&&<button onClick={()=>{set(lines.filter(l=>!team.includes(l)));setActive('');setDraft(null);publish(null)}}>Descartar equipo vacío</button>}<label>Marca y modelo<input readOnly={team.some(l=>l.job && (l.option || (isChargeJob(l.job)&&!l.pending)))} value={team[0].device} onChange={e=>{const id=team[0].equipment||crypto.randomUUID();set(lines.map(l=>team.includes(l)?{...l,equipment:id,device:e.target.value}:l));setActive(id);setDraft(null);setOptions([]);setChargeTier('');publish(null)}}/></label>
+ {current&&<>{!team.some(l=>l.job)&&lines.length>team.length&&<button onClick={()=>{set(lines.filter(l=>!team.includes(l)));setActive('');setDraft(null);publish(null)}}>Descartar equipo vacío</button>}<label>Marca y modelo<small>¿Qué equipo querés presupuestar?</small><input readOnly={team.some(l=>l.job && (l.option || (isChargeJob(l.job)&&!l.pending)))} value={team[0].device} onChange={e=>{const id=team[0].equipment||crypto.randomUUID();set(lines.map(l=>team.includes(l)?{...l,equipment:id,device:e.target.value}:l));setActive(id);setDraft(null);setOptions([]);setChargeTier('');publish(null)}}/></label>
  <div style={{display:'flex',alignItems:'end',gap:8,flexWrap:'wrap'}}><RepairPicker device={team[0].device} rates={menuRates} value={draft?.equipment===key?(menuRates.some(r=>r.job===draft.job)?draft.job:'Otro trabajo'):''} disabledJob={job=>unsupported({...team[0],job})} onChange={job=>{
   const rate=menuRates.find(r=>r.job===job)
   const fee=job==='Revisión'?REVIEW_PRICE:rate?.labor_ars

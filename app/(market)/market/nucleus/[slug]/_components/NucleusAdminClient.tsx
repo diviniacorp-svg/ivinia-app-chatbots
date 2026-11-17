@@ -426,13 +426,6 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
     return acc
   }, {})
 
-  const menuGroups=[
-    {name:'Atención',links:['ordenes','clientes','locales']},
-    {name:'Catálogo',links:['lista','repuestos','proveedores','precios','margenes']},
-    {name:'Caja y ventas',links:['caja','ventas','tienda']},
-    {name:'Difusión',links:['qr']}
-  ] as const
-  const menuGroup=menuGroups.find(group=>(group.links as readonly string[]).includes(tab))||menuGroups[0]
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui' }}>
 
@@ -457,14 +450,10 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
         </button>
       </div>
 
-      {/* Áreas del taller */}
-      <nav aria-label="Áreas del Nucleus" style={{background:'#fff',borderBottom:'1px solid #e2e8f0',display:'flex',gap:6,padding:'8px 12px',flexWrap:'wrap'}}>
-        {menuGroups.map(group=><button type="button" key={group.name} aria-pressed={menuGroup.name===group.name} onClick={()=>setTab(group.links[0])} style={{border:'1px solid #e2e8f0',background:menuGroup.name===group.name?color:'white',color:menuGroup.name===group.name?'white':'#334155',borderRadius:14,padding:'6px 12px',fontSize:13,fontWeight:700,cursor:'pointer'}}>{group.name}</button>)}
-      </nav>
       {/* Tabs */}
       <style>{`.cl-nucleus-tabs::-webkit-scrollbar{display:none}.cl-nucleus-tabs{scrollbar-width:none}`}</style>
       <div className="cl-nucleus-tabs" style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 8px', display: 'flex', gap: 0, overflowX: 'auto' }}>
-        {menuGroup.links.map(t => {
+        {(['ordenes', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
           const label = t === 'ordenes' ? '📋 Órdenes' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
           return (
             <button key={t} onClick={() => setTab(t)} style={{

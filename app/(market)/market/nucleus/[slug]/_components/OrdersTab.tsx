@@ -4,6 +4,7 @@ import {fetchOrderPages,finalOrderStatus,groupOrderMonths,period} from '../../..
 import QuoteEditor from '../../../celulab/_components/QuoteEditor'
 import ExtraJobs from '../../../celulab/_components/ExtraJobs'
 import ShareOrder from '../../../celulab/_components/ShareOrder'
+import {openTrackingPrint, trackingPrintBlock, type OrderTracking} from '../../../celulab/_components/order-tracking'
 import { useState, useEffect, useCallback } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -358,10 +359,7 @@ function OrderDetail({
 
   const [updatedDraft,setUpdatedDraft]=useState<Order['quote_draft_lines']>(undefined)
   function handlePrint() {
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(buildPrintHTML(order, partner, order.warranty_days ?? 0))
-    win.document.close()
+    void openTrackingPrint(order.id, tracking => buildPrintHTML(order, partner, order.warranty_days ?? 0, tracking))
   }
 
   return (
@@ -878,7 +876,7 @@ function PhoneDiagramReadonly({ markers }: { markers: DamageMarker[] }) {
 
 // ─── Print HTML ───────────────────────────────────────────────────────────────
 
-function buildPrintHTML(order: Order, partner: Partner | null, warrantyDays: number): string {
+function buildPrintHTML(order: Order, partner: Partner | null, warrantyDays: number, tracking: OrderTracking | null): string {
   const date = new Date(order.created_at).toLocaleDateString('es-AR')
   const markers = order.damage_diagram?.markers ?? []
   const frontMarkers = markers.filter(m => m.side === 'front')
@@ -987,6 +985,8 @@ function buildPrintHTML(order: Order, partner: Partner | null, warrantyDays: num
           ${row('Garantía', warrantyDays > 0 ? `${warrantyDays} días` : 'Sin garantía')}
           ${order.deposit_ars > 0 ? row('Saldo a pagar', `$${((order.total_ars ?? 0) - (order.deposit_ars ?? 0)).toLocaleString('es-AR')}`) : ''}
         </div>` : ''}
+
+        ${!includeTechDetails ? trackingPrintBlock(tracking) : ''}
 
         <!-- Firma -->
         <div style="margin-top:18px;display:flex;justify-content:space-between;">

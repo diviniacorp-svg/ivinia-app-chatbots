@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useId } from 'react'
 import {partCaption,repairForCategory} from '../../../_components/quote-labels'
 import {ChargeOptions,RepairPicker,standardRepairRates,type RepairRate} from '../../../_components/RepairPicker'
 import QuoteParts,{catalogGroup} from '../../../_components/QuoteParts'
@@ -11,6 +11,7 @@ import {fetchOrderPages,finalOrderStatus,groupOrderMonths} from '../../../_compo
 import QuoteEditor from '../../../_components/QuoteEditor'
 import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
+import {openTrackingPrint, trackingPrintBlock, type OrderTracking} from '../../../_components/order-tracking'
 import { LocalEarnings, OrderEarnings } from './LocalEarnings'
 import { PatternLock } from '../../../_components/PatternLock'
 import CeluLabPriceList, { type PriceListItem } from '../../../_components/CeluLabPriceList'
@@ -201,20 +202,50 @@ function PinScreen({ partnerName, logoUrl, pinInput, pinErr, onInput, onSubmit }
 
 // ─── Local Dashboard ──────────────────────────────────────────────────────────
 
-function EarningsPin({onUnlock}:{onUnlock:(value:string)=>Promise<boolean>}) {
-  const [value,setValue]=useState('')
-  const [visible,setVisible]=useState(false)
-  const [error,setError]=useState(false)
-  return <form style={{background:'white',padding:16,border:'1px solid #dbe1ea',borderRadius:14}} onSubmit={async e=>{
-    e.preventDefault();setError(!await onUnlock(value));setValue('')
-  }}>
-    <label style={{display:'block',fontWeight:600}}>PIN del dueño o encargado
-      <input type={visible?'text':'password'} inputMode="numeric" maxLength={4} required pattern="[0-9]{4}" placeholder="••••" value={value} onChange={e=>setValue(e.target.value.replace(/\D/g,''))} style={{display:'block',background:'#f1f5f9',border:'1px solid #cbd5e1',borderRadius:9,width:108,minHeight:46,textAlign:'center',letterSpacing:5,margin:'8px 0'}} />
-    </label>
-    <button type="button" aria-label="Mostrar u ocultar PIN" onClick={()=>setVisible(!visible)}>👁</button>
-    <button style={{background:'#2563eb',color:'white',borderRadius:9,padding:'10px 16px',marginLeft:10}}>Ver ganancias</button>
-    {error && <p role="alert">No se pudo desbloquear. Verificá el PIN o volvé a intentar más tarde.</p>}
-  </form>
+function MetricsDialog({orders, unlocked, onUnlock, onClose}: {
+  orders: Order[]; unlocked: boolean
+  onUnlock: (value: string) => Promise<boolean>; onClose: () => void
+}) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const [value, setValue] = useState('')
+  const [visible, setVisible] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(false)
+  useEffect(() => { if (dialog.current && !dialog.current.open) dialog.current.showModal() }, [])
+
+  return (
+    <dialog ref={dialog} aria-labelledby={titleId} onClose={onClose} style={{ border: '1px solid #e5e7eb', borderRadius: 20, padding: 20, width: unlocked ? 680 : 320, maxWidth: 'calc(100vw - 32px)', maxHeight: '85dvh', boxSizing: 'border-box', color: '#111827', boxShadow: '0 16px 48px #0f172a26' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+        <h2 id={titleId} style={{ margin: 0, fontSize: 16 }}>📊 Métricas</h2>
+        <button type="button" onClick={() => dialog.current?.close()} aria-label="Cerrar métricas" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e5e7eb', background: '#f9fafb', color: '#475569', cursor: 'pointer', fontSize: 20 }}>×</button>
+      </div>
+      {unlocked ? <LocalEarnings orders={orders} unlocked /> : (
+        <form onSubmit={async e => {
+          e.preventDefault()
+          if (busy) return
+          setBusy(true)
+          setError(false)
+          const ok = await onUnlock(value)
+          setBusy(false)
+          setError(!ok)
+          setValue('')
+          setVisible(false)
+        }} style={{ display: 'grid', justifyItems: 'center', gap: 10, textAlign: 'center', padding: '4px 0 10px' }}>
+          <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>Ingresá el PIN del dueño para ver las ganancias.</p>
+          <label htmlFor={titleId + '-pin'} style={{ fontSize: 12, color: '#64748b' }}>PIN</label>
+          <div style={{ position: 'relative' }}>
+            <input id={titleId + '-pin'} autoFocus autoComplete="off" type={visible ? 'text' : 'password'} inputMode="numeric" maxLength={4} required pattern="[0-9]{4}" placeholder="••••" value={value} onChange={e => setValue(e.target.value.replace(/[^0-9]/g, ''))} style={{ background: '#eef2f7', border: '1px solid transparent', borderRadius: 12, width: 80, minHeight: 44, textAlign: 'center', letterSpacing: 4, color: '#334155' }} />
+            <button type="button" aria-label={visible ? 'Ocultar PIN' : 'Mostrar PIN'} aria-pressed={visible} onClick={() => setVisible(v => !v)} style={{ position: 'absolute', left: '100%', top: 0, width: 40, height: 44, display: 'grid', placeItems: 'center', background: 'transparent', color: '#475569', border: 0, cursor: 'pointer' }}>
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>{visible && <path d="M3 3l18 18"/>}</svg>
+            </button>
+          </div>
+          <button disabled={busy || value.length !== 4} style={{ background: '#6366f1', color: '#fff', border: 0, borderRadius: 16, padding: '8px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: busy || value.length !== 4 ? .55 : 1 }}>{busy ? 'Verificando…' : 'Ver métricas'}</button>
+          {error && <p role="alert" style={{ color: '#b91c1c', fontSize: 12, margin: 0 }}>No se pudo desbloquear. Revisá el PIN o volvé a intentar.</p>}
+        </form>
+      )}
+    </dialog>
+  )
 }
 
 function LocalDashboard({
@@ -228,13 +259,14 @@ function LocalDashboard({
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [activeTab, setActiveTab] = useState<'ordenes' | 'historial' | 'precios' | 'ganancias' | 'clientes'>('ordenes')
+  const [activeTab, setActiveTab] = useState<'ordenes' | 'historial' | 'precios' | 'clientes'>('ordenes')
   const [historialView, setHistorialView] = useState<'ordenes' | 'clientes'>('ordenes')
   const [clientFilter, setClientFilter] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [prefilledRepair, setPrefilledRepair] = useState<RepairLineItem | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('todas')
   const [commissionUnlocked,setCommissionUnlocked]=useState(false)
+  const [showMetrics,setShowMetrics]=useState(false)
   async function unlockCommission(value:string) {
     try {
       const res=await fetch('/api/celulab/partners/'+partnerId+'/owner-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:value})})
@@ -277,7 +309,7 @@ function LocalDashboard({
     return (
       <LocalOrderDetail
         order={selectedOrder}
-        pin={pin} unlockCommission={unlockCommission}
+        pin={pin}
         commissionUnlocked={commissionUnlocked}
         partnerName={partnerName}
         partnerAddress={partnerAddress}
@@ -356,7 +388,6 @@ function LocalDashboard({
             { key: 'precios', label: '💰 Lista de precios' },
             { key: 'ordenes', label: '📋 Órdenes activas' },
             { key: 'historial', label: '🕐 Historial' },
-            { key: 'ganancias', label: '📊 Ganancias' },
             { key: 'clientes', label: '👤 Clientes' },
           ].map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
@@ -370,10 +401,6 @@ function LocalDashboard({
             </button>
           ))}
         </div>
-
-        {(activeTab === 'ganancias' || activeTab === 'historial') && <details open={activeTab === 'ganancias' || undefined} key={activeTab}><summary>Ganancias por mes</summary>
-          {commissionUnlocked ? <LocalEarnings orders={orders} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}
-        </details>}
 
         {/* ── Tab: Órdenes ── */}
         {activeTab === 'ordenes' && (() => {
@@ -445,6 +472,10 @@ function LocalDashboard({
         })()}
 
         {/* ── Tab: Historial ── */}
+        {activeTab === 'historial' && <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <button type="button" onClick={() => setShowMetrics(true)} style={{ padding: '7px 14px', borderRadius: 16, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#fff', border: '1px solid #e5e7eb', color: '#4f46e5' }}>📊 Métricas</button>
+          {showMetrics && <MetricsDialog orders={orders} unlocked={commissionUnlocked} onUnlock={unlockCommission} onClose={() => setShowMetrics(false)} />}
+        </div>}
         {activeTab === 'historial' && (
           (() => {
             const closed = orders.filter(o => ['entregado_al_cliente', 'entregado', 'rechazado'].includes(o.status))
@@ -760,7 +791,7 @@ export function OrderIntake({
 
 
         {/* 2-column grid on wide screens */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: 14 }}>
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -768,16 +799,14 @@ export function OrderIntake({
             <Card title="👤 Cliente">
               {origins&&<FField label="Origen de la orden"><select style={inp} value={origin} onChange={e=>{setOrigin(e.target.value);setAccount('')}}><option value="">Directo · CeluLab</option>{origins.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></FField>}
               {contacts.rows.length>0&&<FField label="Usar cliente guardado"><select style={inp} value={clientKey} onChange={e=>{setClientKey(e.target.value);const c=contacts.rows.find(r=>r.key===e.target.value);if(c)setForm(f=>({...f,client_name:c.name,client_dni:c.dni,client_phone:c.phone}))}}><option value="">Ingresar datos nuevos</option>{contacts.rows.filter(c=>!form.client_name.trim()||c.key===clientKey||c.name.toLowerCase().includes(form.client_name.trim().toLowerCase())).map(c=><option key={c.key} value={c.key}>{c.name}{c.dni?' · '+c.dni:''}</option>)}</select></FField>}
-              <ScriptTip text="¿Me das tu nombre completo y WhatsApp para avisarte cuando esté listo?" />
-              <div style={{ height: 8 }} />
-              <FField label="Nombre completo *">
-                <input style={inp} value={form.client_name} onChange={e => set('client_name', e.target.value)} placeholder="Nombre y apellido" autoFocus />
+              <FField label="Nombre completo *" question="¿Cuál es tu nombre y apellido?">
+                <input style={inp} value={form.client_name} onChange={e => set('client_name', e.target.value)} placeholder="Nombre y apellido" autoFocus autoComplete="name" />
               </FField>
-              <FField label="WhatsApp">
-                <input style={inp} type="tel" value={form.client_phone} onChange={e => set('client_phone', e.target.value)} placeholder="+54 9 266 XXXXXXX" />
+              <FField label="DNI (opcional)" question="¿Me indicás tu número de DNI?">
+                <input style={inp} value={form.client_dni} onChange={e => set('client_dni', e.target.value)} placeholder="Sin puntos" inputMode="numeric" />
               </FField>
-              <FField label="DNI (opcional)">
-                <input style={inp} value={form.client_dni} onChange={e => set('client_dni', e.target.value)} placeholder="Sin puntos" />
+              <FField label="Teléfono / WhatsApp" question="¿A qué número puede escribirte o llamarte el técnico para avisarte si hay novedades?">
+                <input style={inp} type="tel" value={form.client_phone} onChange={e => set('client_phone', e.target.value)} placeholder="+54 9 266 XXXXXXX" autoComplete="tel" />
               </FField>
             </Card>
 
@@ -802,7 +831,7 @@ export function OrderIntake({
             </Card>
 
             <Card title="🔒 Acceso al equipo">
-              <ScriptTip text="Registrá cómo se accede al equipo." />
+              <ScriptTip text="¿Cómo se desbloquea el equipo para poder hacer las pruebas?" />
               <div style={{ height: 8 }} />
               <div style={{ display: 'flex', flexWrap:'wrap', gap: 8, marginBottom: 12 }}>
                 {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: 'Sin contraseña' }, { v: 'unknown', l: 'No sabe la clave' }].map(opt => (
@@ -833,7 +862,7 @@ export function OrderIntake({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             <Card title="📱 Equipo, reparaciones y seña">
-              <FField label="Marca y modelo *"><input style={inp} value={deviceText} onChange={e=>setDevice(e.target.value)} placeholder="Ej. Motorola G22, Samsung A54 o iPhone 14"/></FField>
+              <FField label="Marca y modelo *" question="¿Qué marca y modelo es el equipo? Confirmalo antes de buscar repuestos."><input style={inp} value={deviceText} onChange={e=>setDevice(e.target.value)} placeholder="Ej. Motorola G22, Samsung A54 o iPhone 14"/></FField>
               {form.turns_on===false ? (
                 <ScriptTip text="El diagnóstico es $15.000, se descuenta si aprobás la reparación. ¿Dejás la seña ahora?" />
               ) : (
@@ -841,8 +870,8 @@ export function OrderIntake({
               )}
               <div style={{ height: 6 }} />
 
-              <FField label="¿Qué le pasó? · Según el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="Ej. Se hinchó la batería"/></FField>
-              {form.turns_on===false&&<FField label="Posible trabajo (opcional)">
+              <FField label="Falla informada por el cliente" question="¿Qué le pasó al equipo y desde cuándo notás la falla?"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="Ej. Se hinchó la batería"/></FField>
+              {form.turns_on===false&&<FField label="Posible trabajo (opcional)" question="¿Te indicaron qué podría necesitar? Registralo como posible trabajo, no como diagnóstico.">
                 <select style={inp} value={possible} onChange={e=>choosePossible(e.target.value)}><option value="">No sabe / sólo revisión</option>{intakeChoices.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select>
                 {!possible&&suggested&&<button type="button" onClick={()=>choosePossible(suggested)} style={{...inp,width:'auto',marginTop:6,cursor:'pointer'}}>Sugerencia: {intakeChoices.find(c=>c.value===suggested)?.label}</button>}
               </FField>}
@@ -878,19 +907,19 @@ export function OrderIntake({
               )}
 
               <div style={{ height: 10 }} />
-              <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado (opcional si ingresa para revisión)'}>
+              <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado (opcional si ingresa para revisión)'} question={repairs.length ? '¿Hay algún otro trabajo que quieras pedir?' : '¿Qué querés que revisemos o reparemos?'}>
                 <textarea style={{ ...inp, minHeight: 56, resize: 'vertical' }} value={form.requested_work} onChange={e => set('requested_work', e.target.value)} placeholder={repairs.length > 0 ? 'Algún trabajo extra o nota adicional...' : 'Pantalla rota, no carga, no enciende, cambio de batería...'} />
               </FField>
               <FField label="Observaciones internas">
                 <textarea style={{ ...inp, minHeight: 48, resize: 'vertical' }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Notas para el técnico..." />
               </FField>
-              <FField label="Seña recibida ($)">
+              <FField label="Seña recibida ($)" question="¿Vas a dejar una seña? ¿De cuánto y por qué medio? Registrala sólo cuando la hayas recibido.">
                <input type="number" min="0" step="1" style={inp} value={form.deposit_ars} onChange={e=>{set('deposit_ars',e.target.value);setMpLink(null)}} placeholder={form.turns_on===false?'15000':'0'}/>
                <div role="group" aria-label="Método de seña" style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
                 {(['efectivo','transferencia','mercadopago'] as const).map((m,i)=><button type="button" key={m} aria-pressed={depositMethod===m} onClick={()=>{setDepositMethod(m);setAccount('');setMpLink(null)}} style={{...inp,width:'auto',cursor:'pointer',background:depositMethod===m?'#eff6ff':'white'}}>{['Efectivo','Transferencia','Mercado Pago'][i]}</button>)}
                </div>
                {depositMethod==='transferencia'&&<div style={{marginTop:10,background:'#eff6ff',borderRadius:9,padding:10}}>
-                <label>Cuenta de transferencia<select style={inp} value={account} onChange={e=>setAccount(e.target.value)}><option value="">Elegí un alias</option>{payments.items.map(a=><option key={a.id} value={a.id}>{a.name} · {a.alias}</option>)}</select></label>
+                <label>Cuenta de transferencia<small style={{display:'block',color:'#64748b'}}>Confirmá a qué cuenta va a transferir.</small><select style={inp} value={account} onChange={e=>setAccount(e.target.value)}><option value="">Elegí un alias</option>{payments.items.map(a=><option key={a.id} value={a.id}>{a.name} · {a.alias}</option>)}</select></label>
                 {payments.error&&<p role="status">{payments.error}</p>}{payments.loading&&<p role="status">Cargando alias…</p>}
                 {!payments.loading&&!payments.error&&!payments.items.length&&<p>Todavía no hay alias configurados en el Nucleus.</p>}
                 {transfer&&<div><strong>{transfer.alias}</strong> <button type="button" onClick={()=>navigator.clipboard?.writeText(transfer.alias)}>Copiar alias</button>{transfer.qr&&<div><img src={transfer.qr} alt={'QR de '+transfer.name} style={{width:155,height:155,objectFit:'contain'}}/></div>}</div>}
@@ -1018,10 +1047,7 @@ function OrderTicket({
   const waLink = `https://wa.me/${JOACO_WA}?text=${waMsg}`
 
   function handlePrint() {
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(buildTicketHTML(order, partnerName, partnerAddress, logoUrl))
-    win.document.close()
+    void openTrackingPrint(order.id, tracking => buildTicketHTML(order, partnerName, partnerAddress, logoUrl, tracking))
   }
 
   return (
@@ -1079,7 +1105,7 @@ function OrderTicket({
 
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <ShareOrder pin={pin} id={order.id} number={order.order_number} phone={order.client_phone} />
+          <ShareOrder id={order.id} number={order.order_number} phone={order.client_phone} />
           <a href={waLink} target="_blank" rel="noreferrer" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '13px', borderRadius: 12, background: '#25d366',
@@ -1118,9 +1144,9 @@ function TicketRow({ icon, label, value }: { icon: string; label: string; value:
 // ─── Order Detail (read-only for local) ──────────────────────────────────────
 
 function LocalOrderDetail({
-  order, partnerName, partnerAddress, logoUrl, onBack, onStatusChange, commissionUnlocked, pin, unlockCommission,
+  order, partnerName, partnerAddress, logoUrl, onBack, onStatusChange, commissionUnlocked, pin,
 }: {
-  order: Order; partnerName: string; partnerAddress: string; logoUrl: string; commissionUnlocked: boolean; pin:string; unlockCommission:(value:string)=>Promise<boolean>
+  order: Order; partnerName: string; partnerAddress: string; logoUrl: string; commissionUnlocked: boolean; pin:string
   onBack: () => void; onStatusChange: (orderId: string, newStatus: string) => void
 }) {
   const [advancing, setAdvancing] = useState(false)
@@ -1145,10 +1171,7 @@ function LocalOrderDetail({
   }
 
   function handlePrint() {
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(buildTicketHTML(order, partnerName, partnerAddress, logoUrl))
-    win.document.close()
+    void openTrackingPrint(order.id, tracking => buildTicketHTML(order, partnerName, partnerAddress, logoUrl, tracking))
   }
 
   const waMsg = encodeURIComponent(
@@ -1277,7 +1300,7 @@ function LocalOrderDetail({
 
         <QuoteEditor key={updatedDraft?.length??'original'} initialLines={updatedDraft??order.quote_draft_lines} order={order.id} partner={order.partner_id} pin={pin} name={order.client_name} device={order.device_brand+' '+order.device_model}/>
         <ExtraJobs id={order.id} local device={order.device_brand+' '+order.device_model} pin={pin} onDraftChanged={setUpdatedDraft}/>
-        <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}</Card>
+        {commissionUnlocked && <Card title="Ganancia del local" style={{ marginTop: 12 }}><OrderEarnings order={order} unlocked /></Card>}
 
         {order.budget_ars > 0 && (
           <Card title="💰 Presupuesto" style={{ marginTop: 12 }}>
@@ -1287,7 +1310,7 @@ function LocalOrderDetail({
           </Card>
         )}
 
-        <ShareOrder pin={pin} id={order.id} number={order.order_number} phone={order.client_phone} />
+        <ShareOrder id={order.id} number={order.order_number} phone={order.client_phone} />
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <button onClick={handlePrint} style={{
             flex: 1, padding: '12px', borderRadius: 10, border: '1px solid #e5e7eb',
@@ -1392,7 +1415,7 @@ function MiniPhoneDiagram({
 
 // ─── Print HTML ───────────────────────────────────────────────────────────────
 
-function buildTicketHTML(order: Order, partnerName: string, partnerAddress: string, logoUrl: string): string {
+function buildTicketHTML(order: Order, partnerName: string, partnerAddress: string, logoUrl: string, tracking: OrderTracking | null): string {
   const acc = [order.has_battery && 'Batería', order.has_chip && 'Chip', order.has_cover && 'Tapa', order.has_memory && 'Memoria'].filter(Boolean).join(' · ') || 'Ninguno'
   const date = new Date(order.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
   const markers = order.damage_diagram?.markers ?? []
@@ -1489,12 +1512,7 @@ function buildTicketHTML(order: Order, partnerName: string, partnerAddress: stri
 
       ${isInternal ? diagSection : ''}
 
-      ${!isInternal ? `
-      <!-- Seguimiento — solo copia cliente -->
-      <div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #86efac;border-radius:7px;font-size:10px;color:#14532d;">
-        📱 Seguí tu equipo en tiempo real:<br/>
-        <strong>divinia.vercel.app/seguimiento/${order.order_number}</strong>
-      </div>` : ''}
+      ${!isInternal ? trackingPrintBlock(tracking) : ''}
 
       <!-- Firmas -->
       <div style="display:flex;justify-content:space-between;margin-top:14px;">
@@ -1754,10 +1772,11 @@ function Card({ title, children, style }: { title: string; children: React.React
   )
 }
 
-function FField({ label, children }: { label: string; children: React.ReactNode }) {
+function FField({ label, children, question }: { label: string; children: React.ReactNode; question?: string }) {
   return (
     <div style={{ marginBottom: 10 }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>{label}</div>
+      {question && <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>{question}</div>}
       {children}
     </div>
   )
