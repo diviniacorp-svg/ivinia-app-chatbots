@@ -7,9 +7,9 @@ const ars=(n:number)=>n.toLocaleString('es-AR',{style:'currency',currency:'ARS',
 const date=(s:string)=>new Date(s).toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires'})
 const note='Precios y disponibilidad al momento de emisión. Confirmamos stock y cualquier cambio de importe antes de realizar el trabajo.'
 function receipt(v:Version){return [v.issuer,'Presupuesto '+v.quote_id.slice(0,8).toUpperCase()+' · v'+v.revision,date(v.issued_at)+' (San Luis)','Cliente: '+v.customer,'',...v.lines.map(l=>l.device+' · '+l.job+'\nRepuesto '+ars(l.part)+' + mano de obra '+ars(l.labor)+' = '+ars(l.part+l.labor)),'','Total: '+ars(v.lines.reduce((a,l)=>a+l.part+l.labor,0)),note].join('\n')}
-export default function QuoteEditor({partner,pin,order,name='',device=''}:{partner?:string|null;pin?:string;order?:string;name?:string;device?:string}){
+export default function QuoteEditor({partner,pin,order,name='',device='',initialLines}:{initialLines?:Line[];partner?:string|null;pin?:string;order?:string;name?:string;device?:string}){
  const blank=()=>({device,job:'',part:0,labor:0})
- const [open,show]=useState(false),[customer,customerSet]=useState(name),[lines,set]=useState<Line[]>([blank()]),[history,list]=useState<Version[]>([]),[base,select]=useState<Version|null>(null),[issued,publish]=useState<Version|null>(null),[message,msg]=useState(''),[busy,wait]=useState(false)
+ const [open,show]=useState(false),[customer,customerSet]=useState(name),[lines,set]=useState<Line[]>(initialLines?.length?initialLines:[blank()]),[history,list]=useState<Version[]>([]),[base,select]=useState<Version|null>(null),[issued,publish]=useState<Version|null>(null),[message,msg]=useState(''),[busy,wait]=useState(false)
  const [tab,category]=useState('modulos'),[query,search]=useState(''),[parts,results]=useState<Part[]>([])
  async function api(data:object){const r=await fetch('/api/celulab/quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,partner,pin,order})});if(!r.ok)throw Error(r.status===409?'Hay una versión más reciente. Volvé a abrir el historial.':'Revisá los datos y el acceso al panel.');return r.json()}
  async function start(){show(true);msg('');try{list(await api({action:'history'}))}catch(e){msg(String(e))}}
