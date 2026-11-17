@@ -1261,6 +1261,7 @@ function LocalOrderDetail({
           {order.water_damage && <TRow label="Humedad" value="SÍ ⚠️" />}
         </Card>
 
+        {order.damage_diagram?.accessUnknown&&<p style={{color:'#991b1b',fontWeight:700}}>{UNKNOWN_ACCESS}</p>}
         <Card title="Falla reportada por el cliente" style={{marginTop:12,borderLeft:'4px solid #cc6673'}}>{order.reported_fault||'Sin registrar'}</Card>
         <Card title="🔧 Trabajo" style={{ marginTop: 12 }}>
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || '—'}</div>

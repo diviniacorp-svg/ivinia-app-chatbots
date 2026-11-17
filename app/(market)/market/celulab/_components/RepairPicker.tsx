@@ -39,10 +39,10 @@ export function RepairPicker({device,rates,value,onChange,disabledJob}:{device:s
 }
 export function ChargeOptions({device,value,onChange}:{device:string;value:string;onChange:(v:string)=>void}){
  const profile=chargeProfile(device),caution=chargeCaution(device)
- const [manualConnector,setManualConnector]=useState('')
+ const [manualConnector,setManualConnector]=useState<string|null>(null)
  const detected=profile.connector.startsWith('iPhone')?profile.connector:profile.connector.startsWith('V8')?'V8 / Micro-USB':profile.connector==='Tipo C'?'Tipo C':''
  return <div style={{margin:'9px 0',fontSize:12}}>
-  <label style={{display:'block'}}>Conector<select value={manualConnector||detected} onChange={e=>setManualConnector(e.target.value)} style={{display:'block',width:'100%',marginTop:4,padding:7,border:'1px solid #cbd5e1',borderRadius:8,background:'white'}}><option value="">A verificar</option><option>V8 / Micro-USB</option><option>Tipo C</option><option>iPhone · Lightning</option><option>iPhone · USB-C</option><option>iPhone · conector a verificar</option></select></label>
+  <label style={{display:'block'}}>Conector<select value={manualConnector??detected} onChange={e=>setManualConnector(e.target.value)} style={{display:'block',width:'100%',marginTop:4,padding:7,border:'1px solid #cbd5e1',borderRadius:8,background:'white'}}><option value="">A verificar</option><option>V8 / Micro-USB</option><option>Tipo C</option><option>iPhone · Lightning</option><option>iPhone · USB-C</option><option>iPhone · conector a verificar</option></select></label>
   <label style={{display:'block',marginTop:5}}>Gama del equipo
    <select value={value} onChange={e=>onChange(e.target.value)} style={{display:'block',width:'100%',marginTop:4,padding:7,border:'1px solid #cbd5e1',borderRadius:8,background:'white'}}>
     <option value="">Elegí una gama</option>

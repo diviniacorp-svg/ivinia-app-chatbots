@@ -80,7 +80,6 @@ export async function POST(req: NextRequest) {
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
       damage_diagram: {...diagram,accessUnknown},
-      ...(accessUnknown?{warranty_days:0}:{}),
       quote_draft_lines: draft,
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',

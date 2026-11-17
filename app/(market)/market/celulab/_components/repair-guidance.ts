@@ -12,7 +12,7 @@ export function chargeProfile(device:string){
  if(isIphone(device)){
   connector='iPhone · conector a verificar'
   const number=Number(model.match(/\biphone\s*(\d{1,2})\b/)?.[1])
-  if(number>=6&&number<=18){
+  if(number>=6&&number<=17){
    connector=number>=15?'iPhone · USB-C':'iPhone · Lightning'
    tier=number<=8?'baja':number>=12&&/\b(?:pro|max)\b/.test(model)?'alta':'media'
   }
@@ -29,7 +29,7 @@ export function chargeTierOptions(device:string){
 }
 export function chargeCaution(device:string){
  const model=normalize(device)
- if(!/\b(?:(?:samsung|galaxy)\s+(?:galaxy\s+)?j\s*[57]\b|(?:moto(?:rola)?\s+)?g\s*7\b)/.test(model))return ''
+ if(!/\b(?:(?:samsung|galaxy)\s+(?:galaxy\s+)?j\s*[57]\b|(?:moto(?:rola)?\s+|^)g\s*7\b)/.test(model))return ''
  return 'Verificar la variante antes de abrir. Si se desarma por el frente, el módulo debe estar sano. Si está dañado, cotizar también su cambio antes de intervenir.'
 }
 export const intakeChoices=[
