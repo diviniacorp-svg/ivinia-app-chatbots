@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
       damage_diagram: damage_diagram ?? {},
+      reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',
       deposit_ars: deposit_ars ?? 0,
       notes: notes ?? '',
