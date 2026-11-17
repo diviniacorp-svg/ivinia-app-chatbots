@@ -34,7 +34,7 @@ export default function QuoteParts({device,job,chargeRate,selected,onPick}:{devi
       const matches:Part[]=[]
       for(let offset=0;;offset+=100){
         const query=new URLSearchParams({q:model,tab,offset:String(offset),limit:'100',quoteJob:job,device,labor:String(chargeRate)})
-        const response=await fetch('/api/celulab/lista?'+query,{signal:ctrl.signal})
+        const response=await fetch('/api/celulab/lista?'+query,{signal:ctrl.signal,cache:'no-store'})
         if(!response.ok)throw Error()
         const data=await response.json() as {items:Part[];total:number}
         matches.push(...data.items)

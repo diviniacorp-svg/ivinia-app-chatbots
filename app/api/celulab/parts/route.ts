@@ -9,35 +9,20 @@ export const dynamic = 'force-dynamic'
 export async function GET(req:NextRequest) {
   if(!await hasNucleusSession(req))return NextResponse.json({error:'Sólo taller.'},{status:403})
   const db = createAdminClient()
-  const { data, error } = await db
-    .from('cl_parts')
-    .select(`
-      *,
-      cl_provider_prices!inner(
-        id, cost_ars, url_item, scraped_at, is_latest,
-        cl_providers(id, name)
-      )
-    `)
-    .eq('cl_provider_prices.is_latest', true)
-    .order('category')
-
-  // También traer partes sin precios aún
-  const { data: allParts } = await db
-    .from('cl_parts')
-    .select('*')
-    .order('category')
-
-  if (error && !data) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Merge: partes con precios y partes sin precios
-  const partsWithPrices = new Set((data ?? []).map((p: { id: string }) => p.id))
-  const partsWithoutPrices = (allParts ?? []).filter((p: { id: string }) => !partsWithPrices.has(p.id))
-
-  return NextResponse.json([...(data ?? []), ...partsWithoutPrices])
+  const parts=[]
+  for(let offset=0;;offset+=500){
+    const {data,error}=await db.from('cl_parts').select(`*,cl_provider_prices(id,cost_ars,url_item,scraped_at,is_latest,supplier_in_stock,cl_providers(id,name,is_active))`)
+      .eq('cl_provider_prices.is_latest',true).order('category').order('id').range(offset,offset+499)
+    if(error)return NextResponse.json({error:'No se pudo leer el catálogo de repuestos'},{status:503})
+    parts.push(...(data||[]))
+    if(!data||data.length<500)break
+  }
+  return NextResponse.json(parts,{headers:{'Cache-Control':'no-store'}})
 }
 
 // POST /api/celulab/parts
 export async function POST(req: NextRequest) {
+  if(req.headers.get('origin')!==req.nextUrl.origin||!await hasNucleusSession(req))return NextResponse.json({}, {status:403})
   const body = await req.json()
   const { name, category, service_name, notes } = body
 

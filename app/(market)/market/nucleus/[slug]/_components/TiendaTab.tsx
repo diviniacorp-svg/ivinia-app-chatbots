@@ -10,7 +10,7 @@ type OfferProduct = {
   is_offer: boolean; offer_label: string | null
 }
 
-export function TiendaTab({ color }: { color: string }) {
+export function TiendaTab({ color, operations = true }: { color: string; operations?: boolean }) {
   const [tab, setTab] = useState<'markup' | 'ofertas'>('markup')
   const [markups, setMarkups] = useState<Markup[]>([])
   const [editing, setEditing] = useState<Record<string, string>>({})
@@ -96,7 +96,7 @@ export function TiendaTab({ color }: { color: string }) {
   return (
     <div>
       <a href="/market/celulab/tienda" target="_blank" rel="noreferrer" style={{display:'inline-block',padding:'10px 0',fontWeight:700}}>Mi tienda ↗</a>
-      <StoreOperations/>
+      {operations && <StoreOperations/>}
       <details><summary>Acceso de técnicos</summary><TechnicianPin manage /></details>
       {/* Sub-tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', marginBottom: 24 }}>

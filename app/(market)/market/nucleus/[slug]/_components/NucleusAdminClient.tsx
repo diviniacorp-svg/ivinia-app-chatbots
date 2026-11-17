@@ -1,4 +1,8 @@
 'use client'
+import { finalRepairPrice } from '../../../celulab/_components/repair-guidance'
+import { repairForCategory } from '../../../celulab/_components/quote-labels'
+import ListaClient from '../../../celulab/lista/_components/ListaClient'
+import type { QuoteOrderSeed } from '../../../celulab/_components/quote-order'
 import PaymentAccounts from '../../../celulab/_components/PaymentAccounts'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import QuotesTab from './QuotesTab'
@@ -7,6 +11,7 @@ import { OrdersTab } from './OrdersTab'
 import { LocalesTab } from './LocalesTab'
 import { CajaTab } from './CajaTab'
 import { VentasTab } from './VentasTab'
+import StoreOperations from './StoreOperations'
 import { TiendaTab } from './TiendaTab'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -24,7 +29,7 @@ type RepairConfig = {
 
 type Part = {
   id: string; name: string; category: string; service_name: string; notes: string
-  cl_provider_prices?: Array<{ cost_ars: number; url_item: string; scraped_at: string; cl_providers: { id: string; name: string } | null }>
+  cl_provider_prices?: Array<{ cost_ars: number; url_item: string; scraped_at: string; supplier_in_stock?: boolean | null; cl_providers: { id: string; name: string; is_active?: boolean } | null }>
 }
 
 type MarginRow = {
@@ -55,8 +60,7 @@ async function readPanelJson(url: string) {
 
 function calcFinal(category: string, cost: number, configs: RepairConfig[]): number {
   const cfg = configs.find(c => c.category === category)
-  if (cfg) return cost + cfg.markup_ars + cfg.labor_ars
-  return cost + 5000 + 15000
+  return finalRepairPrice(cfg?.tab_key==='modulos'?'Cambio de módulo':repairForCategory(category), cost + Number(cfg?.markup_ars??0) + Number(cfg?.labor_ars??0))
 }
 
 function ars(n: number) {
@@ -189,9 +193,27 @@ function PinScreen({ companyName, color, pinInput, pinErr, onInput, onSubmit }: 
 
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
 
+const oldTabs = ['ordenes','clientes','locales','ventas','caja','lista','margenes','proveedores','repuestos','precios','tienda','qr'] as const
+type PanelTab = typeof oldTabs[number] | 'lista-publica' | 'store-providers' | 'store-cash' | 'store-management'
+const panelLabels: Record<PanelTab,string> = {ordenes:'📋 Órdenes',clientes:'👤 Clientes',locales:'🏪 Locales',ventas:'🛍 Ventas',caja:'💰 Caja ST',lista:'📊 Lista privada',margenes:'📈 Márgenes',proveedores:'🏷 Proveedores ST',repuestos:'🔩 Repuestos',precios:'💲 Precios ST',tienda:'🛒 Catálogo','store-management':'⚙️ Gestión y márgenes',qr:'📲 Difusión y QR','lista-publica':'📊 Lista de precios','store-providers':'🏷 Proveedores de accesorios','store-cash':'💰 Caja de tienda'}
+
 function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: string; companyName: string; color: string; publicUrl: string }) {
   const [customerView,setCustomerView]=useState<'clientes'|'archivo'>('clientes')
-  const [tab, setTab] = useState<'ordenes' | 'presupuestos' | 'clientes' | 'locales' | 'ventas' | 'caja' | 'margenes' | 'proveedores' | 'repuestos' | 'precios' | 'lista' | 'tienda' | 'qr'>('ordenes')
+  const [tab, setTab] = useState<PanelTab>('ordenes')
+  const [quoteOrder, setQuoteOrder] = useState<QuoteOrderSeed | null>(null)
+  const workshop = ['lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'caja'] as const
+  const store = ['tienda', 'store-management', 'ventas', 'store-providers', 'store-cash', 'qr'] as const
+  const section = workshop.some(t => t === tab) ? 'taller' : store.some(t => t === tab) ? 'tienda' : tab
+  const isCeluLab = companyName.toLowerCase().includes('celulab')
+  const mainTabs: {id: PanelTab; section: string; label: string}[] = isCeluLab ? [
+    {id:'ordenes',section:'ordenes',label:'📋 Órdenes'},
+    {id:'lista-publica',section:'lista-publica',label:'📊 Lista de precios'},
+    {id:'clientes',section:'clientes',label:'👤 Clientes'},
+    {id:'lista',section:'taller',label:'🔧 Mi taller'},
+    {id:'tienda',section:'tienda',label:'🛒 Mi tienda'},
+    {id:'locales',section:'locales',label:'🏪 Locales socios'},
+  ] : oldTabs.map(id => ({id,section:id,label:panelLabels[id]}))
+
   const [repairConfigs, setRepairConfigs] = useState<RepairConfig[]>([])
   const [configEditing, setConfigEditing] = useState<Record<string, { markup: string; labor: string }>>({})
   const [configSaving, setConfigSaving] = useState<string | null>(null)
@@ -299,16 +321,13 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
 
   async function triggerSync() {
     setSyncLoading(true); setSyncResult(null)
-    const res = await fetch('/api/celulab/sync').then(r => r.json())
-    setSyncLoading(false)
-    setSyncResult(res.ok ? `✓ ${res.mapped} repuestos sincronizados (${res.synced_at?.slice(11,16)})` : `Error: ${res.error}`)
-  }
-
-  function supportsCatalogue(url: string) {
     try {
-      const source = new URL(url)
-      return source.hostname === 'mayori.store' && /^\/onlysanluis(?:\/|$)/i.test(source.pathname)
-    } catch { return false }
+      const response=await fetch('/api/celulab/sync', {cache:'no-store'})
+      if(!response.ok) throw new Error()
+      const result=await response.json()
+      setSyncResult(result.ok ? `✓ ${result.mapped} repuestos sincronizados` : (result.error || 'No se pudo actualizar repuestos.'))
+    } catch { setSyncResult('La actualización de repuestos no está disponible en este entorno.') }
+    finally { setSyncLoading(false) }
   }
 
   async function triggerSyncTienda() {
@@ -453,13 +472,13 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
       {/* Tabs */}
       <style>{`.cl-nucleus-tabs::-webkit-scrollbar{display:none}.cl-nucleus-tabs{scrollbar-width:none}`}</style>
       <div className="cl-nucleus-tabs" style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 8px', display: 'flex', gap: 0, overflowX: 'auto' }}>
-        {(['ordenes', 'clientes', 'locales', 'ventas', 'caja', 'lista', 'margenes', 'proveedores', 'repuestos', 'precios', 'tienda', 'qr'] as const).map(t => {
-          const label = t === 'ordenes' ? '📋 Órdenes' : t === 'clientes' ? '👤 Clientes' : t === 'locales' ? '🏪 Locales' : t === 'ventas' ? '🛍 Ventas' : t === 'caja' ? '💰 Caja' : t === 'lista' ? '📊 Lista' : t === 'margenes' ? '📈 Márgenes' : t === 'proveedores' ? '🏷 Proveedores' : t === 'repuestos' ? '🔩 Repuestos' : t === 'precios' ? '💲 Precios' : t === 'tienda' ? '🛒 Tienda' : '📲 QR'
+        {mainTabs.map(({id: t, section: area, label}) => {
+          const active = (isCeluLab ? section : tab) === area
           return (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '12px 14px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              borderBottom: tab === t ? `2px solid ${color}` : '2px solid transparent',
-              color: tab === t ? color : '#6b7280', background: 'transparent', whiteSpace: 'nowrap',
+              borderBottom: active ? `2px solid ${color}` : '2px solid transparent',
+              color: active ? color : '#6b7280', background: 'transparent', whiteSpace: 'nowrap',
               position: 'relative', flexShrink: 0,
             }}>
               {label}
@@ -480,6 +499,11 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
         })}
       </div>
 
+      {isCeluLab && (section === 'taller' || section === 'tienda') && <nav aria-label={section === 'taller' ? 'Mi taller' : 'Mi tienda'} style={{display:'flex',gap:8,flexWrap:'wrap',maxWidth:1190,margin:'0 auto',padding:'14px 16px 0'}}>
+        {(section === 'taller' ? workshop : store).map(id => <button key={id} type="button" aria-pressed={tab===id} onClick={() => setTab(id)} style={{border:'1px solid '+(tab===id?color:'#e5e7eb'),borderRadius:20,padding:'7px 14px',background:tab===id?color:'#fff',color:tab===id?'#fff':'#334155',fontSize:13,fontWeight:600,cursor:'pointer'}}>{panelLabels[id]}</button>)}
+        {section === 'tienda' && <a href="/market/celulab/tienda" target="_blank" rel="noreferrer" style={{border:'1px solid #e5e7eb',borderRadius:20,padding:'7px 14px',background:'#fff',color,fontSize:13,fontWeight:600}}>↗ Mi página web</a>}
+      </nav>}
+      {tab === 'lista-publica' && <ListaClient />}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: isMobile ? '16px 8px' : '28px 24px' }}>
         {loadError && <p role="alert">{loadError} <button onClick={fetchAll}>Reintentar</button></p>}
         {loading && ['proveedores','margenes','repuestos','precios'].includes(tab) ? (
@@ -488,8 +512,8 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
           <>
 
             {/* ══ ÓRDENES ══ */}
-            {tab === 'ordenes' && <OrdersTab color={color} />}
-            {tab === 'clientes' && <><div style={{display:'flex',gap:8,marginBottom:16}}>{(['clientes','archivo'] as const).map(view=><button key={view} onClick={()=>setCustomerView(view)} style={{padding:'8px 14px',border:'1px solid #dbe3ef',borderRadius:20,background:customerView===view?color:'white',color:customerView===view?'white':'#31415b'}}>{view==='clientes'?'Clientes':'Presupuestos'}</button>)}</div>{customerView==='clientes'?<CustomersTab/>:<QuotesTab/>}</>}
+            {tab === 'ordenes' && <OrdersTab color={color} quoteOrder={quoteOrder} clearQuoteOrder={() => setQuoteOrder(null)} />}
+            {tab === 'clientes' && <><div style={{display:'flex',gap:8,marginBottom:16}}>{(['clientes','archivo'] as const).map(view=><button key={view} onClick={()=>setCustomerView(view)} style={{padding:'8px 14px',border:'1px solid #dbe3ef',borderRadius:20,background:customerView===view?color:'white',color:customerView===view?'white':'#31415b'}}>{view==='clientes'?'Clientes':'Presupuestos'}</button>)}</div>{customerView==='clientes'?<CustomersTab/>:<QuotesTab onConvert={seed=>{setQuoteOrder(seed);setTab('ordenes')}}/>}</>}
 
             {/* ══ LOCALES ══ */}
             {tab === 'locales' && <LocalesTab color={color} />}
@@ -498,13 +522,21 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {tab === 'ventas' && <VentasTab color={color} />}
 
             {/* ══ CAJA ══ */}
-            {tab === 'caja' && <><PaymentAccounts/><CajaTab color={color} /></>}
+            {tab === 'caja' && <><PaymentAccounts/><CajaTab color={color} scope="taller" /></>}
+            {tab === 'store-cash' && <CajaTab key="tienda" color={color} scope="tienda" />}
 
             {/* ══ LISTA ══ */}
             {tab === 'lista' && <AdminListaTab color={color} configs={repairConfigs} />}
 
             {/* ══ TIENDA ══ */}
-            {tab === 'tienda' && <TiendaTab color={color} />}
+            {tab === 'tienda' && (isCeluLab?<><h2 style={{fontSize:17,marginBottom:4}}>Catálogo, stock y pedidos</h2><StoreOperations/></>:<TiendaTab color={color}/>)}
+            {tab === 'store-management' && <TiendaTab color={color} operations={false} />}
+            {tab === 'store-providers' && <section style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:18}}>
+              <h2 style={{fontSize:17,margin:'0 0 8px'}}>Proveedores de accesorios</h2>
+              <p style={{fontSize:13,color:'#64748b'}}>La importación de accesorios mantiene su catálogo y sus márgenes separados de los repuestos del taller.</p>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}><strong>ONLY San Luis</strong><Btn onClick={triggerSyncTienda} color={color} disabled={syncTiendaLoading}>{syncTiendaLoading?'Actualizando…':'↻ Actualizar catálogo'}</Btn></div>
+              {syncTiendaResult && <p role="status">{syncTiendaResult}</p>}
+            </section>}
 
             {/* ══ QR ══ */}
             {tab === 'qr' && (
@@ -709,12 +741,11 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
             {tab === 'proveedores' && (
               <div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end', marginBottom: 16 }}>
-                  <Btn onClick={triggerSyncTienda} color={color} disabled={syncTiendaLoading || !providers.some(p => p.is_active && supportsCatalogue(p.url))}>
-                    {syncTiendaLoading ? 'Actualizando…' : 'Actualizar proveedores conectados'}
-                  </Btn>
+                  <Btn onClick={triggerSync} color={color} disabled={syncLoading}>{syncLoading ? 'Actualizando…' : '↻ Actualizar repuestos'}</Btn>
                   <Btn onClick={() => setShowProvForm(true)} color={color}>+ Nuevo proveedor</Btn>
                 </div>
 
+                {syncResult && <p role="status">{syncResult}</p>}
                 {showProvForm && (
                   <FormCard title="Nuevo proveedor" onClose={() => setShowProvForm(false)}>
                     <Field label="Nombre *"><input style={inp} value={provForm.name} onChange={e => setProvForm(p => ({ ...p, name: e.target.value }))} placeholder="ej: MercadoLibre" /></Field>
@@ -746,15 +777,6 @@ function AdminPanel({ clientId, companyName, color, publicUrl }: { clientId: str
                             <div style={{ color: '#9ca3af' }}>Último scraping</div>
                             <div style={{ fontWeight: 600, color: '#374151' }}>{ago(p.last_scraped_at)}</div>
                           </div>
-                          {supportsCatalogue(p.url) ? (
-                            <div style={{ maxWidth: 260 }}>
-                              <button onClick={triggerSyncTienda} disabled={syncTiendaLoading || !p.is_active}
-                                style={{ minHeight: 44, padding: '8px 12px', borderRadius: 8, border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer' }}>
-                                {syncTiendaLoading ? 'Actualizando…' : '↻ Actualizar catálogo de tienda'}
-                              </button>
-                              {syncTiendaResult && <div role="status" style={{ fontSize: 12, marginTop: 6 }}>{syncTiendaResult}</div>}
-                            </div>
-                          ) : <span style={{ fontSize: 12 }}>Sin conexión automática</span>}
                           <BtnSec onClick={() => deleteProvider(p.id)} style={{ color: '#ef4444', borderColor: '#fecaca', fontSize: 12 }}>Eliminar</BtnSec>
                         </div>
                       ))}
@@ -1098,11 +1120,14 @@ function AdminListaTab({ color, configs }: { color: string; configs: RepairConfi
       setBrands(Array.from(new Set(tabRows.map(row => row.brand).filter(Boolean))).sort())
       const filtered = tabRows.filter(row => (!b || row.brand === b) && row.name.toLowerCase().includes(search.toLowerCase()))
       setItems(filtered.slice(off, off + LIMIT).map(row => {
-        const providers = (row.cl_provider_prices || []).map(p => ({ name: p.cl_providers?.name || '', cost: p.cost_ars })).sort((a,b) => a.cost - b.cost)
-        const cfg = configs.find(c => c.category === row.category)
-        return { ...row, stock: row.stock_qty > 0, best_cost: providers[0]?.cost ?? null, best_provider: providers[0]?.name ?? null,
-          all_providers: providers, final_price: providers.length ? calcFinal(row.category,providers[0].cost,configs) : null,
-          markup_ars: cfg?.markup_ars ?? 5000, labor_ars: cfg?.labor_ars ?? 15000 }
+        const providers = (row.cl_provider_prices || []).filter(p=>p.cl_providers?.is_active && p.cost_ars>0).sort((a,b)=>a.cost_ars-b.cost_ars)
+        const available = providers.find(p=>p.supplier_in_stock===true)
+        const cfg = configs.find(c => c.category === row.category&&c.tab_key===t)
+        const diagnostic=available??providers[0]
+        return { ...row, stock: !!available, best_cost: diagnostic?.cost_ars ?? null, best_provider: diagnostic?.cl_providers?.name ?? null,
+          all_providers: providers.map(p=>({name:p.cl_providers?.name||'',cost:p.cost_ars})), final_price: available ? calcFinal(row.category,available.cost_ars,cfg?[cfg]:[]) : null,
+          markup_ars: cfg?.markup_ars ?? 0, labor_ars: cfg?.labor_ars ?? 0 }
+
       }))
       setTotal(filtered.length)
       setLastSync(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }))

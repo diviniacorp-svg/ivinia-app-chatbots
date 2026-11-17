@@ -1,6 +1,8 @@
 'use client'
+import OrderPeriods from '../../../celulab/_components/OrderPeriods'
+import type {QuoteOrderSeed} from '../../../celulab/_components/quote-order'
 import {OrderIntake} from '../../../celulab/local/[slug]/_components/LocalPartnerClient'
-import {fetchOrderPages,finalOrderStatus,groupOrderMonths,period} from '../../../celulab/_components/order-lists'
+import {fetchOrderPages,finalOrderStatus,period} from '../../../celulab/_components/order-lists'
 import QuoteEditor from '../../../celulab/_components/QuoteEditor'
 import ExtraJobs from '../../../celulab/_components/ExtraJobs'
 import ShareOrder from '../../../celulab/_components/ShareOrder'
@@ -108,7 +110,7 @@ function fmtDate(iso: string) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function OrdersTab({ color }: { color: string }) {
+export function OrdersTab({ color, quoteOrder, clearQuoteOrder }: { color: string; quoteOrder?: QuoteOrderSeed | null; clearQuoteOrder?: () => void }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
@@ -173,12 +175,13 @@ export function OrdersTab({ color }: { color: string }) {
     )
   }
 
-  if (showNewForm) {
+  if (showNewForm || quoteOrder) {
     return (
       <OrderIntake
         origins={partners} partnerId={null} partnerName="CeluLab · Taller" partnerAddress="" partnerPhone="" logoUrl="" commissionPct={0} commissionUnlocked={true}
-        onBack={() => setShowNewForm(false)}
-        onSaved={() => { setShowNewForm(false); fetchData() }}
+        quoteOrder={quoteOrder}
+        onBack={() => { setShowNewForm(false); clearQuoteOrder?.() }}
+        onSaved={() => { setShowNewForm(false); clearQuoteOrder?.(); fetchData() }}
       />
     )
   }
@@ -296,7 +299,7 @@ export function OrdersTab({ color }: { color: string }) {
         <div style={{ textAlign: 'center', padding: 64, color: '#9ca3af' }}>Cargando...</div>
       ) : visibleOrders.length === 0 ? (
         <EmptyOrders onNew={() => setShowNewForm(true)} />
-      ) : statusFilter==='completed'?(<div>{groupOrderMonths(visibleOrders).map((g,i,all)=><section key={g.key}>{(i===0||all[i-1].year!==g.year)&&<h3>{g.year}</h3>}<details open={i===0||undefined}><summary style={{cursor:'pointer',textTransform:'capitalize'}}>{g.month} · {g.rows.length}</summary><div style={{display:'grid',gap:8,margin:'10px 0'}}>{g.rows.map(order=><OrderRow key={order.id} order={order} color={color} onClick={()=>setSelectedOrder(order)}/>)}</div></details></section>)}</div>):(
+      ) : statusFilter==='completed'?<OrderPeriods rows={visibleOrders}>{order=><OrderRow key={order.id} order={order} color={color} onClick={()=>setSelectedOrder(order)}/>}</OrderPeriods>:(
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {visibleOrders.map(order => (
             <OrderRow key={order.id} order={order} color={color} onClick={() => setSelectedOrder(order)} />

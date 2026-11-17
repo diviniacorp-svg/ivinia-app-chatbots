@@ -20,9 +20,13 @@ export default function CustomersTab({partner}:{partner?:string}={}){
  const {rows,status,refresh}=useCustomers(partner),[search,setSearch]=useState(''),[key,select]=useState(''),[edit,setEdit]=useState<Customer|null>(null),[message,setMessage]=useState(''),[saving,setSaving]=useState(false)
  const [adding,setAdding]=useState(false),[contact,setContact]=useState({name:'',dni:'',phone:''})
  async function add(){setSaving(true);try{const r=await fetch('/api/celulab/customers',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...contact,partner})});const data=await r.json();if(!r.ok)throw Error(data.error||'No se pudo guardar');setAdding(false);setContact({name:'',dni:'',phone:''});setMessage('Ficha guardada.');refresh()}catch(error){setMessage(error instanceof Error?error.message:'No se pudo guardar')}finally{setSaving(false)}}
- const c=rows.find(r=>r.key===key),query=search.trim().toLowerCase()
+ const normalize=(v:string|null|undefined)=>(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-AR')
+ const c=rows.find(r=>r.key===key),query=normalize(search.trim())
+ const digits=query.replace(/[^0-9]/g,'')
+ const isNumber=digits.length>0&&/^[0-9+ .()-]+$/.test(query)
+
  async function save(){if(!edit||saving)return;setSaving(true);try{const r=await fetch('/api/celulab/customers',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:edit.key,name:edit.name,phone:edit.phone||'',dni:edit.dni||''})});if(!r.ok)throw Error();setEdit(null);setMessage('Datos guardados.');refresh()}catch{setMessage('No se pudieron guardar los datos.')}finally{setSaving(false)}}
- const matches=rows.filter(r=>[r.name,r.dni,r.phone].some(v=>v?.toLowerCase().includes(query)))
+ const matches=rows.filter(r=>!query||[r.name,r.dni,r.phone].some(v=>normalize(v).includes(query))||(isNumber&&[r.dni,r.phone].some(v=>(v||'').replace(/[^0-9]/g,'').includes(digits))))
  return <section className="cl-customer-panel">
  <style>{`
  .cl-customer-panel{font:400 13px/1.5 system-ui,sans-serif;color:#374151}

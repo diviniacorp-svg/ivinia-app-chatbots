@@ -54,35 +54,42 @@ function ars(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(n)
 }
 
+const argentinaTime='America/Argentina/Buenos_Aires'
 function fechaHoy() {
-  const d = new Date()
-  return d.toISOString().slice(0, 10)
+  return new Intl.DateTimeFormat('sv-SE',{timeZone:argentinaTime,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
 }
-
+function localDateTime() {
+  return new Intl.DateTimeFormat('sv-SE',{timeZone:argentinaTime,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date()).replace(' ','T')
+}
+function boundary(date:string,end=false) {
+  return date ? new Date(date+(end?'T23:59:59.999':'T00:00:00')+'-03:00').toISOString() : ''
+}
 function rangoParaPeriodo(periodo: string): { desde: string; hasta: string } {
-  const now = new Date()
-  if (periodo === 'hoy') {
-    const s = new Date(now); s.setHours(0, 0, 0, 0)
-    const e = new Date(now); e.setHours(23, 59, 59, 999)
-    return { desde: s.toISOString(), hasta: e.toISOString() }
+  const today=fechaHoy()
+  if(periodo==='hoy')return {desde:boundary(today),hasta:boundary(today,true)}
+  if(periodo==='mes')return {desde:boundary(today.slice(0,7)+'-01'),hasta:boundary(today,true)}
+  if(periodo==='semana'){
+    const d=new Date(today+'T12:00:00Z')
+    d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7))
+    return {desde:boundary(d.toISOString().slice(0,10)),hasta:boundary(today,true)}
   }
-  if (periodo === 'semana') {
-    const day = now.getDay() === 0 ? 6 : now.getDay() - 1
-    const s = new Date(now); s.setDate(now.getDate() - day); s.setHours(0, 0, 0, 0)
-    const e = new Date(now); e.setHours(23, 59, 59, 999)
-    return { desde: s.toISOString(), hasta: e.toISOString() }
-  }
-  if (periodo === 'mes') {
-    const s = new Date(now.getFullYear(), now.getMonth(), 1)
-    const e = new Date(now); e.setHours(23, 59, 59, 999)
-    return { desde: s.toISOString(), hasta: e.toISOString() }
-  }
-  return { desde: '', hasta: '' }
+  return {desde:'',hasta:''}
 }
 
 // ─── CajaTab ─────────────────────────────────────────────────────────────────
 
-export function CajaTab({ color }: { color: string }) {
+export function CajaTab({ color, scope='taller' }: { color: string; scope?: 'taller'|'tienda' }) {
+  const [origin,setOrigin]=useState('')
+  const [partners,setPartners]=useState<{id:string;name:string}[]>([])
+  const [cashMessage,setCashMessage]=useState('')
+  useEffect(()=>{
+    if(scope==='tienda')return
+    const ctrl=new AbortController()
+    fetch('/api/celulab/partners',{signal:ctrl.signal}).then(r=>r.ok?r.json():[]).then(data=>{if(Array.isArray(data))setPartners(data)}).catch(()=>{})
+    return ()=>ctrl.abort()
+  },[scope])
+  const categories=CATEGORIAS.filter(c=>scope==='tienda'?c.key==='accesorios':c.key!=='accesorios')
+
   const [periodo, setPeriodo] = useState('hoy')
   const [customDesde, setCustomDesde] = useState(fechaHoy())
   const [customHasta, setCustomHasta] = useState(fechaHoy())
@@ -103,7 +110,7 @@ export function CajaTab({ color }: { color: string }) {
     monto_ars: '',
     equipo_modelo: '',
     notas: '',
-    fecha: new Date().toISOString().slice(0, 16),
+    fecha: localDateTime(),
   })
   const [saving, setSaving] = useState(false)
 
@@ -118,48 +125,58 @@ export function CajaTab({ color }: { color: string }) {
       if (desde) params.set('desde', desde)
       if (hasta) params.set('hasta', hasta)
     } else {
-      if (customDesde) params.set('desde', new Date(customDesde).toISOString())
-      if (customHasta) {
-        const h = new Date(customHasta); h.setHours(23, 59, 59, 999)
-        params.set('hasta', h.toISOString())
-      }
+      if(customDesde)params.set('desde',boundary(customDesde))
+      if(customHasta)params.set('hasta',boundary(customHasta,true))
     }
     if (filtroTipo) params.set('tipo', filtroTipo)
     if (filtroMetodo) params.set('metodo', filtroMetodo)
     if (filtroCategoria) params.set('categoria', filtroCategoria)
 
-    const res = await fetch(`/api/celulab/caja?${params}`, { cache: 'no-store' }).then(r => r.json())
-    setMovimientos(res.movimientos ?? [])
-    setResumen(res.resumen ?? null)
-    setLoading(false)
-  }, [periodo, customDesde, customHasta, filtroTipo, filtroMetodo, filtroCategoria])
+    params.set('scope',scope)
+    if(origin&&scope==='taller')params.set('origin',origin)
+    try {
+      const response=await fetch(`/api/celulab/caja?${params}`,{cache:'no-store'})
+      if(!response.ok)throw Error()
+      const res=await response.json()
+      setMovimientos(res.movimientos??[])
+      setResumen(res.resumen??null)
+      setCashMessage('')
+    } catch {
+      setMovimientos([]);setResumen(null);setCashMessage('No se pudo cargar la caja del período.')
+    } finally {setLoading(false)}
+  }, [periodo, customDesde, customHasta, filtroTipo, filtroMetodo, filtroCategoria, scope, origin])
 
   useEffect(() => { fetchCaja() }, [fetchCaja])
 
   async function guardarMovimiento() {
-    if (!form.concepto || !form.monto_ars || Number(form.monto_ars) <= 0) return
+    if (!form.fecha || !form.concepto.trim() || !form.monto_ars || Number(form.monto_ars) <= 0) return
     setSaving(true)
-    await fetch('/api/celulab/caja', {
+    const response=await fetch('/api/celulab/caja', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
+        scope,
+        partner_id: scope==='taller'&&origin&&origin!=='direct'?origin:null,
+        fecha: new Date(form.fecha+'-03:00').toISOString(),
         monto_ars: Number(form.monto_ars),
         categoria: form.categoria || null,
         equipo_modelo: form.equipo_modelo || null,
       }),
-    })
+    }).catch(()=>null)
     setSaving(false)
+    if(!response?.ok){setCashMessage((await response?.json().catch(()=>null))?.error||'No se pudo guardar. Actualizá la caja antes de reintentar.');return}
     setShowForm(false)
-    setForm({ tipo: 'ingreso', concepto: '', categoria: '', metodo_pago: 'efectivo', monto_ars: '', equipo_modelo: '', notas: '', fecha: new Date().toISOString().slice(0, 16) })
+    setForm({ tipo: 'ingreso', concepto: '', categoria: '', metodo_pago: 'efectivo', monto_ars: '', equipo_modelo: '', notas: '', fecha: localDateTime() })
     fetchCaja()
   }
 
   async function eliminarMovimiento(id: string) {
     if (!confirm('¿Eliminar este movimiento?')) return
     setDeletingId(id)
-    await fetch(`/api/celulab/caja?id=${id}`, { method: 'DELETE' })
+    const response=await fetch(`/api/celulab/caja?id=${id}`, { method: 'DELETE' }).catch(()=>null)
     setDeletingId(null)
+    if(!response?.ok){setCashMessage('No se pudo eliminar el movimiento o está vinculado a una operación.');return}
     fetchCaja()
   }
 
@@ -177,7 +194,7 @@ export function CajaTab({ color }: { color: string }) {
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 17, color: '#111' }}>💰 Caja CeluLab</div>
+          <div style={{ fontWeight: 700, fontSize: 17, color: '#111' }}>💰 Caja {scope==='tienda'?'de accesorios':'CeluLab · Servicio técnico'}</div>
           <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>Registrá ingresos y egresos · Efectivo vs Digital</div>
         </div>
         <button
@@ -188,6 +205,7 @@ export function CajaTab({ color }: { color: string }) {
         </button>
       </div>
 
+      {cashMessage&&<p role="alert" style={{color:'#92400e'}}>{cashMessage}</p>}
       {/* ── Formulario nuevo movimiento ── */}
       {showForm && (
         <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 14, padding: 20, marginBottom: 24 }}>
@@ -233,7 +251,7 @@ export function CajaTab({ color }: { color: string }) {
               <div style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Categoría</div>
               <select style={inp} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
                 <option value="">Sin categoría</option>
-                {CATEGORIAS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
               </select>
             </div>
 
@@ -299,6 +317,9 @@ export function CajaTab({ color }: { color: string }) {
 
       {/* ── Filtros adicionales ── */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        {scope==='taller'&&<select value={origin} onChange={e=>setOrigin(e.target.value)} aria-label="Caja por local" style={{padding:'6px 10px',borderRadius:8,border:'1px solid #d1d5db',fontSize:12}}>
+          <option value="">Caja ST completa</option><option value="direct">Mi taller · sin local</option>{partners.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>}
         <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}
           style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 12, minWidth: 130 }}>
           <option value="">Ingresos + Egresos</option>
@@ -314,7 +335,7 @@ export function CajaTab({ color }: { color: string }) {
         <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
           style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 12, minWidth: 160 }}>
           <option value="">Todas las categorías</option>
-          {CATEGORIAS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
         </select>
       </div>
 
@@ -497,7 +518,7 @@ export function CajaTab({ color }: { color: string }) {
 
           {/* ── Vista Rendimientos ── */}
           {activeView === 'rendimientos' && (
-            <RendimientosView color={color} periodo={periodo} customDesde={customDesde} customHasta={customHasta} />
+            scope==='taller'?<RendimientosView color={color} periodo={periodo} customDesde={customDesde} customHasta={customHasta} origin={origin}/>:<p style={{fontSize:13,color:'#64748b'}}>Los rendimientos de reparación por local se consultan en la caja de Servicio técnico. Acá podés revisar los ingresos, egresos y reportes de accesorios.</p>
           )}
         </>
       )}
@@ -510,11 +531,11 @@ export function CajaTab({ color }: { color: string }) {
 type RendPartner = {
   partner_id: string; partner_name: string; orders_count: number
   deposits_total: number; budget_total: number
-  commission_owed: number; ya_rendido: number; pendiente: number
-  orders: { id: string; order_number: string; device: string; deposit_ars: number; budget_ars: number; commission_pct: number; status: string; created_at: string }[]
+  commission_owed: number; ya_rendido: number; pendiente: number; missing: number; reconciled: boolean
+  orders: { id: string; order_number: string; device: string; deposit_ars: number; budget_ars: number; commission_pct: number; commission_ars: number|null; status: string; created_at: string }[]
 }
 
-function RendimientosView({ color, periodo, customDesde, customHasta }: { color: string; periodo: string; customDesde: string; customHasta: string }) {
+function RendimientosView({ color, periodo, customDesde, customHasta, origin }: { color: string; periodo: string; customDesde: string; customHasta: string; origin: string }) {
   const [data, setData] = useState<RendPartner[]>([])
   const [reportError,setReportError]=useState(false)
   const [loading, setLoading] = useState(true)
@@ -525,34 +546,18 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
   const fetch_ = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (periodo !== 'custom') {
-      const now = new Date()
-      if (periodo === 'hoy') {
-        const s = new Date(now); s.setHours(0, 0, 0, 0)
-        const e = new Date(now); e.setHours(23, 59, 59, 999)
-        params.set('desde', s.toISOString()); params.set('hasta', e.toISOString())
-      } else if (periodo === 'semana') {
-        const day = now.getDay() === 0 ? 6 : now.getDay() - 1
-        const s = new Date(now); s.setDate(now.getDate() - day); s.setHours(0, 0, 0, 0)
-        const e = new Date(now); e.setHours(23, 59, 59, 999)
-        params.set('desde', s.toISOString()); params.set('hasta', e.toISOString())
-      } else if (periodo === 'mes') {
-        const s = new Date(now.getFullYear(), now.getMonth(), 1)
-        const e = new Date(now); e.setHours(23, 59, 59, 999)
-        params.set('desde', s.toISOString()); params.set('hasta', e.toISOString())
-      }
-    } else {
-      if (customDesde) params.set('desde', new Date(customDesde).toISOString())
-      if (customHasta) { const h = new Date(customHasta); h.setHours(23, 59, 59, 999); params.set('hasta', h.toISOString()) }
-    }
+    const range=periodo==='custom'?{desde:boundary(customDesde),hasta:boundary(customHasta,true)}:rangoParaPeriodo(periodo)
+    if(range.desde)params.set('desde',range.desde)
+    if(range.hasta)params.set('hasta',range.hasta)
     try {
       const response=await fetch(`/api/celulab/caja/rendimientos?${params}`,{cache:'no-store'})
       if (!response.ok) throw new Error()
-      setData(await response.json())
+      const result:RendPartner[]=await response.json()
+      setData(origin?result.filter(p=>p.partner_id===origin):result)
       setReportError(false)
     } catch { setReportError(true) }
     finally { setLoading(false) }
-  }, [periodo, customDesde, customHasta])
+  }, [periodo, customDesde, customHasta, origin])
 
   useEffect(() => { fetch_() }, [fetch_])
 
@@ -582,7 +587,7 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
     </div>
   )
 
-  const totalPendiente = data.reduce((s, p) => s + p.pendiente, 0)
+  const totalCommission = data.reduce((s, p) => s + p.commission_owed, 0)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -590,10 +595,10 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 18px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
         <div><div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>LOCALES ACTIVOS</div><div style={{ fontWeight: 800, fontSize: 20 }}>{data.length}</div></div>
         <div><div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>SEÑAS RECIBIDAS</div><div style={{ fontWeight: 800, fontSize: 20, color: '#16a34a' }}>{ars(data.reduce((s, p) => s + p.deposits_total, 0))}</div></div>
-        <div><div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>YA RENDIDO</div><div style={{ fontWeight: 800, fontSize: 20, color: '#6366f1' }}>{ars(data.reduce((s, p) => s + p.ya_rendido, 0))}</div></div>
-        <div><div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>PENDIENTE A PAGAR</div><div style={{ fontWeight: 800, fontSize: 20, color: totalPendiente > 0 ? '#ef4444' : '#16a34a' }}>{ars(totalPendiente)}</div></div>
+        <div><div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>COMISIÓN DE ÓRDENES ENTREGADAS</div><div style={{ fontWeight: 800, fontSize: 20, color }}>{ars(totalCommission)}</div></div>
       </div>
 
+      <p style={{margin:0,color:'#64748b',fontSize:13}}>Se muestran comisiones guardadas. Falta conciliar pagos y rendiciones para saber el saldo exacto a pagar.</p>
       {data.map(p => (
         <div key={p.partner_id} style={{ background: '#fff', border: `1px solid ${p.pendiente > 0 ? '#fde68a' : '#d1fae5'}`, borderRadius: 12, overflow: 'hidden' }}>
           {/* Header */}
@@ -604,7 +609,7 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
             </div>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, color: '#9ca3af' }}>Comisión estimada</div>
+                <div style={{ fontSize: 11, color: '#9ca3af' }}>Comisión registrada</div>
                 <div style={{ fontWeight: 700, color: color, fontSize: 16 }}>{ars(p.commission_owed)}</div>
               </div>
               {p.ya_rendido > 0 && (
@@ -613,15 +618,12 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
                   <div style={{ fontWeight: 700, color: '#6366f1', fontSize: 16 }}>{ars(p.ya_rendido)}</div>
                 </div>
               )}
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, color: '#9ca3af' }}>Pendiente</div>
-                <div style={{ fontWeight: 800, color: p.pendiente > 0 ? '#ef4444' : '#16a34a', fontSize: 18 }}>{ars(p.pendiente)}</div>
-              </div>
+              {p.missing>0&&<span style={{fontSize:12,color:'#92400e'}}>{p.missing} sin comisión registrada</span>}
             </div>
           </div>
 
           {/* Rendir row */}
-          {p.pendiente > 0 && (
+          {p.reconciled && p.pendiente > 0 && (
             <div style={{ padding: '10px 18px 14px', borderTop: '1px solid #f3f4f6', background: '#fffbeb', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: '#92400e', flex: 1 }}>💸 Registrar pago al local:</span>
               <input
@@ -653,15 +655,14 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 480 }}>
                   <thead>
                     <tr style={{ background: '#f9fafb' }}>
-                      {['Orden', 'Equipo', 'Estado', 'Seña', 'Presupuesto', 'Comisión est.'].map(h => (
+                      {['Orden', 'Equipo', 'Estado', 'Seña', 'Presupuesto', 'Comisión registrada'].map(h => (
                         <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontWeight: 600, fontSize: 11, color: '#6b7280' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {p.orders.map(o => {
-                      const base = (o.budget_ars ?? 0) > 0 ? o.budget_ars : (o.deposit_ars ?? 0)
-                      const comm = Math.round(base * (o.commission_pct ?? 33) / 100)
+                      const comm = o.commission_ars
                       return (
                         <tr key={o.id} style={{ borderTop: '1px solid #f3f4f6' }}>
                           <td style={{ padding: '8px 12px', fontWeight: 600, color: color }}>{o.order_number}</td>
@@ -671,7 +672,7 @@ function RendimientosView({ color, periodo, customDesde, customHasta }: { color:
                           </td>
                           <td style={{ padding: '8px 12px', color: '#16a34a', fontWeight: 600 }}>{ars(o.deposit_ars ?? 0)}</td>
                           <td style={{ padding: '8px 12px', color: '#1d4ed8' }}>{o.budget_ars > 0 ? ars(o.budget_ars) : '—'}</td>
-                          <td style={{ padding: '8px 12px', color: '#7c3aed', fontWeight: 700 }}>{ars(comm)}</td>
+                          <td style={{ padding: '8px 12px', color: '#7c3aed', fontWeight: 700 }}>{comm==null?'A confirmar':ars(comm)}</td>
                         </tr>
                       )
                     })}

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef, useId } from 'react'
+import { useState, useEffect, useCallback, useId } from 'react'
 import {partCaption,repairForCategory} from '../../../_components/quote-labels'
 import {ChargeOptions,RepairPicker,standardRepairRates,type RepairRate} from '../../../_components/RepairPicker'
 import QuoteParts,{catalogGroup} from '../../../_components/QuoteParts'
@@ -7,7 +7,10 @@ import {isChargeJob} from '../../../_components/charge-quote'
 import {chargeCaution,chargeProfile,chargeTierOptions,intakeChoices,suggestIntake,REVIEW_PRICE,UNKNOWN_ACCESS} from '../../../_components/repair-guidance'
 import CustomersTab,{useCustomers} from '../../../../nucleus/[slug]/_components/CustomersTab'
 import {usePaymentAccounts,type DepositMethod} from '../../../_components/PaymentAccounts'
-import {fetchOrderPages,finalOrderStatus,groupOrderMonths} from '../../../_components/order-lists'
+import {fetchOrderPages,finalOrderStatus} from '../../../_components/order-lists'
+import OrderPeriods from '../../../_components/OrderPeriods'
+import QuotesTab from '../../../../nucleus/[slug]/_components/QuotesTab'
+import {quoteJobsToReview,splitDevice,type QuoteOrderSeed} from '../../../_components/quote-order'
 import QuoteEditor from '../../../_components/QuoteEditor'
 import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
@@ -202,25 +205,23 @@ function PinScreen({ partnerName, logoUrl, pinInput, pinErr, onInput, onSubmit }
 
 // ─── Local Dashboard ──────────────────────────────────────────────────────────
 
-function MetricsDialog({orders, unlocked, onUnlock, onClose}: {
+function MetricsPanel({orders, unlocked, onUnlock, onClose}: {
   orders: Order[]; unlocked: boolean
   onUnlock: (value: string) => Promise<boolean>; onClose: () => void
 }) {
-  const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const [value, setValue] = useState('')
   const [visible, setVisible] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
-  useEffect(() => { if (dialog.current && !dialog.current.open) dialog.current.showModal() }, [])
 
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onClose={onClose} style={{ border: '1px solid #e5e7eb', borderRadius: 20, padding: 20, width: unlocked ? 680 : 320, maxWidth: 'calc(100vw - 32px)', maxHeight: '85dvh', boxSizing: 'border-box', color: '#111827', boxShadow: '0 16px 48px #0f172a26' }}>
+    <section aria-labelledby={titleId} style={{ border: '1px solid #e5e7eb', background:'#fff', borderRadius: 16, padding: 14, width:'100%', maxWidth:unlocked?'100%':370, boxSizing: 'border-box', color: '#111827' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
         <h2 id={titleId} style={{ margin: 0, fontSize: 16 }}>📊 Métricas</h2>
-        <button type="button" onClick={() => dialog.current?.close()} aria-label="Cerrar métricas" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e5e7eb', background: '#f9fafb', color: '#475569', cursor: 'pointer', fontSize: 20 }}>×</button>
+        <button type="button" onClick={onClose} aria-label="Cerrar métricas" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e5e7eb', background: '#f9fafb', color: '#475569', cursor: 'pointer', fontSize: 20 }}>×</button>
       </div>
-      {unlocked ? <LocalEarnings orders={orders} unlocked /> : (
+      {unlocked ? <><div style={{borderBottom:'1px solid #e5e7eb',marginBottom:10}}><span style={{display:'inline-block',borderBottom:'2px solid #6366f1',padding:'8px 12px',fontSize:13,fontWeight:700,color:'#4f46e5'}}>Ganancias</span></div><LocalEarnings orders={orders} unlocked /></> : (
         <form onSubmit={async e => {
           e.preventDefault()
           if (busy) return
@@ -244,7 +245,7 @@ function MetricsDialog({orders, unlocked, onUnlock, onClose}: {
           {error && <p role="alert" style={{ color: '#b91c1c', fontSize: 12, margin: 0 }}>No se pudo desbloquear. Revisá el PIN o volvé a intentar.</p>}
         </form>
       )}
-    </dialog>
+    </section>
   )
 }
 
@@ -255,11 +256,12 @@ function LocalDashboard({
   partnerPhone: string; logoUrl: string; commissionPct: number; pin: string
 }) {
   const [view, setView] = useState<'list' | 'new'>('list')
+  const [quoteOrder, setQuoteOrder] = useState<QuoteOrderSeed|null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [activeTab, setActiveTab] = useState<'ordenes' | 'historial' | 'precios' | 'clientes'>('ordenes')
+  const [activeTab, setActiveTab] = useState<'ordenes' | 'historial' | 'precios' | 'clientes' | 'presupuestos'>('ordenes')
   const [historialView, setHistorialView] = useState<'ordenes' | 'clientes'>('ordenes')
   const [clientFilter, setClientFilter] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
@@ -299,8 +301,9 @@ function LocalDashboard({
         pin={pin}
         commissionUnlocked={commissionUnlocked}
         prefilledRepair={prefilledRepair}
-        onBack={() => { setView('list'); setPrefilledRepair(null) }}
-        onSaved={() => { setView('list'); setPrefilledRepair(null); fetchOrders() }}
+        quoteOrder={quoteOrder}
+        onBack={() => { setView('list'); setPrefilledRepair(null); setQuoteOrder(null) }}
+        onSaved={() => { setView('list'); setPrefilledRepair(null); setQuoteOrder(null); fetchOrders() }}
       />
     )
   }
@@ -389,6 +392,7 @@ function LocalDashboard({
             { key: 'ordenes', label: '📋 Órdenes activas' },
             { key: 'historial', label: '🕐 Historial' },
             { key: 'clientes', label: '👤 Clientes' },
+            { key: 'presupuestos', label: '📄 Presupuestos' },
           ].map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
               padding: '7px 14px', borderRadius: 20, whiteSpace: 'nowrap',
@@ -472,9 +476,9 @@ function LocalDashboard({
         })()}
 
         {/* ── Tab: Historial ── */}
-        {activeTab === 'historial' && <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-          <button type="button" onClick={() => setShowMetrics(true)} style={{ padding: '7px 14px', borderRadius: 16, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#fff', border: '1px solid #e5e7eb', color: '#4f46e5' }}>📊 Métricas</button>
-          {showMetrics && <MetricsDialog orders={orders} unlocked={commissionUnlocked} onUnlock={unlockCommission} onClose={() => setShowMetrics(false)} />}
+        {activeTab === 'historial' && <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
+          {showMetrics ? <MetricsPanel orders={orders} unlocked={commissionUnlocked} onUnlock={unlockCommission} onClose={() => setShowMetrics(false)} /> :
+            <button type="button" onClick={() => setShowMetrics(true)} style={{ padding: '7px 14px', borderRadius: 16, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#fff', border: '1px solid #e5e7eb', color: '#4f46e5' }}>📊 Métricas</button>}
         </div>}
         {activeTab === 'historial' && (
           (() => {
@@ -511,7 +515,7 @@ function LocalDashboard({
                         ← Todos los clientes
                       </button>
                     )}
-                    {groupOrderMonths(visibleOrders).map((period,index,all)=><section key={period.key}>{(index===0||all[index-1].year!==period.year)&&<h3 style={{margin:'14px 0 6px'}}>{period.year}</h3>}<details style={{marginBottom:10}} open={index===0||undefined}><summary style={{cursor:'pointer',fontWeight:700,textTransform:'capitalize',marginBottom:8}}>{period.month} · {period.rows.length}</summary><div style={{display:'grid',gap:8}}>{period.rows.map(order => {
+                    <OrderPeriods rows={visibleOrders}>{order => {
                       const sc = STATUS_COLORS[order.status] ?? '#9ca3af'
                       return (
                         <div key={order.id} onClick={() => setSelectedOrder(order)} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, opacity: 0.85 }}>
@@ -526,7 +530,7 @@ function LocalDashboard({
                           <div style={{ color: '#d1d5db' }}>›</div>
                         </div>
                       )
-                    })}</div></details></section>)}
+                    }}</OrderPeriods>
                   </div>
                 ) : (
                   // Vista por cliente
@@ -574,6 +578,7 @@ function LocalDashboard({
           })()
         )}
 
+        {activeTab==='presupuestos'&&<QuotesTab partner={partnerId} onConvert={seed=>{setQuoteOrder(seed);setPrefilledRepair(null);setView('new')}}/>}
         {activeTab==='clientes'&&<CustomersTab partner={partnerId}/>}
         {/* ── Tab: Lista de precios ── */}
         {activeTab === 'precios' && (
@@ -671,30 +676,39 @@ function CheckItem({ label, done, onToggle }: { label: string; done: boolean; on
 }
 
 export function OrderIntake({
-  partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, commissionPct, pin, commissionUnlocked, prefilledRepair, origins, onBack, onSaved,
+  partnerId, partnerName, partnerAddress, partnerPhone, logoUrl, commissionPct, pin, commissionUnlocked, prefilledRepair, quoteOrder, origins, onBack, onSaved,
 }: {
   partnerId: string|null; partnerName: string; partnerAddress: string
   partnerPhone: string; logoUrl: string; commissionPct: number
   pin?: string; commissionUnlocked: boolean
   origins?:{id:string;name:string;commission_pct:number}[]
   prefilledRepair?: RepairLineItem | null
+  quoteOrder?: QuoteOrderSeed | null
   onBack: () => void; onSaved: () => void
 }) {
-  const [form, setForm] = useState(BLANK)
-  const [deviceText,setDeviceText]=useState('')
-  function setDevice(value:string){setDeviceText(value);const combined=value.trim().replace(/^Apple\s+iPhone\s+/i,'iPhone ');const [raw,...rest]=combined.split(/\s+/);const brand=/^moto$/i.test(raw)?'Motorola':raw;setForm(f=>({...f,device_brand:brand,device_model:rest.join(' ')}));setRepairs(prev=>prev.filter(r=>prefilledRepair?.partId===r.partId))}
-  const [origin,setOrigin]=useState(''),[depositMethod,setDepositMethod]=useState<DepositMethod>('efectivo'),[account,setAccount]=useState('')
+  const [step,setStep]=useState<1|2>(1)
+  const [form, setForm] = useState(() => quoteOrder ? {...BLANK,...splitDevice(quoteOrder.device),client_name:quoteOrder.customer,client_phone:quoteOrder.phone} : BLANK)
+  const [deviceText,setDeviceText]=useState(quoteOrder?.device||'')
+  const [pendingQuote,setPendingQuote]=useState(false)
+  function setDevice(value:string){
+    setDeviceText(value)
+    setForm(f=>({...f,...splitDevice(value)}))
+    setRepairs(prev=>quoteOrder?[]:prev.filter(r=>prefilledRepair?.partId===r.partId))
+    setPendingQuote(false)
+  }
+  const [origin,setOrigin]=useState(quoteOrder?.partnerId||''),[depositMethod,setDepositMethod]=useState<DepositMethod>('efectivo'),[account,setAccount]=useState('')
   const selectedOrigin=origins?.find(o=>o.id===origin)
   const orderPartner=origins?selectedOrigin?.id||null:partnerId
   const rate=origins?selectedOrigin?.commission_pct||0:commissionPct
   const contacts=useCustomers(origins?null:partnerId),[clientKey,setClientKey]=useState('')
   const payments=usePaymentAccounts(orderPartner,depositMethod==='transferencia')
   const transfer=payments.items.find(a=>a.id===account)
-  const [job,setJob]=useState(''),[possible,setPossible]=useState('')
+  const [job,setJob]=useState(quoteOrder?.jobs[0]||''),[possible,setPossible]=useState('')
   const suggested=suggestIntake(form.reported_fault)
   const choosePossible=(value:string)=>{setPossible(value);setJob(intakeChoices.find(c=>c.value===value)?.job||'')}
   const repairCaption=(r:RepairLineItem)=>r.caption||(r.partId?partCaption(r.job,form.device_brand+' '+form.device_model,r.quality,r.color):r.job)
   const [repairs, setRepairs] = useState<RepairLineItem[]>(prefilledRepair ? [prefilledRepair] : [])
+  const [rateCheck,setRateCheck]=useState(0)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [savedOrder, setSavedOrder] = useState<Order | null>(null)
@@ -726,21 +740,35 @@ export function OrderIntake({
   function set(k: string, v: unknown) { setForm(f => ({ ...f, [k]: v })) }
   function toggleCheck(k: keyof typeof checks) { setChecks(c => ({ ...c, [k]: !c[k] })) }
 
+  const unverified = quoteOrder ? quoteJobsToReview(quoteOrder.jobs,repairs.map(r=>r.job)) : []
+  function intakeError() {
+    if (!form.client_name.trim() || !form.device_brand.trim() || !form.device_model.trim()) return 'Nombre, marca y modelo son obligatorios.'
+    if (origins&&origin&&!selectedOrigin) return 'Confirmá el local de ingreso antes de continuar.'
+    if (form.turns_on === null) return 'Verificá si el equipo enciende antes de continuar.'
+    if (!form.unlock_type) return 'Elegí cómo se accede al equipo.'
+    if ((form.unlock_type==='pin'||form.unlock_type==='patron')&&!form.unlock_code.trim()) return 'Registrá el código de acceso o marcá que no lo recuerda.'
+    return ''
+  }
+  function go(next:1|2) {
+    const error = next===2 ? intakeError() : ''
+    setErr(error)
+    if(error)return
+    setStep(next)
+    if(next===2)setRateCheck(n=>n+1)
+    window.scrollTo({top:0})
+  }
+
   async function handleSubmit() {
     const device=form.device_brand+' '+form.device_model
     const possibleText=form.turns_on===false?intakeChoices.find(c=>c.value===possible)?.label||'':''
     const repairText=repairs.map(repairCaption).join(' + ')
     const freeText = (form.requested_work ?? '').trim()
     const caution=repairs.some(r=>isChargeJob(r.job))||possible==='charge'?chargeCaution(device):''
-    const finalRequestedWork=[form.turns_on===false?'Ingresa para revisión — $15.000':null,possibleText,repairText?(form.turns_on===false?'Reparación estimada: ':'')+repairText:'',freeText,caution].filter(Boolean).join(' / ')
+    const finalRequestedWork=[pendingQuote&&unverified.length?'A confirmar · '+unverified.join(', '):null,form.turns_on===false?'Ingresa para revisión — $15.000':null,possibleText,repairText?(form.turns_on===false?'Reparación estimada: ':'')+repairText:'',freeText,caution].filter(Boolean).join(' / ')
 
-    if (!form.client_name.trim() || !form.device_brand.trim() || !form.device_model.trim()) {
-      setErr('Nombre, marca y modelo son obligatorios.')
-      return
-    }
-    if(form.turns_on===null){setErr('Verificá si el equipo enciende antes de continuar.');return}
-    if(!form.unlock_type){setErr('Elegí cómo se accede al equipo.');return}
-    if ((form.unlock_type==='pin'||form.unlock_type==='patron')&&!form.unlock_code.trim()){setErr('Registrá el código de acceso o marcá que no lo recuerda.');return}
+    const error=intakeError()
+    if(error){setStep(1);setErr(error);return}
+    if(quoteOrder && unverified.length && !pendingQuote){setErr('Volvé a cotizar los trabajos pendientes o registralos a confirmar, sin copiar el importe anterior.');return}
     if (!finalRequestedWork.trim() && !form.reported_fault.trim()) {
       setErr('Ingresá el trabajo a realizar o buscá un repuesto.')
       return
@@ -761,11 +789,12 @@ export function OrderIntake({
         deposit_ars: Number(form.deposit_ars) || 0,
         deposit_method: depositMethod,
         deposit_account: account,
+        source_quote: quoteOrder ? {id:quoteOrder.quoteId,revision:quoteOrder.revision} : undefined,
         partner_id: orderPartner,
       }),
     })
 
-    if (!res.ok) { setErr((await res.json()).error ?? 'Error al guardar'); setSaving(false); return }
+    if (!res.ok) { setErr((await res.json()).error ?? 'Error al guardar'); if (quoteOrder && res.status===409) {setRateCheck(n=>n+1);setRepairs([]);setPendingQuote(false)}; return }
     setSavedOrder(await res.json())
     }catch{setErr('No se pudo enviar la orden. Revisá el listado antes de reintentar.')}finally{setSaving(false)}
   }
@@ -780,24 +809,24 @@ export function OrderIntake({
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui' }}>
       {/* Header */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 20px', height: 52, display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9ca3af', padding: 0 }}>←</button>
+        <button onClick={() => step===2 ? go(1) : onBack()} aria-label="Volver" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9ca3af', padding: 0 }}>←</button>
         <div>
           <div style={{ fontWeight: 700, fontSize: 14 }}>📋 Nueva Orden</div>
-          <div style={{ fontSize: 10, color: '#9ca3af' }}>{partnerName}</div>
+          <div style={{ fontSize: 11, color: '#64748b' }}>{partnerName} · {step} de 2 · {step===1?'Cliente y equipo':'Trabajo y comprobante'}</div>
         </div>
       </div>
 
       <div style={{ maxWidth: 1020, margin: '0 auto', padding: '20px 16px 100px' }}>
 
 
-        {/* 2-column grid on wide screens */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: 14 }}>
+        {/* Intake stored in one shared draft across both steps. */}
+        <div style={{ display:step===1?'grid':'none', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: 14 }}>
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             <Card title="👤 Cliente">
-              {origins&&<FField label="Origen de la orden"><select style={inp} value={origin} onChange={e=>{setOrigin(e.target.value);setAccount('')}}><option value="">Directo · CeluLab</option>{origins.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></FField>}
+              {origins&&<FField label="Origen de la orden"><select style={inp} value={origin} onChange={e=>{setOrigin(e.target.value);setAccount('');if(quoteOrder){setRepairs([]);setPendingQuote(false)}}}><option value="">Directo · CeluLab</option>{origins.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></FField>}
               {contacts.rows.length>0&&<FField label="Usar cliente guardado"><select style={inp} value={clientKey} onChange={e=>{setClientKey(e.target.value);const c=contacts.rows.find(r=>r.key===e.target.value);if(c)setForm(f=>({...f,client_name:c.name,client_dni:c.dni,client_phone:c.phone}))}}><option value="">Ingresar datos nuevos</option>{contacts.rows.filter(c=>!form.client_name.trim()||c.key===clientKey||c.name.toLowerCase().includes(form.client_name.trim().toLowerCase())).map(c=><option key={c.key} value={c.key}>{c.name}{c.dni?' · '+c.dni:''}</option>)}</select></FField>}
               <FField label="Nombre completo *" question="¿Cuál es tu nombre y apellido?">
                 <input style={inp} value={form.client_name} onChange={e => set('client_name', e.target.value)} placeholder="Nombre y apellido" autoFocus autoComplete="name" />
@@ -810,6 +839,11 @@ export function OrderIntake({
               </FField>
             </Card>
 
+            <Card title="📱 Equipo">
+              <FField label="Marca y modelo *" question="¿Qué marca y modelo es el equipo? Confirmalo antes de buscar repuestos."><input style={inp} value={deviceText} onChange={e=>setDevice(e.target.value)} placeholder="Ej. Motorola G22, Samsung A54 o iPhone 14"/></FField>
+            </Card>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:14,minWidth:0}}>
             <Card title="⚡ Estado de encendido">
               <div style={{ fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>¿Enciende?</div>
               <div style={{fontSize:12,color:'#475569',marginBottom:8}}>Verificá vos si enciende. No completes este campo a partir de lo que diga el cliente.</div>
@@ -858,11 +892,12 @@ export function OrderIntake({
             </Card>
           </div>
 
+        </div>
+        <div style={{display:step===2?'grid':'none',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%, 380px),1fr))',gap:14}}>
           {/* RIGHT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             <Card title="📱 Equipo, reparaciones y seña">
-              <FField label="Marca y modelo *" question="¿Qué marca y modelo es el equipo? Confirmalo antes de buscar repuestos."><input style={inp} value={deviceText} onChange={e=>setDevice(e.target.value)} placeholder="Ej. Motorola G22, Samsung A54 o iPhone 14"/></FField>
               {form.turns_on===false ? (
                 <ScriptTip text="El diagnóstico es $15.000, se descuenta si aprobás la reparación. ¿Dejás la seña ahora?" />
               ) : (
@@ -875,8 +910,14 @@ export function OrderIntake({
                 <select style={inp} value={possible} onChange={e=>choosePossible(e.target.value)}><option value="">No sabe / sólo revisión</option>{intakeChoices.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select>
                 {!possible&&suggested&&<button type="button" onClick={()=>choosePossible(suggested)} style={{...inp,width:'auto',marginTop:6,cursor:'pointer'}}>Sugerencia: {intakeChoices.find(c=>c.value===suggested)?.label}</button>}
               </FField>}
-              <OrderRepairPicker key={form.device_brand+' '+form.device_model+' '+possible} device={form.device_brand+' '+form.device_model} partnerId={orderPartner} pin={pin} commissionPct={rate} job={job} setJob={setJob}
-                onAdd={r=>setRepairs(prev=>prev.some(x=>x.job===r.job&&x.partId===r.partId)?prev:[...prev,r])} />
+              {quoteOrder && <div style={{border:'1px solid #dbeafe',borderRadius:12,background:'#eff6ff',padding:12,marginBottom:12,fontSize:13}}>
+                <strong>Presupuesto guardado · versión {quoteOrder.revision}</strong>
+                <p style={{margin:'5px 0 8px',color:'#475569'}}>Elegí cada trabajo y volvé a confirmar el precio y el stock informado. No se copian importes anteriores.</p>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{Array.from(new Set(quoteOrder.jobs)).map(work=><button type="button" key={work} onClick={()=>setJob(work)} style={{border:'1px solid #bfdbfe',borderRadius:18,padding:'5px 10px',background:'white',color:'#1d4ed8',cursor:'pointer'}}>{unverified.includes(work)?'↻':'✓'} {work}</button>)}</div>
+                {unverified.length>0&&<label style={{display:'flex',gap:6,marginTop:10}}><input type="checkbox" checked={pendingQuote} onChange={e=>setPendingQuote(e.target.checked)}/> Dejar trabajos sin verificar a confirmar, sin precio.</label>}
+              </div>}
+              {step===2&&<OrderRepairPicker key={form.device_brand+' '+form.device_model+' '+possible+' '+rateCheck} device={form.device_brand+' '+form.device_model} partnerId={orderPartner} pin={pin} commissionPct={rate} job={job} setJob={setJob}
+                onAdd={r=>setRepairs(prev=>prev.some(x=>x.job===r.job&&x.partId===r.partId)?prev:[...prev,r])} />}
 
               {/* Selected repairs list */}
               {repairs.length > 0 && (
@@ -950,6 +991,8 @@ export function OrderIntake({
                 </div>
               )}
             </Card>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:14,minWidth:0}}>
             <Card title="🔍 Revisión al ingreso">
               <ScriptTip text="Revisamos el equipo juntos. ¿Podés retirar el chip y la memoria?" />
               <div style={{ height: 8 }} />
@@ -999,8 +1042,8 @@ export function OrderIntake({
       {/* Sticky submit */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #e5e7eb', padding: '12px 20px' }}>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: color, color: '#fff', fontWeight: 700, fontSize: 15, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-            {saving ? 'Creando orden...' : '✓ Crear Orden'}
+          <button onClick={step===1 ? ()=>go(2) : handleSubmit} disabled={saving} style={{ width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: color, color: '#fff', fontWeight: 700, fontSize: 15, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+            {step===1 ? 'Continuar →' : saving ? 'Creando orden...' : '✓ Crear Orden'}
           </button>
         </div>
       </div>

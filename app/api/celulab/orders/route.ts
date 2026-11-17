@@ -7,6 +7,8 @@ import {partnerOrder} from '@/lib/celulab/public-order'
 import {readPaymentAccounts} from '@/lib/celulab/payment-accounts'
 
 import {sendWhatsAppMessage} from '@/lib/twilio'
+import {isChargeJob,chargeLabor} from '@/app/(market)/market/celulab/_components/charge-quote'
+import {finalRepairPrice} from '@/app/(market)/market/celulab/_components/repair-guidance'
 import {orderSourcing,parseOrderDraft} from '@/lib/celulab/order-sourcing'
 
 export const dynamic = 'force-dynamic'
@@ -64,6 +66,14 @@ export async function POST(req: NextRequest) {
 
   const {data:local,error:partnerError}=partner_id?await db.from('cl_partners').select('name,commission_pct').eq('id',partner_id).eq('is_active',true).maybeSingle():{data:null,error:null}
   if(partner_id&&(!local||partnerError))return NextResponse.json({}, {status:403})
+  let sourceQuote: {id:string;revision:number}|null=null
+  if(body.source_quote){
+    const {id,revision}=body.source_quote
+    if(!validPartnerId(id)||!Number.isSafeInteger(revision)||revision<1)return NextResponse.json({error:'Presupuesto inválido'},{status:400})
+    const {data,error}=await db.from('cl_quote_versions').select('quote_id,revision,partner_id,order_id').eq('quote_id',id).eq('revision',revision).maybeSingle()
+    if(error||!data||data.order_id||(!actor.admin&&data.partner_id!==(partner_id??null)))return NextResponse.json({error:'No se pudo verificar el presupuesto de origen'},{status:409})
+    sourceQuote={id,revision}
+  }
   const deposit=Number(deposit_ars??0),method=body.deposit_method
   if(!Number.isSafeInteger(deposit)||deposit<0||deposit>2147483647||(deposit>0&&!['efectivo','transferencia','mercadopago'].includes(method)))return NextResponse.json({error:'Revisá monto y método de seña.'}, {status:400})
   let paymentAlias=''
@@ -72,6 +82,30 @@ export async function POST(req: NextRequest) {
     if(!paymentAlias)return NextResponse.json({error:'Elegí una cuenta de transferencia configurada.'},{status:400})
   }
   const draft=parseOrderDraft(body.quote_draft_lines)
+  if(sourceQuote){
+    const selected=draft.filter(line=>line.partId)
+    if(selected.length){
+      try{
+        const ids=Array.from(new Set(selected.map(line=>line.partId!)))
+        const [sources,parts,configs]=await Promise.all([
+          orderSourcing(db,selected),
+          db.from('cl_parts').select('id,category,tab_key').in('id',ids),
+          db.from('cl_repair_configs').select('tab_key,category,markup_ars,labor_ars')
+        ])
+        if(parts.error||configs.error)throw Error()
+        const unchanged=selected.every((line,index)=>{
+          const part=parts.data.find(p=>p.id===line.partId), source=sources[index]
+          if(!part||!source?.supplier||!(source.cost>0))return false
+          const config=configs.data.find(c=>c.category===part.category&&c.tab_key===part.tab_key)
+          const isCharge=isChargeJob(line.job)
+          const labor=isCharge?line.labor:Number(config?.labor_ars??0)
+          if(isCharge&&!chargeLabor(line.device).includes(labor))return false
+          return line.labor===labor&&line.part+line.labor===finalRepairPrice(line.job,source.cost+Number(config?.markup_ars??0)+labor)
+        })
+        if(!unchanged)return NextResponse.json({error:'Cambió la disponibilidad o el precio de un repuesto. Volvé a seleccionarlo antes de registrar la orden.'},{status:409})
+      }catch{return NextResponse.json({error:'No se pudo volver a comprobar el catálogo. Reintentá antes de guardar.'},{status:503})}
+    }
+  }
   const accessUnknown=body.unknown_access===true&&unlock_type==='none'
   const diagram=damage_diagram&&typeof damage_diagram==='object'&&!Array.isArray(damage_diagram)?damage_diagram:{}
   if(typeof turns_on!=='boolean'||!['pin','patron','none'].includes(unlock_type)||((unlock_type==='pin'||unlock_type==='patron')&&(typeof unlock_code!=='string'||!unlock_code.trim()||unlock_code.length>40)))return NextResponse.json({error:'Confirmá el encendido y el acceso del equipo.'},{status:400})
@@ -98,7 +132,7 @@ export async function POST(req: NextRequest) {
       water_damage: water_damage ?? false,
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
-      damage_diagram: {markers:Array.isArray(diagram.markers)?diagram.markers.slice(0,50):[],possibleRepair:['battery','charge','board','water'].includes(diagram.possibleRepair)?diagram.possibleRepair:null,accessUnknown,depositMethod:deposit>0?method:null,depositAlias:paymentAlias||null},
+      damage_diagram: {markers:Array.isArray(diagram.markers)?diagram.markers.slice(0,50):[],possibleRepair:['battery','charge','board','water'].includes(diagram.possibleRepair)?diagram.possibleRepair:null,accessUnknown,depositMethod:deposit>0?method:null,depositAlias:paymentAlias||null,...(sourceQuote?{sourceQuote}:{})},
       quote_draft_lines: draft,
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',

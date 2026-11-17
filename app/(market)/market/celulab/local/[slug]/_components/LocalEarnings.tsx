@@ -22,7 +22,7 @@ export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrde
   const [period, setPeriod] = useState('Todos')
   function choosePeriod(next: string) {
     setPeriod(next)
-    if (next === 'Personalizado') return
+    if (next === 'Personalizado' || next === 'Por mes') { setMonth(''); setFrom(''); setTo(''); return }
     if (next === 'Todos') { setMonth(''); setFrom(''); setTo(''); return }
     setMonth('')
     const today = argentinaDate(new Date().toISOString())!
@@ -33,20 +33,20 @@ export function LocalEarnings({ orders, unlocked }: { orders: Array<EarningsOrde
   }
   const invalidRange = Boolean(from && to && from > to)
   const summary = summarizeEarnings(orders, from, to)
-  if (!unlocked) return <p role="status">Las ganancias están protegidas. Desbloquealas desde la búsqueda de repuestos en una nueva orden.</p>
+  if (!unlocked) return <p role="status">Las ganancias están protegidas. Desbloquealas desde Historial → Métricas.</p>
   return <section aria-label="Resumen de ganancias del local" style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
     <h2 style={{ marginTop: 0, fontSize: 18 }}>Ganancias del local</h2>
     <p style={{ fontSize: 13, color: '#64748b' }}>Órdenes entregadas, agrupadas por fecha de ingreso. Los importes corresponden a la comisión guardada en cada orden; no indican que se haya cobrado o liquidado.</p>
-    <p style={{ fontSize: 12, color: '#64748b' }}>Este resumen usa las {orders.length} órdenes cargadas en el panel (máximo 200).</p>
+    <p style={{ fontSize: 12, color: '#64748b' }}>Este resumen usa las {orders.length} órdenes cargadas en el panel.</p>
     <div className="periods" role="group" aria-label="Período del resumen">
-      {['Hoy','Esta semana','Este mes','Personalizado','Todos'].map(item =>
+      {['Hoy','Esta semana','Este mes','Por mes','Personalizado','Todos'].map(item =>
         <button key={item} type="button" aria-pressed={item === period} onClick={() => choosePeriod(item)}>{item}</button>
       )}
     </div>
-    {period === 'Personalizado' && <fieldset className="earn-period"><legend>Elegí un mes o un rango</legend><div className="earn-controls">
+    {(period === 'Personalizado'||period==='Por mes') && <fieldset className="earn-period"><legend>{period==='Por mes'?'Elegí un mes':'Elegí un rango'}</legend><div className="earn-controls">
       <label>Elegir mes <input type="month" value={month} onChange={e=>{const m=e.target.value;setMonth(m);if(!m){setFrom('');setTo('');return;}const [year,month]=m.split('-').map(Number);setFrom(m+'-01');setTo(new Date(Date.UTC(year,month,0)).toISOString().slice(0,10))}} /></label>
-      <label>Desde <input type="date" value={from} onChange={e => {setMonth(''); setFrom(e.target.value)}} /></label>
-      <label>Hasta <input type="date" value={to} onChange={e => {setMonth(''); setTo(e.target.value)}} /></label>
+      {period==='Personalizado'&&<><label>Desde <input type="date" value={from} onChange={e => {setMonth(''); setFrom(e.target.value)}} /></label>
+      <label>Hasta <input type="date" value={to} onChange={e => {setMonth(''); setTo(e.target.value)}} /></label></>}
     </div></fieldset>}
     <style jsx>{`
       .periods { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; }

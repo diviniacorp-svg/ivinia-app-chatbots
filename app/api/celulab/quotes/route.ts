@@ -34,7 +34,16 @@ export async function POST(req:NextRequest){
   }))
  }
  if(b.action==='rate'&&admin){if(typeof b.job!=='string'||(b.amount!==null&&(!Number.isSafeInteger(b.amount)||b.amount<0||b.amount>2147483647)))return reply({},400);const {error}=await db.from('cl_labor_rates').update({labor_ars:b.amount}).eq('job',b.job).select('job').single();return error?reply({},400):reply({ok:true})}
- if(b.action==='archive'&&admin){const offset=Number(b.offset||0);if(!Number.isSafeInteger(offset)||offset<0)return reply({},400);const {data,error}=await db.from('cl_quote_versions').select('*').order('issued_at',{ascending:false}).order('quote_id').order('revision').range(offset,offset+99);return error?reply({},503):reply(data)}
+ if(b.action==='archive'){
+  const offset=Number(b.offset||0)
+  if(!Number.isSafeInteger(offset)||offset<0)return reply({},400)
+  let archive=db.from('cl_quote_versions').select('*')
+  if(!admin)archive=archive.eq('partner_id',partner)
+  const {data,error}=await archive.order('issued_at',{ascending:false}).order('quote_id').order('revision',{ascending:false}).range(offset,offset+99)
+  if(error)return reply({},503)
+  return reply(admin?data:(data||[]).map(v=>{const safe=publicVersion(v);return {...safe,lines:totalOnlyLines(safe.lines)}}))
+ }
+
  let q=db.from('cl_quote_versions').select('*')
  q=b.order?q.eq('order_id',b.order):q.is('order_id',null)
  if(!admin||!b.order)q=partner?q.eq('partner_id',partner):q.is('partner_id',null)
