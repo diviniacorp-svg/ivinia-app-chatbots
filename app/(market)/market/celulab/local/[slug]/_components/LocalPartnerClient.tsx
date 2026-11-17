@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import QuoteEditor from '../../../_components/QuoteEditor'
 import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
 import { LocalEarnings, OrderEarnings } from './LocalEarnings'
@@ -43,6 +44,8 @@ type Order = {
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
   damage_diagram: { markers?: DamageMarker[] }
+  partner_id?:string
+  reported_fault?: string
   requested_work: string
   notes: string
   deposit_ars: number
@@ -323,6 +326,7 @@ function LocalDashboard({
               flexShrink: 0,
             }}
           >?</button>
+          <QuoteEditor partner={partnerId} pin={pin}/>
           <button onClick={() => setView('new')} style={{
             padding: '8px 16px', borderRadius: 9, border: 'none',
             background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
@@ -730,7 +734,7 @@ const BLANK = {
   unlock_type: 'none' as 'pin' | 'patron' | 'none',
   unlock_code: '',
   damage_diagram: { markers: [] as DamageMarker[] },
-  requested_work: '', notes: '', deposit_ars: '',
+  reported_fault: '', requested_work: '', notes: '', deposit_ars: '',
 }
 
 function ScriptTip({ text }: { text: string }) {
@@ -810,7 +814,7 @@ function LocalNewOrder({
       setErr('Nombre, marca y modelo son obligatorios.')
       return
     }
-    if (!finalRequestedWork.trim()) {
+    if (!finalRequestedWork.trim() && !form.reported_fault.trim()) {
       setErr('Ingresá el trabajo a realizar o buscá un repuesto.')
       return
     }
@@ -906,7 +910,7 @@ function LocalNewOrder({
               <ScriptTip text="¿Tenés el código o patrón? Sin acceso no podemos aplicar garantía." />
               <div style={{ height: 8 }} />
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: '❌ Sin acceso' }].map(opt => (
+                {[{ v: 'pin', l: '🔢 PIN' }, { v: 'patron', l: '🔷 Patrón' }, { v: 'none', l: 'Sin código de acceso' }].map(opt => (
                   <button key={opt.v} onClick={() => { set('unlock_type', opt.v); if (opt.v !== 'patron') { setPatternDots([]); set('unlock_code', '') } }} style={{ flex: 1, padding: '9px 4px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 700, border: `2px solid ${form.unlock_type === opt.v ? color : '#e5e7eb'}`, background: form.unlock_type === opt.v ? color + '12' : '#fff', color: form.unlock_type === opt.v ? color : '#6b7280' }}>
                     {opt.l}
                   </button>
@@ -1017,6 +1021,7 @@ function LocalNewOrder({
               )}
 
               <div style={{ height: 10 }} />
+              <FField label="Falla reportada por el cliente"><textarea style={inp} value={form.reported_fault} onChange={e=>set('reported_fault',e.target.value)} placeholder="¿Qué le pasa al equipo y desde cuándo?"/></FField>
               <FField label={repairs.length > 0 ? 'Trabajo adicional (opcional)' : 'Trabajo solicitado *'}>
                 <textarea style={{ ...inp, minHeight: 56, resize: 'vertical' }} value={form.requested_work} onChange={e => set('requested_work', e.target.value)} placeholder={repairs.length > 0 ? 'Algún trabajo extra o nota adicional...' : 'Pantalla rota, no carga, no enciende, cambio de batería...'} />
               </FField>
@@ -1362,10 +1367,12 @@ function LocalOrderDetail({
           {order.water_damage && <TRow label="Humedad" value="SÍ ⚠️" />}
         </Card>
 
+        <Card title="Falla reportada por el cliente" style={{marginTop:12,borderLeft:'4px solid #cc6673'}}>{order.reported_fault||'Sin registrar'}</Card>
         <Card title="🔧 Trabajo" style={{ marginTop: 12 }}>
           <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{order.requested_work || '—'}</div>
         </Card>
 
+        <QuoteEditor order={order.id} partner={order.partner_id} pin={pin} name={order.client_name} device={order.device_brand+' '+order.device_model}/>
         <ExtraJobs id={order.id} pin={pin}/>
         <Card title="Ganancia del local" style={{ marginTop: 12 }}>{commissionUnlocked ? <OrderEarnings order={order} unlocked /> : <EarningsPin onUnlock={unlockCommission} />}</Card>
 
