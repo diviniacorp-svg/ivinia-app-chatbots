@@ -44,7 +44,6 @@ type Order = {
   unlock_type: 'pin' | 'patron' | 'none'
   unlock_code: string
   damage_diagram: { markers?: DamageMarker[] }
-  partner_id?:string
   quote_draft_lines?: {device:string;job:string;part:number;labor:number}[]
   reported_fault?: string
   requested_work: string
