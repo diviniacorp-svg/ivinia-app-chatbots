@@ -3,9 +3,11 @@ import assert from 'node:assert/strict'
 import {chargeLabel,chargeLabor,chargePrice,chargeSupplier,isChargeJob,matchesChargePart} from './charge-quote.ts'
 import {registerHooks} from 'node:module'
 const hook=registerHooks({resolve(specifier,context,next){
-  return next(specifier==='./charge-quote'?'./charge-quote.ts':specifier,context)
+  return next(['./charge-quote','./quote-labels','./quote-groups','./quote-document'].includes(specifier)?specifier+'.ts':specifier,context)
 }})
 const {quoteSummary}=await import('./quote-groups.ts')
+const {partCaption,partQuality}=await import('./quote-labels.ts')
+const {quoteMessage,quotePdf,printableQuote}=await import('./quote-document.ts')
 hook.deregister()
 
 test('pin and puerto use the same quote flow',()=>{
@@ -37,7 +39,20 @@ test('receipts keep commercial names and hide legacy part and supplier names',()
   const android=quoteSummary([{...old,device:'Samsung A14'}])
   assert.match(android,/Pin de carga/)
   assert.doesNotMatch(android,/placa|only/i)
-  const iphone=quoteSummary([{...old,device:'iPhone 13',option:'Calidad OEM'}])
+  const iphone=quoteSummary([{...old,device:'iPhone 13',option:'Repuesto: Calidad OEM'}])
   assert.match(iphone,/Pin de carga \(flex completo\).*Calidad OEM/)
   assert.equal(chargeLabel('Moto G32'),'Pin de carga')
+})
+
+test('shared part is presented under the requested model, with clean quality and no supplier',()=>{
+ const caption=partCaption('Cambio de módulo','Motorola G22',partQuality('','Módulo Moto E32/G22 Incell'))
+ assert.equal(caption,'Módulo G22 Incell')
+ const quote={quote_id:'test-123',revision:1,issued_at:'2026-11-17T03:00:00Z',issuer:'Local Demo',customer:'Cliente <Demo>',lines:[{device:'Motorola G22',job:'Cambio de módulo',part:20000,labor:22500,option:'Repuesto: '+caption},{device:'Motorola G22',job:'Cambio de batería',part:0,labor:0,pending:true,option:'Batería Motorola · VG Mayorista'}]}
+ const text=quoteMessage(quote), html=printableQuote(quote)
+ assert.match(text,/Módulo G22 Incell/)
+ assert.match(text,/42\.500/)
+ assert.doesNotMatch(text,/E32|Mayorista/)
+ assert.match(html,/Cliente &lt;Demo&gt;/)
+ assert.doesNotMatch(html,/Mayorista/)
+ return quotePdf(quote).text().then(pdf=>{assert.match(pdf,/^%PDF-1\.4/);assert.match(pdf,/xref/);assert.match(pdf,/%%EOF$/m)})
 })

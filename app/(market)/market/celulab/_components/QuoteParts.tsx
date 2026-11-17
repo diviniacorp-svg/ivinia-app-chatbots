@@ -1,8 +1,8 @@
 'use client'
 import {useEffect,useState} from 'react'
 import {pesos} from './quote-groups'
-import {chargeLabel,chargeModel,chargePrice,chargeSupplier,isChargeJob,matchesChargePart} from './charge-quote'
-type Part={id:string;name:string;quality:string;markup_ars:number;labor_ars:number;final_price:number|null;best_provider:string|null;stock:boolean;category:string;all_providers:{name:string;cost:number;available:boolean;updated?:string}[]}
+import {chargeModel,isChargeJob} from './charge-quote'
+type Part={id:string;name:string;status:'available'|'unavailable'|'unknown';final_price:number|null;labor_ars:number|null}
 export function catalogGroup(job:string):[string,RegExp?]|null{
  if(isChargeJob(job))return ['partes']
  if(!job.startsWith('Cambio de'))return null
@@ -19,43 +19,44 @@ export function catalogGroup(job:string):[string,RegExp?]|null{
  if(/flex/i.test(job))return ['partes',/flex/i]
  return null
 }
-export default function QuoteParts({device,job,chargeRate,onPick}:{device:string;job:string;chargeRate:number;onPick:(key:string,label:string,total:number,labor:number)=>void}){
- const charge=isChargeJob(job)
- const [rows,setRows]=useState<Part[]>([]),[status,setStatus]=useState('')
+
+export default function QuoteParts({device,job,chargeRate,selected,onPick}:{device:string;job:string;chargeRate:number;selected:string[];onPick:(key:string,label:string,total:number,labor:number)=>void}){
+ const charge=isChargeJob(job), [rows,setRows]=useState<Part[]>([]),[status,setStatus]=useState('')
  useEffect(()=>{
-   const ctrl=new AbortController(),group=catalogGroup(job)
-   setRows([]);setStatus('')
-   const model=charge?chargeModel(device):device.trim().replace(/^(samsung|motorola|xiaomi|apple|huawei)\s+/i,'').replace(/^galaxy\s+/i,'')
-   if(!group||model.length<2)return
-   setStatus('Consultando Lista…')
-   const timer=setTimeout(async()=>{
-    try{
+  const ctrl=new AbortController(), group=catalogGroup(job), model=chargeModel(device)
+  setRows([]);setStatus('')
+  if(!group||model.length<2)return
+  setStatus('Consultando disponibilidad…')
+  const timer=setTimeout(async()=>{
+   try{
+    const tabs=charge?['partes','placas']:/vidrio/i.test(job)?['glass','partes','camaras']:[group[0]]
+    const batches=await Promise.all(tabs.map(async tab=>{
       const matches:Part[]=[]
-      const tabs=charge||/carga/i.test(job)?['partes','placas']:/vidrio/i.test(job)?['glass','partes','camaras']:[group[0]]
-      for(const tab of tabs){
-      let offset=0
-      while(true){
-        const query=new URLSearchParams({q:model,tab,offset:String(offset),limit:'100',offers:'1'})
+      for(let offset=0;;offset+=100){
+        const query=new URLSearchParams({q:model,tab,offset:String(offset),limit:'100',quoteJob:job,device,labor:String(chargeRate)})
         const response=await fetch('/api/celulab/lista?'+query,{signal:ctrl.signal})
         if(!response.ok)throw Error()
         const data=await response.json() as {items:Part[];total:number}
-        matches.push(...data.items.filter(p=>charge?matchesChargePart(device,p.name,p.category)&&p.all_providers?.some(s=>s.available&&chargeSupplier(s.name)):!group[1]||group[1].test((p.name+' '+p.category).normalize('NFD').replace(/[\u0300-\u036f]/g,''))))
-        offset+=data.items.length
-        if(!data.items.length||offset>=data.total)break
+        matches.push(...data.items)
+        if(offset+100>=data.total)break
       }
-      }
-      if(!ctrl.signal.aborted){setRows(matches);setStatus(matches.length?'':(charge?'Sin stock confirmado para este equipo. Queda a confirmar.':'Sin coincidencias en Lista para este equipo y trabajo.'))}
-    }catch{if(!ctrl.signal.aborted)setStatus('No se pudo consultar Lista.')}
-   },300)
-   return ()=>{clearTimeout(timer);ctrl.abort()}
- },[device,job,charge])
- if(!catalogGroup(job))return null
- return <section><strong>{charge?chargeLabel(device):'Repuestos para este trabajo'}</strong><p role="status">{status}</p>{rows.map(p=><div key={p.id}>{(p.all_providers||[]).map(source=>{
-   if(charge&&(!source.available||!chargeSupplier(source.name)))return null
-   const total=charge?(chargeRate?chargePrice(source.cost,p.markup_ars,chargeRate).total:null):p.final_price===null?null:p.final_price+source.cost-Math.min(...p.all_providers.map(s=>s.cost))
-   const key=[p.id,source.name,source.cost].join(':')
-   const option=charge?(p.quality?'Calidad '+p.quality:''):[p.name,p.quality,source.name].filter(Boolean).join(' · ')
-   const label=charge?[chargeLabel(device),option].filter(Boolean).join(' · '):option
-   return <button type="button" key={key} disabled={total===null} onClick={()=>{if(total!==null)onPick(key,option,total,charge?chargeRate:p.labor_ars)}}>{label} · {total===null?(charge?'Elegí mano de obra':'A consultar'):pesos(total)} · {source.available?'Disponible según proveedor':'Stock a confirmar'}{source.updated?' · '+new Date(source.updated).toLocaleDateString('es-AR'):''}</button>
- })}</div>)}</section>
+      return matches
+    }))
+    if(!ctrl.signal.aborted){
+     const matches=Array.from(new Map(batches.flat().map(p=>[p.id,p])).values())
+     matches.sort((a,b)=>Number(b.status==='available')-Number(a.status==='available')||(a.final_price??Infinity)-(b.final_price??Infinity))
+     setRows(matches);setStatus(matches.length?'':'No encontramos repuestos para ese modelo y reparación.')
+    }
+   }catch{if(!ctrl.signal.aborted)setStatus('No se pudo consultar la lista de precios.')}
+  },260)
+  return ()=>{clearTimeout(timer);ctrl.abort()}
+ },[device,job,charge,chargeRate])
+ if(!catalogGroup(job)||!device.trim())return null
+ return <section className="cl-parts"><strong>Repuestos para este trabajo</strong>{status&&<p role="status">{status}</p>}{rows.map(part=>{
+  const available=part.status==='available', total=part.final_price, labor=part.labor_ars
+  return <button className="cl-part" type="button" key={part.id} aria-pressed={selected.includes(part.id)} disabled={!available||total===null||labor===null} onClick={()=>{if(available&&total!==null&&labor!==null)onPick(part.id,'Repuesto: '+part.name,total,labor)}}>
+   <span>{part.name}<small className={available?'cl-in-stock':'cl-no-stock'}>{available?'Disponible':part.status==='unknown'?'Stock sin confirmar':'Sin stock'}</small></span>
+   <strong>{total===null?(available&&charge?'Elegí mano de obra':'—'):pesos(total)}</strong>
+  </button>
+ })}</section>
 }

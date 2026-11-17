@@ -424,6 +424,7 @@ function OrderDetail({
       )}
 
       <div style={{ marginBottom: 16 }}><QuoteEditor initialLines={order.quote_draft_lines} order={order.id} name={order.client_name} device={order.device_brand+' '+order.device_model}/><ExtraJobs id={order.id} /></div>
+      <PrivateSourcing orderId={order.id}/>
       {/* Info grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <InfoCard title="👤 Cliente">
@@ -1383,4 +1384,16 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 const inp: React.CSSProperties = {
   width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #d1d5db',
   fontSize: 13, background: '#fff', boxSizing: 'border-box',
+}
+function PrivateSourcing({orderId}:{orderId:string}){
+ const [rows,setRows]=useState<{caption:string;supplier:string|null;cost:number}[]>([])
+ useEffect(()=>{
+  const ctrl=new AbortController()
+  setRows([])
+  fetch('/api/celulab/orders/'+encodeURIComponent(orderId)+'/sourcing',{signal:ctrl.signal})
+    .then(r=>r.ok?r.json():[]).then(data=>{if(!ctrl.signal.aborted)setRows(Array.isArray(data)?data:[])}).catch(()=>{})
+  return ()=>ctrl.abort()
+ },[orderId])
+ if(!rows.length)return null
+ return <section style={{background:'#f7f9fc',border:'1px solid #dce3ed',borderRadius:12,padding:14,marginBottom:14}}><strong>Compra de repuestos · Sólo taller</strong>{rows.map((row,i)=><p key={i} style={{fontSize:13,color:'#475569'}}><b>{row.caption}</b> · {row.supplier?row.supplier+' · costo '+ars(row.cost):'Proveedor por confirmar'}</p>)}</section>
 }

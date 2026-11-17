@@ -5,9 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 export type PriceListItem = {
   id: string; name: string; brand: string; quality: string; category: string
-  stock: boolean; best_cost: number | null; final_price: number | null
-  best_provider: string | null; markup_ars: number; labor_ars: number
-  all_providers: Array<{ name: string; cost: number }>
+  stock: boolean; final_price: number | null; labor_ars: number; color?: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -106,18 +104,18 @@ function PriceRow({ item, i, isLast, cols, localUnlocked, brand, onItemClick, is
   const displayName = item.name.replace(new RegExp(brand, 'gi'), '').trim() || item.name
   return (
     <div
-      onClick={onItemClick && item.final_price ? () => onItemClick(item) : undefined}
+      onClick={onItemClick && item.stock && item.final_price ? () => onItemClick(item) : undefined}
       style={{
         display: 'grid', gridTemplateColumns: cols,
         padding: '9px 14px', fontSize: 13,
         borderBottom: isLast ? 'none' : '1px solid #f3f4f6',
         background: i % 2 === 0 ? '#fff' : '#f9fafb',
         opacity: item.stock ? 1 : 0.45,
-        cursor: onItemClick && item.final_price ? 'pointer' : 'default',
+        cursor: onItemClick && item.stock && item.final_price ? 'pointer' : 'default',
         transition: 'background .1s',
       }}
-      onMouseEnter={onItemClick && item.final_price ? e => (e.currentTarget.style.background = '#eff6ff') : undefined}
-      onMouseLeave={onItemClick && item.final_price ? e => (e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#f9fafb') : undefined}
+      onMouseEnter={onItemClick && item.stock && item.final_price ? e => (e.currentTarget.style.background = '#eff6ff') : undefined}
+      onMouseLeave={onItemClick && item.stock && item.final_price ? e => (e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#f9fafb') : undefined}
     >
       <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {!item.stock && <span style={{ fontSize: 9, color: '#ef4444', marginRight: 4, verticalAlign: 'middle' }}>●</span>}

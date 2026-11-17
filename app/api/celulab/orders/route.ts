@@ -3,6 +3,9 @@ import { createAdminClient } from '@/lib/supabase'
 
 import {canReadEarnings,hideCommission} from '@/lib/celulab/owner-session'
 
+import {sendWhatsAppMessage} from '@/lib/twilio'
+import {orderSourcing,parseOrderDraft} from '@/lib/celulab/order-sourcing'
+
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
@@ -47,6 +50,7 @@ export async function POST(req: NextRequest) {
 
   const db = createAdminClient()
 
+  const draft=parseOrderDraft(body.quote_draft_lines)
   // Sequential order number — count existing + 1
   const { count } = await db.from('cl_orders').select('id', { count: 'exact', head: true })
   const n = String((count ?? 0) + 1).padStart(6, '0')
@@ -71,7 +75,7 @@ export async function POST(req: NextRequest) {
       unlock_type: unlock_type ?? 'none',
       unlock_code: unlock_code ?? '',
       damage_diagram: damage_diagram ?? {},
-      quote_draft_lines: Array.isArray(body.quote_draft_lines) ? body.quote_draft_lines.slice(0,100).filter((l:{device:string;job:string;part:number;labor:number})=>l && typeof l.device==='string' && typeof l.job==='string' && Number.isSafeInteger(l.part) && l.part>=0 && Number.isSafeInteger(l.labor) && l.labor>=0).map((l:{device:string;job:string;part:number;labor:number})=>({device:l.device.slice(0,200),job:l.job.slice(0,200),part:l.part,labor:l.labor})) : [],
+      quote_draft_lines: draft,
       reported_fault: typeof body.reported_fault === 'string' ? body.reported_fault.slice(0,5000) : '',
       requested_work: requested_work ?? '',
       deposit_ars: deposit_ars ?? 0,
@@ -100,6 +104,26 @@ export async function POST(req: NextRequest) {
       fecha: new Date().toISOString(),
     }).select().single()
     // fire-and-forget: no bloqueamos si falla
+  }
+
+  // Notifications are only sent to the owner configured on the server, never to a client-supplied number.
+  const ownerPhone=process.env.CELULAB_OWNER_WHATSAPP
+  if(ownerPhone&&partner_id&&typeof body.partner_pin==='string'&&body.partner_pin&&req.headers.get('origin')===req.nextUrl.origin){
+    try{
+      const {data:local}=await db.from('cl_partners').select('name').eq('id',partner_id).eq('pin',body.partner_pin).eq('is_active',true).maybeSingle()
+      if(local){
+        const sourcing=await orderSourcing(db,draft).catch(()=>[])
+        const info=sourcing.map(r=>r.caption+(r.supplier?' · '+r.supplier+' · costo 
+}+r.cost.toLocaleString('es-AR'):' · proveedor por confirmar'))
+        await sendWhatsAppMessage(ownerPhone,[
+          'CeluLab · Nuevo ingreso '+data.order_number,
+          'Local: '+local.name,
+          'Equipo: '+device_brand+' '+device_model,
+          'Trabajo: '+(requested_work||body.reported_fault||'A confirmar'),
+          ...info
+        ].join('\n'))
+      }
+    }catch{console.warn('[CeluLab] No se pudo procesar el aviso de nuevo ingreso.')}
   }
 
   return NextResponse.json(data, { status: 201 })

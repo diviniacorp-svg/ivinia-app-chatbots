@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import {partCaption,repairForCategory} from '../../../_components/quote-labels'
 import QuoteEditor from '../../../_components/QuoteEditor'
 import ExtraJobs from '../../../_components/ExtraJobs'
 import ShareOrder from '../../../_components/ShareOrder'
@@ -13,21 +14,15 @@ type DamageMarker = { x: number; y: number; side: 'front' | 'back' }
 
 type RepairLineItem = {
   partId: string
-  name: string
-  provider: string
-  cost_ars: number
+  job: string
+  quality: string
+  color: string
   final_price: number
   commission: number
-  celulab_margin: number
-  markup_ars: number
   labor_ars: number
 }
 
-type SearchResult = {
-  id: string; name: string; brand: string; quality: string; stock: boolean
-  best_cost: number | null; best_provider: string | null; final_price: number | null
-  markup_ars: number; labor_ars: number
-}
+type SearchResult = PriceListItem
 
 type Order = {
   id: string
@@ -560,18 +555,14 @@ function LocalDashboard({
               embedded={true}
               localUnlocked={true}
               onItemClick={(item: PriceListItem) => {
-                if (item.final_price == null) return
+                if (!item.stock || item.final_price == null) return
                 const commission = Math.round(item.labor_ars * commissionPct / 100)
                 setPrefilledRepair({
                   partId: item.id,
-                  name: item.name + (item.brand ? ` ${item.brand}` : ''),
-                  provider: item.best_provider ?? '',
-                  cost_ars: item.best_cost ?? 0,
-                  final_price: item.final_price,
+      job: repairForCategory(item.category), quality:item.quality||'', color:item.color||'',
+                                                  final_price: item.final_price,
                   commission,
-                  celulab_margin: item.final_price - (item.best_cost ?? 0) - commission,
-                  markup_ars: item.markup_ars,
-                  labor_ars: item.labor_ars,
+                                                  labor_ars: item.labor_ars,
                 })
                 setView('new')
               }}
@@ -604,27 +595,23 @@ function PartSearch({ commissionPct, pin, commissionUnlocked, unlockCommission, 
     if (val.trim().length < 2) { setResults([]); setOpen(false); return }
     timer.current = setTimeout(async () => {
       setLoading(true)
-      const data = await fetch(`/api/celulab/parts/search?q=${encodeURIComponent(val)}&limit=8`)
-        .then(r => r.json()).catch(() => [])
-      setResults(Array.isArray(data) ? data : [])
+      const pages=await Promise.all(['modulos','baterias','partes','camaras','tapas','glass'].map(tab=>fetch('/api/celulab/lista?'+new URLSearchParams({q:val.trim(),tab,limit:'8'})).then(r=>r.json()).catch(()=>({items:[]}))))
+      const data:SearchResult[]=pages.flatMap(page=>Array.isArray(page.items)?page.items:[])
+      setResults(data.sort((a,b)=>Number(b.stock)-Number(a.stock)))
       setOpen(true)
       setLoading(false)
     }, 300)
   }
 
   function select(item: SearchResult) {
-    if (item.final_price == null || item.best_cost == null) return
+    if (!item.stock || item.final_price == null) return
     const commission = Math.round(item.labor_ars * commissionPct / 100)
     onAdd({
       partId: item.id,
-      name: item.name + (item.brand ? ` ${item.brand}` : ''),
-      provider: item.best_provider ?? '',
-      cost_ars: item.best_cost,
-      final_price: item.final_price,
+      job: repairForCategory(item.category), quality:item.quality||'', color:item.color||'',
+              final_price: item.final_price,
       commission,
-      celulab_margin: item.final_price - item.best_cost - commission,
-      markup_ars: item.markup_ars,
-      labor_ars: item.labor_ars,
+              labor_ars: item.labor_ars,
     })
     setQ(''); setResults([]); setOpen(false)
   }
@@ -685,7 +672,7 @@ function PartSearch({ commissionPct, pin, commissionUnlocked, unlockCommission, 
               <div
                 key={item.id}
                 onMouseDown={() => select(item)}
-                style={{ padding: '10px 14px', borderBottom: '1px solid #f3f4f6', cursor: 'pointer' }}
+                style={{ padding: '10px 14px', borderBottom: '1px solid #f3f4f6', cursor: item.stock?'pointer':'not-allowed' }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#f5f3ff')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
               >
@@ -695,9 +682,6 @@ function PartSearch({ commissionPct, pin, commissionUnlocked, unlockCommission, 
                   {item.quality && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, marginLeft: 5, background: '#f3f4f6', color: '#6b7280' }}>{item.quality}</span>}
                   {!item.stock && <span style={{ fontSize: 9, color: '#ef4444', marginLeft: 5 }}>● sin stock</span>}
                 </div>
-                {item.best_provider && (
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6 }}>Proveedor: {item.best_provider}</div>
-                )}
                 {item.final_price != null && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                     <div style={{ background: '#eff6ff', borderRadius: 6, padding: '4px 6px', fontSize: 11 }}>
@@ -805,7 +789,8 @@ function LocalNewOrder({
   function toggleCheck(k: keyof typeof checks) { setChecks(c => ({ ...c, [k]: !c[k] })) }
 
   async function handleSubmit() {
-    const repairText = repairs.map(r => r.name).join(' + ')
+    const device=form.device_brand+' '+form.device_model
+    const repairText=repairs.map(r=>partCaption(r.job,device,r.quality,r.color)).join(' + ')
     const freeText = (form.requested_work ?? '').trim()
     const finalRequestedWork = repairText && freeText
       ? `${repairText} / ${freeText}`
@@ -827,7 +812,8 @@ function LocalNewOrder({
       body: JSON.stringify({
         ...form,
         requested_work: finalRequestedWork,
-        quote_draft_lines: repairs.map(r=>({device:form.device_brand+' '+form.device_model,job:r.name,part:r.final_price-r.labor_ars,labor:r.labor_ars})),
+        quote_draft_lines: repairs.map(r=>({device,job:r.job,partId:r.partId,option:'Repuesto: '+partCaption(r.job,device,r.quality,r.color),part:r.final_price-r.labor_ars,labor:r.labor_ars})),
+        partner_pin: pin,
         deposit_ars: Number(form.deposit_ars) || 0,
         partner_id: partnerId,
         commission_pct: commissionPct,
@@ -997,8 +983,7 @@ function LocalNewOrder({
                     {repairs.map((r, i) => (
                       <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 9, padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{r.name}</div>
-                          {r.provider && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Proveedor: {r.provider}</div>}
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{form.device_model.trim()?partCaption(r.job,form.device_brand+' '+form.device_model,r.quality,r.color):r.job}</div>
                           <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: 11, color: '#1d4ed8' }}>Precio: <strong>{ars(r.final_price)}</strong></span>
                             <span style={{ fontSize: 11, color: '#16a34a' }}>Tu comisión: <strong>{commissionUnlocked ? ars(r.commission) : '🔒 ••••'}</strong></span>
